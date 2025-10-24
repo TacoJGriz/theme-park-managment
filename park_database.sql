@@ -128,18 +128,31 @@ CREATE TABLE membership (
     CONSTRAINT chk_membership_dates CHECK (end_date > start_date)
 );
 
+CREATE TABLE ticket_types (
+    ticket_type_id INT NOT NULL AUTO_INCREMENT,
+    type_name VARCHAR(50) NOT NULL UNIQUE,
+    base_price DECIMAL(10, 2) NOT NULL,
+    is_active BOOL NOT NULL DEFAULT TRUE,
+    is_member_type BOOL NOT NULL DEFAULT FALSE,
+    
+    PRIMARY KEY (ticket_type_id),
+    CONSTRAINT chk_ticket_price_positive CHECK (base_price >= 0)
+);
+
 CREATE TABLE visits (
     visit_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT,
     visit_date DATETIME,
     exit_time TIME,
-    ticket_type ENUM('Adult', 'Child', 'Senior', 'Member', 'Other') NOT NULL,
+    ticket_type_id INT NOT NULL,  -- MODIFIED: Replaced ENUM
     ticket_price DECIMAL(10,2),
     discount_amount DECIMAL(10,2),
     -- Keys
     PRIMARY KEY (visit_id),
     FOREIGN KEY (membership_id)
         REFERENCES membership (membership_id),
+    FOREIGN KEY (ticket_type_id)      -- NEW: Foreign key
+        REFERENCES ticket_types(ticket_type_id),
 	-- Constraints
     CONSTRAINT chk_positive_prices CHECK (ticket_price >= 0 AND discount_amount >= 0),
     CONSTRAINT chk_valid_discount CHECK (discount_amount <= ticket_price)

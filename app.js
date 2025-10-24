@@ -1004,23 +1004,125 @@ app.post('/members', isAuthenticated, canManageMembersAndVisits, async (req, res
 
 // UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
 app.get('/visits/new', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
-    res.render('log-visit', { error: null });
+    // Phase 3: Rebuilt to fetch dynamic data
+    try {
+        const [ticketTypes] = await pool.query(
+            "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
+        );
+        
+        const [activeMembers] = await pool.query(
+            "SELECT membership_id, first_name, last_name, email FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name"
+        );
+        
+        const [promos] = await pool.query(
+            "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
+        );
+
+        const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
+
+        res.render('log-visit', { 
+            error: null,
+            ticketTypes: ticketTypes,
+            activeMembers: activeMembers,
+            currentDiscount: currentDiscount
+        });
+
+    } catch (error) {
+        console.error("Error loading log visit page:", error);
+        res.render('log-visit', {
+             error: "Error fetching park data. Please try again.",
+             ticketTypes: [],
+             activeMembers: [],
+             currentDiscount: 0
+        });
+    }
 });
 app.post('/visits', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
-    const { ticket_type, ticket_price, discount_amount } = req.body;
+    // Phase 3: Rebuilt to calculate price on server
+    const { ticket_type_id, membership_id } = req.body;
+    const visit_date = new Date();
+    
     let connection;
     try {
         connection = await pool.getConnection();
-        const visit_date = new Date();
+        
+        // --- 1. Get Ticket Type Info (Server-side) ---
+        const [ticketResult] = await pool.query(
+            "SELECT base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?", 
+            [ticket_type_id]
+        );
+        
+        if (ticketResult.length === 0) {
+            throw new Error("Invalid ticket type submitted.");
+        }
+        const ticket = ticketResult[0];
+
+        // --- 2. Get Promotion Info (Server-side) ---
+        const [promos] = await pool.query(
+            "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
+        );
+        const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
+
+        // --- 3. Calculate Price & Set Member ID ---
+        let finalTicketPrice = 0.00;
+        let finalDiscountAmount = 0.00;
+        let finalMembershipId = null;
+
+        if (ticket.is_member_type) {
+            // It's a member. Price is $0.
+            if (!membership_id || membership_id === "") {
+                throw new Error("A membership ID is required for a 'Member' ticket type.");
+            }
+            finalMembershipId = membership_id;
+            finalTicketPrice = 0.00;
+            finalDiscountAmount = 0.00;
+        } else {
+            // It's a standard (non-member) ticket. Calculate price.
+            finalMembershipId = null; // Ensure member ID is null
+            finalTicketPrice = parseFloat(ticket.base_price);
+            finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
+        }
+
+        // --- 4. Insert the Visit ---
         const sql = `
-            INSERT INTO visits (visit_date, ticket_type, ticket_price, discount_amount)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount)
+            VALUES (?, ?, ?, ?, ?)
         `;
-        await connection.query(sql, [visit_date, ticket_type, ticket_price, discount_amount || 0]);
+        await connection.query(sql, [
+            visit_date, 
+            ticket_type_id, 
+            finalMembershipId, 
+            finalTicketPrice, 
+            finalDiscountAmount
+        ]);
+        
+        // Success
         res.redirect('/dashboard');
+
     } catch (error) {
-        console.error(error);
-        res.render('log-visit', { error: "Database error logging visit." });
+        // Error: Re-render the form with an error message
+        console.error("Error logging visit:", error.message);
+        try {
+            const [ticketTypes] = await pool.query("SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name");
+            const [activeMembers] = await pool.query("SELECT membership_id, first_name, last_name, email FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name");
+            const [promos] = await pool.query("SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
+            const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
+
+            res.render('log-visit', { 
+                error: `Database error logging visit: ${error.message}`,
+                ticketTypes: ticketTypes,
+                activeMembers: activeMembers,
+                currentDiscount: currentDiscount
+            });
+        } catch (fetchError) {
+            console.error("Error fetching data for log-visit error page:", fetchError);
+            res.render('log-visit', {
+                 error: "A critical error occurred. Please try again.",
+                 ticketTypes: [],
+                 activeMembers: [],
+                 currentDiscount: 0
+            });
+        }
     } finally {
         if (connection) connection.release();
     }
@@ -1143,6 +1245,150 @@ app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrManager
         console.error("Error toggling membership status:", error);
         req.session.error = "Database error toggling status.";
         res.redirect('/memberships/types');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// --- TICKET TYPE MANAGEMENT ---
+// (Requires AdminOrManager access)
+
+// GET list of ticket types
+app.get('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) => {
+    try {
+        // Fetch all types, order by system-flag (member) first, then by name
+        const [types] = await pool.query('SELECT * FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
+        
+        res.render('manage-ticket-types', { 
+            types: types, 
+            error: req.session.error, 
+            success: req.session.success 
+        });
+        req.session.success = null; // Clear message after displaying
+        req.session.error = null;
+    } catch (error) {
+        console.error("Error fetching ticket types:", error);
+        res.status(500).send('Error fetching ticket types');
+    }
+});
+
+// GET form to add a new ticket type
+app.get('/ticket-types/new', isAuthenticated, isAdminOrManager, (req, res) => {
+    res.render('add-ticket-type', { error: null });
+});
+
+// POST to create a new ticket type
+app.post('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) => {
+    // Note: is_member_type defaults to FALSE in the DB, so we only insert standard tickets.
+    const { type_name, base_price, description } = req.body;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const sql = "INSERT INTO ticket_types (type_name, base_price, description, is_active, is_member_type) VALUES (?, ?, ?, TRUE, FALSE)";
+        await connection.query(sql, [type_name, base_price, description || null]);
+        req.session.success = "Ticket type added successfully!";
+        res.redirect('/ticket-types');
+    } catch (error) {
+        console.error("Error adding ticket type:", error);
+        res.render('add-ticket-type', { error: "Database error adding type. Name might be duplicate." });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// GET form to edit a ticket type
+app.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    try {
+        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        if (typeResult.length === 0) {
+            return res.status(404).send('Ticket type not found');
+        }
+        res.render('edit-ticket-type', { type: typeResult[0], error: null });
+    } catch (error) {
+        console.error("Error loading ticket edit page:", error);
+        res.status(500).send('Error loading edit page');
+    }
+});
+
+// POST to update a ticket type
+app.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    const { type_name, base_price, description } = req.body;
+    let connection;
+    let typeResult = [];
+
+    try {
+        connection = await pool.getConnection();
+
+        // First, check if this is the 'Member' type which shouldn't be edited
+        [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        if (typeResult.length === 0) {
+            return res.status(404).send('Ticket type not found');
+        }
+        const ticketType = typeResult[0];
+
+        // This check matches the logic in your EJS file.
+        // If it's a member type, we only accept hidden fields (which are the same values)
+        // or we just skip the update.
+        if (ticketType.is_member_type) {
+             // If they submit the form for the member type, just redirect without error
+            req.session.error = "The 'Member' type is a system record and cannot be edited.";
+            return res.redirect('/ticket-types');
+        }
+
+        // It's a standard ticket, so update it.
+        const sql = `
+            UPDATE ticket_types 
+            SET type_name = ?, base_price = ?, description = ?
+            WHERE ticket_type_id = ? AND is_member_type = FALSE
+        `;
+        await connection.query(sql, [type_name, base_price, description || null, type_id]);
+        
+        req.session.success = "Ticket type updated successfully!";
+        res.redirect('/ticket-types');
+
+    } catch (error) {
+        console.error("Error updating ticket type:", error);
+        // On error, re-render edit page with fetched data
+        res.render('edit-ticket-type', {
+            type: typeResult.length > 0 ? typeResult[0] : { ticket_type_id: type_id },
+            error: "Database error updating type. Name might be duplicate."
+        });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// POST to toggle 'is_active' status
+app.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        
+        // Find the current status and type
+        const [current] = await pool.query('SELECT is_active, is_member_type FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        if (current.length === 0) {
+            return res.status(404).send('Ticket type not found');
+        }
+        
+        // PREVENT DEACTIVATING THE MEMBER TYPE
+        if (current[0].is_member_type) {
+            req.session.error = "The 'Member' type is a system record and cannot be deactivated.";
+            return res.redirect('/ticket-types');
+        }
+
+        const newStatus = !current[0].is_active;
+        
+        await connection.query('UPDATE ticket_types SET is_active = ? WHERE ticket_type_id = ?', [newStatus, type_id]);
+        req.session.success = `Ticket type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
+        res.redirect('/ticket-types');
+        
+    } catch (error) {
+        console.error("Error toggling ticket status:", error);
+        req.session.error = "Database error toggling status.";
+        res.redirect('/ticket-types');
     } finally {
         if (connection) connection.release();
     }
