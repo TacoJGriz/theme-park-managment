@@ -61,7 +61,7 @@ CREATE TABLE rides (
     ride_id INT NOT NULL AUTO_INCREMENT,
     ride_name VARCHAR(50) NOT NULL,
     ride_type ENUM('Rollercoaster', 'Water Ride', 'Flat Ride', 'Show', 'Other') NOT NULL,
-    ride_status ENUM("OPEN", "CLOSED", "BROKEN"),
+    ride_status ENUM('OPEN', 'CLOSED', 'BROKEN'),
     max_weight INT,
     min_height INT,
     capacity INT,
