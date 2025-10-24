@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Inventory</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #343a40; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold;
+ }
+
+        .cancel-link {
+            display: inline-block;
+            margin-left: 15px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Set Inventory Count</h1>
+    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    <form action="/inventory/manage" method="POST">
+        <div>
+            <label for="vendor_id">Select Vendor:</label>
+            <select id="vendor_id" name="vendor_id" required>
+                <% vendors.forEach(vendor => { %>
+                    <option value="<%= vendor.vendor_id %>"><%= vendor.vendor_name %></option>
+                <% }); %>
+            </select>
+        </div>
+        <div>
+            <label for="item_id">Select Item:</label>
+            <select id="item_id" name="item_id" required>
+                <% items.forEach(item => { %>
+                    <option value="<%= item.item_id %>"><%= item.item_name %></option>
+                <% }); %>
+            </select>
+        </div>
+        <div>
+            <label for="count">Set New Count:</label>
+            <input type="number" id="count" name="count" min="0" required>
+        </div>
+        <br>
+        <button type="submit">Update Inventory</button>
+        <a href="/inventory" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

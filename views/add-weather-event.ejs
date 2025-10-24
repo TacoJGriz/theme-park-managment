@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Weather Event</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+        }
+        input[type="checkbox"] {
+            width: auto; 
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #ffc107;
+            color: #333;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #e0a800;
+        }
+        .error { color: red; font-weight: bold;
+ }
+
+        .cancel-link {
+            display: inline-block;
+            margin-left: 15px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Log Weather Event</h1>
+    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    <form action="/weather" method="POST">
+        <div>
+            <label for="event_date">Event Start Date & Time:</label>
+            <input type="datetime-local" id="event_date" name="event_date" required>
+        </div>
+        <div>
+            <label for="end_time">Event End Date & Time (optional):</label>
+            <input type="datetime-local" id="end_time" name="end_time">
+        </div>
+        <div>
+            <label for="weather_type">Weather Type:</label>
+            <select id="weather_type" name="weather_type" required>
+                <option value="Rain">Rain</option>
+                <option value="Thunderstorm">Thunderstorm</option>
+                <option value="Tornado Warning">Tornado Warning</option>
+                <option value="Heatwave">Heatwave</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div>
+            <label class="checkbox-label">
+                <input type="checkbox" name="park_closure" value="1">
+                Did this cause a full park closure?
+            </label>
+        </div>
+        <br>
+        <button type="submit">Log Event</button>
+        <a href="/weather" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

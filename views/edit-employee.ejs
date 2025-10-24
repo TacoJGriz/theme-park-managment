@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Employee</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-section { margin-bottom: 1.5em; }
+        .form-section h3 { border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; color: #0056b3; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], input[type="tel"],
+        input[type="date"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        /* Make disabled fields visually clear */
+        input:disabled, select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        
+        /* --- NEW CSS CLASS --- */
+        .info-note {
+            color: #004085;
+            background-color: #cce5ff;
+            border: 1px solid #b8daff;
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
+                 cursor: pointer; border-radius: 4px; font-size: 1em; }
+        button:hover { background-color: #0056b3;
+ }
+        .full-width { grid-column: 1 / -1;
+ }
+        .cancel-link {
+            display: inline-block;
+            margin-left: 15px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<body>
+    <%- include('partials/header') %>
+    <h1>Edit Employee: <%= employee.first_name %> <%= employee.last_name %></h1>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <p class="error"><%= error %></p>
+    <% } %>
+
+    <%# --- NEW EJS LOGIC --- %>
+    <%# Create a variable to check if fields should be disabled %>
+    <% const isReadOnlyForHR = (user.role === 'HR') ? 'disabled' : '' %>
+
+    <%# Show a helpful note to the HR user %>
+    <% if (user.role === 'HR') { %>
+        <div class="info-note">
+            <strong>Note:</strong> As an HR user, you can only edit personal and address information.
+            Sensitive fields (Job, Pay, Status) are read-only. Please contact an Admin to change them.
+        </div>
+    <% } %>
+
+
+    <form action="/employees/edit/<%= employee.employee_id %>" method="POST">
+        
+        <div class="form-section">
+            <h3>Personal Information</h3>
+            <div class="form-grid">
+                <div>
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" value="<%= employee.first_name %>" required>
+                </div>
+                <div>
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" value="<%= employee.last_name %>" required>
+                </div>
+                <div>
+                    <label for="gender">Gender:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="Male" <% if (employee.gender === 'Male') { %>selected<% } %>>Male</option>
+                        <option value="Female" <% if (employee.gender === 'Female') { %>selected<% } %>>Female</option>
+                        <option value="Other" <% if (employee.gender === 'Other') { %>selected<% } %>>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="birth_date">Birth Date:</label>
+                    <input type="date" id="birth_date" name="birth_date" value="<%= employee.birth_date.toISOString().substring(0, 10) %>" required>
+                </div>
+                <div class="full-width">
+                    <label for="phone_number">Phone Number:</label>
+                    <input type="tel" id="phone_number" name="phone_number" value="<%= employee.phone_number %>">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Address</h3>
+            <div class="form-grid">
+                <div class="full-width">
+                    <label for="street_address">Street Address:</label>
+                    <input type="text" id="street_address" name="street_address" value="<%= employee.street_address %>">
+                </div>
+                <div>
+                    <label for="city">City:</label>
+                    <input type="text" id="city" name="city" value="<%= employee.city %>">
+                </div>
+                <div>
+                    <label for="state">State (2-letter):</label>
+                    <input type="text" id="state" name="state" maxlength="2" value="<%= employee.state %>">
+                </div>
+                <div>
+                    <label for="zip_code">Zip Code:</label>
+                    <input type="text" id="zip_code" name="zip_code" value="<%= employee.zip_code %>">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Job Details</h3>
+             <div class="form-grid">
+                <div>
+                    <label for="hire_date">Hire Date:</label>
+                    <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required <%= isReadOnlyForHR %>>
+                </div>
+                <div>
+                    <label for="termination_date">Termination Date:</label>
+                    <input type="date" id="termination_date" name="termination_date" value="<%= employee.termination_date ? employee.termination_date.toISOString().substring(0, 10) : '' %>" <%= isReadOnlyForHR %>>
+                </div>
+                <div>
+                    <label for="hourly_rate">Hourly Rate:</label>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isReadOnlyForHR %>>
+                </div>
+                 <div>
+                    <label for="is_active">Status:</label>
+                     <select id="is_active" name="is_active" <%= isReadOnlyForHR %>>
+                        <option value="1" <% if (employee.is_active) { %>selected<% } %>>Active</option>
+                        <option value="0" <% if (!employee.is_active) { %>selected<% } %>>Inactive</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="employee_type">Role:</label>
+                    <select id="employee_type" name="employee_type" required <%= isReadOnlyForHR %>>
+                        <option value="Staff" <% if (employee.employee_type === 'Staff') { %>selected<% } %>>Staff</option>
+                        <option value="Maintenance" <% if (employee.employee_type === 'Maintenance') { %>selected<% } %>>Maintenance</option>
+                        <option value="Manager" <% if (employee.employee_type === 'Manager') { %>selected<% } %>>Manager</option>
+                        <option value="HR" <% if (employee.employee_type === 'HR') { %>selected<% } %>>HR</option>
+                        <option value="Admin" <% if (employee.employee_type === 'Admin') { %>selected<% } %>>Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="location_id">Location:</label>
+                    <select id="location_id" name="location_id" required <%= isReadOnlyForHR %>>
+                        <% locations.forEach(location => { %>
+                            <option value="<%= location.location_id %>" <% if (employee.location_id === location.location_id) { %>selected<% } %>>
+                                <%= location.location_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="full-width">
+                    <label for="supervisor_id">Supervisor:</label>
+                    <select id="supervisor_id" name="supervisor_id" <%= isReadOnlyForHR %>>
+                        <option value="">-- None --</option>
+                        <% supervisors.forEach(supervisor => { %>
+                            <option value="<%= supervisor.employee_id %>" <% if (employee.supervisor_id === supervisor.employee_id) { %>selected<% } %>>
+                                <%= supervisor.first_name %> <%= supervisor.last_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Login Details</h3>
+            <div class="form-grid">
+                <div class="full-width">
+                     <label for="email">Email (Username):</label>
+                    <input type="email" id="email" name="email" value="<%= employee.email %>" required>
+                </div>
+            </div>
+             <p><i>Note: Password cannot be changed from this form.</i></p>
+        </div>
+        
+        <br>
+        <button type="submit">Update Employee</button>
+        <a href="/users" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

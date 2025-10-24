@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Member</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #17a2b8; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold; }
+        .full-width { grid-column: 1 / -1;}
+
+        .cancel-link {
+            display: inline-block;
+            margin-left: 15px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Add New Park Member</h1>
+    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    <form action="/members" method="POST">
+        <div class="form-grid">
+            <div>
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div>
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="full-width">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="phone_number">Phone Number:</label>
+                <input type="tel" id="phone_number" name="phone_number">
+            </div>
+            <div>
+                <label for="date_of_birth">Date of Birth:</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" required>
+            </div>
+            <div>
+                <label for="member_type">Membership Type:</label>
+                <select id="member_type" name="member_type" required>
+                    <option value="Individual">Individual</option>
+                    <option value="Family">Family</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                </select>
+            </div>
+            <div>
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" required>
+            </div>
+            <div>
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" required>
+            </div>
+        </div>
+        <br>
+        <button type="submit">Add Member</button>
+        <a href="/members" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

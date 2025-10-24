@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maintenance History</title>
+     <style>
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        h1 small { color: #666; font-weight: normal;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #6c757d; color: white;
+ }
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
+        tr:hover { background-color: #f1f1f1;
+ }
+        .action-link { text-decoration: none; color: #28a745; font-weight: bold;
+ }
+        .action-link:hover { text-decoration: underline;
+ }
+        .status-open { background-color: #fff;
+ }
+        .status-closed { background-color: #ffeeba;
+ }
+
+        /* --- 'BACK' LINK STYLE --- */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Maintenance History for <br><small><%= ride.ride_name %></small></h1>
+        
+        <a href="/rides" class="back-link">&laquo; Back to Rides List</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Reported On</th>
+                    <th>Summary</th>
+                    <th>Assigned To</th>
+                    <th>Completed On</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (maintenance_logs.length === 0) { %>
+                    <tr>
+                        <td colspan="6">No maintenance records found for this ride.</td>
+                    </tr>
+                <% } %>
+                <% maintenance_logs.forEach(log => { %>
+                    <tr class="<%= log.end_date ? 'status-closed' : 'status-open' %>">
+                        <td><%= log.report_date.toISOString().substring(0, 10) %></td>
+                        <td><%= log.summary %></td>
+                        <td><%= log.employee_name || 'Unassigned' %></td>
+                        <td><%= log.end_date ? log.end_date.toISOString().substring(0, 10) : '---' %></td>
+                        <td>$<%= log.cost ? parseFloat(log.cost).toFixed(2) : '0.00' %></td>
+                        <td>
+                            <% if (log.end_date) { %>
+                                Completed
+                            <% } else { %>
+                                <a href="/maintenance/complete/<%= log.maintenance_id %>" class="action-link">Complete Work Order</a>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

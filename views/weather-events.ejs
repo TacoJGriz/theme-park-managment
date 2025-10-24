@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Events</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #ffc107; color: #333; }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Weather Events</h1>
+        <a href="/weather/new" class="add-button">Log New Weather Event</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Event Date & Time</th>
+                    <th>End Time</th>
+                    <th>Type</th>
+                    <th>Park Closed?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% events.forEach(event => { %>
+                    <tr>
+                        <td><%= event.event_date.toLocaleString() %></td>
+                        <td><%= event.end_time ? event.end_time.toLocaleString() : 'N/A' %></td>
+                        <td><%= event.weather_type %></td>
+                        <td><%= event.park_closure ? 'Yes' : 'No' %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

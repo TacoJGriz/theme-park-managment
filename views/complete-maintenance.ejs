@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Complete Work Order</title>
+     <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        h1 small { color: #28a745; font-weight: bold; }
+        .initial-report { background-color: #fff3cd; padding: 1em; border-left: 5px solid #ffeeba; margin-bottom: 1.5em; border-radius: 4px; }
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;
+        }
+        textarea { grid-column: 1 / -1; resize: vertical; min-height: 80px; }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Complete Work Order for: <small><%= log.ride_name %></small></h1>
+    
+    <form action="/maintenance/complete/<%= log.maintenance_id %>" method="POST">
+        <input type="hidden" name="ride_id" value="<%= log.ride_id %>">
+        
+        <div class="initial-report">
+            <strong>Initial Report on <%= log.report_date.toISOString().substring(0, 10) %>:</strong>
+            <p><em><%= log.summary %></em></p>
+        </div>
+
+        <div class="form-grid">
+            <div>
+                <label for="start_date">Work Started On:</label>
+                <input type="date" id="start_date" name="start_date" required>
+            </div>
+            <div>
+                <label for="end_date">Work Completed On:</label>
+                <input type="date" id="end_date" name="end_date" required>
+            </div>
+            <div>
+                <label for="cost">Total Cost ($):</label>
+                <input type="number" id="cost" name="cost" step="0.01" min="0">
+            </div>
+            <div>
+                 <label for="ride_status">Set Ride Status To:</label>
+                 <select id="ride_status" name="ride_status" required>
+                    <option value="OPEN">Open</option>
+                    <option value="CLOSED">Closed (Testing)</option>
+                </select>
+            </div>
+             <textarea name="summary" placeholder="Enter completion summary and notes here..."><%= log.summary %></textarea>
+        </div>
+        <br>
+        <button type="submit">Complete Order</button>
+    </form>
+</body>
+</html>

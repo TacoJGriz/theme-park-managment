@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vendors</title>
+     <style>
+         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+         .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+         th { background-color: #007bff; color: white; }
+         tr:nth-child(even) { background-color: #f9f9f9; }
+         tr:hover { background-color: #f1f1f1; }
+         .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
+         .action-link:hover { text-decoration: underline; }
+         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+         .add-button:hover { background-color: #218838; }
+     </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <h1>Park Vendors</h1>
+        <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+            <a href="/vendors/new" class="add-button">Add New Vendor</a>
+        <% } %>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Manager</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% vendors.forEach(vendor => { %>
+                    <tr>
+                        <td><%= vendor.vendor_id %></td>
+                        <td><%= vendor.vendor_name %></td>
+                        <td><%= vendor.location_name || 'N/A' %></td>
+                        <td><%= vendor.manager_name || 'Unassigned' %></td>
+                        <td>
+                            <%# 3. HIDE THIS ACTION LINK BASED ON ROLE AS WELL %>
+                            <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+                                <a href="/assign-manager/vendor/<%= vendor.vendor_id %>" class="action-link">Assign Manager</a>
+                            <% } else { %>
+                                No actions available
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+

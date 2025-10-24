@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Park Visit</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 400px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold;
+ }
+
+        .cancel-link {
+            display: inline-block;
+            margin-left: 15px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Log Park Visit (Non-Member)</h1>
+    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    <form action="/visits" method="POST">
+        <div>
+            <label for="ticket_type">Ticket Type:</label>
+            <select id="ticket_type" name="ticket_type" required>
+                <option value="Adult">Adult</option>
+                <option value="Child">Child</option>
+                <option value="Senior">Senior</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div>
+            <label for="ticket_price">Ticket Price ($):</label>
+            <input type="number" id="ticket_price" name="ticket_price" step="0.01" min="0" required>
+        </div>
+        <div>
+            <label for="discount_amount">Discount Amount ($):</label>
+            <input type="number" id="discount_amount" name="discount_amount" step="0.01" min="0" value="0" required>
+        </div>
+        <br>
+        <button type="submit">Log Visit</button>
+        <a href="/dashboard" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

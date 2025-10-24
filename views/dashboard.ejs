@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .dashboard-container { padding: 2em; }
+        h1 { color: #444; }
+        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em; border-bottom: 1px solid #ddd;}
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 1em; /* Reduced top margin */
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .card a {
+            display: block;
+            text-decoration: none;
+            color: #007bff;
+            padding: 8px 5px; /* Added slight horizontal padding */
+            border-radius: 4px;
+            margin-bottom: 5px; /* Space between links */
+        }
+        .card a:hover {
+            background-color: #e9ecef; /* Lighter hover */
+            color: #0056b3;
+        }
+        .card a::before { /* Add a small icon/bullet */
+            content: '» ';
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <div class="dashboard-container">
+        <h1>Park Management Dashboard</h1>
+
+        <% if (user) { %>
+            <p class="welcome-message">
+                Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
+                You are logged in as an <strong><%= user.role %></strong>.
+            </p>
+        <% } %>
+
+        <div class="card-container">
+
+            <%# UPDATED: Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
+            <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
+                <div class="card">
+                    <h3>Rides & Maintenance</h3>
+                    <a href="/rides">View All Rides</a>
+                    <%# Report Issue link accessible via Rides page for these roles %>
+                    <%# Link to specific ride history is better than a generic link %>
+                    <%# Example: <a href="/maintenance/ride/1">View Ride 1 History</a> %>
+                    <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Maintenance') { %>
+                         <%# <a href="/maintenance/ride">View Maintenance History (Select Ride)</a> %>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <%# UPDATED: Card for Staff, Manager, Admin (NOT HR or Maintenance) %>
+            <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Staff') { %>
+                <div class="card">
+                    <h3>Guest Services</h3>
+                    <a href="/members">Manage Members</a>
+                    <a href="/visits/new">Log Park Visit</a>
+                </div>
+            <% } %>
+
+            <%# Card for Admin and Manager (No Change) %>
+            <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+                <div class="card">
+                    <h3>Park & Retail Operations</h3>
+                    <a href="/locations">Manage Locations</a>
+                    <a href="/vendors">Manage Vendors</a>
+                    <a href="/items">Manage Items</a>
+                    <a href="/inventory">Manage Inventory</a>
+                </div>
+                <div class="card">
+                    <h3>Park Events</h3>
+                    <a href="/promotions">Manage Promotions</a>
+                    <a href="/weather">Manage Weather Events</a>
+                </div>
+            <% } %>
+
+             <%# Card for Admin and HR (No Change) %>
+            <% if (user.role === 'Admin' || user.role === 'HR') { %>
+                <div class="card">
+                    <h3>Human Resources</h3>
+                    <a href="/users">Manage Employees</a>
+                     <%# Add Employee link is on the /users page %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

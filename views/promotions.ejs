@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Promotions</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #6f42c1; color: white; }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Event Promotions</h1>
+        <a href="/promotions/new" class="add-button">Create New Promotion</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Discount</th>
+                    <th>Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% promotions.forEach(promo => { %>
+                    <tr>
+                        <td><%= promo.event_name %></td>
+                        <td><%= promo.event_type %></td>
+                        <td><%= promo.start_date.toISOString().substring(0, 10) %></td>
+                        <td><%= promo.end_date.toISOString().substring(0, 10) %></td>
+                        <td><%= parseFloat(promo.discount_percent).toFixed(2) %>%</td>
+                        <td><%= promo.summary %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rides</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1; }
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
+        .action-link:hover { text-decoration: underline; }
+        .report-link { color: #dc3545; }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838; }
+        .status-form select { padding: 5px; border-radius: 4px; }
+        .status-form button { padding: 5px 10px; margin-left: 5px; cursor: pointer; }
+        .status-OPEN { color: green; font-weight: bold; }
+        .status-CLOSED { color: orange; font-weight: bold; }
+        .status-BROKEN { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Park Rides</h1>
+        <a href="/rides/new" class="add-button">Add New Ride</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Update Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% rides.forEach(ride => { %>
+                    <tr>
+                        <td><%= ride.ride_name %></td>
+                        <td><%= ride.ride_type %></td>
+                        <td><%= ride.location_name %></td>
+                        <td>
+                            <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
+                        </td>
+                        <td>
+                            <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
+                                <select name="ride_status">
+                                    <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
+                                    <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
+                                    <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
+                                </select>
+                                <button type="submit">Set</button>
+                            </form>
+                        </td>
+                        <td>
+                            <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View History</a>
+                            <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
