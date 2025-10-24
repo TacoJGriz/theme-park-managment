@@ -97,6 +97,17 @@ CREATE TABLE maintenance (
     CONSTRAINT chk_cost_positive CHECK (cost IS NULL OR cost >= 0)
 );
 
+CREATE TABLE membership_type (
+    type_id INT NOT NULL AUTO_INCREMENT,
+    type_name VARCHAR(50) NOT NULL UNIQUE,
+    base_price DECIMAL(10, 2) NOT NULL,
+    description VARCHAR(250),
+    is_active BOOL NOT NULL DEFAULT TRUE,
+    
+    PRIMARY KEY (type_id),
+    CONSTRAINT chk_base_price_positive CHECK (base_price >= 0)
+);
+
 CREATE TABLE membership (
     membership_id INT NOT NULL AUTO_INCREMENT,
     first_name VARCHAR(25) NOT NULL,
@@ -104,12 +115,16 @@ CREATE TABLE membership (
     email VARCHAR(50) UNIQUE,
     phone_number VARCHAR(15),
     date_of_birth DATE NOT NULL,
-    member_type ENUM('Individual', 'Family', 'Gold', 'Platinum') NOT NULL,
+    type_id INT NOT NULL,
     start_date DATE NOT NULL DEFAULT (CURDATE()),
 	end_date DATE NOT NULL,
-    -- keys
+    
     PRIMARY KEY (membership_id),
-    -- constraints
+    
+    FOREIGN KEY (type_id) 
+        REFERENCES membership_type (type_id)
+        ON DELETE RESTRICT,
+
     CONSTRAINT chk_membership_dates CHECK (end_date > start_date)
 );
 
@@ -236,4 +251,19 @@ CREATE TABLE employee_ride_assignments (
     FOREIGN KEY (ride_id) 
         REFERENCES rides(ride_id) 
         ON DELETE CASCADE
+);
+
+CREATE TABLE zone_entry (
+    visit_id INT NOT NULL,
+    location_id INT NOT NULL,
+    entry_time DATETIME NOT NULL,
+    -- Keys
+    PRIMARY KEY (visit_id, location_id),
+    FOREIGN KEY (visit_id) 
+        REFERENCES visits (visit_id)
+        ON DELETE CASCADE,
+	-- Constraints
+    FOREIGN KEY (location_id) 
+        REFERENCES location (location_id)
+        ON DELETE RESTRICT
 );
