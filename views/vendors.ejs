@@ -49,6 +49,8 @@
                             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                                 <a href="/assign-manager/vendor/<%= vendor.vendor_id %>" class="action-link">Assign Manager</a>
                             <% } else { %>
+                                 <span>No Access</span> <%# Moved this inside the else block %>
+                            <% } %>
                         </td>
                     </tr>
                 <% }); %>

@@ -39,8 +39,8 @@
     <div class="nav-links">
         <a href="/dashboard">Dashboard</a>
 
-        <%# Admin and HR Links %>
-        <% if (user.role === 'Admin' || user.role === 'HR') { %>
+        <%# Admin, HR, and Park Manager Links for VIEWING Employees %
+        <% if (user.role === 'Admin' || user.role === 'HR' || user.role === 'Park Manager') { %>
             <a href="/users">Employees</a>
         <% } %>
 
