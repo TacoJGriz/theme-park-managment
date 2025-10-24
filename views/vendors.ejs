@@ -23,7 +23,7 @@
 
     <div class="container">
         <h1>Park Vendors</h1>
-        <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/vendors/new" class="add-button">Add New Vendor</a>
         <% } %>
 
@@ -46,11 +46,9 @@
                         <td><%= vendor.manager_name || 'Unassigned' %></td>
                         <td>
                             <%# 3. HIDE THIS ACTION LINK BASED ON ROLE AS WELL %>
-                            <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                                 <a href="/assign-manager/vendor/<%= vendor.vendor_id %>" class="action-link">Assign Manager</a>
                             <% } else { %>
-                                No actions available
-                            <% } %>
                         </td>
                     </tr>
                 <% }); %>

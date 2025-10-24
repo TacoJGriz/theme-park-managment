@@ -80,7 +80,12 @@
                             <% if (log.end_date) { %>
                                 Completed
                             <% } else { %>
-                                <a href="/maintenance/complete/<%= log.maintenance_id %>" class="action-link">Complete Work Order</a>
+                                <%# NEW: Only show Complete link to Maint, Park Mgr, Admin %>
+                                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Maintenance') { %>
+                                    <a href="/maintenance/complete/<%= log.maintenance_id %>" class="action-link">Complete Work Order</a>
+                                <% } else { %>
+                                    <span style="font-weight: bold; color: #dc3545;">Open</span>
+                                <% } %>
                             <% } %>
                         </td>
                     </tr>

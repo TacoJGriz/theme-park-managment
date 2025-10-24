@@ -159,7 +159,9 @@
                     <select id="employee_type" name="employee_type" required <%= isReadOnlyForHR %>>
                         <option value="Staff" <% if (employee.employee_type === 'Staff') { %>selected<% } %>>Staff</option>
                         <option value="Maintenance" <% if (employee.employee_type === 'Maintenance') { %>selected<% } %>>Maintenance</option>
-                        <option value="Manager" <% if (employee.employee_type === 'Manager') { %>selected<% } %>>Manager</option>
+                        <option value="Location Manager" <% if (employee.employee_type === 'Location Manager') { %>selected<% } %>>Location Manager</option>
+                        <option value="Vendor Manager" <% if (employee.employee_type === 'Vendor Manager') { %>selected<% } %>>Vendor Manager</option>
+                        <option value="Park Manager" <% if (employee.employee_type === 'Park Manager') { %>selected<% } %>>Park Manager</option>
                         <option value="HR" <% if (employee.employee_type === 'HR') { %>selected<% } %>>HR</option>
                         <option value="Admin" <% if (employee.employee_type === 'Admin') { %>selected<% } %>>Admin</option>
                     </select>

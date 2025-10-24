@@ -62,25 +62,46 @@
         <div class="card-container">
 
             <%# UPDATED: Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
-            <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
                 <div class="card">
                     <h3>Rides & Maintenance</h3>
-                    <a href="/rides">View All Rides</a>
+                    <a href="/rides">View Rides</a>
                     <%# Report Issue link accessible via Rides page for these roles %>
-                    <%# Link to specific ride history is better than a generic link %>
-                    <%# Example: <a href="/maintenance/ride/1">View Ride 1 History</a> %>
-                    <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Maintenance') { %>
-                         <%# <a href="/maintenance/ride">View Maintenance History (Select Ride)</a> %>
-                    <% } %>
                 </div>
             <% } %>
 
             <%# UPDATED: Card for Staff, Manager, Admin (NOT HR or Maintenance) %>
-            <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Staff') { %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
                 <div class="card">
                     <h3>Guest Services</h3>
                     <a href="/members">Manage Members</a>
-                    <a href="/visits/new">Log Park Visit</a>
+                    <a href="/visits/new">Log Park Entry</a>
+                </div>
+            <% } %>
+
+            <%# Card for Admin and Manager (No Change) %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                <div class="card">
+                    <h3>Park Administration</h3>
+                    <a href="/locations">Manage Locations</a>
+                    <a href="/vendors">Manage Vendors</a>
+                    <a href="/memberships/types">Manage Membership Types</a>
+                    <a href="/ticket-types">Manage Ticket Types</a>
+                </div>
+                <div class="card">
+                    <h3>Park Events</h3>
+                    <a href="/promotions">Manage Promotions</a>
+                    <a href="/weather">Manage Weather Events</a>
+                </div>
+            <% } %>
+
+             <%# NEW: Card for Retail (Admin, Park Manager, Vendor Manager) %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager') { %>
+                <div class="card">
+                    <h3>Retail & Inventory</h3>
+                    <a href="/items">Manage Master Item List</a>
+                    <a href="/inventory">View All Inventory</a>
+                    <a href="/inventory/manage">Set/Update Inventory</a>
                 </div>
             <% } %>
 

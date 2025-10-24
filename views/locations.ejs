@@ -22,7 +22,9 @@
     <%- include('partials/header') %>
     <div class="container">
         <h1>Park Locations</h1>
-        <a href="/locations/new" class="add-button">Add New Location</a>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+            <a href="/locations/new" class="add-button">Add New Location</a>
+        <% } %>
         <table>
             <thead>
                 <tr>
@@ -41,7 +43,11 @@
                         <td><%= location.summary %></td>
                         <td><%= location.manager_name || 'Unassigned' %></td>
                         <td>
-                            <a href="/assign-manager/location/<%= location.location_id %>" class="action-link">Assign Manager</a>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                                <a href="/assign-manager/location/<%= location.location_id %>" class="action-link">Assign Manager</a>
+                            <% } else { %>
+                                <span>No Access</span>
+                            <% } %>
                         </td>
                     </tr>
                 <% }); %>

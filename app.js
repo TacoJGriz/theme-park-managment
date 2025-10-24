@@ -35,12 +35,6 @@ const dbConfig = {
 const pool = mysql.createPool(dbConfig);
 
 // --- AUTHORIZATION MIDDLEWARE ---
-const isAuthenticated = (req, res, next) => {
-    if (req.session && req.session.user) {
-        return next();
-    }
-    res.redirect('/login');
-};
 
 const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Admin') { return next(); }
@@ -50,31 +44,31 @@ const isHR = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'HR') { return next(); }
     res.status(403).send('Forbidden: HR only');
 };
-const isManager = (req, res, next) => {
-    if (req.session.user && req.session.user.role === 'Manager') { return next(); }
-    res.status(403).send('Forbidden: Managers only');
+const isParkManager = (req, res, next) => {
+    if (req.session.user && req.session.user.role === 'Park Manager') { return next(); }
+    res.status(403).send('Forbidden: Park Managers only');
 };
 const isAdminOrHR = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'HR') { return next(); }
     res.status(403).send('Forbidden: Admin or HR access required');
 };
-const isAdminOrManager = (req, res, next) => {
+const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Manager') { return next(); }
-    res.status(403).send('Forbidden: Admin or Manager access required');
+    if (role === 'Admin' || role === 'Park Manager') { return next(); }
+    res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
 const isMaintenanceOrHigher = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Manager' || role === 'Maintenance') { return next(); }
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') { return next(); }
     res.status(403).send('Forbidden: Maintenance or higher access required');
 };
 
 // MODIFIED: Renamed for clarity - Excludes HR
-const canManageMembersAndVisits = (req, res, next) => {
+const canManageMembersVisits = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    // Includes Admin, Manager, Staff -- **EXCLUDES HR**
-    if (role === 'Admin' || role === 'Manager' || role === 'Staff') {
+    // Includes Admin, Park Manager, Staff -- **EXCLUDES HR, Maint, Location/Vendor Mgrs**
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Staff') {
         return next();
     }
     res.status(403).send('Forbidden: Staff access or higher (excluding HR) required');
@@ -83,12 +77,20 @@ const canManageMembersAndVisits = (req, res, next) => {
 // NEW Middleware: Who can view the rides list? Staff+ (incl Maintenance), but NOT HR
 const canViewRides = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    // Includes Admin, Manager, Maintenance, Staff (Staff need to report issues)
-    // **EXCLUDES HR**
-    if (role === 'Admin' || role === 'Manager' || role === 'Maintenance' || role === 'Staff') {
+    // Includes Admin, Park/Location Managers, Maintenance, Staff
+    // **EXCLUDES HR, Vendor Manager**
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance' || role === 'Staff') {
         return next();
     }
-    res.status(403).send('Forbidden: Access denied for your role.'); // More specific message
+    res.status(403).send('Forbidden: Access denied for your role.');
+};
+
+const canManageRetail = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Vendor Manager') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Admin, Park Manager, or Vendor Manager access required.');
 };
 
 // Middleware to pass user data to all views
@@ -126,14 +128,50 @@ app.post('/login', async (req, res) => {
                     console.error("Session regeneration error:", err);
                     return res.status(500).render('login', { error: 'Session error during login.' });
                 }
-                req.session.user = {
-                    id: user.employee_id,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    role: user.employee_type
-                };
+                let assignedVendorIds = [];
+                if (user.employee_type === 'Vendor Manager') {
+                    // This is an async operation, so we must wrap the session logic
+                    pool.query('SELECT vendor_id FROM vendors WHERE manager_id = ?', [user.employee_id])
+                        .then(([vendorRows]) => {
+                            assignedVendorIds = vendorRows.map(v => v.vendor_id);
+                            
+                            // Set session *after* async query completes
+                            req.session.user = {
+                                id: user.employee_id,
+                                firstName: user.first_name,
+                                lastName: user.last_name,
+                                role: user.employee_type,
+                                locationId: user.location_id, // For Location Manager
+                                vendorIds: assignedVendorIds  // For Vendor Manager
+                            };
+                            res.redirect('/dashboard');
+                        })
+                        .catch(vendorErr => {
+                            console.error("Error fetching vendor assignments:", vendorErr);
+                            // Log them in anyway, but with no vendors
+                            req.session.user = {
+                                id: user.employee_id,
+                                firstName: user.first_name,
+                                lastName: user.last_name,
+                                role: user.employee_type,
+                                locationId: user.location_id,
+                                vendorIds: []
+                            };
+                            res.redirect('/dashboard');
+                        });
+                } else {
+                    // Not a vendor manager, set session immediately
+                    req.session.user = {
+                        id: user.employee_id,
+                        firstName: user.first_name,
+                        lastName: user.last_name,
+                        role: user.employee_type,
+                        locationId: user.location_id, // For Location Manager
+                        vendorIds: [] // Empty for all other roles
+                    };
+                    res.redirect('/dashboard');
+                }
                 // Let express-session save automatically before redirecting
-                res.redirect('/dashboard');
             });
         } else {
             res.render('login', { error: 'Invalid email or password' });
@@ -522,7 +560,7 @@ app.post('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (r
 });
 
 // --- LOCATION & VENDOR MANAGEMENT --- (No changes needed, still AdminOrManager)
-app.get('/locations', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const query = `
             SELECT l.*, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
@@ -537,10 +575,10 @@ app.get('/locations', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching locations');
     }
 });
-app.get('/locations/new', isAuthenticated, isAdminOrManager, (req, res) => {
+app.get('/locations/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     res.render('add-location', { error: null });
 });
-app.post('/locations', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { location_name, summary } = req.body;
     let connection;
     try {
@@ -555,7 +593,7 @@ app.post('/locations', isAuthenticated, isAdminOrManager, async (req, res) => {
         if (connection) connection.release();
     }
 });
-app.get('/vendors', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const query = `
             SELECT v.*, l.location_name, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
@@ -571,17 +609,17 @@ app.get('/vendors', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching vendors');
     }
 });
-app.get('/vendors/new', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Manager', 'Admin') AND is_active = TRUE");
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
         res.render('add-vendor', { locations: locations, managers: managers, error: null });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error loading add vendor page');
     }
 });
-app.post('/vendors', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { vendor_name, location_id } = req.body;
     const manager_id = req.body.manager_id ? req.body.manager_id : null;
     let connection;
@@ -593,7 +631,7 @@ app.post('/vendors', isAuthenticated, isAdminOrManager, async (req, res) => {
     } catch (error) {
         console.error(error);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Manager', 'Admin') AND is_active = TRUE");
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
         res.render('add-vendor', {
             locations: locations,
             managers: managers,
@@ -603,7 +641,7 @@ app.post('/vendors', isAuthenticated, isAdminOrManager, async (req, res) => {
         if (connection) connection.release();
     }
 });
-app.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type, id } = req.params;
     try {
         let entity = null;
@@ -619,7 +657,16 @@ app.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (r
             return res.status(404).send('Location or Vendor not found');
         }
 
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Manager', 'Admin') AND is_active = TRUE");
+        let managerRoleToQuery = '';
+        if (type === 'location') {
+            managerRoleToQuery = 'Location Manager';
+        } else if (type === 'vendor') {
+            managerRoleToQuery = 'Vendor Manager';
+        } else {
+            return res.status(400).send('Invalid entity type');
+        }
+
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = ? AND is_active = TRUE", [managerRoleToQuery]);
 
         res.render('assign-manager', {
             entity: entity,
@@ -632,7 +679,7 @@ app.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (r
         res.status(500).send('Error loading assign manager page');
     }
 });
-app.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type, id } = req.params;
     const { manager_id } = req.body;
     const manager_start = (type === 'location' && req.body.manager_start) ? req.body.manager_start : null;
@@ -673,7 +720,15 @@ app.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (
                 const [vend] = await pool.query('SELECT vendor_id as id, vendor_name as name FROM vendors WHERE vendor_id = ?', [id]);
                 if (vend.length > 0) entity = vend[0];
             }
-            const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Manager', 'Admin') AND is_active = TRUE");
+
+            let managerRoleToQuery = '';
+            if (type === 'location') {
+                managerRoleToQuery = 'Location Manager';
+            } else if (type === 'vendor') {
+                managerRoleToQuery = 'Vendor Manager';
+            }
+            const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = ? AND is_active = TRUE", [managerRoleToQuery]);
+            
             res.render('assign-manager', {
                 entity: entity || { name: 'Unknown' },
                 managers: managers,
@@ -694,13 +749,22 @@ app.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrManager, async (
 // UPDATED: Apply canViewRides (Staff+, excluding HR) middleware
 app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
     try {
-        const query = `
+        const { role, locationId } = req.session.user;
+        let query = `
             SELECT r.*, l.location_name
             FROM rides r
             LEFT JOIN location l ON r.location_id = l.location_id
-            ORDER BY r.ride_name
         `;
-        const [rides] = await pool.query(query);
+        let params = [];
+
+        // --- NEW: Scope query for Location Manager ---
+        if (role === 'Location Manager') {
+            query += ' WHERE r.location_id = ?';
+            params.push(locationId);
+        }
+        
+        query += ' ORDER BY r.ride_name';
+        const [rides] = await pool.query(query, params);
         res.render('rides', { rides: rides });
     } catch (error) {
         console.error(error);
@@ -709,7 +773,7 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
 });
 
 // Add Ride remains AdminOrManager
-app.get('/rides/new', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/rides/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
         res.render('add-ride', { locations: locations, error: null });
@@ -718,7 +782,7 @@ app.get('/rides/new', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error loading add ride page');
     }
 });
-app.post('/rides', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/rides', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight } = req.body;
     let connection;
     try {
@@ -745,18 +809,34 @@ app.post('/rides', isAuthenticated, isAdminOrManager, async (req, res) => {
 });
 
 // Update Status remains AdminOrManager
-app.post('/rides/status/:id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/rides/status/:id', isAuthenticated, async (req, res) => {
     const rideId = req.params.id;
     const { ride_status } = req.body;
+    const { role, locationId } = req.session.user;
+
     if (!['OPEN', 'CLOSED', 'BROKEN'].includes(ride_status)) {
         return res.status(400).send('Invalid ride status provided.');
     }
     let connection;
     try {
         connection = await pool.getConnection();
+
+        // --- NEW: Permission Check for Location Manager ---
+        let hasPermission = false;
+        if (role === 'Admin' || role === 'Park Manager') {
+            hasPermission = true;
+        } else if (role === 'Location Manager') {
+            // Check if this ride is in their location
+            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [rideId]);
+            if (rideLoc.length > 0 && rideLoc[0].location_id === locationId) {
+                hasPermission = true;
+            }
+        }
+
+        if (!hasPermission) {
+            return res.status(403).send('Forbidden: You do not have permission to update this ride.');
+        }
         const sql = "UPDATE rides SET ride_status = ? WHERE ride_id = ?";
-        await connection.query(sql, [ride_status, rideId]);
-        res.redirect('/rides');
     } catch (error) {
         console.error(error);
         res.status(500).send('Error updating ride status');
@@ -766,14 +846,29 @@ app.post('/rides/status/:id', isAuthenticated, isAdminOrManager, async (req, res
 });
 
 // View History remains MaintenanceOrHigher
-app.get('/maintenance/ride/:ride_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+app.get('/maintenance/ride/:ride_id', isAuthenticated, (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance' || role === 'Location Manager') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Access denied.');
+}, async (req, res) => {
     const rideId = req.params.ride_id;
+    const { role, locationId } = req.session.user;
+    let ride;
+
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id FROM rides WHERE ride_id = ?', [rideId]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
-        const ride = rideResult[0];
+        ride = rideResult[0];
+        
+        if (role === 'Location Manager') {
+            if (ride.location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only view maintenance for rides in your location.');
+            }
+        }
 
         const query = `
             SELECT m.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name
@@ -794,10 +889,17 @@ app.get('/maintenance/ride/:ride_id', isAuthenticated, isMaintenanceOrHigher, as
 // Report Issue GET remains isAuthenticated (anyone logged in can see the form)
 app.get('/maintenance/new/:ride_id', isAuthenticated, async (req, res) => {
     const rideId = req.params.ride_id;
+    const { role, locationId } = req.session.user;
+
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id FROM rides WHERE ride_id = ?', [rideId]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
+        }
+        if (role === 'Location Manager') {
+            if (rideResult[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only report issues for rides in your location.');
+            }
         }
         const ride = rideResult[0];
 
@@ -820,6 +922,16 @@ app.post('/maintenance', isAuthenticated, async (req, res) => {
 
     let connection;
     try {
+        if (role === 'Location Manager') {
+            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [ride_id]);
+            if (rideLoc.length === 0) {
+                return res.status(404).send('Ride not found.');
+            }
+            if (rideLoc[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only report issues for rides in your location.');
+            }
+        }
+        
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
@@ -830,7 +942,7 @@ app.post('/maintenance', isAuthenticated, async (req, res) => {
         await connection.query(rideSql, [ride_id]);
 
         await connection.commit();
-        if (['Admin', 'Manager', 'Maintenance'].includes(req.session.user.role)) {
+        if (['Admin', 'Park Manager', 'Location Manager', 'Maintenance'].includes(req.session.user.role)) {
             res.redirect(`/maintenance/ride/${ride_id}`);
         } else {
             res.redirect('/rides');
@@ -941,7 +1053,7 @@ app.post('/maintenance/complete/:maintenance_id', isAuthenticated, isMaintenance
 
 // --- GUEST & VISITS MANAGEMENT ---
 // UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
-app.get('/members', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
+app.get('/members', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         // UPDATED QUERY: Join with membership_type to get the type_name
         const query = `
@@ -958,7 +1070,7 @@ app.get('/members', isAuthenticated, canManageMembersAndVisits, async (req, res)
         res.status(500).send('Error fetching members');
     }
 });
-app.get('/members/new', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
+app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // UPDATED: Fetch active membership types to pass to the view
     try {
         const [types] = await pool.query(
@@ -971,7 +1083,7 @@ app.get('/members/new', isAuthenticated, canManageMembersAndVisits, async (req, 
         res.render('add-member', { error: "Error fetching membership types.", types: [] });
     }
 });
-app.post('/members', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
+app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // UPDATED: Read 'type_id' from body instead of 'member_type'
     const { first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date } = req.body;
     let connection;
@@ -1003,7 +1115,7 @@ app.post('/members', isAuthenticated, canManageMembersAndVisits, async (req, res
 });
 
 // UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
-app.get('/visits/new', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
+app.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // Phase 3: Rebuilt to fetch dynamic data
     try {
         const [ticketTypes] = await pool.query(
@@ -1037,7 +1149,7 @@ app.get('/visits/new', isAuthenticated, canManageMembersAndVisits, async (req, r
         });
     }
 });
-app.post('/visits', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
+app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // Phase 3: Rebuilt to calculate price on server
     const { ticket_type_id, membership_id } = req.body;
     const visit_date = new Date();
@@ -1132,7 +1244,7 @@ app.post('/visits', isAuthenticated, canManageMembersAndVisits, async (req, res)
 // (Requires AdminOrManager access)
 
 // GET list of membership types
-app.get('/memberships/types', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
         // Note: You will need to create a 'membership-types.ejs' view
@@ -1151,13 +1263,13 @@ app.get('/memberships/types', isAuthenticated, isAdminOrManager, async (req, res
 });
 
 // GET form to add a new membership type
-app.get('/memberships/types/new', isAuthenticated, isAdminOrManager, (req, res) => {
+app.get('/memberships/types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     // Note: You will need to create an 'add-membership-type.ejs' view
     res.render('add-membership-type', { error: null });
 });
 
 // POST to create a new membership type
-app.post('/memberships/types', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_name, base_price, description } = req.body;
     let connection;
     try {
@@ -1175,7 +1287,7 @@ app.post('/memberships/types', isAuthenticated, isAdminOrManager, async (req, re
 });
 
 // GET form to edit a membership type
-app.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     try {
         const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
@@ -1191,7 +1303,7 @@ app.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, a
 });
 
 // POST to update a membership type
-app.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     const { type_name, base_price, description } = req.body;
     let connection;
@@ -1218,7 +1330,7 @@ app.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, 
 });
 
 // POST to toggle 'is_active' status (soft delete/reactivate)
-app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     let connection;
     try {
@@ -1254,7 +1366,7 @@ app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrManager
 // (Requires AdminOrManager access)
 
 // GET list of ticket types
-app.get('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         // Fetch all types, order by system-flag (member) first, then by name
         const [types] = await pool.query('SELECT * FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
@@ -1273,12 +1385,12 @@ app.get('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) => 
 });
 
 // GET form to add a new ticket type
-app.get('/ticket-types/new', isAuthenticated, isAdminOrManager, (req, res) => {
+app.get('/ticket-types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     res.render('add-ticket-type', { error: null });
 });
 
 // POST to create a new ticket type
-app.post('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     // Note: is_member_type defaults to FALSE in the DB, so we only insert standard tickets.
     const { type_name, base_price, description } = req.body;
     let connection;
@@ -1297,7 +1409,7 @@ app.post('/ticket-types', isAuthenticated, isAdminOrManager, async (req, res) =>
 });
 
 // GET form to edit a ticket type
-app.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     try {
         const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
@@ -1312,7 +1424,7 @@ app.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async 
 });
 
 // POST to update a ticket type
-app.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     const { type_name, base_price, description } = req.body;
     let connection;
@@ -1361,7 +1473,7 @@ app.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrManager, async
 });
 
 // POST to toggle 'is_active' status
-app.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     let connection;
     try {
@@ -1395,7 +1507,7 @@ app.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrManager, asy
 });
 
 // --- PARK OPERATIONS (Weather, Promos, Items, Inventory) --- (No changes needed, still AdminOrManager)
-app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [events] = await pool.query('SELECT * FROM weather_events ORDER BY event_date DESC');
         res.render('weather-events', { events: events });
@@ -1404,10 +1516,10 @@ app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching weather events');
     }
 });
-app.get('/weather/new', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/weather/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     res.render('add-weather-event', { error: null });
 });
-app.post('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { event_date, weather_type } = req.body;
     const end_time = req.body.end_time ? req.body.end_time : null;
     const park_closure = req.body.park_closure === '1';
@@ -1428,7 +1540,7 @@ app.post('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
         if (connection) connection.release();
     }
 });
-app.get('/promotions', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [promotions] = await pool.query('SELECT * FROM event_promotions ORDER BY start_date DESC');
         res.render('promotions', { promotions: promotions });
@@ -1437,10 +1549,10 @@ app.get('/promotions', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching promotions');
     }
 });
-app.get('/promotions/new', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     res.render('add-promotion', { error: null });
 });
-app.post('/promotions', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body;
     let connection;
     try {
@@ -1458,7 +1570,7 @@ app.post('/promotions', isAuthenticated, isAdminOrManager, async (req, res) => {
         if (connection) connection.release();
     }
 });
-app.get('/items', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/items', isAuthenticated, canManageRetail, async (req, res) => {
     try {
         const [items] = await pool.query('SELECT * FROM item ORDER BY item_name');
         res.render('items', { items: items });
@@ -1467,10 +1579,10 @@ app.get('/items', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching items');
     }
 });
-app.get('/items/new', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/items/new', isAuthenticated, canManageRetail, async (req, res) => {
     res.render('add-item', { error: null });
 });
-app.post('/items', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/items', isAuthenticated, canManageRetail, async (req, res) => {
     const { item_name, item_type, price, summary } = req.body;
     let connection;
     try {
@@ -1485,7 +1597,7 @@ app.post('/items', isAuthenticated, isAdminOrManager, async (req, res) => {
         if (connection) connection.release();
     }
 });
-app.get('/inventory', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/inventory', isAuthenticated, canManageRetail, async (req, res) => {
     try {
         const query = `
             SELECT i.count, v.vendor_name, it.item_name
@@ -1501,9 +1613,24 @@ app.get('/inventory', isAuthenticated, isAdminOrManager, async (req, res) => {
         res.status(500).send('Error fetching inventory');
     }
 });
-app.get('/inventory/manage', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.get('/inventory/manage', isAuthenticated, canManageRetail, async (req, res) => {
     try {
-        const [vendors] = await pool.query('SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name');
+        const { role, vendorIds } = req.session.user;
+
+        let vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name';
+        let vendorParams = [];
+
+        if (role === 'Vendor Manager') {
+            if (!vendorIds || vendorIds.length === 0) {
+                 // A vendor manager with no vendors assigned.
+                 const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
+                 return res.render('manage-inventory', { vendors: [], items: items, error: "You are not assigned to any vendors." });
+            }
+            vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE vendor_id IN (?) ORDER BY vendor_name';
+            vendorParams.push(vendorIds);
+        }
+
+        const [vendors] = await pool.query(vendorQuery, vendorParams);
         const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
         res.render('manage-inventory', { vendors: vendors, items: items, error: null });
     } catch (error) {
@@ -1511,8 +1638,17 @@ app.get('/inventory/manage', isAuthenticated, isAdminOrManager, async (req, res)
         res.status(500).send('Error loading inventory management page');
     }
 });
-app.post('/inventory/manage', isAuthenticated, isAdminOrManager, async (req, res) => {
+app.post('/inventory/manage', isAuthenticated, canManageRetail, async (req, res) => {
     const { vendor_id, item_id, count } = req.body;
+    const { role, vendorIds } = req.session.user;
+
+    if (role === 'Vendor Manager') {
+        // vendorIds is an array of numbers. vendor_id is a string from the form.
+        if (!vendorIds || !vendorIds.includes(parseInt(vendor_id, 10))) {
+            return res.status(403).send('Forbidden: You can only manage inventory for your assigned vendors.');
+        }
+    }
+
     if (count < 0 || count === '' || count === null) {
         const [vendors] = await pool.query('SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name');
         const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
@@ -1534,7 +1670,19 @@ app.post('/inventory/manage', isAuthenticated, isAdminOrManager, async (req, res
         res.redirect('/inventory');
     } catch (error) {
         console.error("Error updating inventory:", error);
-        const [vendors] = await pool.query('SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name');
+
+        let vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name';
+        let vendorParams = [];
+        if (role === 'Vendor Manager') {
+            if (!vendorIds || vendorIds.length === 0) {
+                 vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE 1 = 0'; // No vendors
+            } else {
+                vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE vendor_id IN (?) ORDER BY vendor_name';
+                vendorParams.push(vendorIds);
+            }
+        }
+
+        const [vendors] = await pool.query(vendorQuery, vendorParams);
         const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
         res.render('manage-inventory', {
             vendors: vendors,

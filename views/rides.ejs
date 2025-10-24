@@ -50,17 +50,25 @@
                             <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
                         </td>
                         <td>
-                            <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
-                                <select name="ride_status">
-                                    <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
-                                    <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
-                                    <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
-                                </select>
-                                <button type="submit">Set</button>
-                            </form>
+                            <%# NEW: Only show update form to managers %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
+                                    <select name="ride_status">
+                                        <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
+                                        <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
+                                        <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
+                                    </select>
+                                    <button type="submit">Set</button>
+                                </form>
+                            <% } else { %>
+                                <span>No Access</span>
+                            <% } %>
                         </td>
                         <td>
-                            <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View History</a>
+                            <%# NEW: Hide View History if user can't access it %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
+                                <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View History</a>
+                            <% } %>
                             <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>
                         </td>
                     </tr>

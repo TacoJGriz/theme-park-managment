@@ -14,14 +14,16 @@ INSERT INTO employee_demographics
 (first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code, birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active)
 VALUES
 ('Walt', 'Disney', 'Male', '(123) 456-7890', 'walt@park.com', '123 Main St', 'Orlando', 'FL', '32830', '1901-12-05', '2024-01-01', 'Admin', 4, NULL, 75.00, TRUE),
-('Minnie', 'Mouse', 'Female', '(123) 456-7891', 'minnie@park.com', '124 Main St', 'Orlando', 'FL', '32830', '1928-11-18', '2024-01-15', 'Manager', 3, 1, 35.50, TRUE),
+('Minnie', 'Mouse', 'Female', '(123) 456-7891', 'minnie@park.com', '124 Main St', 'Orlando', 'FL', '32830', '1928-11-18', '2024-01-15', 'Park Manager', 4, 1, 35.50, TRUE),
 ('Donald', 'Duck', 'Male', '(123) 456-7892', 'donald@park.com', '125 Main St', 'Orlando', 'FL', '32830', '1934-06-09', '2024-02-01', 'Staff', 1, 2, 18.00, TRUE),
 ('Daisy', 'Duck', 'Female', '(123) 456-7893', 'daisy@park.com', '126 Main St', 'Orlando', 'FL', '32830', '1940-01-07', '2024-02-15', 'Staff', 4, 1, 19.25, TRUE),
-('Goofy', 'Goof', 'Male', '(123) 456-7894', 'goofy@park.com', '127 Main St', 'Orlando', 'FL', '32830', '1932-05-25', '2024-03-01', 'Maintenance', 2, 1, 28.00, TRUE);
+('Goofy', 'Goof', 'Male', '(123) 456-7894', 'goofy@park.com', '127 Main St', 'Orlando', 'FL', '32830', '1932-05-25', '2024-03-01', 'Maintenance', 2, 1, 28.00, TRUE),
+('Luke', 'Skywalker', 'Male', '(555) 555-5551', 'luke@park.com', '1 Desert Way', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Location Manager', 3, 2, 29.00, TRUE),
+('Han', 'Solo', 'Male', '(555) 555-5552', 'han@park.com', '2 Smuggler Run', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Vendor Manager', 4, 2, 27.00, TRUE);
 
 -- Update locations with their new managers
-UPDATE location SET manager_id = 2, manager_start = '2024-01-15' WHERE location_id = 3;
-UPDATE location SET manager_id = 1, manager_start = '2024-01-01' WHERE location_id = 4;
+UPDATE location SET manager_id = 6, manager_start = '2024-03-05' WHERE location_id = 3; -- Luke manages Fantasyland
+UPDATE location SET manager_id = 2, manager_start = '2024-01-15' WHERE location_id = 4; -- Minnie (Park Mgr) manages Park Entrance
 
 -- 3. EMPLOYEE_AUTH
 INSERT INTO employee_auth (employee_id, password_hash) VALUES
@@ -29,7 +31,9 @@ INSERT INTO employee_auth (employee_id, password_hash) VALUES
 (2, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (3, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (4, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
-(5, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu');
+(5, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
+(6, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
+(7, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu');
 
 -- 4. RIDES
 -- Depends on location
@@ -99,9 +103,9 @@ INSERT INTO daily_stats (date_rec, visitor_count) VALUES
 -- 13. VENDORS
 -- Depends on location and employees
 INSERT INTO vendors (vendor_name, location_id, manager_id) VALUES
-('Cosmic Rays Cafe', 2, 2),
-('Pecos Bill Cantina', 1, 2),
-('The Emporium', 4, 1);
+('Cosmic Rays Cafe', 2, 7), -- Han (ID 7) manages
+('Pecos Bill Cantina', 1, 7), -- Han (ID 7) manages
+('The Emporium', 4, 1); -- Walt (Admin) manages
 
 -- 14. ITEM
 INSERT INTO item (item_type, item_name, price, summary) VALUES

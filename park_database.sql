@@ -16,7 +16,7 @@ CREATE TABLE employee_demographics (
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    employee_type ENUM('Staff', 'Maintenance', 'Manager', 'HR', 'Admin') NOT NULL,
+    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'HR', 'Admin') NOT NULL,
     location_id INT,
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
