@@ -36,6 +36,14 @@ const pool = mysql.createPool(dbConfig);
 
 // --- AUTHORIZATION MIDDLEWARE ---
 
+const isAuthenticated = (req, res, next) => {
+    if (req.session && req.session.user) {
+        return next(); // User is logged in, proceed to the route
+    }
+    // User is not logged in, redirect to login page
+    res.redirect('/login');
+};
+
 const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Admin') { return next(); }
     res.status(403).send('Forbidden: Admins only');
