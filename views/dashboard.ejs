@@ -105,22 +105,6 @@
                 </div>
             <% } %>
 
-            <%# Card for Admin and Manager (No Change) %>
-            <% if (user.role === 'Admin' || user.role === 'Manager') { %>
-                <div class="card">
-                    <h3>Park & Retail Operations</h3>
-                    <a href="/locations">Manage Locations</a>
-                    <a href="/vendors">Manage Vendors</a>
-                    <a href="/items">Manage Items</a>
-                    <a href="/inventory">Manage Inventory</a>
-                </div>
-                <div class="card">
-                    <h3>Park Events</h3>
-                    <a href="/promotions">Manage Promotions</a>
-                    <a href="/weather">Manage Weather Events</a>
-                </div>
-            <% } %>
-
              <%# Card for Admin and HR (No Change) %>
             <% if (user.role === 'Admin' || user.role === 'HR') { %>
                 <div class="card">

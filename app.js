@@ -66,6 +66,13 @@ const isAdminOrParkManager = (req, res, next) => {
     if (role === 'Admin' || role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
+
+const canViewUsers = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'HR' || role === 'Park Manager') { return next(); }
+   res.status(403).send('Forbidden: Access denied.');
+};
+
 const isMaintenanceOrHigher = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') { return next(); }
@@ -266,7 +273,7 @@ app.get(['/', '/dashboard'], isAuthenticated, (req, res) => {
 });
 
 // --- USER & EMPLOYEE MANAGEMENT --- (No changes needed, still AdminOrHR)
-app.get('/users', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
     try {
         const query = 'SELECT employee_id, first_name, last_name, email, employee_type FROM employee_demographics';
         const [users] = await pool.query(query);
