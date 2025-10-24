@@ -45,13 +45,24 @@ INSERT INTO maintenance (ride_id, report_date, start_date, end_date, summary, em
 (4, '2025-10-20', '2025-10-21', NULL, 'Lift chain snapped on hill 2.', 5, NULL),
 (3, '2025-10-15', '2025-10-16', '2025-10-18', 'Routine canal cleaning and audio check.', 5, 1500.00);
 
--- 6. MEMBERSHIP
-INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, member_type, start_date, end_date) VALUES
-('Peter', 'Pan', 'peter@neverland.com', '(555) 123-4567', '1953-02-05', 'Platinum', '2024-05-01', '2025-05-01'),
-('Alice', 'Wonder', 'alice@wonderland.com', '(555) 123-4568', '1951-07-26', 'Gold', '2024-06-15', '2025-06-15'),
-('John', 'Doe', 'john@gmail.com', '(555) 123-4569', '1990-01-01', 'Individual', '2024-08-01', '2025-08-01');
+-- 6. MEMBERSHIP_TYPE (NEW SECTION)
+-- Must be inserted before MEMBERSHIP
+INSERT INTO membership_type (type_name, base_price, description, is_active) VALUES
+('Platinum', 799.00, 'All access pass with perks', TRUE),
+('Gold', 599.00, 'Standard annual pass', TRUE),
+('Individual', 399.00, 'Single person annual pass', TRUE),
+('Family', 1299.00, 'Covers 2 adults and 2 children', TRUE),
+('Founders Club', 299.00, 'Legacy pass, no longer available for new signups', FALSE); -- For testing 'is_active'
 
--- 7. VISITS
+-- 7. MEMBERSHIP (UPDATED SECTION)
+-- Now depends on membership_type
+-- Note: 'Platinum' is type_id 1, 'Gold' is 2, 'Individual' is 3
+INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date) VALUES
+('Peter', 'Pan', 'peter@neverland.com', '(555) 123-4567', '1953-02-05', 1, '2024-05-01', '2025-05-01'),
+('Alice', 'Wonder', 'alice@wonderland.com', '(555) 123-4568', '1951-07-26', 2, '2024-06-15', '2025-06-15'),
+('John', 'Doe', 'john@gmail.com', '(555) 123-4569', '1990-01-01', 3, '2024-08-01', '2025-08-01');
+
+-- 8. VISITS
 -- Some visits are from members, some are single-day tickets (membership_id = NULL)
 INSERT INTO visits (membership_id, visit_date, exit_time, ticket_type, ticket_price, discount_amount) VALUES
 (1, '2025-10-20 09:05:12', '17:30:00', 'Member', 0.00, 0.00),
@@ -59,37 +70,37 @@ INSERT INTO visits (membership_id, visit_date, exit_time, ticket_type, ticket_pr
 (NULL, '2025-10-20 09:30:00', '18:00:00', 'Adult', 109.00, 0.00),
 (NULL, '2025-10-20 09:31:00', '18:00:00', 'Child', 99.00, 0.00);
 
--- 8. WEATHER_EVENTS
+-- 9. WEATHER_EVENTS
 INSERT INTO weather_events (event_date, end_time, weather_type, park_closure) VALUES
 ('2025-07-15 14:30:00', '2025-07-15 15:15:00', 'Thunderstorm', TRUE),
 ('2025-10-19 12:00:00', '2025-10-19 14:00:00', 'Rain', FALSE);
 
--- 9. EVENT_PROMOTIONS
+-- 10. EVENT_PROMOTIONS
 INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary) VALUES
 ('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.'),
 ('Winter Wonderland', 'Holiday', '2025-12-01', '2026-01-05', 10.00, 'Holiday-themed event.');
 
--- 10. DAILY_STATS
+-- 11. DAILY_STATS
 -- Depends on visits, but often populated by a trigger or end-of-day job.
 INSERT INTO daily_stats (date_rec, visitor_count) VALUES
 ('2025-10-19', 3200),
 ('2025-10-20', 4500);
 
--- 11. VENDORS
+-- 12. VENDORS
 -- Depends on location and employees
 INSERT INTO vendors (vendor_name, location_id, manager_id) VALUES
 ('Cosmic Rays Cafe', 2, 2),
 ('Pecos Bill Cantina', 1, 2),
 ('The Emporium', 4, 1);
 
--- 12. ITEM
+-- 13. ITEM
 INSERT INTO item (item_type, item_name, price, summary) VALUES
 ('Food', 'Cheeseburger', 12.99, '1/3 lb Angus Burger'),
 ('Food', 'Chicken Tenders', 11.99, '4 Tenders with Fries'),
 ('Apparel', 'Mickey T-Shirt', 29.99, '100% Cotton T-Shirt'),
 ('Souvenir', 'Mickey Ears', 24.99, 'Classic Mickey Mouse Ears');
 
--- 13. INVENTORY
+-- 14. INVENTORY
 -- Depends on item and vendors
 INSERT INTO inventory (item_id, vendor_id, count) VALUES
 (1, 1, 200),
@@ -98,14 +109,14 @@ INSERT INTO inventory (item_id, vendor_id, count) VALUES
 (3, 3, 500),
 (4, 3, 450);
 
--- 14. DAILY_RIDE
+-- 15. DAILY_RIDE
 -- Depends on rides and daily_stats
 INSERT INTO daily_ride (ride_id, dat_date, ride_count, run_count) VALUES
 (1, '2025-10-20', 1200, 100),
 (2, '2025-10-20', 900, 30),
 (1, '2025-10-19', 1100, 95);
 
--- 15. EMPLOYEE_RIDE_ASSIGNMENTS
+-- 16. EMPLOYEE_RIDE_ASSIGNMENTS
 -- Depends on employees and rides
 INSERT INTO employee_ride_assignments (employee_id, ride_id, assignment_date, role) VALUES
 (3, 2, '2025-10-20', 'Operator'),

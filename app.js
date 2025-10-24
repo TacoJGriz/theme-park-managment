@@ -1148,11 +1148,6 @@ app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrManager
     }
 });
 
-
-// --- PARK OPERATIONS (Weather, Promos, Items, Inventory) ---
-app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
-// ... (rest of the file)
-
 // --- PARK OPERATIONS (Weather, Promos, Items, Inventory) --- (No changes needed, still AdminOrManager)
 app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
     try {
