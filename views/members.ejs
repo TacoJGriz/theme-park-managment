@@ -31,11 +31,13 @@
                     <th>End Date</th>
                 </tr>
             </thead>
-            <tbody>
+           <tbody>
                 <% members.forEach(member => { %>
                     <tr>
+                        <td><%= member.first_name %> <%= member.last_name %></td>
+                        <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
-                        <td><%= member.type_name || 'N/A' %></td>
+                        <td><%= member.type_name || 'N/A' %></td>  <%# Correctly uses type_name %>
                         <td><%= member.end_date.toISOString().substring(0, 10) %></td>
                     </tr>
                 <% }); %>
