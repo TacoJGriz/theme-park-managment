@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Membership Type</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        textarea { resize: vertical; min-height: 80px; }
+        button { padding: 12px 20px; background-color: #17a2b8; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold; }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Edit: <%= type.type_name %></h1>
+    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    
+    <form action="/memberships/types/edit/<%= type.type_id %>" method="POST">
+        <div>
+            <label for="type_name">Type Name:</label>
+            <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required>
+        </div>
+        <div>
+            <label for="base_price">Base Price ($):</label>
+            <input type="number" id="base_price" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" step="0.01" min="0" required>
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description"><%= type.description || '' %></textarea>
+        </div>
+        <br>
+        <button type="submit">Update Type</button>
+        <a href="/memberships/types" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

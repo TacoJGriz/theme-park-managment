@@ -943,7 +943,15 @@ app.post('/maintenance/complete/:maintenance_id', isAuthenticated, isMaintenance
 // UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
 app.get('/members', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
     try {
-        const [members] = await pool.query('SELECT * FROM membership ORDER BY last_name, first_name');
+        // UPDATED QUERY: Join with membership_type to get the type_name
+        const query = `
+            SELECT m.*, mt.type_name 
+            FROM membership m
+            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            ORDER BY m.last_name, m.first_name
+        `;
+        const [members] = await pool.query(query);
+        // This now passes 'type_name' to your 'members.ejs' file
         res.render('members', { members: members });
     } catch (error) {
         console.error(error);
@@ -951,24 +959,44 @@ app.get('/members', isAuthenticated, canManageMembersAndVisits, async (req, res)
     }
 });
 app.get('/members/new', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
-    res.render('add-member', { error: null });
+    // UPDATED: Fetch active membership types to pass to the view
+    try {
+        const [types] = await pool.query(
+            'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
+        );
+        // This now passes 'types' to your 'add-member.ejs' file
+        res.render('add-member', { error: null, types: types });
+    } catch (error) {
+        console.error(error);
+        res.render('add-member', { error: "Error fetching membership types.", types: [] });
+    }
 });
 app.post('/members', isAuthenticated, canManageMembersAndVisits, async (req, res) => {
-    const { first_name, last_name, email, phone_number, date_of_birth, member_type, start_date, end_date } = req.body;
+    // UPDATED: Read 'type_id' from body instead of 'member_type'
+    const { first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
+        // UPDATED: SQL query to insert 'type_id'
         const sql = `
-            INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, member_type, start_date, end_date)
+            INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
+        // UPDATED: Parameter list to use 'type_id'
         await connection.query(sql, [
-            first_name, last_name, email, phone_number || null, date_of_birth, member_type, start_date, end_date
+            first_name, last_name, email, phone_number || null, date_of_birth, type_id, start_date, end_date
         ]);
         res.redirect('/members');
     } catch (error) {
         console.error(error);
-        res.render('add-member', { error: "Database error adding member. Email might be duplicate." });
+        // UPDATED: Re-fetch types for error page
+        const [types] = await pool.query(
+            'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
+        );
+        res.render('add-member', { 
+            error: "Database error adding member. Email might be duplicate.",
+            types: types
+        });
     } finally {
         if (connection) connection.release();
     }
@@ -997,6 +1025,133 @@ app.post('/visits', isAuthenticated, canManageMembersAndVisits, async (req, res)
         if (connection) connection.release();
     }
 });
+
+// --- MEMBERSHIP TYPE MANAGEMENT ---
+// (Requires AdminOrManager access)
+
+// GET list of membership types
+app.get('/memberships/types', isAuthenticated, isAdminOrManager, async (req, res) => {
+    try {
+        const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
+        // Note: You will need to create a 'membership-types.ejs' view
+        // 'req.session.success' and 'req.session.error' are used for flash messages
+        res.render('membership-types', { 
+            types: types, 
+            error: req.session.error, 
+            success: req.session.success 
+        });
+        req.session.success = null; // Clear message after displaying
+        req.session.error = null;
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error fetching membership types');
+    }
+});
+
+// GET form to add a new membership type
+app.get('/memberships/types/new', isAuthenticated, isAdminOrManager, (req, res) => {
+    // Note: You will need to create an 'add-membership-type.ejs' view
+    res.render('add-membership-type', { error: null });
+});
+
+// POST to create a new membership type
+app.post('/memberships/types', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_name, base_price, description } = req.body;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const sql = "INSERT INTO membership_type (type_name, base_price, description, is_active) VALUES (?, ?, ?, TRUE)";
+        await connection.query(sql, [type_name, base_price, description || null]);
+        req.session.success = "Membership type added successfully!";
+        res.redirect('/memberships/types');
+    } catch (error) {
+        console.error(error);
+        res.render('add-membership-type', { error: "Database error adding type. Name might be duplicate." });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// GET form to edit a membership type
+app.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    try {
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        if (typeResult.length === 0) {
+            return res.status(404).send('Membership type not found');
+        }
+        // Note: You will need to create an 'edit-membership-type.ejs' view
+        res.render('edit-membership-type', { type: typeResult[0], error: null });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading edit page');
+    }
+});
+
+// POST to update a membership type
+app.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    const { type_name, base_price, description } = req.body;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const sql = `
+            UPDATE membership_type 
+            SET type_name = ?, base_price = ?, description = ?
+            WHERE type_id = ?
+        `;
+        await connection.query(sql, [type_name, base_price, description || null, type_id]);
+        req.session.success = "Membership type updated successfully!";
+        res.redirect('/memberships/types');
+    } catch (error) {
+        console.error(error);
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        res.render('edit-membership-type', {
+            type: typeResult.length > 0 ? typeResult[0] : {},
+            error: "Database error updating type. Name might be duplicate."
+        });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// POST to toggle 'is_active' status (soft delete/reactivate)
+app.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrManager, async (req, res) => {
+    const { type_id } = req.params;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        
+        // Find the current status
+        const [current] = await pool.query('SELECT is_active FROM membership_type WHERE type_id = ?', [type_id]);
+        if (current.length === 0) {
+            return res.status(404).send('Membership type not found');
+        }
+        
+        const newStatus = !current[0].is_active;
+
+        // This logic handles your requirement:
+        // If deactivating (newStatus = false), existing members are unaffected.
+        // The 'GET /members/new' route will no longer show this as an option,
+        // preventing new signups/renewals for this type.
+        
+        await connection.query('UPDATE membership_type SET is_active = ? WHERE type_id = ?', [newStatus, type_id]);
+        req.session.success = `Membership type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
+        res.redirect('/memberships/types');
+        
+    } catch (error) {
+        console.error("Error toggling membership status:", error);
+        req.session.error = "Database error toggling status.";
+        res.redirect('/memberships/types');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+
+// --- PARK OPERATIONS (Weather, Promos, Items, Inventory) ---
+app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {
+// ... (rest of the file)
 
 // --- PARK OPERATIONS (Weather, Promos, Items, Inventory) --- (No changes needed, still AdminOrManager)
 app.get('/weather', isAuthenticated, isAdminOrManager, async (req, res) => {

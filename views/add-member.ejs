@@ -54,14 +54,18 @@
                 <input type="date" id="date_of_birth" name="date_of_birth" required>
             </div>
             <div>
-                <label for="member_type">Membership Type:</label>
-                <select id="member_type" name="member_type" required>
-                    <option value="Individual">Individual</option>
-                    <option value="Family">Family</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Platinum">Platinum</option>
+                <label for="type_id">Membership Type:</label>
+                <select id="type_id" name="type_id" required>
+                    <% if (types.length === 0) { %>
+                        <option value="" disabled>-- No active types available --</option>
+                    <% } else { %>
+                        <option value="" disabled selected>-- Select a Type --</option>
+                        <% types.forEach(type => { %>
+                            <option value="<%= type.type_id %>"><%= type.type_name %></option>
+                        <% }); %>
+                    <% } %>
                 </select>
-            </div>
+                </div>
             <div>
                 <label for="start_date">Start Date:</label>
                 <input type="date" id="start_date" name="start_date" required>

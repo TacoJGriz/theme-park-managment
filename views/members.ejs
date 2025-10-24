@@ -34,10 +34,8 @@
             <tbody>
                 <% members.forEach(member => { %>
                     <tr>
-                        <td><%= member.first_name %> <%= member.last_name %></td>
-                        <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
-                        <td><%= member.member_type %></td>
+                        <td><%= member.type_name || 'N/A' %></td>
                         <td><%= member.end_date.toISOString().substring(0, 10) %></td>
                     </tr>
                 <% }); %>
