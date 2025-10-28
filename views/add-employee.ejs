@@ -127,7 +127,7 @@
                 <option value="">-- None --</option> <%# This allows for a NULL value %>
                 <% supervisors.forEach(supervisor => { %>
                     <option value="<%= supervisor.employee_id %>">
-                        <%= supervisor.first_name %> <%= supervisor.last_name %>
+                        <%= supervisor.first_name %> <%= supervisor.last_name %> (<%= supervisor.employee_type %>)
                     </option>
                 <% }); %>
             </select>

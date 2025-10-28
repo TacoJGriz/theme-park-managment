@@ -182,7 +182,7 @@
                         <option value="">-- None --</option>
                         <% supervisors.forEach(supervisor => { %>
                             <option value="<%= supervisor.employee_id %>" <% if (employee.supervisor_id === supervisor.employee_id) { %>selected<% } %>>
-                                <%= supervisor.first_name %> <%= supervisor.last_name %>
+                                <%= supervisor.first_name %> <%= supervisor.last_name %> (<%= supervisor.employee_type %>)
                             </option>
                         <% }); %>
                     </select>

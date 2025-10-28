@@ -51,7 +51,7 @@
             <select id="employee_id" name="employee_id">
                 <option value="">-- Assign Later --</option>
                 <% employees.forEach(employee => { %>
-                    <option value="<%= employee.employee_id %>"><%= employee.first_name %> <%= employee.last_name %></option>
+                    <option value="<%= employee.employee_id %>"><%= employee.first_name %> <%= employee.last_name %> (<%= employee.employee_type %>)</option>
                 <% }); %>
             </select>
         </div>

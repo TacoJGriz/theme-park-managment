@@ -69,8 +69,8 @@ const isAdminOrParkManager = (req, res, next) => {
 
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'HR' || role === 'Park Manager') { return next(); }
-   res.status(403).send('Forbidden: Access denied.');
+    if (role === 'Admin' || role === 'HR' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
+    res.status(403).send('Forbidden: Access denied.');
 };
 
 const isMaintenanceOrHigher = (req, res, next) => {
@@ -102,7 +102,7 @@ const canViewRides = (req, res, next) => {
 
 const canManageRetail = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Park Manager' || role === 'Vendor Manager') {
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Vendor Manager' || role === 'Location Manager') {
         return next();
     }
     res.status(403).send('Forbidden: Admin, Park Manager, or Vendor Manager access required.');
@@ -275,8 +275,19 @@ app.get(['/', '/dashboard'], isAuthenticated, (req, res) => {
 // --- USER & EMPLOYEE MANAGEMENT --- (No changes needed, still AdminOrHR)
 app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
     try {
-        const query = 'SELECT employee_id, first_name, last_name, email, employee_type FROM employee_demographics';
-        const [users] = await pool.query(query);
+        const { role, locationId } = req.session.user; // Get user's role and location
+
+        let query = 'SELECT employee_id, first_name, last_name, email, employee_type, location_id FROM employee_demographics';
+        let params = [];
+
+        if (role === 'Location Manager') {
+            query += ' WHERE location_id = ?';
+            params.push(locationId);
+        }
+
+        query += ' ORDER BY last_name, first_name';
+        const [users] = await pool.query(query, params);
+
         res.render('users', { users: users });
     } catch (error) {
         console.error(error);
@@ -286,7 +297,7 @@ app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
 app.get('/employees/new', isAuthenticated, isAdminOrHR, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE is_active = TRUE');
+        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE');
         res.render('add-employee', {
             locations: locations,
             supervisors: supervisors,
@@ -608,16 +619,25 @@ app.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) =
         if (connection) connection.release();
     }
 });
-app.get('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+app.get('/vendors', isAuthenticated, canManageRetail, async (req, res) => {
     try {
-        const query = `
+        const { role, locationId } = req.session.user;
+
+        let query = `
             SELECT v.*, l.location_name, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
             FROM vendors v
             LEFT JOIN location l ON v.location_id = l.location_id
             LEFT JOIN employee_demographics e ON v.manager_id = e.employee_id
-            ORDER BY v.vendor_name
         `;
-        const [vendors] = await pool.query(query);
+        let params = [];
+
+        if (role === 'Location Manager') {
+            query += ' WHERE v.location_id = ?';
+            params.push(locationId);
+        }
+
+        query += ' ORDER BY v.vendor_name';
+        const [vendors] = await pool.query(query, params);
         res.render('vendors', { vendors: vendors });
     } catch (error) {
         console.error(error);
@@ -627,7 +647,7 @@ app.get('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
 app.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
         res.render('add-vendor', { locations: locations, managers: managers, error: null });
     } catch (error) {
         console.error(error);
@@ -646,7 +666,7 @@ app.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => 
     } catch (error) {
         console.error(error);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN ('Park Manager', 'Admin') AND is_active = TRUE");
         res.render('add-vendor', {
             locations: locations,
             managers: managers,
@@ -672,16 +692,20 @@ app.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, asyn
             return res.status(404).send('Location or Vendor not found');
         }
 
-        let managerRoleToQuery = '';
+        let managerRolesToQuery = []; // Changed to plural
+        let redirectUrl = '/dashboard';
+
         if (type === 'location') {
-            managerRoleToQuery = 'Location Manager';
+            managerRolesToQuery = ['Location Manager', 'Park Manager', 'Admin'];
+            redirectUrl = '/locations';
         } else if (type === 'vendor') {
-            managerRoleToQuery = 'Vendor Manager';
+            managerRolesToQuery = ['Vendor Manager', 'Park Manager', 'Admin']; // Also good to add flexibility here
+            redirectUrl = '/vendors';
         } else {
             return res.status(400).send('Invalid entity type');
         }
-
-        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = ? AND is_active = TRUE", [managerRoleToQuery]);
+        
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN (?) AND is_active = TRUE", [managerRolesToQuery]);
 
         res.render('assign-manager', {
             entity: entity,
@@ -919,7 +943,7 @@ app.get('/maintenance/new/:ride_id', isAuthenticated, async (req, res) => {
         const ride = rideResult[0];
 
         const [employees] = await pool.query(`
-            SELECT employee_id, first_name, last_name
+            SELECT employee_id, first_name, last_name, employee_type
             FROM employee_demographics
             WHERE employee_type IN ('Maintenance', 'Manager', 'Admin') AND is_active = TRUE
         `);
@@ -970,7 +994,7 @@ app.post('/maintenance', isAuthenticated, async (req, res) => {
             const [rideResult] = await pool.query('SELECT ride_id, ride_name FROM rides WHERE ride_id = ?', [ride_id]);
             const ride = rideResult.length > 0 ? rideResult[0] : { ride_name: 'Unknown' };
             const [employees] = await pool.query(`
-                SELECT employee_id, first_name, last_name
+                SELECT employee_id, first_name, last_name, employee_type
                 FROM employee_demographics
                 WHERE employee_type IN ('Maintenance', 'Manager', 'Admin') AND is_active = TRUE
             `);
@@ -1098,7 +1122,7 @@ app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res
         res.render('add-member', { error: "Error fetching membership types.", types: [] });
     }
 });
-app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
+app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // UPDATED: Read 'type_id' from body instead of 'member_type'
     const { first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date } = req.body;
     let connection;
@@ -1120,7 +1144,7 @@ app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res
         const [types] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
-        res.render('add-member', { 
+        res.render('add-member', {
             error: "Database error adding member. Email might be duplicate.",
             types: types
         });
@@ -1614,14 +1638,23 @@ app.post('/items', isAuthenticated, canManageRetail, async (req, res) => {
 });
 app.get('/inventory', isAuthenticated, canManageRetail, async (req, res) => {
     try {
-        const query = `
+        const { role, locationId } = req.session.user;
+
+        let query = `
             SELECT i.count, v.vendor_name, it.item_name
             FROM inventory i
             JOIN vendors v ON i.vendor_id = v.vendor_id
             JOIN item it ON i.item_id = it.item_id
-            ORDER BY v.vendor_name, it.item_name
         `;
-        const [inventory] = await pool.query(query);
+        let params = [];
+
+        if (role === 'Location Manager') {
+            query += ' WHERE v.location_id = ?';
+            params.push(locationId);
+        }
+
+        query += ' ORDER BY v.vendor_name, it.item_name';
+        const [inventory] = await pool.query(query, params);
         res.render('inventory', { inventory: inventory });
     } catch (error) {
         console.error(error);
@@ -1630,19 +1663,22 @@ app.get('/inventory', isAuthenticated, canManageRetail, async (req, res) => {
 });
 app.get('/inventory/manage', isAuthenticated, canManageRetail, async (req, res) => {
     try {
-        const { role, vendorIds } = req.session.user;
+        const { role, vendorIds, locationId } = req.session.user; // <-- Add locationId
 
         let vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name';
         let vendorParams = [];
 
         if (role === 'Vendor Manager') {
             if (!vendorIds || vendorIds.length === 0) {
-                 // A vendor manager with no vendors assigned.
-                 const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
-                 return res.render('manage-inventory', { vendors: [], items: items, error: "You are not assigned to any vendors." });
+                // A vendor manager with no vendors assigned.
+                const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
+                return res.render('manage-inventory', { vendors: [], items: items, error: "You are not assigned to any vendors." });
             }
             vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE vendor_id IN (?) ORDER BY vendor_name';
             vendorParams.push(vendorIds);
+        } else if (role === 'Location Manager') {
+            vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE location_id = ? ORDER BY vendor_name';
+            vendorParams.push(locationId);
         }
 
         const [vendors] = await pool.query(vendorQuery, vendorParams);
@@ -1655,26 +1691,27 @@ app.get('/inventory/manage', isAuthenticated, canManageRetail, async (req, res) 
 });
 app.post('/inventory/manage', isAuthenticated, canManageRetail, async (req, res) => {
     const { vendor_id, item_id, count } = req.body;
-    const { role, vendorIds } = req.session.user;
-
-    if (role === 'Vendor Manager') {
-        // vendorIds is an array of numbers. vendor_id is a string from the form.
-        if (!vendorIds || !vendorIds.includes(parseInt(vendor_id, 10))) {
-            return res.status(403).send('Forbidden: You can only manage inventory for your assigned vendors.');
-        }
-    }
-
-    if (count < 0 || count === '' || count === null) {
-        const [vendors] = await pool.query('SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name');
-        const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
-        return res.render('manage-inventory', {
-            vendors: vendors, items: items,
-            error: "Inventory count must be zero or greater."
-        });
-    }
+    const { role, vendorIds, locationId } = req.session.user;
 
     let connection;
+
     try {
+        if (role === 'Vendor Manager') {
+            if (!vendorIds || !vendorIds.includes(parseInt(vendor_id, 10))) {
+                return res.status(403).send('Forbidden: You can only manage inventory for your assigned vendors.');
+            }
+        } else if (role === 'Location Manager') {
+            // Check if the vendor being submitted belongs to this manager's location
+            const [vLoc] = await pool.query('SELECT location_id FROM vendors WHERE vendor_id = ?', [vendor_id]);
+            if (vLoc.length === 0 || vLoc[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only manage inventory for vendors in your assigned location.');
+            }
+        }
+
+        if (count < 0 || count === '' || count === null) {
+            throw new Error("Inventory count must be zero or greater.");
+        }
+
         connection = await pool.getConnection();
         const sql = `
             INSERT INTO inventory (vendor_id, item_id, count)
@@ -1683,26 +1720,33 @@ app.post('/inventory/manage', isAuthenticated, canManageRetail, async (req, res)
         `;
         await connection.query(sql, [vendor_id, item_id, count, count]);
         res.redirect('/inventory');
+
     } catch (error) {
         console.error("Error updating inventory:", error);
 
         let vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors ORDER BY vendor_name';
         let vendorParams = [];
+
         if (role === 'Vendor Manager') {
             if (!vendorIds || vendorIds.length === 0) {
-                 vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE 1 = 0'; // No vendors
+                vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE 1 = 0'; // No vendors
             } else {
                 vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE vendor_id IN (?) ORDER BY vendor_name';
                 vendorParams.push(vendorIds);
             }
+        } else if (role === 'Location Manager') {
+            vendorQuery = 'SELECT vendor_id, vendor_name FROM vendors WHERE location_id = ? ORDER BY vendor_name';
+            vendorParams.push(locationId);
         }
 
+        // Re-fetch the correct lists for the dropdowns
         const [vendors] = await pool.query(vendorQuery, vendorParams);
         const [items] = await pool.query('SELECT item_id, item_name FROM item ORDER BY item_name');
+
         res.render('manage-inventory', {
             vendors: vendors,
             items: items,
-            error: "Database error updating inventory."
+            error: (error.message.startsWith("Inventory count")) ? error.message : "Database error updating inventory."
         });
     } finally {
         if (connection) connection.release();

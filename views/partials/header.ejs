@@ -39,26 +39,32 @@
     <div class="nav-links">
         <a href="/dashboard">Dashboard</a>
 
-        <%# Admin, HR, and Park Manager Links for VIEWING Employees %>
-        <% if (user.role === 'Admin' || user.role === 'HR' || user.role === 'Park Manager') { %>
-            <a href="/users">Employees</a>
-        <% } %>
+		<%# Admin, HR, Park Manager, and Location Manager Links for VIEWING Employees %>
+		<% if (user.role === 'Admin' || user.role === 'HR' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+		    <a href="/users">Employees</a>
+		<% } %>
 
-        <%# Admin and Park Manager Links (Park Admin/Events) %>
-        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-            <a href="/locations">Locations</a>
-            <a href="/vendors">Vendors</a>
-            <a href="/memberships/types">Membership Types</a>
+		<%# Admin and Park Manager Links (Park Admin/Events) %>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+		    <a href="/locations">Locations</a>
+		    <a href="/vendors">Vendors</a>
+		<%# Show Vendors link separately for Location Manager %>
+		<% } else if (user.role === 'Location Manager') { %>
+		    <a href="/vendors">Vendors</a>
+		<% } %>
+
+		<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+		    <a href="/memberships/types">Membership Types</a>
             <a href="/ticket-types">Ticket Types</a>
             <a href="/promotions">Promotions</a>
             <a href="/weather">Weather</a>
         <% } %>
 
-        <%# NEW: Admin, Park Manager, and Vendor Manager Links (Retail) %>
-        <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager') { %>
-            <a href="/items">Items</a>
-            <a href="/inventory">Inventory</a>
-        <% } %>
+		<%# Admin, Park Manager, Vendor Manager, and Location Manager Links (Retail) %>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager' || user.role === 'Location Manager') { %>
+		<a href="/items">Items</a>
+		<a href="/inventory">Inventory</a>
+		<% } %>
 
         <%# Link for viewing Rides (Includes Location Manager) %>
         <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>

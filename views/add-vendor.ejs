@@ -59,7 +59,7 @@
             <select id="manager_id" name="manager_id">
                 <option value="">-- Unassigned --</option>
                 <% managers.forEach(manager => { %>
-                    <option value="<%= manager.employee_id %>"><%= manager.first_name %> <%= manager.last_name %></option>
+                    <option value="<%= manager.employee_id %>"><%= manager.first_name %> <%= manager.last_name %> (<%= manager.employee_type %>)</option>
                 <% }); %>
             </select>
         </div>
