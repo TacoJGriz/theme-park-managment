@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <title>Dashboard</title>
     <style>
+        .assignment-info {
+            background-color: #cce5ff; /* A light blue */
+            color: #004085;
+            border: 1px solid #b8daff;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+        }
+        .assignment-info strong {
+            display: block;
+            margin-bottom: 0.5em;
+        }
+        .assignment-info ul {
+            margin-top: 0.5em;
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         .dashboard-container { padding: 2em; }
         h1 { color: #444; }
@@ -57,9 +74,19 @@
                 Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
                 You are logged in as an <strong><%= user.role %></strong>.
             </p>
-        <% } %>
 
-        <div class="card-container">
+            <% if (user.role === 'Vendor Manager' && user.vendorNames && user.vendorNames.length > 0) { %>
+                <div class="assignment-info">
+                    <strong>You are assigned to the following vendors:</strong>
+                    <ul>
+                        <% user.vendorNames.forEach(name => { %>
+                            <li><%= name %></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } %>
+
+            <div class="card-container">
 
             <%# UPDATED: Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
@@ -95,8 +122,7 @@
                 </div>
             <% } %>
 
-             <%# NEW: Card for Retail (Admin, Park Manager, Vendor Manager) %>
-            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager') { %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager' || user.role === 'Location Manager') { %>
                 <div class="card">
                     <h3>Retail & Inventory</h3>
                     <a href="/items">Manage Master Item List</a>
@@ -106,7 +132,7 @@
             <% } %>
 
              <%# Card for Admin and HR (No Change) %>
-            <% if (user.role === 'Admin' || user.role === 'HR') { %>
+            <% if (user.role === 'Admin' || user.role === 'HR' || user.role === 'Location Manager') { %>
                 <div class="card">
                     <h3>Human Resources</h3>
                     <a href="/users">Manage Employees</a>

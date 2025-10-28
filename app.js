@@ -146,18 +146,20 @@ app.post('/login', async (req, res) => {
                 let assignedVendorIds = [];
                 if (user.employee_type === 'Vendor Manager') {
                     // This is an async operation, so we must wrap the session logic
-                    pool.query('SELECT vendor_id FROM vendors WHERE manager_id = ?', [user.employee_id])
+                    pool.query('SELECT vendor_id, vendor_name FROM vendors WHERE manager_id = ? ORDER BY vendor_name', [user.employee_id]) // <-- MODIFIED QUERY
                         .then(([vendorRows]) => {
-                            assignedVendorIds = vendorRows.map(v => v.vendor_id);
-                            
+                            const assignedVendorIds = vendorRows.map(v => v.vendor_id);
+                            const assignedVendorNames = vendorRows.map(v => v.vendor_name); // <-- NEW
+
                             // Set session *after* async query completes
                             req.session.user = {
                                 id: user.employee_id,
                                 firstName: user.first_name,
                                 lastName: user.last_name,
                                 role: user.employee_type,
-                                locationId: user.location_id, // For Location Manager
-                                vendorIds: assignedVendorIds  // For Vendor Manager
+                                locationId: user.location_id,
+                                vendorIds: assignedVendorIds,  // <-- Keep this for permissions
+                                vendorNames: assignedVendorNames // <-- NEW: For display
                             };
                             res.redirect('/dashboard');
                         })
@@ -170,7 +172,7 @@ app.post('/login', async (req, res) => {
                                 lastName: user.last_name,
                                 role: user.employee_type,
                                 locationId: user.location_id,
-                                vendorIds: []
+                                vendorIds: [], vendorNames: []
                             };
                             res.redirect('/dashboard');
                         });
@@ -182,7 +184,7 @@ app.post('/login', async (req, res) => {
                         lastName: user.last_name,
                         role: user.employee_type,
                         locationId: user.location_id, // For Location Manager
-                        vendorIds: [] // Empty for all other roles
+                        vendorIds: [], vendorNames: []
                     };
                     res.redirect('/dashboard');
                 }
