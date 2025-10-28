@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pending Approvals</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-top: 2em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #6c757d; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .approve-button { background-color: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .reject-button { background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px; }
+        .no-pending { text-align: center; font-style: italic; color: #666; margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Pending Approvals</h1>
+
+        <h2>Hourly Rate Changes</h2>
+        <% if (rateChanges.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Current Rate</th>
+                        <th>Requested Rate</th>
+                        <th>Requested By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% rateChanges.forEach(req => { %>
+                        <tr>
+                            <td><%= req.first_name %> <%= req.last_name %></td>
+                            <td>$<%= parseFloat(req.hourly_rate).toFixed(2) %></td>
+                            <td>$<%= parseFloat(req.pending_hourly_rate).toFixed(2) %></td>
+                            <td><%= req.requester_first_name %> <%= req.requester_last_name %></td>
+                            <td>
+                                <form action="/approve/rate/<%= req.employee_id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="approve-button">Approve</button>
+                                </form>
+                                <form action="/reject/rate/<%= req.employee_id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="reject-button">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p class="no-pending">No pending hourly rate changes.</p>
+        <% } %>
+
+        <h2>Maintenance Reassignments</h2>
+        <% if (reassignments.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ride</th>
+                        <th>Currently Assigned</th>
+                        <th>Requested Assignee</th>
+                        <th>Requested By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% reassignments.forEach(req => { %>
+                        <tr>
+                            <td><%= req.ride_name %></td>
+                            <td><%= req.current_employee_name || 'Unassigned' %></td>
+                            <td><%= req.pending_employee_name %></td>
+                            <td><%= req.requester_name %></td>
+                            <td>
+                                <form action="/approve/reassignment/<%= req.maintenance_id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="approve-button">Approve</button>
+                                </form>
+                                <form action="/reject/reassignment/<%= req.maintenance_id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="reject-button">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p class="no-pending">No pending maintenance reassignments.</p>
+        <% } %>
+
+    </div>
+</body>
+</html>

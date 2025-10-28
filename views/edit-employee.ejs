@@ -12,51 +12,19 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
         div { margin-bottom: 10px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"], input[type="tel"],
-        input[type="date"], input[type="password"], input[type="number"], select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="password"], input[type="number"], select {
+            width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;
         }
-        /* Make disabled fields visually clear */
-        input:disabled, select:disabled {
-            background-color: #e9ecef;
-            cursor: not-allowed;
-            color: #6c757d;
-        }
+        input:disabled, select:disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
         .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
-        
-        /* --- NEW CSS CLASS --- */
-        .info-note {
-            color: #004085;
-            background-color: #cce5ff;
-            border: 1px solid #b8daff;
-            padding: 1em;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
-
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
-                 cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #0056b3;
- }
-        .full-width { grid-column: 1 / -1;
- }
-        .cancel-link {
-            display: inline-block;
-            margin-left: 15px;
-            text-decoration: none;
-            color: #6c757d;
-            font-weight: bold;
-        }
-        .cancel-link:hover {
-            text-decoration: underline;
-        }
+        .info-note { color: #004085; background-color: #cce5ff; border: 1px solid #b8daff; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        button { padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        button:hover { background-color: #0056b3; }
+        .full-width { grid-column: 1 / -1; }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+        .cancel-link:hover { text-decoration: underline; }
     </style>
 </head>
-<body>
 <body>
     <%- include('partials/header') %>
     <h1>Edit Employee: <%= employee.first_name %> <%= employee.last_name %></h1>
@@ -65,18 +33,19 @@
         <p class="error"><%= error %></p>
     <% } %>
 
-    <%# --- NEW EJS LOGIC --- %>
-    <%# Create a variable to check if fields should be disabled %>
     <% const isReadOnlyForHR = (user.role === 'HR') ? 'disabled' : '' %>
 
-    <%# Show a helpful note to the HR user %>
     <% if (user.role === 'HR') { %>
         <div class="info-note">
-            <strong>Note:</strong> As an HR user, you can only edit personal and address information.
-            Sensitive fields (Job, Pay, Status) are read-only. Please contact an Admin to change them.
+            <strong>Note:</strong> As an HR user, you can edit personal and address information. Pay rate changes require Manager or Admin approval. Other sensitive fields are read-only.
         </div>
     <% } %>
 
+    <% if (employee.pending_hourly_rate) { %>
+        <div class="info-note" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">
+            <strong>Pending Change:</strong> A request to change the hourly rate to <strong>$<%= parseFloat(employee.pending_hourly_rate).toFixed(2) %></strong> is awaiting approval.
+        </div>
+    <% } %>
 
     <form action="/employees/edit/<%= employee.employee_id %>" method="POST">
         
@@ -134,7 +103,7 @@
 
         <div class="form-section">
             <h3>Job Details</h3>
-             <div class="form-grid">
+            <div class="form-grid">
                 <div>
                     <label for="hire_date">Hire Date:</label>
                     <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required <%= isReadOnlyForHR %>>
@@ -145,7 +114,7 @@
                 </div>
                 <div>
                     <label for="hourly_rate">Hourly Rate:</label>
-                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isReadOnlyForHR %>>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= (user.role === 'HR') ? '' : isReadOnlyForHR %>>
                 </div>
                  <div>
                     <label for="is_active">Status:</label>

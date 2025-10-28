@@ -2,6 +2,17 @@ DROP DATABASE IF EXISTS park_database;
 CREATE DATABASE park_database;
 USE park_database;
 
+CREATE TABLE location (
+    location_id INT NOT NULL AUTO_INCREMENT,
+    location_name VARCHAR(50) NOT NULL UNIQUE,
+    summary VARCHAR(250),
+    manager_id INT,
+    manager_start DATE,
+    -- keys
+    PRIMARY KEY (location_id)
+    -- Deferring manager FK until employee table exists
+);
+
 CREATE TABLE employee_demographics (
     employee_id INT NOT NULL AUTO_INCREMENT,
     first_name VARCHAR(50) NOT NULL,
@@ -21,41 +32,33 @@ CREATE TABLE employee_demographics (
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
+    -- NEW COLUMNS FOR APPROVAL WORKFLOW
+    pending_hourly_rate DECIMAL(10, 2) DEFAULT NULL,
+    rate_change_requested_by INT DEFAULT NULL,
     -- Keys
     PRIMARY KEY (employee_id),
-    FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
+    FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (rate_change_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (location_id) REFERENCES location(location_id) ON DELETE SET NULL,
     -- Constraints
-    CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date), -- force termination date to be not null for active employees, OR if terminated, the termination date must be after hire date
-    CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)), -- force employeees to be at least 16 years old (no child labor allowed)
-    CONSTRAINT chk_rate_positive CHECK (hourly_rate >= 0) -- force pay to not be negative 
+    CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date),
+    CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)),
+    CONSTRAINT chk_rate_positive CHECK (hourly_rate >= 0)
 );
+
+-- Add the deferred FK constraint to location
+ALTER TABLE location
+ADD FOREIGN KEY (manager_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL;
 
 CREATE TABLE employee_auth (
     employee_id INT NOT NULL,
     password_hash VARCHAR(255) NOT NULL, -- Stores the secure bcrypt hash
-    
     -- Keys
     PRIMARY KEY (employee_id),
     FOREIGN KEY (employee_id)
         REFERENCES employee_demographics (employee_id)
         ON DELETE CASCADE -- If an employee is deleted, their login is automatically deleted.
 );
-
-CREATE TABLE location (
-    location_id INT NOT NULL AUTO_INCREMENT,
-    location_name VARCHAR(50) NOT NULL UNIQUE,
-    summary VARCHAR(250),
-    manager_id INT,
-    manager_start DATE,
-    -- keys
-    PRIMARY KEY (location_id),
-    FOREIGN KEY (manager_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL -- if a manager is deleted, the manager id for the location is Null
-);
-
-ALTER TABLE employee_demographics
-ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
 CREATE TABLE rides (
     ride_id INT NOT NULL AUTO_INCREMENT,
@@ -83,14 +86,15 @@ CREATE TABLE maintenance (
     summary VARCHAR(250),
     employee_id INT,
     cost DECIMAL(10,2),
+    -- NEW COLUMNS FOR APPROVAL WORKFLOW
+    pending_employee_id INT DEFAULT NULL,
+    assignment_requested_by INT DEFAULT NULL,
     -- Keys
     PRIMARY KEY (maintenance_id),
-    FOREIGN KEY (ride_id)
-        REFERENCES rides (ride_id)
-        ON DELETE CASCADE,
-	FOREIGN KEY (employee_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL,
+    FOREIGN KEY (ride_id) REFERENCES rides (ride_id) ON DELETE CASCADE,
+	FOREIGN KEY (employee_id) REFERENCES employee_demographics (employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (pending_employee_id) REFERENCES employee_demographics (employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (assignment_requested_by) REFERENCES employee_demographics (employee_id) ON DELETE SET NULL,
     -- Constraints
     CONSTRAINT chk_maintenance_dates CHECK (start_date IS NULL OR start_date >= report_date),
     CONSTRAINT chk_completion_date CHECK (end_date IS NULL OR end_date >= start_date),
@@ -237,3 +241,4 @@ CREATE TABLE employee_ride_assignments (
         REFERENCES rides(ride_id) 
         ON DELETE CASCADE
 );
+
