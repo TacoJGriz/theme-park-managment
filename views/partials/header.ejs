@@ -44,28 +44,31 @@
             <a href="/users">Employees</a>
         <% } %>
 
-        <%# Admin and Manager Links %>
-        <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+        <%# Admin and Park Manager Links (Park Admin/Events) %>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/locations">Locations</a>
             <a href="/vendors">Vendors</a>
-            <a href="/items">Items</a>
-            <a href="/inventory">Inventory</a>
             <a href="/memberships/types">Membership Types</a>
             <a href="/ticket-types">Ticket Types</a>
             <a href="/promotions">Promotions</a>
             <a href="/weather">Weather</a>
         <% } %>
 
-        <%# UPDATED: Link for Staff, Maintenance, Manager, Admin (NOT HR) %>
-        <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
+        <%# NEW: Admin, Park Manager, and Vendor Manager Links (Retail) %>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager') { %>
+            <a href="/items">Items</a>
+            <a href="/inventory">Inventory</a>
+        <% } %>
+
+        <%# Link for viewing Rides (Includes Location Manager) %>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
             <a href="/rides">Rides</a>
         <% } %>
 
-        <%# UPDATED: Link for Staff, Manager, Admin (NOT HR or Maintenance) %>
-         <% if (user.role === 'Admin' || user.role === 'Manager' || user.role === 'Staff') { %>
+        <%# Link for viewing Members (Excludes Maint/Location/Vendor Managers) %>
+         <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
             <a href="/members">Members</a>
         <% } %>
-
     </div>
     <div class="user-info">
         <span>Welcome, <%= user.firstName %> (<%= user.role %>)</span>
