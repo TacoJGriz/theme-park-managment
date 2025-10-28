@@ -126,7 +126,7 @@ app.post('/login', async (req, res) => {
         const email = req.body.username;
         const password = req.body.password;
         const query = `
-            SELECT demo.employee_id, demo.first_name, demo.last_name, demo.employee_type, auth.password_hash
+            SELECT demo.employee_id, demo.first_name, demo.last_name, demo.employee_type, demo.location_id, auth.password_hash
             FROM employee_demographics AS demo
             JOIN employee_auth AS auth ON demo.employee_id = auth.employee_id
             WHERE demo.email = ? AND demo.is_active = TRUE
@@ -876,6 +876,8 @@ app.post('/rides/status/:id', isAuthenticated, async (req, res) => {
             return res.status(403).send('Forbidden: You do not have permission to update this ride.');
         }
         const sql = "UPDATE rides SET ride_status = ? WHERE ride_id = ?";
+        await connection.query(sql, [ride_status, rideId]);
+        res.redirect('/rides');
     } catch (error) {
         console.error(error);
         res.status(500).send('Error updating ride status');
