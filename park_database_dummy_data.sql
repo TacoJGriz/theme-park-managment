@@ -19,13 +19,16 @@ VALUES
 ('Daisy', 'Duck', 'Female', '(123) 456-7893', 'daisy@park.com', '126 Main St', 'Orlando', 'FL', '32830', '1940-01-07', '2024-02-15', 'Staff', 4, 1, 19.25, TRUE),
 ('Goofy', 'Goof', 'Male', '(123) 456-7894', 'goofy@park.com', '127 Main St', 'Orlando', 'FL', '32830', '1932-05-25', '2024-03-01', 'Maintenance', 2, 1, 28.00, TRUE),
 ('Luke', 'Skywalker', 'Male', '(555) 555-5551', 'luke@park.com', '1 Desert Way', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Location Manager', 3, 2, 29.00, TRUE),
-('Han', 'Solo', 'Male', '(555) 555-5552', 'han@park.com', '2 Smuggler Run', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Vendor Manager', 4, 2, 27.00, TRUE);
+('Han', 'Solo', 'Male', '(555) 555-5552', 'han@park.com', '2 Smuggler Run', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Vendor Manager', 4, 2, 27.00, TRUE),
+('Scrooge', 'McDuck', 'Male', '(555) 111-2222', 'hr@park.com', '1 Money Bin', 'Orlando', 'FL', '32830', '1947-12-01', '2024-01-10', 'HR', 4, 1, 40.00, TRUE),
+('Woody', 'Pride', 'Male', '(555) 333-4444', 'woody@park.com', '1 Toy Box', 'Orlando', 'FL', '32830', '1995-11-22', '2024-03-10', 'Location Manager', 1, 2, 29.00, TRUE);
 
 -- Update locations with their new managers
-UPDATE location SET manager_id = 6, manager_start = '2024-03-05' WHERE location_id = 3; -- Luke manages Fantasyland
-UPDATE location SET manager_id = 2, manager_start = '2024-01-15' WHERE location_id = 4; -- Minnie (Park Mgr) manages Park Entrance
+UPDATE location SET manager_id = 6, manager_start = '2024-03-05' WHERE location_id = 3; -- Luke (ID 6) manages Fantasyland
+UPDATE location SET manager_id = 2, manager_start = '2024-01-15' WHERE location_id = 4; -- Minnie (ID 2) manages Park Entrance
+UPDATE location SET manager_id = 9, manager_start = '2024-03-10' WHERE location_id = 1; -- Woody (ID 9) manages Frontierland
 
--- 3. EMPLOYEE_AUTH
+-- 3. EMPLOYEE_AUTH (All passwords are 'password')
 INSERT INTO employee_auth (employee_id, password_hash) VALUES
 (1, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (2, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
@@ -33,7 +36,9 @@ INSERT INTO employee_auth (employee_id, password_hash) VALUES
 (4, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (5, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (6, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
-(7, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu');
+(7, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
+(8, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
+(9, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu');
 
 -- 4. RIDES
 -- Depends on location
@@ -41,7 +46,8 @@ INSERT INTO rides (ride_name, ride_type, ride_status, max_weight, min_height, ca
 ('Space Mountain', 'Rollercoaster', 'OPEN', 300, 44, 12, 2),
 ('Jungle Cruise', 'Water Ride', 'OPEN', 1000, 0, 30, 1),
 ('Its a Small World', 'Water Ride', 'CLOSED', 1200, 0, 30, 3),
-('Thunder Mountain', 'Rollercoaster', 'BROKEN', 300, 40, 30, 1);
+('Thunder Mountain', 'Rollercoaster', 'BROKEN', 300, 40, 30, 1),
+('Main Street Trolley', 'Other', 'OPEN', 2000, 0, 40, 4);
 
 -- 5. MAINTENANCE
 -- Depends on rides and employees
@@ -105,7 +111,8 @@ INSERT INTO daily_stats (date_rec, visitor_count) VALUES
 INSERT INTO vendors (vendor_name, location_id, manager_id) VALUES
 ('Cosmic Rays Cafe', 2, 7), -- Han (ID 7) manages
 ('Pecos Bill Cantina', 1, 7), -- Han (ID 7) manages
-('The Emporium', 4, 1); -- Walt (Admin) manages
+('The Emporium', 4, 1), -- Walt (Admin) manages
+('Sir Mickeys', 3, 7); -- Han (ID 7) also manages this
 
 -- 14. ITEM
 INSERT INTO item (item_type, item_name, price, summary) VALUES
@@ -121,7 +128,9 @@ INSERT INTO inventory (item_id, vendor_id, count) VALUES
 (2, 1, 150),
 (1, 2, 250),
 (3, 3, 500),
-(4, 3, 450);
+(4, 3, 450),
+(3, 4, 300),
+(4, 4, 350);
 
 -- 16. DAILY_RIDE
 -- Depends on rides and daily_stats

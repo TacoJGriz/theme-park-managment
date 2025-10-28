@@ -961,6 +961,8 @@ app.post('/maintenance', isAuthenticated, async (req, res) => {
     const { ride_id, summary } = req.body;
     const employee_id = req.body.employee_id ? req.body.employee_id : null;
 
+    const { role, locationId } = req.session.user;
+
     let connection;
     try {
         if (role === 'Location Manager') {
