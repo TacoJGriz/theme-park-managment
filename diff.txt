@@ -1,0 +1,94 @@
+--- a/views/users.ejs
++++ b/views/users.ejs
+@@ -42,6 +42,7 @@
+                     <th>Name</th>
+                     <th>Email</th>
+                     <th>Role</th>
++                    <th>Status</th>
+                     <th>Actions</th>
+                 </tr>
+            
+@@ -54,32 +55,42 @@
+                       <td><%= targetUser.first_name %> <%= targetUser.last_name %></td>
+                         <td><%= targetUser.email %></td>
+                         <td><%= targetUser.employee_type %></td>
++                        <td>
++                            <% if (targetUser.is_pending_approval) { %>
++                                <span style="color: #fd7e14; font-weight: bold;">Pending Approval</span>
++                            <% } else if (targetUser.is_active) { %>
++                                <span style="color: green;">Active</span>
++                            <% } else { %>
++                                <span style="color: #dc3545;">Inactive</span>
++                            <% } %>
++                        </td>
+                         <td>
+                  
+  <%# --- PERMISSION CHECK --- %>
+                             <%# 'user' is the Actor (logged in) %>
+                             <%# 'targetUser' is the Target (person in row) %>
+              
+-                <% 
+-                               const actorRole = user.role;
+- const actorId = user.id;
+-                               const targetRole = targetUser.employee_type;
+-                               const targetId = targetUser.employee_id;
+-    
+-                               // An Admin can edit anyone.
+- // An HR user can edit themselves or anyone who is NOT an Admin or HR.
+-                               let canEdit = false;
+- if (actorRole === 'Admin') {
+-                                   canEdit = true;
+- } else if (actorRole === 'HR') {
+-                                   if (targetRole !== 'Admin' && targetRole !== 'HR') {
+-                                       canEdit = true;
+- // HR can edit Staff, Maintenance, etc.
+-                                   } else if (targetRole === 'HR' && actorId === targetId) {
+-                                       canEdit = true;
+- // HR can edit themselves
+-                                   }
+-                               }
+-                            %>
+-  
+-   
++                            <% 
++                                const actorRole = user.role;
++                                const actorId = user.id;
++                                const targetRole = targetUser.employee_type;
++                                const targetId = targetUser.employee_id;
++
++                                // --- Edit Permissions ---
++                                let canEdit = false;
++                                if (actorRole === 'Admin') { canEdit = true; }
++                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true; }
++                                else if (actorRole === 'HR Staff') {
++                                    const nonEditableRoles = ['Admin', 'Head of HR', 'Park Manager', 'Location Manager', 'Vendor Manager'];
++                                    if (!nonEditableRoles.includes(targetRole) && (targetRole !== 'HR Staff' || actorId === targetId)) {
++                                        canEdit = true; // HR Staff can edit self, Staff, Maintenance
++                                    }
++                                }
++
++                                // --- Reset Password Permissions ---
++                                let canResetPassword = false;
++                                if (actorRole === 'Admin') { canResetPassword = true; }
++                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canResetPassword = true; }
++                                else if (actorRole === 'HR Staff' && (targetRole === 'Staff' || targetRole === 'Maintenance')) {
++                                    canResetPassword = true; // HR Staff can only reset Staff and Maintenance
++                                }
++                            %>
+                             <% if (canEdit) { %>
+                                 <a href="/employees/edit/<%= targetUser.employee_id %>" class="action-link">Edit</a>
+                               
+-   
++                            <% } %>
++
++                            <% if (canResetPassword) { %>
+                                 <a href="/employees/reset-password/<%= targetUser.employee_id %>" class="action-link" style="color: #dc3545;">Reset Password</a>
+                                 <% } else { %>
+-                       
+-         <span>No Access</span>
++                                <% if (!canEdit) { %> 
++                                    <span>No Access</span> <%# Only show No Access if they cant do anything %>
++                                <% } %>
+                             <% } %>
+                             <%# --- END PERMISSION CHECK --- %>
+                         </td>

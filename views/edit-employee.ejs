@@ -67,12 +67,12 @@
 
     <%# --- NEW EJS LOGIC --- %>
     <%# Create a variable to check if fields should be disabled %>
-    <% const isReadOnlyForHR = (user.role === 'HR') ? 'disabled' : '' %>
+    <% const isReadOnlyForHR = (user.role === 'HR Staff') ? 'disabled' : '' %>
 
     <%# Show a helpful note to the HR user %>
-    <% if (user.role === 'HR') { %>
+    <% if (user.role === 'HR Staff') { %>
         <div class="info-note">
-            <strong>Note:</strong> As an HR user, you can only edit personal and address information.
+            <strong>Note:</strong> As HR Staff, you can only edit personal and address information.
             Sensitive fields (Job, Pay, Status) are read-only. Please contact an Admin to change them.
         </div>
     <% } %>

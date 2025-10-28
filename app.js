@@ -56,10 +56,15 @@ const isParkManager = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Park Managers only');
 };
-const isAdminOrHR = (req, res, next) => {
+const canAddEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'HR') { return next(); }
+    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff') { return next(); }
     res.status(403).send('Forbidden: Admin or HR access required');
+};
+const canApproveEmployees = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Head of HR') { return next(); }
+    res.status(403).send('Forbidden: Admin or Head of HR access required.');
 };
 const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
@@ -69,7 +74,7 @@ const isAdminOrParkManager = (req, res, next) => {
 
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'HR' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
+    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
     res.status(403).send('Forbidden: Access denied.');
 };
 
@@ -79,21 +84,18 @@ const isMaintenanceOrHigher = (req, res, next) => {
     res.status(403).send('Forbidden: Maintenance or higher access required');
 };
 
-// MODIFIED: Renamed for clarity - Excludes HR
 const canManageMembersVisits = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    // Includes Admin, Park Manager, Staff -- **EXCLUDES HR, Maint, Location/Vendor Mgrs**
+    // Includes Admin, Park Manager, Staff -- **EXCLUDES ALL HR, Maint, Location/Vendor Mgrs**
     if (role === 'Admin' || role === 'Park Manager' || role === 'Staff') {
         return next();
     }
     res.status(403).send('Forbidden: Staff access or higher (excluding HR) required');
 };
 
-// NEW Middleware: Who can view the rides list? Staff+ (incl Maintenance), but NOT HR
 const canViewRides = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     // Includes Admin, Park/Location Managers, Maintenance, Staff
-    // **EXCLUDES HR, Vendor Manager**
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance' || role === 'Staff') {
         return next();
     }
@@ -129,7 +131,7 @@ app.post('/login', async (req, res) => {
             SELECT demo.employee_id, demo.first_name, demo.last_name, demo.employee_type, demo.location_id, auth.password_hash
             FROM employee_demographics AS demo
             JOIN employee_auth AS auth ON demo.employee_id = auth.employee_id
-            WHERE demo.email = ? AND demo.is_active = TRUE
+            WHERE demo.email = ? AND demo.is_active = TRUE AND demo.is_pending_approval = FALSE
         `;
         const [results] = await pool.query(query, [email]);
         if (results.length === 0) {
@@ -279,7 +281,7 @@ app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
     try {
         const { role, locationId } = req.session.user; // Get user's role and location
 
-        let query = 'SELECT employee_id, first_name, last_name, email, employee_type, location_id FROM employee_demographics';
+        let query = 'SELECT employee_id, first_name, last_name, email, employee_type, location_id, is_pending_approval, is_active FROM employee_demographics';
         let params = [];
 
         if (role === 'Location Manager') {
@@ -296,13 +298,19 @@ app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
         res.status(500).send('Error querying the database');
     }
 });
-app.get('/employees/new', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.get('/employees/new', isAuthenticated, canAddEmployees, async (req, res) => {
     try {
+        const actorRole = req.session.user.role;
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
         const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE');
+
+        // Define roles that can be created
+        let creatableRoles = ['Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'HR Staff', 'Head of HR', 'Admin'];
+
         res.render('add-employee', {
             locations: locations,
             supervisors: supervisors,
+            creatableRoles: creatableRoles,
             error: null
         });
     } catch (error) {
@@ -310,7 +318,7 @@ app.get('/employees/new', isAuthenticated, isAdminOrHR, async (req, res) => {
         res.status(500).send('Error loading page');
     }
 });
-app.post('/employees', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.post('/employees', isAuthenticated, canAddEmployees, async (req, res) => {
     const {
         first_name, last_name, gender, phone_number, email,
         street_address, city, state, zip_code,
@@ -318,17 +326,28 @@ app.post('/employees', isAuthenticated, isAdminOrHR, async (req, res) => {
         location_id, hourly_rate, password, confirm_password
     } = req.body;
     const supervisor_id = req.body.supervisor_id ? req.body.supervisor_id : null;
+    const actorRole = req.session.user.role;
 
     let locations = [];
     let supervisors = [];
+    let creatableRoles = [];
     try {
         [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        [supervisors] = await pool.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE is_active = TRUE');
+        [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE');
+        
+        creatableRoles =['Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'HR Staff', 'Head of HR', 'Admin'];
+        if (actorRole === 'HR Staff') {
+            creatableRoles =['Staff', 'Maintenance'];
+            if (!creatableRoles.includes(employee_type)) {
+                throw new Error("HR Staff do not have permission to create this employee type.");
+            }
+        }
 
         if (password !== confirm_password) {
             return res.render('add-employee', {
                 locations: locations,
                 supervisors: supervisors,
+                creatableRoles: creatableRoles,
                 error: "Passwords do not match."
             });
         }
@@ -336,12 +355,15 @@ app.post('/employees', isAuthenticated, isAdminOrHR, async (req, res) => {
         console.error("Error fetching dropdown data for add employee:", error);
         return res.render('add-employee', {
             locations: [], supervisors: [],
+            creatableRoles: [],
             error: "Error loading form data. Please try again."
         });
     }
 
     let connection;
     try {
+        const isPending = (actorRole === 'HR Staff');
+
         const hash = await bcrypt.hash(password, saltRounds);
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -349,12 +371,12 @@ app.post('/employees', isAuthenticated, isAdminOrHR, async (req, res) => {
         const demoSql = `
             INSERT INTO employee_demographics
             (first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code,
-            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_pending_approval)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [demoResult] = await connection.query(demoSql, [
             first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
-            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate || null
+            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate || null, isPending
         ]);
 
         const newEmployeeId = demoResult.insertId;
@@ -371,13 +393,14 @@ app.post('/employees', isAuthenticated, isAdminOrHR, async (req, res) => {
         res.render('add-employee', {
             locations: locations,
             supervisors: supervisors,
+            creatableRoles: creatableRoles,
             error: "Database error adding employee. The email may already be in use."
         });
     } finally {
         if (connection) connection.release();
     }
 });
-app.get('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.get('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user; // Get the logged-in user
 
@@ -391,14 +414,20 @@ app.get('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =>
         const targetRole = employee.employee_type;
         const targetId = employee.employee_id;
 
-        // Check if HR is trying to edit an Admin or another HR user
+        // --- PERMISSION CHECK ---
         // Note: actor.id is an int, employee.employee_id is an int from the DB
-        if (actor.role === 'HR' && (targetRole === 'Admin' || (targetRole === 'HR' && actor.id !== targetId))) {
+        // 'Head of HR' can edit anyone except 'Admin'
+        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: HR users cannot edit Admin or other HR users.');
         }
 
+        // 'HR Staff' can only edit themselves or non-managerial roles
+        if (actor.role === 'HR Staff' && (targetRole === 'Admin' || targetRole === 'Head of HR' || targetRole === 'Park Manager' || targetRole === 'Location Manager' || targetRole === 'Vendor Manager' || (targetRole === 'HR Staff' && actor.id !== targetId))) {
+            return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
+        }
+
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
+        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
 
         res.render('edit-employee', {
             employee: employee,
@@ -411,7 +440,7 @@ app.get('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =>
         res.status(500).send('Error loading edit page');
     }
 });
-app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => { // Use canAddEmployees
     const employeeId = req.params.id; // This is the Target ID
     const actor = req.session.user; // This is the Actor (logged-in user)
 
@@ -424,9 +453,13 @@ app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =
         }
         targetRole = targetUser[0].employee_type;
 
-        // Check if HR is trying to edit an Admin or another HR user
-        if (actor.role === 'HR' && (targetRole === 'Admin' || (targetRole === 'HR' && actor.id !== parseInt(employeeId)))) {
+        // --- PERMISSION CHECK ---
+        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: HR users cannot edit Admin or other HR users.');
+        }
+
+        if (actor.role === 'HR Staff' && (targetRole === 'Admin' || targetRole === 'Head of HR' || targetRole === 'Park Manager' || targetRole === 'Location Manager' || targetRole === 'Vendor Manager' || (targetRole === 'HR Staff' && actor.id !== parseInt(employeeId)))) {
+            return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
     } catch (error) {
         console.error("Permission check query error:", error);
@@ -438,8 +471,8 @@ app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =
         connection = await pool.getConnection();
 
 
-        if (actor.role === 'Admin') {
-            // ADMIN can edit everything (Original Logic)
+        if (actor.role === 'Admin' || actor.role === 'Head of HR') {
+            // ADMIN and Head of HR can edit everything
             const {
                 first_name, last_name, gender, phone_number, email,
                 street_address, city, state, zip_code, birth_date,
@@ -463,8 +496,8 @@ app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =
                 employeeId
             ]);
 
-        } else if (actor.role === 'HR') {
-            // HR can only edit non-sensitive fields
+        } else if (actor.role === 'HR Staff') {
+            // HR Staff can only edit non-sensitive fields
             const {
                 first_name, last_name, gender, phone_number, email,
                 street_address, city, state, zip_code, birth_date
@@ -496,7 +529,7 @@ app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =
             const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
             const employee = employeeResult.length > 0 ? employeeResult[0] : {};
             const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-            const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
+            const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
             res.render('edit-employee', {
                 employee: employee,
                 locations: locations,
@@ -512,7 +545,7 @@ app.post('/employees/edit/:id', isAuthenticated, isAdminOrHR, async (req, res) =
     }
 });
 
-app.get('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.get('/employees/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => { // Use canAddEmployees
     const employeeId = req.params.id;
     const actor = req.session.user;
 
@@ -524,10 +557,17 @@ app.get('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (re
         const employee = employeeResult[0];
 
         // --- Permission Check ---
-        // HR cannot reset Admin or other HR passwords
         const targetRole = employee.employee_type;
         const targetId = employee.employee_id;
-        if (actor.role === 'HR' && (targetRole === 'Admin' || (targetRole === 'HR' && actor.id !== targetId))) {
+
+        // Head of HR can't reset Admin
+        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
+            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
+        }
+
+        // HR Staff can only reset Staff and Maintenance
+        const allowedRolesToReset = ['Staff', 'Maintenance'];
+        if (actor.role === 'HR Staff' && !allowedRolesToReset.includes(targetRole)) {
             return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
         }
 
@@ -539,7 +579,7 @@ app.get('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (re
     }
 });
 
-app.post('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (req, res) => {
+app.post('/employees/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user;
     const { password, confirm_password } = req.body;
@@ -556,7 +596,14 @@ app.post('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (r
         // --- 2. Permission Check (CRITICAL: must be done in POST)
         const targetRole = employee.employee_type;
         const targetId = employee.employee_id;
-        if (actor.role === 'HR' && (targetRole === 'Admin' || (targetRole === 'HR' && actor.id !== targetId))) {
+        // Head of HR can't reset Admin
+        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
+            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
+        }
+
+        // HR Staff can only reset Staff and Maintenance
+        const allowedRolesToReset = ['Staff', 'Maintenance'];
+        if (actor.role === 'HR Staff' && !allowedRolesToReset.includes(targetRole)) {
             return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
         }
 
@@ -584,6 +631,38 @@ app.post('/employees/reset-password/:id', isAuthenticated, isAdminOrHR, async (r
             employee: employee || { employee_id: employeeId, first_name: 'Unknown', last_name: '' },
             error: "A database error occurred while resetting the password."
         });
+    }
+});
+
+// --- ROUTES FOR EMPLOYEE APPROVAL ---
+app.get('/employees/pending', isAuthenticated, canApproveEmployees, async (req, res) => {
+    try {
+        const [pendingUsers] = await pool.query(`
+            SELECT e.employee_id, e.first_name, e.last_name, e.email, e.employee_type, e.hire_date, l.location_name
+            FROM employee_demographics e
+            LEFT JOIN location l ON e.location_id = l.location_id
+            WHERE e.is_pending_approval = TRUE
+            ORDER BY e.hire_date
+        `);
+
+        res.render('pending-employees', { users: pendingUsers, success: null, error: null });
+
+    } catch (error) {
+        console.error("Error fetching pending employees:", error);
+        res.status(500).send("Error fetching pending employees.");
+    }
+});
+app.post('/employees/approve/:id', isAuthenticated, canApproveEmployees, async (req, res) => {
+    const employeeId = req.params.id;
+
+    try {
+        const sql = "UPDATE employee_demographics SET is_pending_approval = FALSE WHERE employee_id = ?";
+        await pool.query(sql, [employeeId]);
+
+        res.redirect('/employees/pending');
+    } catch (error) {
+        console.error("Error approving employee:", error);
+        res.status(500).send("Error approving employee.");
     }
 });
 

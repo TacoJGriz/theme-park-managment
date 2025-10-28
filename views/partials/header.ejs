@@ -39,9 +39,12 @@
     <div class="nav-links">
         <a href="/dashboard">Dashboard</a>
 
-		<%# Admin, HR, Park Manager, and Location Manager Links for VIEWING Employees %>
-		<% if (user.role === 'Admin' || user.role === 'HR' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+		<%# Admin, ALL HR, Park Manager, and Location Manager Links for VIEWING Employees %>
+		<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 		    <a href="/users">Employees</a>
+			<% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
+			    <a href="/employees/pending" style="color: #ffc107;">Pending Approvals</a>
+			<% } %>
 		<% } %>
 
 		<%# Admin and Park Manager Links (Park Admin/Events) %>

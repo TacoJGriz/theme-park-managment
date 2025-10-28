@@ -98,13 +98,9 @@
         <div>
             <label for="employee_type">Role:</label>
             <select id="employee_type" name="employee_type" required>
-                <option value="Staff">Staff</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Location Manager">Location Manager</option>
-                <option value="Vendor Manager">Vendor Manager</option>
-                <option value="Park Manager">Park Manager</option>
-                <option value="HR">HR</option>
-                <option value="Admin">Admin</option>
+                <% creatableRoles.forEach(role => { %>
+                    <option value="<%= role %>"><%= role %></option>
+                <% }); %>
             </select>
         </div>
         

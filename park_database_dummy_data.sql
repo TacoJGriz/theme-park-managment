@@ -20,8 +20,10 @@ VALUES
 ('Goofy', 'Goof', 'Male', '(123) 456-7894', 'goofy@park.com', '127 Main St', 'Orlando', 'FL', '32830', '1932-05-25', '2024-03-01', 'Maintenance', 2, 1, 28.00, TRUE),
 ('Luke', 'Skywalker', 'Male', '(555) 555-5551', 'luke@park.com', '1 Desert Way', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Location Manager', 3, 2, 29.00, TRUE),
 ('Han', 'Solo', 'Male', '(555) 555-5552', 'han@park.com', '2 Smuggler Run', 'Orlando', 'FL', '32830', '1977-05-25', '2024-03-05', 'Vendor Manager', 4, 2, 27.00, TRUE),
-('Scrooge', 'McDuck', 'Male', '(555) 111-2222', 'hr@park.com', '1 Money Bin', 'Orlando', 'FL', '32830', '1947-12-01', '2024-01-10', 'HR', 4, 1, 40.00, TRUE),
-('Woody', 'Pride', 'Male', '(555) 333-4444', 'woody@park.com', '1 Toy Box', 'Orlando', 'FL', '32830', '1995-11-22', '2024-03-10', 'Location Manager', 1, 2, 29.00, TRUE);
+('Scrooge', 'McDuck', 'Male', '(555) 111-2222', 'hr@park.com', '1 Money Bin', 'Orlando', 'FL', '32830', '1947-12-01', '2024-01-10', 'Head of HR', 4, 1, 40.00, TRUE), -- UPDATED ROLE
+('Woody', 'Pride', 'Male', '(555) 333-4444', 'woody@park.com', '1 Toy Box', 'Orlando', 'FL', '32830', '1995-11-22', '2024-03-10', 'Location Manager', 1, 2, 29.00, TRUE),
+('Morty', 'Fieldmouse', 'Male', '(555) 666-7777', 'morty@park.com', '3 Mouse House', 'Orlando', 'FL', '32830', '1999-10-10', '2024-04-01', 'HR Staff', 4, 8, 25.00, TRUE), -- NEW HR STAFF (reports to Scrooge, ID 8)
+('Chip', 'Dale', 'Male', '(555) 888-9999', 'chip@park.com', '1 Treehouse', 'Orlando', 'FL', '32830', '1990-05-15', '2024-04-05', 'Maintenance', 1, 5, 27.50, TRUE); -- NEW MAINTENANCE (reports to Goofy, ID 5)
 
 -- Update locations with their new managers
 UPDATE location SET manager_id = 6, manager_start = '2024-03-05' WHERE location_id = 3; -- Luke (ID 6) manages Fantasyland
@@ -38,7 +40,9 @@ INSERT INTO employee_auth (employee_id, password_hash) VALUES
 (6, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (7, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
 (8, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
-(9, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu');
+(9, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'),
+(10, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'), -- NEW (Morty)
+(11, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'); -- NEW (Chip)
 
 -- 4. RIDES
 -- Depends on location
@@ -88,12 +92,14 @@ INSERT INTO visits (membership_id, visit_date, exit_time, ticket_type_id, ticket
 (1, '2025-10-20 09:05:12', '17:30:00', 1, 0.00, 0.00),
 (2, '2025-10-20 09:15:00', '16:00:00', 1, 0.00, 0.00),
 (NULL, '2025-10-20 09:30:00', '18:00:00', 2, 109.00, 0.00),
-(NULL, '2025-10-20 09:31:00', '18:00:00', 3, 99.00, 0.00);
+(NULL, '2025-10-20 09:31:00', '18:00:00', 3, 99.00, 0.00),
+(NULL, '2025-10-25 16:15:00', '21:00:00', 2, 109.00, 16.35); -- NEW (Adult ticket on 10/25, 15% discount of 16.35)
 
 -- 10. WEATHER_EVENTS
 INSERT INTO weather_events (event_date, end_time, weather_type, park_closure) VALUES
 ('2025-07-15 14:30:00', '2025-07-15 15:15:00', 'Thunderstorm', TRUE),
-('2025-10-19 12:00:00', '2025-10-19 14:00:00', 'Rain', FALSE);
+('2025-10-19 12:00:00', '2025-10-19 14:00:00', 'Rain', FALSE),
+('2025-08-01 13:00:00', NULL, 'Heatwave', FALSE); -- NEW
 
 -- 11. EVENT_PROMOTIONS
 INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary) VALUES
@@ -103,8 +109,11 @@ INSERT INTO event_promotions (event_name, event_type, start_date, end_date, disc
 -- 12. DAILY_STATS
 -- Depends on visits, but often populated by a trigger or end-of-day job.
 INSERT INTO daily_stats (date_rec, visitor_count) VALUES
+('2025-07-15', 1200),
+('2025-08-01', 3800),
 ('2025-10-19', 3200),
-('2025-10-20', 4500);
+('2025-10-20', 4500),
+('2025-10-25', 5100);
 
 -- 13. VENDORS
 -- Depends on location and employees
@@ -119,7 +128,8 @@ INSERT INTO item (item_type, item_name, price, summary) VALUES
 ('Food', 'Cheeseburger', 12.99, '1/3 lb Angus Burger'),
 ('Food', 'Chicken Tenders', 11.99, '4 Tenders with Fries'),
 ('Apparel', 'Mickey T-Shirt', 29.99, '100% Cotton T-Shirt'),
-('Souvenir', 'Mickey Ears', 24.99, 'Classic Mickey Mouse Ears');
+('Souvenir', 'Mickey Ears', 24.99, 'Classic Mickey Mouse Ears'),
+('Other', 'Poncho', 10.00, 'Plastic rain poncho'); -- NEW
 
 -- 15. INVENTORY
 -- Depends on item and vendors
@@ -130,7 +140,9 @@ INSERT INTO inventory (item_id, vendor_id, count) VALUES
 (3, 3, 500),
 (4, 3, 450),
 (3, 4, 300),
-(4, 4, 350);
+(4, 4, 350),
+(5, 3, 1000), -- NEW (Ponchos at The Emporium)
+(5, 4, 500);  -- NEW (Ponchos at Sir Mickeys)
 
 -- 16. DAILY_RIDE
 -- Depends on rides and daily_stats

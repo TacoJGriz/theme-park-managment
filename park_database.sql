@@ -16,11 +16,12 @@ CREATE TABLE employee_demographics (
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'HR', 'Admin') NOT NULL,
+    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'Head of HR', 'HR Staff', 'Admin') NOT NULL,
     location_id INT,
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
+    is_pending_approval BOOL NOT NULL DEFAULT FALSE,
     -- Keys
     PRIMARY KEY (employee_id),
     FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
