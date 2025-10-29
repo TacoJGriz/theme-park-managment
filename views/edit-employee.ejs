@@ -66,14 +66,14 @@
     <% } %>
 
     <%# --- NEW EJS LOGIC --- %>
-    <%# Create a variable to check if fields should be disabled %>
-    <% const isReadOnlyForHR = (user.role === 'HR Staff') ? 'disabled' : '' %>
+    <%# Create a variable to check if HOURLY RATE should be disabled %>
+    <% const isHourlyRateReadOnly = (user.role === 'HR Staff') ? 'disabled' : '' %>
 
     <%# Show a helpful note to the HR user %>
     <% if (user.role === 'HR Staff') { %>
         <div class="info-note">
             <strong>Note:</strong> As HR Staff, you can only edit personal and address information.
-            Sensitive fields (Job, Pay, Status) are read-only. Please contact an Admin to change them.
+            *except* for <strong>Hourly Rate</strong>. Please contact an Admin or Head of HR to change pay.
         </div>
     <% } %>
 
@@ -137,7 +137,7 @@
              <div class="form-grid">
                 <div>
                     <label for="hire_date">Hire Date:</label>
-                    <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required <%= isReadOnlyForHR %>>
+                    <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required>
                 </div>
                 <div>
                     <label for="termination_date">Termination Date:</label>
@@ -145,18 +145,18 @@
                 </div>
                 <div>
                     <label for="hourly_rate">Hourly Rate:</label>
-                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isReadOnlyForHR %>>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isHourlyRateReadOnly %>>
                 </div>
                  <div>
                     <label for="is_active">Status:</label>
-                     <select id="is_active" name="is_active" <%= isReadOnlyForHR %>>
+                     <select id="is_active" name="is_active">
                         <option value="1" <% if (employee.is_active) { %>selected<% } %>>Active</option>
                         <option value="0" <% if (!employee.is_active) { %>selected<% } %>>Inactive</option>
                     </select>
                 </div>
                 <div>
                     <label for="employee_type">Role:</label>
-                    <select id="employee_type" name="employee_type" required <%= isReadOnlyForHR %>>
+                    <select id="employee_type" name="employee_type" required>
                         <option value="Staff" <% if (employee.employee_type === 'Staff') { %>selected<% } %>>Staff</option>
                         <option value="Maintenance" <% if (employee.employee_type === 'Maintenance') { %>selected<% } %>>Maintenance</option>
                         <option value="Location Manager" <% if (employee.employee_type === 'Location Manager') { %>selected<% } %>>Location Manager</option>
@@ -168,7 +168,7 @@
                 </div>
                 <div>
                     <label for="location_id">Location:</label>
-                    <select id="location_id" name="location_id" required <%= isReadOnlyForHR %>>
+                    <select id="location_id" name="location_id" required>
                         <% locations.forEach(location => { %>
                             <option value="<%= location.location_id %>" <% if (employee.location_id === location.location_id) { %>selected<% } %>>
                                 <%= location.location_name %>
@@ -178,7 +178,7 @@
                 </div>
                 <div class="full-width">
                     <label for="supervisor_id">Supervisor:</label>
-                    <select id="supervisor_id" name="supervisor_id" <%= isReadOnlyForHR %>>
+                    <select id="supervisor_id" name="supervisor_id">
                         <option value="">-- None --</option>
                         <% supervisors.forEach(supervisor => { %>
                             <option value="<%= supervisor.employee_id %>" <% if (employee.supervisor_id === supervisor.employee_id) { %>selected<% } %>>

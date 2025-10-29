@@ -60,9 +60,13 @@
                         <td><%= targetUser.hire_date.toISOString().substring(0, 10) %></td>
                         <td><%= targetUser.location_name || 'N/A' %></td>
                         <td>
-                            <form action="/employees/approve/<%= targetUser.employee_id %>" method="POST" onsubmit="return confirm('Are you sure you want to approve this employee?');">
+                            <% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
+                                <form action="/employees/approve/<%= targetUser.employee_id %>" method="POST" onsubmit="return confirm('Are you sure you want to approve this employee?');">
                                 <button type="submit" class="approve-button">Approve</button>
-                            </form>
+                                </form>
+                            <% } else { %>
+                                <span>(Pending Approval)</span>
+                            <% } %>
                         </td>
                     </tr>
                 <% }); %>

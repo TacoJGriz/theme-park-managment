@@ -70,20 +70,13 @@
                                 let canEdit = false;
                                 if (actorRole === 'Admin') { canEdit = true; }
                                 else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true; }
-                                else if (actorRole === 'HR Staff') {
-                                    const nonEditableRoles = ['Admin', 'Head of HR', 'Park Manager', 'Location Manager', 'Vendor Manager'];
-                                    if (!nonEditableRoles.includes(targetRole) && (targetRole !== 'HR Staff' || actorId === targetId)) {
-                                        canEdit = true; // HR Staff can edit self, Staff, Maintenance
-                                    }
+                                else if (actorRole === 'HR Staff' && targetRole !== 'Admin') {
++                                    canEdit = true;
                                 }
 
                                 // --- Reset Password Permissions ---
                                 let canResetPassword = false;
-                                if (actorRole === 'Admin') { canResetPassword = true; }
-                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canResetPassword = true; }
-                                else if (actorRole === 'HR Staff' && (targetRole === 'Staff' || targetRole === 'Maintenance')) {
-                                    canResetPassword = true; // HR Staff can only reset Staff and Maintenance
-                                }
+                                if (actorRole === 'Admin' || actorRole === 'Head of HR' || 'HR Staff') { canResetPassword = true; }
                             %>
     
                             <% if (canEdit) { %>

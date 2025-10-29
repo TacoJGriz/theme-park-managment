@@ -41,9 +41,9 @@
 
 		<%# Admin, ALL HR, Park Manager, and Location Manager Links for VIEWING Employees %>
 		<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-		    <a href="/users">Employees</a>
-			<% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
-			    <a href="/employees/pending" style="color: #ffc107;">Pending Approvals</a>
+			<a href="/users">Employees</a>
+				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff') { %>	
+			        <a href="/employees/pending" style="color: #ffc107;">Pending Approvals</a>
 			<% } %>
 		<% } %>
 

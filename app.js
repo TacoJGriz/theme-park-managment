@@ -66,6 +66,11 @@ const canApproveEmployees = (req, res, next) => {
     if (role === 'Admin' || role === 'Head of HR') { return next(); }
     res.status(403).send('Forbidden: Admin or Head of HR access required.');
 };
+const canViewPendingEmployees = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff') { return next(); }
+    res.status(403).send('Forbidden: Admin or HR access required.');
+};
 const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') { return next(); }
@@ -416,13 +421,12 @@ app.get('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res
 
         // --- PERMISSION CHECK ---
         // Note: actor.id is an int, employee.employee_id is an int from the DB
-        // 'Head of HR' can edit anyone except 'Admin'
+        // 'Head of HR' and 'HR Staff' can edit anyone except 'Admin'
         if (actor.role === 'Head of HR' && targetRole === 'Admin') {
-            return res.status(403).send('Forbidden: HR users cannot edit Admin or other HR users.');
+            return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
-
-        // 'HR Staff' can only edit themselves or non-managerial roles
-        if (actor.role === 'HR Staff' && (targetRole === 'Admin' || targetRole === 'Head of HR' || targetRole === 'Park Manager' || targetRole === 'Location Manager' || targetRole === 'Vendor Manager' || (targetRole === 'HR Staff' && actor.id !== targetId))) {
+        // 'HR Staff' cannot edit 'Admin'
+        if (actor.role === 'HR Staff' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
 
@@ -455,10 +459,10 @@ app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, re
 
         // --- PERMISSION CHECK ---
         if (actor.role === 'Head of HR' && targetRole === 'Admin') {
-            return res.status(403).send('Forbidden: HR users cannot edit Admin or other HR users.');
+            return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
 
-        if (actor.role === 'HR Staff' && (targetRole === 'Admin' || targetRole === 'Head of HR' || targetRole === 'Park Manager' || targetRole === 'Location Manager' || targetRole === 'Vendor Manager' || (targetRole === 'HR Staff' && actor.id !== parseInt(employeeId)))) {
+        if (actor.role === 'HR Staff' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
     } catch (error) {
@@ -500,22 +504,28 @@ app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, re
             // HR Staff can only edit non-sensitive fields
             const {
                 first_name, last_name, gender, phone_number, email,
-                street_address, city, state, zip_code, birth_date
+                street_address, city, state, zip_code, birth_date,
+                hire_date, employee_type, location_id, is_active
             } = req.body;
-
+            const supervisor_id = req.body.supervisor_id ? req.body.supervisor_id : null;
+            const termination_date = req.body.termination_date ? req.body.termination_date : null;
             // Note: The sensitive fields (hourly_rate, employee_type, etc.) are
             // deliberately *not* read from req.body, so they cannot be updated
             // even if a user tries to send them in the request.
 
+            // HR Staff can update all fields EXCEPT hourly_rate
             const sql = `
                 UPDATE employee_demographics SET
                 first_name = ?, last_name = ?, gender = ?, phone_number = ?, email = ?,
-                street_address = ?, city = ?, state = ?, zip_code = ?, birth_date = ?
+                street_address = ?, city = ?, state = ?, zip_code = ?, birth_date = ?,
+                hire_date = ?, termination_date = ?, employee_type = ?, location_id = ?,
+                supervisor_id = ?, is_active = ?
                 WHERE employee_id = ?
             `;
             await connection.query(sql, [
                 first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
-                birth_date,
+                birth_date, hire_date, termination_date, employee_type, location_id,
+                supervisor_id, is_active === '1',
                 employeeId
             ]);
         }
@@ -556,21 +566,7 @@ app.get('/employees/reset-password/:id', isAuthenticated, canAddEmployees, async
         }
         const employee = employeeResult[0];
 
-        // --- Permission Check ---
-        const targetRole = employee.employee_type;
-        const targetId = employee.employee_id;
-
-        // Head of HR can't reset Admin
-        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
-            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
-        }
-
-        // HR Staff can only reset Staff and Maintenance
-        const allowedRolesToReset = ['Staff', 'Maintenance'];
-        if (actor.role === 'HR Staff' && !allowedRolesToReset.includes(targetRole)) {
-            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
-        }
-
+        // HR Staff and Head can reset anyone. Admin can also reset anyone via the canAddEmployees middleware.
         res.render('reset-password', { employee: employee, error: null });
 
     } catch (error) {
@@ -592,20 +588,6 @@ app.post('/employees/reset-password/:id', isAuthenticated, canAddEmployees, asyn
             return res.status(404).send('Employee not found');
         }
         employee = employeeResult[0];
-
-        // --- 2. Permission Check (CRITICAL: must be done in POST)
-        const targetRole = employee.employee_type;
-        const targetId = employee.employee_id;
-        // Head of HR can't reset Admin
-        if (actor.role === 'Head of HR' && targetRole === 'Admin') {
-            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
-        }
-
-        // HR Staff can only reset Staff and Maintenance
-        const allowedRolesToReset = ['Staff', 'Maintenance'];
-        if (actor.role === 'HR Staff' && !allowedRolesToReset.includes(targetRole)) {
-            return res.status(403).send('Forbidden: You do not have permission to reset this user\'s password.');
-        }
 
         // --- 3. Password Match Check
         if (password !== confirm_password) {
@@ -635,7 +617,7 @@ app.post('/employees/reset-password/:id', isAuthenticated, canAddEmployees, asyn
 });
 
 // --- ROUTES FOR EMPLOYEE APPROVAL ---
-app.get('/employees/pending', isAuthenticated, canApproveEmployees, async (req, res) => {
+app.get('/employees/pending', isAuthenticated, canViewPendingEmployees, async (req, res) => {
     try {
         const [pendingUsers] = await pool.query(`
             SELECT e.employee_id, e.first_name, e.last_name, e.email, e.employee_type, e.hire_date, l.location_name
@@ -646,6 +628,9 @@ app.get('/employees/pending', isAuthenticated, canApproveEmployees, async (req, 
         `);
 
         res.render('pending-employees', { users: pendingUsers, success: null, error: null });
+        // Clear flash messages
+        req.session.success = null;
+        req.session.error = null;
 
     } catch (error) {
         console.error("Error fetching pending employees:", error);
@@ -658,6 +643,8 @@ app.post('/employees/approve/:id', isAuthenticated, canApproveEmployees, async (
     try {
         const sql = "UPDATE employee_demographics SET is_pending_approval = FALSE WHERE employee_id = ?";
         await pool.query(sql, [employeeId]);
+        // Add success message for confirmation
+        req.session.success = "Employee approved successfully.";
 
         res.redirect('/employees/pending');
     } catch (error) {
