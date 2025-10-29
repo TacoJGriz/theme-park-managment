@@ -71,12 +71,15 @@
                                 if (actorRole === 'Admin') { canEdit = true; }
                                 else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true; }
                                 else if (actorRole === 'HR Staff' && targetRole !== 'Admin') {
-+                                    canEdit = true;
+                                    canEdit = true;
                                 }
 
                                 // --- Reset Password Permissions ---
                                 let canResetPassword = false;
-                                if (actorRole === 'Admin' || actorRole === 'Head of HR' || 'HR Staff') { canResetPassword = true; }
+                                // *** THIS IS THE CORRECTED LINE ***
+                                if (actorRole === 'Admin' || actorRole === 'Head of HR' || actorRole === 'HR Staff') { 
+                                    canResetPassword = true; 
+                                }
                             %>
     
                             <% if (canEdit) { %>

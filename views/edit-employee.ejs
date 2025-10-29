@@ -39,11 +39,11 @@
         }
 
         button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
-                 cursor: pointer; border-radius: 4px; font-size: 1em; }
+            cursor: pointer; border-radius: 4px; font-size: 1em; }
         button:hover { background-color: #0056b3;
- }
+}
         .full-width { grid-column: 1 / -1;
- }
+}
         .cancel-link {
             display: inline-block;
             margin-left: 15px;
@@ -72,8 +72,7 @@
     <%# Show a helpful note to the HR user %>
     <% if (user.role === 'HR Staff') { %>
         <div class="info-note">
-            <strong>Note:</strong> As HR Staff, you can only edit personal and address information.
-            *except* for <strong>Hourly Rate</strong>. Please contact an Admin or Head of HR to change pay.
+            <strong>Note:</strong> Please contact an Admin or Head of HR to change pay.
         </div>
     <% } %>
 
@@ -134,14 +133,15 @@
 
         <div class="form-section">
             <h3>Job Details</h3>
-             <div class="form-grid">
+            <div class="form-grid">
                 <div>
                     <label for="hire_date">Hire Date:</label>
                     <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required>
                 </div>
                 <div>
                     <label for="termination_date">Termination Date:</label>
-                    <input type="date" id="termination_date" name="termination_date" value="<%= employee.termination_date ? employee.termination_date.toISOString().substring(0, 10) : '' %>" <%= isReadOnlyForHR %>>
+                    <%# CORRECTED: Removed isReadOnlyForHR %>
+                    <input type="date" id="termination_date" name="termination_date" value="<%= employee.termination_date ? employee.termination_date.toISOString().substring(0, 10) : '' %>">
                 </div>
                 <div>
                     <label for="hourly_rate">Hourly Rate:</label>
@@ -149,6 +149,7 @@
                 </div>
                  <div>
                     <label for="is_active">Status:</label>
+                    <%# CORRECTED: Removed isReadOnlyForHR %>
                      <select id="is_active" name="is_active">
                         <option value="1" <% if (employee.is_active) { %>selected<% } %>>Active</option>
                         <option value="0" <% if (!employee.is_active) { %>selected<% } %>>Inactive</option>
@@ -156,20 +157,23 @@
                 </div>
                 <div>
                     <label for="employee_type">Role:</label>
+                    <%# CORRECTED: Removed isReadOnlyForHR %>
                     <select id="employee_type" name="employee_type" required>
                         <option value="Staff" <% if (employee.employee_type === 'Staff') { %>selected<% } %>>Staff</option>
                         <option value="Maintenance" <% if (employee.employee_type === 'Maintenance') { %>selected<% } %>>Maintenance</option>
                         <option value="Location Manager" <% if (employee.employee_type === 'Location Manager') { %>selected<% } %>>Location Manager</option>
                         <option value="Vendor Manager" <% if (employee.employee_type === 'Vendor Manager') { %>selected<% } %>>Vendor Manager</option>
                         <option value="Park Manager" <% if (employee.employee_type === 'Park Manager') { %>selected<% } %>>Park Manager</option>
-                        <option value="HR" <% if (employee.employee_type === 'HR') { %>selected<% } %>>HR</option>
+                        <option value="HR Staff" <% if (employee.employee_type === 'HR Staff') { %>selected<% } %>>HR Staff</option>
+                        <option value="Head of HR" <% if (employee.employee_type === 'Head of HR') { %>selected<% } %>>Head of HR</option>
                         <option value="Admin" <% if (employee.employee_type === 'Admin') { %>selected<% } %>>Admin</option>
                     </select>
                 </div>
                 <div>
                     <label for="location_id">Location:</label>
+                    <%# CORRECTED: Removed isReadOnlyForHR %>
                     <select id="location_id" name="location_id" required>
-                        <% locations.forEach(location => { %>
+                         <% locations.forEach(location => { %>
                             <option value="<%= location.location_id %>" <% if (employee.location_id === location.location_id) { %>selected<% } %>>
                                 <%= location.location_name %>
                             </option>
@@ -178,8 +182,9 @@
                 </div>
                 <div class="full-width">
                     <label for="supervisor_id">Supervisor:</label>
+                    <%# CORRECTED: Removed isReadOnlyForHR %>
                     <select id="supervisor_id" name="supervisor_id">
-                        <option value="">-- None --</option>
+                         <option value="">-- None --</option>
                         <% supervisors.forEach(supervisor => { %>
                             <option value="<%= supervisor.employee_id %>" <% if (employee.supervisor_id === supervisor.employee_id) { %>selected<% } %>>
                                 <%= supervisor.first_name %> <%= supervisor.last_name %> (<%= supervisor.employee_type %>)
@@ -193,7 +198,7 @@
         <div class="form-section">
             <h3>Login Details</h3>
             <div class="form-grid">
-                <div class="full-width">
+                 <div class="full-width">
                      <label for="email">Email (Username):</label>
                     <input type="email" id="email" name="email" value="<%= employee.email %>" required>
                 </div>
