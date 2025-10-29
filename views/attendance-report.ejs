@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Park Attendance Report</title>
+    <%# Link to Chart.js library %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        .chart-container { margin-top: 2em; border: 1px solid #ddd; padding: 1em; background: #fff; border-radius: 4px; }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Park Attendance Report</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error"><%= error %></p>
+        <% } %>
+
+        <form action="/reports/attendance" method="POST">
+            <div class="form-grid">
+                <div>
+                    <label for="selected_date">Select Date:</label>
+                    <%# Default value or previously selected date %>
+                    <input type="date" id="selected_date" name="selected_date" value="<%= selected_date %>" required>
+                </div>
+                <div>
+                    <label for="grouping">Group By:</label>
+                    <select id="grouping" name="grouping" required>
+                        <option value="day" <%= grouping === 'day' ? 'selected' : '' %>>Day (Shows Hourly)</option>
+                        <option value="week" <%= grouping === 'week' ? 'selected' : '' %>>Week (Shows Daily)</option>
+                        <option value="month" <%= grouping === 'month' ? 'selected' : '' %>>Month (Shows Daily)</option>
+                        <option value="year" <%= grouping === 'year' ? 'selected' : '' %>>Year (Shows Monthly)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="membership_type_id">Filter by Membership:</label>
+                    <select id="membership_type_id" name="membership_type_id">
+                        <option value="all" <%= membership_type_id === 'all' ? 'selected' : '' %>>All Visitors</option>
+                        <option value="non-member" <%= membership_type_id === 'non-member' ? 'selected' : '' %>>Non-Members Only</option>
+                        <% membership_types.forEach(type => { %>
+                            <option value="<%= type.type_id %>" <%= String(type.type_id) === membership_type_id ? 'selected' : '' %>>
+                                <%= type.type_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div style="grid-column: 4; align-self: end;">
+                    <button type="submit">Generate Report</button>
+                </div>
+            </div>
+        </form>
+
+        <%# Check if report data exists and has entries %>
+        <% if (attendance_data && attendance_data.length > 0) { %>
+            <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+
+            <script>
+                // Pass EJS data to JavaScript
+                const reportData = <%- JSON.stringify(attendance_data) %>;
+                const labels = reportData.map(item => item.label);
+                const counts = reportData.map(item => item.count);
+                // Style points identified as spikes
+                const pointColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)'); // Red for spike, Blue normal
+                const pointRadii = reportData.map(item => item.isSpike ? 8 : 4); // Larger radius for spike
+
+                const ctx = document.getElementById('attendanceChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line', // Line chart
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Visitor Count',
+                            data: counts,
+                            borderColor: 'rgba(0, 123, 255, 1)', // Blue line
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)', // Light blue fill
+                            borderWidth: 2,
+                            tension: 0.1, // Slight curve to the line
+                            fill: true,
+                            pointBackgroundColor: pointColors, // Use dynamic colors
+                            pointRadius: pointRadii,          // Use dynamic radii
+                            pointHoverRadius: 10              // Larger point on hover
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Allow chart to resize height
+                        scales: {
+                            y: {
+                                beginAtZero: true, // Start Y-axis at 0
+                                title: { display: true, text: 'Total Visitors' }
+                            },
+                            x: {
+                                title: { display: true, text: '<%= labelFormat %>' } // Use dynamic X-axis label
+                            }
+                        },
+                        plugins: {
+                            tooltip: { // Customize tooltips
+                                callbacks: {
+                                    title: function(context) { return context[0].label; },
+                                    label: function(context) { return `Visitors: ${context.parsed.y}`; }
+                                }
+                            }
+                        }
+                    }
+                });
+            </script>
+        <% } else if (attendance_data && attendance_data.length === 0) { %>
+            <%# Message if data exists but is empty (valid query, no results) %>
+            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No attendance data found for the selected criteria.</p>
+        <% } %>
+        <%# If attendance_data is null, nothing is displayed (initial page load) %>
+
+    </div>
+</body>
+</html>

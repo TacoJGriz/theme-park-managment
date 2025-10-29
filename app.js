@@ -34,7 +34,7 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
-// --- AUTHORIZATION MIDDLEWARE ---
+// --- MIDDLEWARE ---
 
 const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
@@ -76,19 +76,16 @@ const isAdminOrParkManager = (req, res, next) => {
     if (role === 'Admin' || role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
-
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
     res.status(403).send('Forbidden: Access denied.');
 };
-
 const isMaintenanceOrHigher = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') { return next(); }
     res.status(403).send('Forbidden: Maintenance or higher access required');
 };
-
 const canManageMembersVisits = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     // Includes Admin, Park Manager, Staff -- **EXCLUDES ALL HR, Maint, Location/Vendor Mgrs**
@@ -97,7 +94,6 @@ const canManageMembersVisits = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Staff access or higher (excluding HR) required');
 };
-
 const canViewRides = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     // Includes Admin, Park/Location Managers, Maintenance, Staff
@@ -106,13 +102,72 @@ const canViewRides = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied for your role.');
 };
-
 const canManageRetail = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Vendor Manager' || role === 'Location Manager') {
         return next();
     }
     res.status(403).send('Forbidden: Admin, Park Manager, or Vendor Manager access required.');
+};
+const canViewReports = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    // ONLY Admin and Park Manager can view reports
+    if (role === 'Admin' || role === 'Park Manager') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Admin or Park Manager access required for reports.');
+};
+const getReportSettings = (selectedDate, grouping) => {
+    // Ensure the date object is created at midnight local time
+    const d = new Date(selectedDate + 'T00:00:00');
+    if (isNaN(d.getTime())) { // Check if the date is valid
+        throw new Error("Invalid date selected.");
+    }
+
+    let startDate, endDate, sqlDateFormat, labelFormat;
+
+    if (grouping === 'day') {
+        // Hourly view for one day
+        startDate = selectedDate;
+        endDate = selectedDate;
+        sqlDateFormat = '%Y-%m-%d %H:00'; // Group by hour
+        labelFormat = 'Hour of Day (YYYY-MM-DD HH:00)';
+    } else if (grouping === 'week') {
+        // Daily view for the week containing the selected date (Mon-Sun)
+        const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        const diffToMonday = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust Sunday
+        const monday = new Date(d.setDate(diffToMonday));
+        startDate = monday.toISOString().substring(0, 10);
+
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        endDate = sunday.toISOString().substring(0, 10);
+        sqlDateFormat = '%Y-%m-%d'; // Group by day
+        labelFormat = 'Day of Week (YYYY-MM-DD)';
+    } else if (grouping === 'month') {
+        // Daily view for the selected month
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const firstDay = new Date(year, month, 1);
+        startDate = firstDay.toISOString().substring(0, 10);
+        const lastDay = new Date(year, month + 1, 0); // Day 0 of next month is last day of current
+        endDate = lastDay.toISOString().substring(0, 10);
+        sqlDateFormat = '%Y-%m-%d'; // Group by day
+        labelFormat = 'Day of Month (YYYY-MM-DD)';
+    } else if (grouping === 'year') {
+        // Monthly view for the selected year
+        const year = d.getFullYear();
+        const firstDay = new Date(year, 0, 1); // Jan 1st
+        startDate = firstDay.toISOString().substring(0, 10);
+        const lastDay = new Date(year, 11, 31); // Dec 31st
+        endDate = lastDay.toISOString().substring(0, 10);
+        sqlDateFormat = '%Y-%m'; // Group by month
+        labelFormat = 'Month of Year (YYYY-MM)';
+    } else {
+        throw new Error("Invalid grouping selection.");
+    }
+
+    return { startDate, endDate, sqlDateFormat, labelFormat };
 };
 
 // Middleware to pass user data to all views
@@ -1195,24 +1250,20 @@ app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res
     }
 });
 app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // UPDATED: Read 'type_id' from body instead of 'member_type'
     const { first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
-        // UPDATED: SQL query to insert 'type_id'
         const sql = `
             INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        // UPDATED: Parameter list to use 'type_id'
         await connection.query(sql, [
             first_name, last_name, email, phone_number || null, date_of_birth, type_id, start_date, end_date
         ]);
         res.redirect('/members');
     } catch (error) {
         console.error(error);
-        // UPDATED: Re-fetch types for error page
         const [types] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
@@ -1225,9 +1276,8 @@ app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) =
     }
 });
 
-// UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
+// Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
 app.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // Phase 3: Rebuilt to fetch dynamic data
     try {
         const [ticketTypes] = await pool.query(
             "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
@@ -1822,6 +1872,121 @@ app.post('/inventory/manage', isAuthenticated, canManageRetail, async (req, res)
         });
     } finally {
         if (connection) connection.release();
+    }
+});
+
+app.get('/reports/attendance', isAuthenticated, canViewReports, async (req, res) => {
+    try {
+        // Fetch membership types dynamically for the filter dropdown
+        const [membershipTypes] = await pool.query('SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name');
+
+        // Set a reasonable default date (e.g., today or a specific date with data)
+        const defaultDate = new Date().toISOString().substring(0, 10); // Today's date
+
+        res.render('attendance-report', {
+            membership_types: membershipTypes, // Pass dynamic types
+            selected_date: defaultDate,
+            grouping: 'day', // Default grouping
+            membership_type_id: 'all', // Default filter selection
+            attendance_data: null,     // No data on initial load
+            labelFormat: 'Time Period',// Default axis label
+            error: null
+        });
+    } catch (error) {
+        console.error("Error loading attendance report page:", error);
+        // Render with empty data and an error message
+        res.render('attendance-report', {
+            membership_types: [],
+            selected_date: new Date().toISOString().substring(0, 10),
+            grouping: 'day',
+            membership_type_id: 'all',
+            attendance_data: null,
+            labelFormat: 'Time Period',
+            error: 'Error loading page setup data. Please try again.'
+        });
+    }
+});
+app.post('/reports/attendance', isAuthenticated, canViewReports, async (req, res) => {
+    const { selected_date, grouping, membership_type_id } = req.body;
+    let membershipTypes = []; // To repopulate dropdown on error/success
+
+    try {
+        // Fetch membership types again for rendering the page
+        [membershipTypes] = await pool.query('SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name');
+
+        // Get date range and SQL format settings
+        const { startDate, endDate, sqlDateFormat, labelFormat } = getReportSettings(selected_date, grouping);
+
+        // --- Build Dynamic SQL Query ---
+        let reportQuery = `
+            SELECT
+                DATE_FORMAT(v.visit_date, ?) as report_interval,
+                COUNT(v.visit_id) as total_count
+            FROM visits v
+        `;
+        let joinClause = '';
+        let whereClause = ' WHERE DATE(v.visit_date) BETWEEN ? AND ? ';
+        // Start params with format, start date, end date
+        let params = [sqlDateFormat, startDate, endDate];
+
+        // Add filtering based on membership type selection
+        if (membership_type_id === 'non-member') {
+            whereClause += 'AND v.membership_id IS NULL ';
+        } else if (membership_type_id !== 'all') {
+            // Join needed only if filtering by a specific member type
+            joinClause = ' JOIN membership m ON v.membership_id = m.membership_id ';
+            whereClause += 'AND m.type_id = ? ';
+            params.push(membership_type_id); // Add type_id to params
+        }
+
+        // Combine query parts
+        reportQuery += joinClause + whereClause + ' GROUP BY report_interval ORDER BY report_interval';
+
+        // Execute the query
+        const [reportData] = await pool.query(reportQuery, params);
+
+        // Calculate average and identify spikes (e.g., > 25% above average)
+        const totalSum = reportData.reduce((sum, row) => sum + row.total_count, 0);
+        const avgCount = reportData.length > 0 ? totalSum / reportData.length : 0;
+        const spikeThreshold = avgCount * 1.25;
+
+        // Format data for Chart.js and add spike flag
+        const chartData = reportData.map(row => ({
+            label: row.report_interval,
+            count: row.total_count,
+            // Flag as spike if count exceeds threshold (and there's enough data to compare)
+            isSpike: row.total_count >= spikeThreshold && reportData.length > 2
+        }));
+
+        // Render the report page with the generated data
+        res.render('attendance-report', {
+            membership_types: membershipTypes,
+            selected_date: selected_date,
+            grouping: grouping,
+            membership_type_id: membership_type_id, // Pass back the selected ID
+            attendance_data: chartData,
+            labelFormat: labelFormat,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error generating attendance report:", error);
+        // Attempt to fetch types even on error for dropdown consistency
+        try {
+            [membershipTypes] = await pool.query('SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name');
+        } catch (fetchErr) {
+            membershipTypes = []; // Use empty array if fetch fails
+        }
+        // Render the report page with an error message
+        res.render('attendance-report', {
+            membership_types: membershipTypes,
+            selected_date: selected_date,
+            grouping: grouping,
+            membership_type_id: membership_type_id,
+            attendance_data: null, // No data to display on error
+            labelFormat: 'Time Period',
+            error: `Error generating report: ${error.message}` // Display specific error
+        });
     }
 });
 
