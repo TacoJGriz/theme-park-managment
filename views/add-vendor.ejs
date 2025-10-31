@@ -18,8 +18,7 @@
         }
         .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
         button { padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #0056b3;
- }
+        button:hover { background-color: #0056b3; }
 
         .cancel-link {
             display: inline-block;
@@ -46,7 +45,8 @@
             <label for="vendor_name">Vendor Name:</label>
             <input type="text" id="vendor_name" name="vendor_name" required>
         </div>
-        <div>
+  
+         <div>
             <label for="location_id">Location:</label>
             <select id="location_id" name="location_id" required>
                 <% locations.forEach(location => { %>
@@ -54,15 +54,9 @@
                 <% }); %>
             </select>
         </div>
-        <div>
-            <label for="manager_id">Manager:</label>
-            <select id="manager_id" name="manager_id">
-                <option value="">-- Unassigned --</option>
-                <% managers.forEach(manager => { %>
-                    <option value="<%= manager.employee_id %>"><%= manager.first_name %> <%= manager.last_name %> (<%= manager.employee_type %>)</option>
-                <% }); %>
-            </select>
-        </div>
+        
+        <%# --- Removed Manager Dropdown --- %>
+
         <br>
         <button type="submit">Add Vendor</button>
         <a href="/vendors" class="cancel-link">Cancel</a>

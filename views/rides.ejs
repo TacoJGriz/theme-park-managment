@@ -17,9 +17,8 @@
         
         /* --- UPDATED: Stats Bar Styles --- */
         .stats-bar {
-            display: grid;
-            /* Allow more cards per row */
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            display: grid; /* Allow more cards per row */
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 0.75em; /* Reduced gap between cards */
             margin-bottom: 1em; /* Reduced bottom margin */
         }
@@ -35,7 +34,7 @@
             font-size: 1.75em; /* Reduced font size */
         }
         .stat-card p { 
-            margin: 0; 
+            margin: 0;
             font-weight: bold; 
             color: #6c757d;
             font-size: 0.9em; /* Reduced font size */
@@ -78,6 +77,42 @@
         .status-OPEN { color: green; font-weight: bold; }
         .status-CLOSED { color: orange; font-weight: bold; }
         .status-BROKEN { color: red; font-weight: bold; }
+
+        /* --- Style for the Log Run link --- */
+        .log-run-link {
+            color: #28a745; /* Green color */
+            font-weight: bold;
+            display: inline-block;
+            padding: 5px 10px;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .log-run-link:hover {
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* --- NEW: Style for DISABLED Log Run link --- */
+        .log-run-link-disabled {
+            color: #6c757d; /* Grey color */
+            font-weight: bold;
+            display: inline-block;
+            padding: 5px 10px;
+            border: 1px solid #6c757d;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 5px;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            .run-history-link {
+            color: #007bff; /* Blue to match other history link */
+        }
+        }
     </style>
 </head>
 <body>
@@ -104,10 +139,9 @@
             </div>
         </div>
         
-        <%# UPDATED: Removed border/padding and added a smaller margin-top %>
         <div class="stats-bar" style="margin-top: -0.25em;">
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countRollercoaster || 0 %></h3>
+                 <h3 class="stat-type"><%= counts.countRollercoaster || 0 %></h3>
                 <p>Rollercoasters</p>
             </div>
             <div class="stat-card">
@@ -133,14 +167,14 @@
             <form action="/rides" method="GET">
                 <div class="filter-controls">
                     <div>
-                        <label for="search">General Search</label>
+                         <label for="search">General Search</label>
                         <input type="search" id="search" name="search" placeholder="Name, Location, Status, Type..." value="<%= search %>">
                     </div>
                     <div>
-                        <label for="filter_location">Location</label>
+                         <label for="filter_location">Location</label>
                         <select id="filter_location" name="filter_location">
                             <option value="">All Locations</option>
-                            <% locations.forEach(loc => { %>
+                             <% locations.forEach(loc => { %>
                                 <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
                                     <%= loc.location_name %>
                                 </option>
@@ -149,24 +183,24 @@
                     </div>
                     <div>
                         <label for="filter_type">Type</label>
-                        <select id="filter_type" name="filter_type">
+                         <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                             <% types.forEach(type => { %>
-                                <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
+                                 <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
                                     <%= type.ride_type %>
                                 </option>
-                            <% }); %>
+                             <% }); %>
                         </select>
                     </div>
                     <div>
                         <label for="filter_status">Status</label>
-                        <select id="filter_status" name="filter_status">
+                         <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <% statuses.forEach(status => { %>
-                                <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
+                                 <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
                                     <%= status.ride_status %>
                                 </option>
-                            <% }); %>
+                             <% }); %>
                         </select>
                     </div>
                 </div>
@@ -176,12 +210,12 @@
                         <a href="/rides" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-                <% if (currentSort && currentDir) { %>
+                 <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
                 <% } %>
             </form>
-        </div>
+         </div>
 
         <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/rides/new" class="add-button">Add New Ride</a>
@@ -196,7 +230,7 @@
                         nextDir = 'desc';
                         indicator = '▲'; 
                     } else if (currentDir === 'desc') {
-                        nextDir = 'none'; 
+                        nextDir = 'none';
                         indicator = '▼';
                     }
                 }
@@ -218,63 +252,74 @@
                 <tr>
                     <th class="sortable">
                         <a href="<%= nameSort.href %>">
-                            <span>Name</span>
+                             <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+                     <th class="sortable">
                         <a href="<%= typeSort.href %>">
                             <span>Type</span>
                             <span class="sort-indicator"><%= typeSort.indicator %></span>
-                        </a>
+                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= locationSort.href %>">
-                            <span>Location</span>
+                             <span>Location</span>
                             <span class="sort-indicator"><%= locationSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+                     <th class="sortable">
                         <a href="<%= statusSort.href %>">
                             <span>Status</span>
                             <span class="sort-indicator"><%= statusSort.indicator %></span>
-                        </a>
+                         </a>
                     </th>
                     <th>Update Status</th>
                     <th>Actions</th>
                 </tr>
-            </thead>
+             </thead>
             <tbody>
                 <% rides.forEach(ride => { %>
                     <tr>
                         <td><%= ride.ride_name %></td>
-                        <td><%= ride.ride_type %></td>
+                         <td><%= ride.ride_type %></td>
                         <td><%= ride.location_name %></td>
                         <td>
                             <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
-                        </td>
+                         </td>
                         <td>
-                            <% if (user.role === 'Admin' ||
- user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                                 <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
                                     <select name="ride_status">
-                                        <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
+                                         <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
                                         <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
-                                        <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
+                                         <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
                                     </select>
-                                    <button type="submit">Set</button>
+                                     <button type="submit">Set</button>
                                 </form>
                             <% } else { %>
                                 <span>No Access</span>
                             <% } %>
                         </td>
                         <td>
-                            <% if (user.role === 'Admin' ||
- user.role === 'Park Manager' || user.role === 'Location Manager' ||
- user.role === 'Maintenance') { %>
-                                <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View History</a>
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
+                                <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View Maintenance</a>
                             <% } %>
-                            <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>
+
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                <a href="/rides/history/<%= ride.ride_id %>" class="action-link run-history-link">View Run History</a>
+                            <% } %>
+                        
+                             <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>
+                            
+                            <%# --- Log Ride Run Link with disabled state --- %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                <% if (ride.ride_status === 'BROKEN') { %>
+                                    <span class="log-run-link-disabled">Log Run</span>
+                                <% } else { %>
+                                    <a href="/rides/log/<%= ride.ride_id %>" class="action-link log-run-link">Log Run</a>
+                                <% } %>
+                            <% } %>
                         </td>
                     </tr>
                 <% }); %>

@@ -75,20 +75,15 @@
                 You are logged in as <strong><%= user.role %></strong>.
             </p>
 
-            <% if (user.role === 'Vendor Manager' && user.vendorNames && user.vendorNames.length > 0) { %>
+            <% if ((user.role === 'Staff' || user.role === 'Location Manager') && user.locationName) { %>
                 <div class="assignment-info">
-                    <strong>You are assigned to the following vendors:</strong>
-                    <ul>
-                        <% user.vendorNames.forEach(name => { %>
-                            <li><%= name %></li>
-                        <% }); %>
-                    </ul>
+                    <strong>You are assigned to: <%= user.locationName %></strong>
                 </div>
             <% } %>
 
             <div class="card-container">
 
-            <%# UPDATED: Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
+            <%# Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
                 <div class="card">
                     <h3>Rides & Maintenance</h3>
@@ -97,16 +92,16 @@
                 </div>
             <% } %>
 
-            <%# UPDATED: Card for Staff, Manager, Admin (NOT HR or Maintenance) %>
+            <%# Card for Staff, Manager, Admin (NOT HR or Maintenance) %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
-                <div class="card">
+                 <div class="card">
                     <h3>Guest Services</h3>
                     <a href="/members">Manage Members</a>
                     <a href="/visits/new">Log Park Entry</a>
                 </div>
             <% } %>
 
-            <%# Card for Admin and Manager (No Change) %>
+            <%# Card for Admin and Manager %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                 <div class="card">
                     <h3>Park Administration</h3>
@@ -122,16 +117,20 @@
                 </div>
             <% } %>
 
-            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager' || user.role === 'Location Manager') { %>
-                <div class="card">
+            <%# MODIFIED: Show for Staff, but hide one link %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                 <div class="card">
                     <h3>Retail & Inventory</h3>
-                    <a href="/items">Manage Master Item List</a>
-                    <a href="/inventory">View All Inventory</a>
+                    <%# Staff cannot see the master item list %>
+                    <% if (user.role !== 'Staff') { %>
+                        <a href="/items">Manage Master Item List</a>
+                    <% } %>
+                    <a href="/inventory">View Park Inventory</a>
                     <a href="/inventory/manage">Set/Update Inventory</a>
                 </div>
             <% } %>
 
-             <%# Card for Admin and HR (No Change) %>
+             <%# Card for Admin and HR %>
             <% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff' || user.role === 'Location Manager') { %>
                 <div class="card">
                     <h3>Human Resources</h3>

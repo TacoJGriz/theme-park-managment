@@ -6,7 +6,8 @@
 	justify-content: space-between;
 	align-items: center;
 	color: white;
-	margin-bottom: 1em; /* Add margin below the navbar */
+	margin-bottom: 1em;
+	/* Add margin below the navbar */
 	min-height: 50px; /* Set a fixed height */
 	}
 	.nav-links {
@@ -20,9 +21,11 @@
 	transition: background-color 0.2s;
 	margin-right: 5px; /* Spacing between links */
 	display: flex; /* Use flex to align text */
-	align-items: center; /* Center text vertically */
+	align-items: center;
+	/* Center text vertically */
 	height: 100%; /* Make link fill the nav height */
-	box-sizing: border-box; /* Include padding in height */
+	box-sizing: border-box;
+	/* Include padding in height */
 	background-color: transparent;
 	border: none;
 	font-family: inherit;
@@ -52,7 +55,8 @@
 	height: 100%;
 	}
 	.dropdown .dropbtn {
-	font-weight: normal; /* Match normal link weight */
+	font-weight: normal;
+	/* Match normal link weight */
 	}
 	.dropdown-content {
 	display: none;
@@ -68,7 +72,8 @@
 	padding: 12px 16px;
 	text-decoration: none;
 	display: block;
-	height: auto; /* Override nav-link height */
+	height: auto;
+	/* Override nav-link height */
 	line-height: 1.5; /* Normal line height */
 	}
 	.dropdown-content a:hover {
@@ -101,10 +106,12 @@
 			<button class="dropbtn">HR ▼</button>
 			<div class="dropdown-content">
 				<a href="/users">Employees</a>
-				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff') { %>
+				<% if (user.role === 'Admin' || user.role === 'Head of HR' 
+|| user.role === 'HR Staff') { %>
 				<a href="/employees/pending" class="special-link">Pending Hires</a>
 				<% } %>
-				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'Park Manager') { %>
+				<%# MODIFIED: Added Location Manager for inventory approvals %>
+				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 				<a href="/approvals" class="special-link">Pending Requests</a>
 				<% } %>
 			</div>
@@ -112,7 +119,8 @@
 		<% } %>
 
 		<%# --- Management Dropdown --- %>
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+		<% if (user.role === 'Admin' ||
+user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Management ▼</button>
 			<div class="dropdown-content">
@@ -128,25 +136,30 @@
 		</div>
 		<% } %>
 
-		<%# --- Retail Dropdown --- %>
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Vendor Manager' || user.role === 'Location Manager') { %>
+		<%# --- MODIFIED: Retail Dropdown (Removed Vendor Manager, Added Staff) --- %>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Retail ▼</button>
 			<div class="dropdown-content">
+				<%# MODIFIED: Staff cannot see master item list %>
+				<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 				<a href="/items">Items</a>
+				<% } %>
 				<a href="/inventory">Inventory</a>
 			</div>
 		</div>
 		<% } %>
 
 		<%# --- Guests Dropdown --- %>
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { 
+%>
 		<div class="dropdown">
 			<button class="dropbtn">Guests ▼</button>
 			<div class="dropdown-content">
 				<a href="/visits/new">Log Park Entry</a>
 				<a href="/members">Manage Members</a>
-				<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+				<% if (user.role === 'Admin' ||
+user.role === 'Park Manager') { %>
 				<a href="/memberships/types">Membership Types</a>
 				<a href="/ticket-types">Ticket Types</a>
 				<% } %>
@@ -181,4 +194,3 @@
 	</div>
 </nav>
 <% } %>
-

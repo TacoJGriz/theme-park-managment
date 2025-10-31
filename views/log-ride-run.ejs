@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Ride Run</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        h1 small { color: #007bff; font-weight: bold; }
+        form { max-width: 500px; margin: 1em auto 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 1.1em; }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        button:hover { background-color: #218838; }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+        .cancel-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Log Run for: <small><%= ride.ride_name %></small></h1>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <p class="error"><%= error %></p>
+    <% } %>
+
+    <form action="/rides/run/<%= ride.ride_id %>" method="POST">
+        <div>
+            <label for="capacity_percentage">Estimated Capacity Percentage:</label>
+            <select id="capacity_percentage" name="capacity_percentage" required>
+                <option value="1">1% (Testing/Empty)</option>
+                <option value="5">5%</option>
+                <option value="10">10%</option>
+                <option value="25">25%</option>
+                <option value="50">50%</option>
+                <option value="75">75%</option>
+                <option value="100">100% (Full)</option>
+            </select>
+        </div>
+        <br>
+        <button type="submit">Submit Run</button>
+        <a href="/rides" class="cancel-link">Cancel</a>
+    </form>
+</body>
+</html>

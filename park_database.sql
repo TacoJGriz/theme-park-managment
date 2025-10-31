@@ -168,7 +168,7 @@ CREATE TABLE visits (
     membership_id INT,
     visit_date DATETIME,
     exit_time TIME,
-    ticket_type_id INT NOT NULL,  -- MODIFIED: Replaced ENUM
+    ticket_type_id INT NOT NULL,
     ticket_price DECIMAL(10,2),
     discount_amount DECIMAL(10,2),
     -- Keys
@@ -219,19 +219,16 @@ CREATE TABLE daily_stats (
     CONSTRAINT chk_stats_count_positive CHECK (visitor_count >= 0)
 );
 
--- UPDATED: Removed manager_id and its foreign key
 CREATE TABLE vendors (
     vendor_id INT NOT NULL AUTO_INCREMENT,
     vendor_name VARCHAR(100) NOT NULL UNIQUE,
     location_id INT,
-    -- manager_id INT, -- REMOVED
     -- keys
     PRIMARY KEY (vendor_id),
     FOREIGN KEY (location_id)
         REFERENCES location (location_id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
-    -- REMOVED: Foreign key for manager_id
 );
 
 CREATE TABLE item (
@@ -254,6 +251,25 @@ CREATE TABLE inventory (
     FOREIGN KEY (vendor_id)
         REFERENCES vendors (vendor_id),
     CONSTRAINT chk_count_positive CHECK (count >= 0)
+);
+
+CREATE TABLE inventory_requests (
+    request_id INT NOT NULL AUTO_INCREMENT,
+    vendor_id INT NOT NULL,
+    item_id INT NOT NULL,
+    requested_count INT NOT NULL,
+    requested_by_id INT,
+    location_id INT, -- For filtering approvals by Location Manager
+    request_date DATE NOT NULL DEFAULT (CURDATE()),
+    status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+    
+    PRIMARY KEY (request_id),
+    FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES item(item_id) ON DELETE CASCADE,
+    FOREIGN KEY (requested_by_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (location_id) REFERENCES location(location_id) ON DELETE SET NULL,
+
+    CONSTRAINT chk_req_count_positive CHECK (requested_count >= 0)
 );
 
 CREATE TABLE daily_ride (

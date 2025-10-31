@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Requests</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #6c757d; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        /* Status-specific styles */
+        .status-Pending { background-color: #fff3cd; font-weight: bold; }
+        .status-Approved { color: #155724; }
+        .status-Rejected { color: #721c24; text-decoration: line-through; }
+        
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
+        .action-link:hover { text-decoration: underline; }
+        
+        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Inventory Requests</h1>
+        <a href="/inventory" class="back-link">&laquo; Back to Park Inventory</a>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Item</th>
+                    <th>Vendor</th>
+                    <th>Amount Requested</th>
+                    <th>Requested By</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (requests.length === 0) { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No inventory requests found.</td>
+                    </tr>
+                <% } %>
+                <% requests.forEach(req => { %>
+                    <tr class="status-<%= req.status %>">
+                        <td><%= req.request_date.toISOString().substring(0, 10) %></td>
+                        <td><%= req.status %></td>
+                        <td><%= req.item_name %></td>
+                        <td><%= req.vendor_name %></td>
+                        <td><%= req.requested_count %></td>
+                        <td><%= req.requester_name %></td>
+                        <td>
+                            <% if (req.status === 'Pending' && user.id === req.requested_by_id) { %>
+                                <a href="/inventory/request/edit/<%= req.request_id %>" class="action-link">Edit</a>
+                            <% } else if (req.status === 'Pending') { %>
+                                (Pending)
+                            <% } else { %>
+                                ---
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

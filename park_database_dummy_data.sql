@@ -141,3 +141,11 @@ WHERE employee_id = 3;
 UPDATE maintenance
 SET pending_employee_id = 11, assignment_requested_by = 5
 WHERE maintenance_id = 1;
+
+-- ADD PENDING INVENTORY REQUESTS FOR APPROVAL DEMO ***
+INSERT INTO inventory_requests (vendor_id, item_id, requested_count, requested_by_id, location_id, request_date, status)
+VALUES
+-- Request 1: From Han Solo (Staff, ID 7) for The Emporium (Vendor 3, Location 4)
+(3, 4, 200, 7, 4, '2025-10-25', 'Pending'),
+-- Request 2: From Donald Duck (Staff, ID 3) for Pecos Bill (Vendor 2, Location 1)
+(2, 1, 500, 3, 1, '2025-10-24', 'Pending');
