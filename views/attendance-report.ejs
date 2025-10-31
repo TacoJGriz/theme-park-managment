@@ -7,7 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        /* UPDATED: Increased max-width for a wider layout */
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
         form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
         .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
@@ -15,7 +16,17 @@
         .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
         button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
         button:hover { background-color: #0056b3; }
-        .chart-container { margin-top: 2em; border: 1px solid #ddd; padding: 1em; background: #fff; border-radius: 4px; }
+        
+        /* UPDATED: Added min-height, position:relative, and increased padding/radius */
+        .chart-container { 
+            margin-top: 2em; 
+            border: 1px solid #ddd; 
+            padding: 1.5em; /* Increased padding */
+            background: #fff; 
+            border-radius: 8px; /* Smoother radius */
+            min-height: 500px; /* <-- This gives the chart a larger vertical space */
+            position: relative; /* Recommended for Chart.js responsiveness */
+        }
         .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
     </style>
 </head>

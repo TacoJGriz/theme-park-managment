@@ -22,9 +22,18 @@ CREATE TABLE employee_demographics (
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
     is_pending_approval BOOL NOT NULL DEFAULT FALSE,
+    
+    -- NEW COLUMNS FOR HR WAGE APPROVAL
+    pending_hourly_rate DECIMAL(10, 2) DEFAULT NULL,
+    rate_change_requested_by INT DEFAULT NULL,
+    
     -- Keys
     PRIMARY KEY (employee_id),
     FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
+    
+    -- NEW FOREIGN KEY
+    FOREIGN KEY (rate_change_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+
     -- Constraints
     CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date), -- force termination date to be not null for active employees, OR if terminated, the termination date must be after hire date
     CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)), -- force employeees to be at least 16 years old (no child labor allowed)
@@ -70,7 +79,7 @@ CREATE TABLE rides (
     PRIMARY KEY (ride_id),
     FOREIGN KEY (location_id)
         REFERENCES location (location_id),
-	CONSTRAINT chk_weight CHECK (max_weight >= 0),
+    CONSTRAINT chk_weight CHECK (max_weight >= 0),
     CONSTRAINT chk_height CHECK (min_height >= 0),
     CONSTRAINT chk_capacity CHECK (capacity >= 0)
 );
@@ -84,14 +93,24 @@ CREATE TABLE maintenance (
     summary VARCHAR(250),
     employee_id INT,
     cost DECIMAL(10,2),
+
+    -- NEW COLUMNS FOR MAINTENANCE REASSIGNMENT APPROVAL
+    pending_employee_id INT DEFAULT NULL,
+    assignment_requested_by INT DEFAULT NULL,
+
     -- Keys
     PRIMARY KEY (maintenance_id),
     FOREIGN KEY (ride_id)
         REFERENCES rides (ride_id)
         ON DELETE CASCADE,
-	FOREIGN KEY (employee_id)
+    FOREIGN KEY (employee_id)
         REFERENCES employee_demographics (employee_id)
         ON DELETE SET NULL,
+        
+    -- NEW FOREIGN KEYS
+    FOREIGN KEY (pending_employee_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (assignment_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+        
     -- Constraints
     CONSTRAINT chk_maintenance_dates CHECK (start_date IS NULL OR start_date >= report_date),
     CONSTRAINT chk_completion_date CHECK (end_date IS NULL OR end_date >= start_date),
@@ -118,7 +137,7 @@ CREATE TABLE membership (
     date_of_birth DATE NOT NULL,
     type_id INT NOT NULL,
     start_date DATE NOT NULL DEFAULT (CURDATE()),
-	end_date DATE NOT NULL,
+    end_date DATE NOT NULL,
     
     PRIMARY KEY (membership_id),
     
@@ -154,7 +173,7 @@ CREATE TABLE visits (
         REFERENCES membership (membership_id),
     FOREIGN KEY (ticket_type_id)      -- NEW: Foreign key
         REFERENCES ticket_types(ticket_type_id),
-	-- Constraints
+    -- Constraints
     CONSTRAINT chk_positive_prices CHECK (ticket_price >= 0 AND discount_amount >= 0),
     CONSTRAINT chk_valid_discount CHECK (discount_amount <= ticket_price)
 );
@@ -193,7 +212,7 @@ CREATE TABLE daily_stats (
     date_rec DATE NOT NULL,
     visitor_count INT,
     PRIMARY KEY (date_rec),
-	CONSTRAINT chk_stats_count_positive CHECK (visitor_count >= 0)
+    CONSTRAINT chk_stats_count_positive CHECK (visitor_count >= 0)
 );
 
 
@@ -276,7 +295,7 @@ CREATE TABLE zone_entry (
     FOREIGN KEY (visit_id) 
         REFERENCES visits (visit_id)
         ON DELETE CASCADE,
-	-- Constraints
+    -- Constraints
     FOREIGN KEY (location_id) 
         REFERENCES location (location_id)
         ON DELETE RESTRICT

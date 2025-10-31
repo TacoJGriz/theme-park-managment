@@ -23,10 +23,28 @@
  }
         tr:hover { background-color: #f1f1f1;
  }
-        .action-link { text-decoration: none; color: #28a745; font-weight: bold;
- }
+        .action-link {
+            text-decoration: none;
+            color: #28a745;
+            font-weight: bold;
+            display: block; /* Ensures links stack vertically */
+            margin-bottom: 5px; /* Adds space between links */
+        }
         .action-link:hover { text-decoration: underline;
  }
+        /* --- NEW: Style for the reassign link --- */
+        .reassign-link {
+            color: #007bff;
+        }
+        /* --- NEW: Style for the pending note --- */
+        .pending-note {
+            font-style: italic;
+            color: #856404; /* A brownish-yellow */
+            font-size: 0.9em;
+            display: block;
+            margin-top: 5px;
+        }
+        
         .status-open { background-color: #fff;
  }
         .status-closed { background-color: #ffeeba;
@@ -60,30 +78,45 @@
                     <th>Assigned To</th>
                     <th>Completed On</th>
                     <th>Cost</th>
-                    <th>Status</th>
+                    <th>Status / Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (maintenance_logs.length === 0) { %>
                     <tr>
-                        <td colspan="6">No maintenance records found for this ride.</td>
+                        <td colspan="6" style="text-align: center;">No maintenance records found for this ride.</td>
                     </tr>
                 <% } %>
                 <% maintenance_logs.forEach(log => { %>
                     <tr class="<%= log.end_date ? 'status-closed' : 'status-open' %>">
                         <td><%= log.report_date.toISOString().substring(0, 10) %></td>
                         <td><%= log.summary %></td>
-                        <td><%= log.employee_name || 'Unassigned' %></td>
+                        <td>
+                            <%# --- MODIFIED: Show pending request --- %>
+                            <%= log.employee_name || 'Unassigned' %>
+                            <% if(log.pending_employee_name) { %>
+                                <span class="pending-note">Pending Reassignment to: <%= log.pending_employee_name %></span>
+                            <% } %>
+                        </td>
                         <td><%= log.end_date ? log.end_date.toISOString().substring(0, 10) : '---' %></td>
                         <td>$<%= log.cost ? parseFloat(log.cost).toFixed(2) : '0.00' %></td>
                         <td>
+                            <%# --- MODIFIED: Added Reassign Link --- %>
                             <% if (log.end_date) { %>
                                 Completed
                             <% } else { %>
-                                <%# NEW: Only show Complete link to Maint, Park Mgr, Admin %>
+                                <%# Check for "Complete" permission %>
                                 <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Maintenance') { %>
                                     <a href="/maintenance/complete/<%= log.maintenance_id %>" class="action-link">Complete Work Order</a>
-                                <% } else { %>
+                                <% } %>
+
+                                <%# Check for "Reassign" permission %>
+                                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
+                                    <a href="/maintenance/reassign/<%= log.maintenance_id %>" class="action-link reassign-link">Reassign</a>
+                                <% } %>
+
+                                <%# Show "Open" status if user has no actions %>
+                                <% if (user.role === 'Staff' || (user.role === 'Location Manager' && !log.end_date)) { %>
                                     <span style="font-weight: bold; color: #dc3545;">Open</span>
                                 <% } %>
                             <% } %>

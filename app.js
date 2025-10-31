@@ -43,7 +43,6 @@ const isAuthenticated = (req, res, next) => {
     // User is not logged in, redirect to login page
     res.redirect('/login');
 };
-
 const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Admin') { return next(); }
     res.status(403).send('Forbidden: Admins only');
@@ -168,6 +167,30 @@ const getReportSettings = (selectedDate, grouping) => {
     }
 
     return { startDate, endDate, sqlDateFormat, labelFormat };
+};
+// For approving HR wage changes
+const canApproveWages = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Head of HR') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Admin or Head of HR access required.');
+};
+// For approving maintenance reassignments
+const canApproveMaintenance = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Admin or Park Manager access required.');
+};
+const canViewApprovals = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Head of HR' || role === 'Park Manager') {
+        return next();
+    }
+    // Redirect or send forbidden if they aren't an approver
+    res.status(403).send('Forbidden: You do not have permission to view this page.');
 };
 
 // Middleware to pass user data to all views
@@ -336,6 +359,130 @@ app.get(['/', '/dashboard'], isAuthenticated, (req, res) => {
     res.render('dashboard');
 });
 
+// --- APPROVAL WORKFLOW ROUTES ---
+app.get('/approvals', isAuthenticated, canViewApprovals, async (req, res) => {
+    try {
+        const { role } = req.session.user;
+        let rateChanges = [];
+        let reassignments = [];
+
+        // Only fetch wage approvals if user is Admin or Head of HR
+        if (role === 'Admin' || role === 'Head of HR') {
+            const rateChangeQuery = `
+                SELECT 
+                    target.employee_id, 
+                    target.first_name, 
+                    target.last_name, 
+                    target.hourly_rate, 
+                    target.pending_hourly_rate,
+                    requester.first_name as requester_first_name,
+                    requester.last_name as requester_last_name
+                FROM employee_demographics as target
+                JOIN employee_demographics as requester ON target.rate_change_requested_by = requester.employee_id
+                WHERE target.pending_hourly_rate IS NOT NULL
+            `;
+            const [rateResults] = await pool.query(rateChangeQuery);
+            rateChanges = rateResults;
+        }
+
+        // Only fetch maintenance approvals if user is Admin or Park Manager
+        if (role === 'Admin' || role === 'Park Manager') {
+            const reassignmentQuery = `
+                SELECT
+                    m.maintenance_id,
+                    r.ride_name,
+                    m.summary,
+                    CONCAT(current_emp.first_name, ' ', current_emp.last_name) as current_employee_name,
+                    CONCAT(pending_emp.first_name, ' ', pending_emp.last_name) as pending_employee_name,
+                    CONCAT(requester.first_name, ' ', requester.last_name) as requester_name
+                FROM maintenance m
+                JOIN rides r ON m.ride_id = r.ride_id
+                LEFT JOIN employee_demographics current_emp ON m.employee_id = current_emp.employee_id
+                JOIN employee_demographics pending_emp ON m.pending_employee_id = pending_emp.employee_id
+                JOIN employee_demographics requester ON m.assignment_requested_by = requester.employee_id
+                WHERE m.pending_employee_id IS NOT NULL AND m.end_date IS NULL
+            `;
+            const [reassignmentResults] = await pool.query(reassignmentQuery);
+            reassignments = reassignmentResults;
+        }
+
+        res.render('approvals', { rateChanges, reassignments });
+    } catch (error) {
+        console.error("Error fetching approvals:", error);
+        res.status(500).send("Error loading approvals page.");
+    }
+});
+
+// Approve HR Wage Change
+app.post('/approve/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE employee_demographics 
+            SET hourly_rate = pending_hourly_rate, 
+                pending_hourly_rate = NULL, 
+                rate_change_requested_by = NULL 
+            WHERE employee_id = ?
+        `;
+        await pool.query(sql, [req.params.employee_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error approving rate change:", error);
+        res.status(500).send("Error processing approval.");
+    }
+});
+
+// Reject HR Wage Change
+app.post('/reject/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE employee_demographics 
+            SET pending_hourly_rate = NULL, 
+                rate_change_requested_by = NULL 
+            WHERE employee_id = ?
+        `;
+        await pool.query(sql, [req.params.employee_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error rejecting rate change:", error);
+        res.status(500).send("Error processing rejection.");
+    }
+});
+
+// Approve Maintenance Reassignment
+app.post('/approve/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE maintenance
+            SET employee_id = pending_employee_id,
+                pending_employee_id = NULL,
+                assignment_requested_by = NULL
+            WHERE maintenance_id = ?
+        `;
+        await pool.query(sql, [req.params.maintenance_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error approving reassignment:", error);
+        res.status(500).send("Error processing approval.");
+    }
+});
+
+// Reject Maintenance Reassignment
+app.post('/reject/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE maintenance
+            SET pending_employee_id = NULL,
+                assignment_requested_by = NULL
+            WHERE maintenance_id = ?
+        `;
+        await pool.query(sql, [req.params.maintenance_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error rejecting reassignment:", error);
+        res.status(500).send("Error processing rejection.");
+    }
+});
+
 // --- USER & EMPLOYEE MANAGEMENT --- (No changes needed, still AdminOrHR)
 app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
     try {
@@ -352,7 +499,17 @@ app.get('/users', isAuthenticated, canViewUsers, async (req, res) => {
         query += ' ORDER BY last_name, first_name';
         const [users] = await pool.query(query, params);
 
-        res.render('users', { users: users });
+        // MODIFIED: Pass success/error flash messages from session to the view
+        res.render('users', {
+            users: users,
+            success: req.session.success, // Pass the success message
+            error: req.session.error       // Pass an error message 
+        });
+
+        // Clear the messages from the session after displaying them once
+        req.session.success = null;
+        req.session.error = null;
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error querying the database');
@@ -499,24 +656,24 @@ app.get('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res
         res.status(500).send('Error loading edit page');
     }
 });
-app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => { // Use canAddEmployees
-    const employeeId = req.params.id; // This is the Target ID
-    const actor = req.session.user; // This is the Actor (logged-in user)
+app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const employeeId = req.params.id;
+    const actor = req.session.user;
 
-    let targetRole;
+    let targetUser; // Will store the employee's state *before* edits
     try {
-        // We must fetch the target user's role from the DB *before* updating
-        const [targetUser] = await pool.query('SELECT employee_type FROM employee_demographics WHERE employee_id = ?', [employeeId]);
-        if (targetUser.length === 0) {
+        // Fetch the full target user record to check permissions and old hourly rate
+        const [targetUserResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+        if (targetUserResult.length === 0) {
             return res.status(404).send('Employee not found');
         }
-        targetRole = targetUser[0].employee_type;
+        targetUser = targetUserResult[0];
+        const targetRole = targetUser.employee_type;
 
         // --- PERMISSION CHECK ---
         if (actor.role === 'Head of HR' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
-
         if (actor.role === 'HR Staff' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
         }
@@ -529,9 +686,12 @@ app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, re
     try {
         connection = await pool.getConnection();
 
+        // Clear any *old* pending rate changes for this user, as this is a new edit
+        // This prevents a stale request from being approved later
+        await connection.query('UPDATE employee_demographics SET pending_hourly_rate = NULL, rate_change_requested_by = NULL WHERE employee_id = ?', [employeeId]);
 
         if (actor.role === 'Admin' || actor.role === 'Head of HR') {
-            // ADMIN and Head of HR can edit everything
+            // ADMIN and Head of HR can edit everything directly
             const {
                 first_name, last_name, gender, phone_number, email,
                 street_address, city, state, zip_code, birth_date,
@@ -555,21 +715,22 @@ app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, re
                 employeeId
             ]);
 
+            // Set generic success message
+            req.session.success = 'Employee details updated successfully.';
+
         } else if (actor.role === 'HR Staff') {
-            // HR Staff can only edit non-sensitive fields
+            // HR Staff can edit personal info directly, but wage changes require approval
             const {
                 first_name, last_name, gender, phone_number, email,
                 street_address, city, state, zip_code, birth_date,
-                hire_date, employee_type, location_id, is_active
+                hire_date, employee_type, location_id, is_active,
+                hourly_rate // Read the hourly rate from the form
             } = req.body;
             const supervisor_id = req.body.supervisor_id ? req.body.supervisor_id : null;
             const termination_date = req.body.termination_date ? req.body.termination_date : null;
-            // Note: The sensitive fields (hourly_rate, employee_type, etc.) are
-            // deliberately *not* read from req.body, so they cannot be updated
-            // even if a user tries to send them in the request.
 
-            // HR Staff can update all fields EXCEPT hourly_rate
-            const sql = `
+            // 1. Update all non-sensitive information
+            const personalInfoSql = `
                 UPDATE employee_demographics SET
                 first_name = ?, last_name = ?, gender = ?, phone_number = ?, email = ?,
                 street_address = ?, city = ?, state = ?, zip_code = ?, birth_date = ?,
@@ -577,24 +738,47 @@ app.post('/employees/edit/:id', isAuthenticated, canAddEmployees, async (req, re
                 supervisor_id = ?, is_active = ?
                 WHERE employee_id = ?
             `;
-            await connection.query(sql, [
+            await connection.query(personalInfoSql, [
                 first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
                 birth_date, hire_date, termination_date, employee_type, location_id,
                 supervisor_id, is_active === '1',
                 employeeId
             ]);
+
+            // 2. Handle the hourly rate change
+            const newRate = parseFloat(hourly_rate);
+            const currentRate = parseFloat(targetUser.hourly_rate);
+
+            if (newRate !== currentRate) {
+                // If rate is different, send it for approval
+                const rateChangeSql = `
+                    UPDATE employee_demographics 
+                    SET pending_hourly_rate = ?, rate_change_requested_by = ? 
+                    WHERE employee_id = ?
+                `;
+                await connection.query(rateChangeSql, [newRate, actor.id, employeeId]);
+
+                // SET THE FLASH MESSAGE
+                req.session.success = 'Wage update request sent for approval.';
+            } else {
+                // No wage change, just set a generic success message
+                req.session.success = 'Employee details updated successfully.';
+            }
         }
 
         res.redirect('/users'); // Success
 
     } catch (error) {
-        // Error handling logic (unchanged from original)
+        // Error handling
         console.error("Error updating employee:", error);
         try {
+            // Re-fetch data to render the edit page again
             const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
             const employee = employeeResult.length > 0 ? employeeResult[0] : {};
             const [locations] = await pool.query('SELECT location_id, location_name FROM location');
             const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
+
+            // Render the edit page again, this time with an error
             res.render('edit-employee', {
                 employee: employee,
                 locations: locations,
@@ -1214,6 +1398,122 @@ app.post('/maintenance/complete/:maintenance_id', isAuthenticated, isMaintenance
         }
     } finally {
         if (connection) connection.release();
+    }
+});
+app.get('/maintenance/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
+    // Role check: Allow Maintenance, Location Manager, Park Manager, Admin
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
+        return next();
+    }
+    res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
+}, async (req, res) => {
+    try {
+        const { maintenance_id } = req.params;
+        const { role, locationId } = req.session.user;
+
+        // Fetch the maintenance log
+        const [logResult] = await pool.query(
+            `SELECT m.*, r.ride_name, r.location_id 
+             FROM maintenance m 
+             JOIN rides r ON m.ride_id = r.ride_id 
+             WHERE m.maintenance_id = ?`,
+            [maintenance_id]
+        );
+
+        if (logResult.length === 0) {
+            return res.status(404).send('Maintenance log not found.');
+        }
+        const log = logResult[0];
+
+        // Permission check for Location Manager
+        if (role === 'Location Manager' && log.location_id !== locationId) {
+            return res.status(403).send('Forbidden: You can only reassign work for rides in your location.');
+        }
+
+        // Fetch available Maintenance employees
+        const [employees] = await pool.query(
+            `SELECT employee_id, first_name, last_name 
+             FROM employee_demographics 
+             WHERE employee_type = 'Maintenance' AND is_active = TRUE`
+        );
+
+        // You will need to create this new view file
+        res.render('reassign-maintenance', {
+            log: log,
+            employees: employees,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading reassignment page:", error);
+        res.status(500).send('Error loading page.');
+    }
+});
+
+// POST to submit a reassignment request or direct assignment
+app.post('/maintenance/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
+    // Role check: Allow Maintenance, Location Manager, Park Manager, Admin
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
+        return next();
+    }
+    res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
+}, async (req, res) => {
+    const { maintenance_id } = req.params;
+    const { new_employee_id, ride_id } = req.body;
+    const { role, id: actorId, locationId } = req.session.user;
+
+    try {
+        // Permission check for Location Manager before submission
+        if (role === 'Location Manager') {
+            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [ride_id]);
+            if (rideLoc.length === 0 || rideLoc[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only reassign work for rides in your location.');
+            }
+        }
+
+        // Logic based on role
+        if (role === 'Maintenance') {
+            // Maintenance staff must submit a request for approval
+            await pool.query(
+                'UPDATE maintenance SET pending_employee_id = ?, assignment_requested_by = ? WHERE maintenance_id = ?',
+                [new_employee_id, actorId, maintenance_id]
+            );
+        } else {
+            // Admin, Park Manager, and Location Manager can reassign directly
+            await pool.query(
+                'UPDATE maintenance SET employee_id = ?, pending_employee_id = NULL, assignment_requested_by = NULL WHERE maintenance_id = ?',
+                [new_employee_id, maintenance_id]
+            );
+        }
+
+        res.redirect(`/maintenance/ride/${ride_id}`);
+
+    } catch (error) {
+        console.error("Error reassigning maintenance:", error);
+        // On error, re-render the page
+        try {
+            const [logResult] = await pool.query(
+                `SELECT m.*, r.ride_name 
+                 FROM maintenance m 
+                 JOIN rides r ON m.ride_id = r.ride_id 
+                 WHERE m.maintenance_id = ?`,
+                [maintenance_id]
+            );
+            const [employees] = await pool.query(
+                `SELECT employee_id, first_name, last_name 
+                 FROM employee_demographics 
+                 WHERE employee_type = 'Maintenance' AND is_active = TRUE`
+            );
+            res.render('reassign-maintenance', {
+                log: logResult[0] || { ride_id: ride_id, ride_name: 'Unknown', summary: 'Error' },
+                employees: employees,
+                error: "Error submitting reassignment."
+            });
+        } catch (fetchError) {
+            res.status(500).send("An error occurred while reassigning the work order.");
+        }
     }
 });
 

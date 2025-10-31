@@ -66,13 +66,14 @@
     <% } %>
 
     <%# --- NEW EJS LOGIC --- %>
-    <%# Create a variable to check if HOURLY RATE should be disabled %>
-    <% const isHourlyRateReadOnly = (user.role === 'HR Staff') ? 'disabled' : '' %>
-
-    <%# Show a helpful note to the HR user %>
-    <% if (user.role === 'HR Staff') { %>
-        <div class="info-note">
-            <strong>Note:</strong> Please contact an Admin or Head of HR to change pay.
+    <%# REMOVED the isHourlyRateReadOnly variable %>
+    
+    <%# The static info-note for HR Staff was removed as requested. %>
+    
+    <%# NEW: Show a note if a rate change is already pending %>
+    <% if (employee.pending_hourly_rate) { %>
+        <div class="info-note" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">
+            <strong>Pending Change:</strong> A request to change the hourly rate to <strong>$<%= parseFloat(employee.pending_hourly_rate).toFixed(2) %></strong> (requested by employee ID <%= employee.rate_change_requested_by %>) is awaiting approval.
         </div>
     <% } %>
 
@@ -145,7 +146,7 @@
                 </div>
                 <div>
                     <label for="hourly_rate">Hourly Rate:</label>
-                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isHourlyRateReadOnly %>>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>">
                 </div>
                  <div>
                     <label for="is_active">Status:</label>
@@ -212,3 +213,4 @@
     </form>
 </body>
 </html>
+

@@ -22,11 +22,41 @@
         .action-link:hover { text-decoration: underline;}
         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         .add-button:hover { background-color: #218838; }
+
+        /* --- NEW STYLES FOR FLASH MESSAGES --- */
+        .message {
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            border: 1px solid transparent;
+        }
+        .success {
+            color: #155724; /* Dark green text */
+            background-color: #d4edda; /* Light green background */
+            border-color: #c3e6cb; /* Green border */
+        }
+        .error {
+            color: #721c24; /* Dark red text */
+            background-color: #f8d7da; /* Light red background */
+            border-color: #f5c6cb; /* Red border */
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
+
+        <%# --- NEW: ADDED THIS BLOCK TO DISPLAY MESSAGES --- %>
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
+        <%# --- END OF NEW BLOCK --- %>
+
+
         <h1>Employee Report</h1>
         <a href="/employees/new" class="add-button">Add New Employee</a>
         <table>

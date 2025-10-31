@@ -156,3 +156,15 @@ INSERT INTO daily_ride (ride_id, dat_date, ride_count, run_count) VALUES
 INSERT INTO employee_ride_assignments (employee_id, ride_id, assignment_date, role) VALUES
 (3, 2, '2025-10-20', 'Operator'),
 (4, 3, '2025-10-20', 'Attendant');
+
+-- 18. ADD PENDING REQUESTS FOR APPROVAL DEMO
+-- Create pending records that require manager/admin approval
+-- Pay raise requested for Donald (ID 3) by Morty (HR Staff, ID 10)
+UPDATE employee_demographics
+SET pending_hourly_rate = 19.50, rate_change_requested_by = 10
+WHERE employee_id = 3;
+
+-- Maintenance reassignment requested for Thunder Mountain (Maint ID 1) to Chip (ID 11) by Goofy (ID 5)
+UPDATE maintenance
+SET pending_employee_id = 11, assignment_requested_by = 5
+WHERE maintenance_id = 1;
