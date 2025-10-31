@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,74 @@
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #007bff; color: white; }
+        
+        th.sortable a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        th.sortable a:hover { text-decoration: underline; }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+        
+        /* --- UPDATED: Styles for the filter bar --- */
+        .filter-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr; /* 4 columns */
+            gap: 1em;
+            align-items: flex-end; /* Aligns buttons to bottom */
+        }
+        .filter-controls label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .filter-controls input[type="search"],
+        .filter-controls select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box; /* Ensures padding doesn't break layout */
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* --- NEW: Shared button style --- */
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            text-decoration: none;  /* For <a> tag */
+            text-align: center;     /* For <a> tag */
+            box-sizing: border-box; /* For <a> tag */
+        }
+
+        /* --- UPDATED: Specific button styles --- */
+        .btn-filter { background-color: #007bff; }
+        
+        .btn-clear { 
+            background-color: #6c757d; 
+            /* All other styles are in .filter-btn */
+        }
+
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f1f1; }
         .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
@@ -28,14 +96,150 @@
     <%- include('partials/header') %>
     <div class="container">
         <h1>Park Rides</h1>
+        
+        <div class="filter-bar">
+            <form action="/rides" method="GET">
+                <div class="filter-controls">
+                    
+                    <div>
+                        <label for="search">General Search</label>
+                        <input type="search" id="search" name="search" 
+                               placeholder="Name, Location, Status, Type..." 
+                               value="<%= search %>">
+                    </div>
+                    
+                    <div>
+                        <label for="filter_location">Location</label>
+                        <select id="filter_location" name="filter_location">
+                            <option value="">All Locations</option>
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.location_id %>" 
+                                        <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
+                                    <%= loc.location_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filter_type">Type</label>
+                        <select id="filter_type" name="filter_type">
+                            <option value="">All Types</option>
+                            <% types.forEach(type => { %>
+                                <option value="<%= type.ride_type %>" 
+                                        <%= filters.type === type.ride_type ? 'selected' : '' %>>
+                                    <%= type.ride_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filter_status">Status</label>
+                        <select id="filter_status" name="filter_status">
+                            <option value="">All Statuses</option>
+                            <% statuses.forEach(status => { %>
+                                <option value="<%= status.ride_status %>" 
+                                        <%= filters.status === status.ride_status ? 'selected' : '' %>>
+                                    <%= status.ride_status %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-controls" style="margin-top: 1em;">
+                    <div style="grid-column: 1 / 4;"></div> <%# --- UPDATED: Added .filter-btn class to both elements --- %>
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="/rides" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                
+                <%# Hidden inputs to preserve sort order while filtering %>
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+
         <a href="/rides/new" class="add-button">Add New Ride</a>
+        
+        <% // --- EJS Logic Block ---
+        
+            // Helper function to generate sort link properties
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲'; 
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none'; 
+                        indicator = '▼';
+                    }
+                }
+                
+                // Build query params manually
+                let href = `/rides?search=${encodeURIComponent(search)}`;
+                
+                if (filters.type) {
+                    href += `&filter_type=${encodeURIComponent(filters.type)}`;
+                }
+                if (filters.status) {
+                    href += `&filter_status=${encodeURIComponent(filters.status)}`;
+                }
+                if (filters.location) {
+                    href += `&filter_location=${encodeURIComponent(filters.location)}`;
+                }
+                
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+
+                return {
+                    href: href,
+                    indicator: indicator
+                };
+            };
+            
+            const nameSort = getSortState('name');
+            const typeSort = getSortState('type');
+            const locationSort = getSortState('location');
+            const statusSort = getSortState('status');
+        %>
+
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Status</th>
+                    <th class="sortable">
+                        <a href="<%= nameSort.href %>">
+                            <span>Name</span>
+                            <span class="sort-indicator"><%= nameSort.indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= typeSort.href %>">
+                            <span>Type</span>
+                            <span class="sort-indicator"><%= typeSort.indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= locationSort.href %>">
+                            <span>Location</span>
+                            <span class="sort-indicator"><%= locationSort.indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= statusSort.href %>">
+                            <span>Status</span>
+                            <span class="sort-indicator"><%= statusSort.indicator %></span>
+                        </a>
+                    </th>
                     <th>Update Status</th>
                     <th>Actions</th>
                 </tr>
@@ -50,8 +254,8 @@
                             <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
                         </td>
                         <td>
-                            <%# NEW: Only show update form to managers %>
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                            <% if (user.role === 'Admin' ||
+ user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                                 <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
                                     <select name="ride_status">
                                         <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
@@ -65,8 +269,9 @@
                             <% } %>
                         </td>
                         <td>
-                            <%# NEW: Hide View History if user can't access it %>
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
+                            <% if (user.role === 'Admin' ||
+ user.role === 'Park Manager' || user.role === 'Location Manager' ||
+ user.role === 'Maintenance') { %>
                                 <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View History</a>
                             <% } %>
                             <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>

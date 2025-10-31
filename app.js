@@ -1096,22 +1096,102 @@ app.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, asy
 app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
+
+        // --- NEW: Read all query params ---
+        const {
+            search,
+            sort,
+            dir,
+            filter_type,
+            filter_status,
+            filter_location
+        } = req.query;
+
+        let orderBy = ' ORDER BY r.ride_name ASC'; // Default sort
+        let whereClauses = [];
+        let params = [];
+
+        // --- 1. Fetch data for filters ---
+        // We fetch these *before* applying location manager scope
+        const [allLocations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+        const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
+        const [allStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
+
+        // --- 2. Handle Location Manager Scope ---
+        if (role === 'Location Manager') {
+            whereClauses.push('r.location_id = ?');
+            params.push(locationId);
+        }
+
+        // --- 3. Handle Search Query (Now searches ride_type) ---
+        if (search) {
+            whereClauses.push(
+                '(r.ride_name LIKE ? OR l.location_name LIKE ? OR r.ride_status LIKE ? OR r.ride_type LIKE ?)'
+            );
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        }
+
+        // --- 4. NEW: Handle Specific Filters ---
+        if (filter_type) {
+            whereClauses.push('r.ride_type = ?');
+            params.push(filter_type);
+        }
+        if (filter_status) {
+            whereClauses.push('r.ride_status = ?');
+            params.push(filter_status);
+        }
+        if (filter_location) {
+            whereClauses.push('r.location_id = ?');
+            params.push(filter_location);
+        }
+
+        // --- 5. Handle Sort Query (No change from last step) ---
+        if (sort && dir && (dir === 'asc' || dir === 'desc')) {
+            const validSorts = {
+                name: 'r.ride_name',
+                type: 'r.ride_type',
+                location: 'l.location_name',
+                status: 'r.ride_status'
+            };
+            if (validSorts[sort]) {
+                orderBy = ` ORDER BY ${validSorts[sort]} ${dir.toUpperCase()}`;
+            }
+        }
+
+        // --- Build Final Query ---
         let query = `
             SELECT r.*, l.location_name
             FROM rides r
             LEFT JOIN location l ON r.location_id = l.location_id
         `;
-        let params = [];
 
-        // --- NEW: Scope query for Location Manager ---
-        if (role === 'Location Manager') {
-            query += ' WHERE r.location_id = ?';
-            params.push(locationId);
+        if (whereClauses.length > 0) {
+            query += ` WHERE ${whereClauses.join(' AND ')}`;
         }
-        
-        query += ' ORDER BY r.ride_name';
+
+        query += orderBy;
+
         const [rides] = await pool.query(query, params);
-        res.render('rides', { rides: rides });
+
+        // --- 6. Render with all data ---
+        res.render('rides', {
+            rides: rides,
+            search: search || "",
+            currentSort: sort,
+            currentDir: dir,
+            // Pass filter data to the view
+            locations: allLocations,
+            types: allTypes,
+            statuses: allStatuses,
+            // Pass current filter selections back to the view
+            filters: {
+                type: filter_type || "",
+                status: filter_status || "",
+                location: filter_location || ""
+            }
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching rides');
