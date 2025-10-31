@@ -4,51 +4,67 @@
     <meta charset="UTF-8">
     <title>Log Park Entry</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2.5em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        div { margin-bottom: 1.5em; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+ }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2.5em;
+ border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        form > div { margin-bottom: 1.5em;
+ } 
+        
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+ }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
+        
+        input#memberSearchPhone {
+            margin-bottom: 10px;
+        }
         
         .price-display {
             background-color: #f9f9f9;
-            border: 1px solid #eee;
+ border: 1px solid #eee;
             border-radius: 8px;
             padding: 1em;
             margin-top: 1.5em;
-        }
+ }
         .price-display h3 {
             margin-top: 0;
-            border-bottom: 1px solid #ddd;
+ border-bottom: 1px solid #ddd;
             padding-bottom: 0.5em;
         }
         .price-display p {
             display: flex;
-            justify-content: space-between;
+ justify-content: space-between;
             margin: 0.5em 0;
             font-size: 1.1em;
         }
         .price-display .final-price {
             font-weight: bold;
-            font-size: 1.3em;
+ font-size: 1.3em;
             color: #28a745;
             border-top: 2px solid #28a745;
             padding-top: 0.5em;
             margin-top: 0.5em;
-        }
+ }
         
-        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; width: 100%; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        button { padding: 12px 20px;
+ background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; width: 100%;
+ }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
+ margin-bottom: 15px; }
         .cancel-link {
             display: block;
-            margin-top: 1em;
+ margin-top: 1em;
             text-align: center;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
-        }
-        .cancel-link:hover { text-decoration: underline; }
+ }
+        .cancel-link:hover { text-decoration: underline;
+ }
     </style>
 </head>
 <body>
@@ -62,7 +78,7 @@
         <% } %>
 
         <div>
-            <label for="ticket_type_id">Ticket Type:</label>
+           <label for="ticket_type_id">Ticket Type:</label>
             <select id="ticket_type_id" name="ticket_type_id" required>
                 <option value="" selected disabled>-- Select a ticket type --</option>
                 <% ticketTypes.forEach(type => { %>
@@ -78,12 +94,19 @@
         </div>
         
         <div id="memberSelectBlock" style="display: none;">
-            <label for="membership_id">Select Member:</label>
+            <label for="memberSearchPhone">Search Member by Phone:</label>
+            <input type="text" id="memberSearchPhone" placeholder="Type phone number...">
+            
+            <label for="membership_id" style="margin-top: 1em;">Select Member:</label>
             <select id="membership_id" name="membership_id">
-                <option value="" selected disabled>-- Select an active member --</option>
+                <option value="" selected>-- Select from filtered list --</option>
                 <% activeMembers.forEach(member => { %>
-                    <option value="<%= member.membership_id %>">
-                        <%= member.last_name %>, <%= member.first_name %> (<%= member.email %>)
+                    <option 
+                        value="<%= member.membership_id %>" 
+                        data-phone="<%= normalizePhone(member.phone_number) %>"
+                    >
+                        <%# --- THIS IS THE UPDATED LINE --- %>
+                        <%= member.last_name %>, <%= member.first_name %> (<%= member.email %> - <%= member.phone_number || 'No Phone' %>)
                     </option>
                 <% }); %>
             </select>
@@ -94,7 +117,7 @@
             <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
             <p><span>Promotion:</span> <span id="priceDiscount">$ --.--</span></p>
             <p class="final-price"><span>Final Price:</span> <span id="priceFinal">$ --.--</span></p>
-        </div>
+         </div>
         
         <br>
         <button type="submit">Log Visit & Print Receipt</button>
@@ -103,8 +126,6 @@
 
     <script>
         // --- Pass data from EJS to JavaScript ---
-        
-        // 1. Create a map of ticket types for easy lookup
         const ticketTypeData = new Map();
         <% ticketTypes.forEach(type => { %>
             ticketTypeData.set('<%= type.ticket_type_id %>', {
@@ -112,8 +133,6 @@
                 isMember: Boolean(<%= type.is_member_type %>)
             });
         <% }); %>
-
-        // 2. Get the current park-wide discount
         const currentDiscountPercent = parseFloat('<%= currentDiscount %>') || 0;
 
         // --- Get DOM Elements ---
@@ -121,11 +140,14 @@
         const memberSelectBlock = document.getElementById('memberSelectBlock');
         const memberSelect = document.getElementById('membership_id');
         
+        const memberSearchInput = document.getElementById('memberSearchPhone');
+        const allMemberOptions = Array.from(memberSelect.options);
+
         const priceBaseEl = document.getElementById('priceBase');
         const priceDiscountEl = document.getElementById('priceDiscount');
         const priceFinalEl = document.getElementById('priceFinal');
 
-        // --- Event Listener ---
+        // --- Event Listener for Ticket Type (Updated) ---
         ticketSelect.addEventListener('change', function() {
             const selectedTypeId = this.value;
             if (!selectedTypeId) {
@@ -139,31 +161,60 @@
                 return;
             }
 
-            // --- Logic ---
             if (ticket.isMember) {
-                // Member Ticket Type
-                memberSelectBlock.style.display = 'block'; // Show member dropdown
-                memberSelect.required = true; // Make it required
-                
-                // Set prices to $0
-                updatePriceDisplay(0, 0, 0);
-
+                memberSelectBlock.style.display = 'block'; 
+                memberSelect.required = true; 
+                updatePriceDisplay(0, 0, 0); 
             } else {
-                // Standard Ticket Type
-                memberSelectBlock.style.display = 'none'; // Hide member dropdown
-                memberSelect.required = false; // Make it not required
-                memberSelect.value = ''; // Clear any selection
+                memberSelectBlock.style.display = 'none'; 
+                memberSelect.required = false; 
+                memberSelect.value = ''; 
                 
-                // Calculate price
+                memberSearchInput.value = ''; 
+                resetMemberFilter(); 
+                
                 const basePrice = ticket.price;
                 const discountAmount = basePrice * (currentDiscountPercent / 100);
                 const finalPrice = basePrice - discountAmount;
-                
                 updatePriceDisplay(basePrice, discountAmount, finalPrice);
             }
         });
 
-        // --- Helper Functions ---
+        // --- Event Listener for Member Phone Search ---
+        memberSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.replace(/\D/g, '');
+
+            if (!searchTerm) {
+                resetMemberFilter();
+                memberSelect.value = '';
+                return;
+            }
+
+            allMemberOptions.forEach(option => {
+                if (option.value === "") {
+                    option.style.display = 'block';
+                    return;
+                }
+                
+                const memberPhone = option.dataset.phone || '';
+                
+                if (memberPhone.startsWith(searchTerm)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            memberSelect.value = '';
+        });
+
+
+        function resetMemberFilter() {
+            allMemberOptions.forEach(option => {
+                option.style.display = 'block';
+            });
+        }
+
         function updatePriceDisplay(base, discount, final) {
             priceBaseEl.textContent = formatAsCurrency(base);
             priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
@@ -178,6 +229,9 @@
             memberSelectBlock.style.display = 'none';
             memberSelect.required = false;
             memberSelect.value = '';
+
+            memberSearchInput.value = '';
+            resetMemberFilter();
         }
 
         function formatAsCurrency(amount) {

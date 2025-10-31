@@ -11,72 +11,60 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #007bff; color: white; }
         
-        th.sortable a {
-            text-decoration: none;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center; }
         th.sortable a:hover { text-decoration: underline; }
         .sort-indicator { font-size: 1.2em; margin-left: 5px; }
         
-        /* --- UPDATED: Styles for the filter bar --- */
-        .filter-bar {
+        /* --- UPDATED: Stats Bar Styles --- */
+        .stats-bar {
+            display: grid;
+            /* Allow more cards per row */
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 0.75em; /* Reduced gap between cards */
+            margin-bottom: 1em; /* Reduced bottom margin */
+        }
+        .stat-card {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
-            padding: 1em;
+            padding: 1em; /* Reduced padding */
             border-radius: 8px;
-            margin-bottom: 1.5em;
+            text-align: center;
         }
+        .stat-card h3 {
+            margin: 0 0 0.25em 0;
+            font-size: 1.75em; /* Reduced font size */
+        }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: bold; 
+            color: #6c757d;
+            font-size: 0.9em; /* Reduced font size */
+        }
+        /* --- End of Updated Styles --- */
+
+        /* Colors for stats */
+        .stat-total { color: #007bff; }
+        .stat-open { color: #28a745; }
+        .stat-closed { color: #fd7e14; }
+        .stat-broken { color: #dc3545; }
+        .stat-type { color: #6f42c1; } /* Purple for types */
+
+
+        /* --- Filter Bar Styles --- */
+        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
         .filter-controls {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr; /* 4 columns */
+            grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: 1em;
-            align-items: flex-end; /* Aligns buttons to bottom */
+            align-items: flex-end;
         }
-        .filter-controls label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
         .filter-controls input[type="search"],
-        .filter-controls select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
-            box-sizing: border-box; /* Ensures padding doesn't break layout */
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        /* --- NEW: Shared button style --- */
-        .filter-btn {
-            flex-grow: 1;
-            padding: 10px 15px;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            text-decoration: none;  /* For <a> tag */
-            text-align: center;     /* For <a> tag */
-            box-sizing: border-box; /* For <a> tag */
-        }
-
-        /* --- UPDATED: Specific button styles --- */
+        .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
+        .filter-buttons { display: flex; gap: 10px; }
+        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box; }
         .btn-filter { background-color: #007bff; }
-        
-        .btn-clear { 
-            background-color: #6c757d; 
-            /* All other styles are in .filter-btn */
-        }
+        .btn-clear { background-color: #6c757d; }
 
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f1f1; }
@@ -97,66 +85,97 @@
     <div class="container">
         <h1>Park Rides</h1>
         
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3 class="stat-total"><%= counts.totalRides || 0 %></h3>
+                <p>Total Rides (View)</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-open"><%= counts.countOpen || 0 %></h3>
+                <p>Open</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-closed"><%= counts.countClosed || 0 %></h3>
+                <p>Closed</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-broken"><%= counts.countBroken || 0 %></h3>
+                <p>Broken</p>
+            </div>
+        </div>
+        
+        <%# UPDATED: Removed border/padding and added a smaller margin-top %>
+        <div class="stats-bar" style="margin-top: -0.25em;">
+            <div class="stat-card">
+                <h3 class="stat-type"><%= counts.countRollercoaster || 0 %></h3>
+                <p>Rollercoasters</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-type"><%= counts.countWaterRide || 0 %></h3>
+                <p>Water Rides</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-type"><%= counts.countFlatRide || 0 %></h3>
+                <p>Flat Rides</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-type"><%= counts.countShow || 0 %></h3>
+                <p>Shows</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="stat-type"><%= counts.countOther || 0 %></h3>
+                <p>Other</p>
+            </div>
+        </div>
+
+
         <div class="filter-bar">
             <form action="/rides" method="GET">
                 <div class="filter-controls">
-                    
                     <div>
                         <label for="search">General Search</label>
-                        <input type="search" id="search" name="search" 
-                               placeholder="Name, Location, Status, Type..." 
-                               value="<%= search %>">
+                        <input type="search" id="search" name="search" placeholder="Name, Location, Status, Type..." value="<%= search %>">
                     </div>
-                    
                     <div>
                         <label for="filter_location">Location</label>
                         <select id="filter_location" name="filter_location">
                             <option value="">All Locations</option>
                             <% locations.forEach(loc => { %>
-                                <option value="<%= loc.location_id %>" 
-                                        <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
+                                <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
                                     <%= loc.location_name %>
                                 </option>
                             <% }); %>
                         </select>
                     </div>
-
                     <div>
                         <label for="filter_type">Type</label>
                         <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                             <% types.forEach(type => { %>
-                                <option value="<%= type.ride_type %>" 
-                                        <%= filters.type === type.ride_type ? 'selected' : '' %>>
+                                <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
                                     <%= type.ride_type %>
                                 </option>
                             <% }); %>
                         </select>
                     </div>
-
                     <div>
                         <label for="filter_status">Status</label>
                         <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <% statuses.forEach(status => { %>
-                                <option value="<%= status.ride_status %>" 
-                                        <%= filters.status === status.ride_status ? 'selected' : '' %>>
+                                <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
                                     <%= status.ride_status %>
                                 </option>
                             <% }); %>
                         </select>
                     </div>
                 </div>
-                
                 <div class="filter-controls" style="margin-top: 1em;">
-                    <div style="grid-column: 1 / 4;"></div> <%# --- UPDATED: Added .filter-btn class to both elements --- %>
-                    <div class="filter-buttons">
+                    <div style="grid-column: 1 / 4;"></div> <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
                         <a href="/rides" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-                
-                <%# Hidden inputs to preserve sort order while filtering %>
                 <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
@@ -164,16 +183,14 @@
             </form>
         </div>
 
-
-        <a href="/rides/new" class="add-button">Add New Ride</a>
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+            <a href="/rides/new" class="add-button">Add New Ride</a>
+        <% } %>
         
-        <% // --- EJS Logic Block ---
-        
-            // Helper function to generate sort link properties
+        <% 
             const getSortState = (column) => {
                 let nextDir = 'asc';
                 let indicator = '';
-
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
@@ -183,30 +200,13 @@
                         indicator = '▼';
                     }
                 }
-                
-                // Build query params manually
                 let href = `/rides?search=${encodeURIComponent(search)}`;
-                
-                if (filters.type) {
-                    href += `&filter_type=${encodeURIComponent(filters.type)}`;
-                }
-                if (filters.status) {
-                    href += `&filter_status=${encodeURIComponent(filters.status)}`;
-                }
-                if (filters.location) {
-                    href += `&filter_location=${encodeURIComponent(filters.location)}`;
-                }
-                
-                if (nextDir !== 'none') {
-                    href += `&sort=${column}&dir=${nextDir}`;
-                }
-
-                return {
-                    href: href,
-                    indicator: indicator
-                };
+                if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
+                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`; }
+                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`; }
+                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`; }
+                return { href: href, indicator: indicator };
             };
-            
             const nameSort = getSortState('name');
             const typeSort = getSortState('type');
             const locationSort = getSortState('location');

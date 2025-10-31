@@ -192,13 +192,68 @@ const canViewApprovals = (req, res, next) => {
     // Redirect or send forbidden if they aren't an approver
     res.status(403).send('Forbidden: You do not have permission to view this page.');
 };
+// --- Helper function to format phone numbers ---
+const formatPhoneNumber = (phoneString) => {
+    if (!phoneString) {
+        return null; // Return null if the input is empty
+    }
+
+    // 1. Remove all non-numeric characters
+    const digits = phoneString.replace(/\D/g, '');
+
+    // 2. Check if it has exactly 10 digits
+    if (digits.length === 10) {
+        // 3. Format as (123) 456-7890. This is 14 chars, fits in VARCHAR(15)
+        return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+    }
+
+    // 4. If not 10 digits, return the original string, truncated to 15 chars
+    // This handles "1-800-CALL-NOW" or other text.
+    return phoneString.substring(0, 15) || null;
+};
+// --- Helper function to format/normalize phone numbers ---
+const normalizePhone = (phoneString) => {
+    if (!phoneString) {
+        return ""; // Return empty string if null
+    }
+    // Remove all non-numeric characters
+    return phoneString.replace(/\D/g, '');
+};
+// --- Helper function to format date/time for receipts ---
+const formatReceiptDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+// --- Helper function to censor phone numbers ---
+const censorPhone = (phone) => {
+    if (!phone) return 'N/A';
+    const digits = phone.replace(/\D/g, ''); // Get only digits
+    if (digits.length > 4) {
+        const lastFour = digits.slice(-4);
+
+        const censoredPart = '*'.repeat(digits.length - 4);
+
+        // Format to match (***) ***-1234
+        if (digits.length === 10) {
+            return `(${censoredPart.slice(0, 3)}) ${censoredPart.slice(3, 6)}-${lastFour}`;
+        }
+        return `${censoredPart}-${lastFour}`;
+    }
+    return phone; // Return as-is if too short to censor
+};
 
 // Middleware to pass user data to all views
 app.use((req, res, next) => {
     res.locals.user = req.session.user;
     next();
 });
-
 // --- LOGIN & LOGOUT ROUTES --- (Corrected Login)
 app.get('/login', (req, res) => {
     if (req.session.user) {
@@ -1097,7 +1152,7 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
 
-        // --- NEW: Read all query params ---
+        // --- 1. Get query params ---
         const {
             search,
             sort,
@@ -1111,19 +1166,18 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
         let whereClauses = [];
         let params = [];
 
-        // --- 1. Fetch data for filters ---
-        // We fetch these *before* applying location manager scope
+        // --- 2. Fetch data for filters ---
         const [allLocations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
         const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
         const [allStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
 
-        // --- 2. Handle Location Manager Scope ---
+        // --- 3. Handle Location Manager Scope ---
         if (role === 'Location Manager') {
             whereClauses.push('r.location_id = ?');
             params.push(locationId);
         }
 
-        // --- 3. Handle Search Query (Now searches ride_type) ---
+        // --- 4. Handle Search Query ---
         if (search) {
             whereClauses.push(
                 '(r.ride_name LIKE ? OR l.location_name LIKE ? OR r.ride_status LIKE ? OR r.ride_type LIKE ?)'
@@ -1132,7 +1186,7 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
-        // --- 4. NEW: Handle Specific Filters ---
+        // --- 5. Handle Specific Filters ---
         if (filter_type) {
             whereClauses.push('r.ride_type = ?');
             params.push(filter_type);
@@ -1146,7 +1200,33 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
             params.push(filter_location);
         }
 
-        // --- 5. Handle Sort Query (No change from last step) ---
+        // --- 6. NEW: Build and Run Summary Query ---
+        // This query uses the same WHERE clauses as the main query
+        let summaryQuery = `
+            SELECT
+                COUNT(r.ride_id) AS totalRides,
+                SUM(CASE WHEN r.ride_status = 'OPEN' THEN 1 ELSE 0 END) AS countOpen,
+                SUM(CASE WHEN r.ride_status = 'CLOSED' THEN 1 ELSE 0 END) AS countClosed,
+                SUM(CASE WHEN r.ride_status = 'BROKEN' THEN 1 ELSE 0 END) AS countBroken,
+                SUM(CASE WHEN r.ride_type = 'Rollercoaster' THEN 1 ELSE 0 END) AS countRollercoaster,
+                SUM(CASE WHEN r.ride_type = 'Water Ride' THEN 1 ELSE 0 END) AS countWaterRide,
+                SUM(CASE WHEN r.ride_type = 'Flat Ride' THEN 1 ELSE 0 END) AS countFlatRide,
+                SUM(CASE WHEN r.ride_type = 'Show' THEN 1 ELSE 0 END) AS countShow,
+                SUM(CASE WHEN r.ride_type = 'Other' THEN 1 ELSE 0 END) AS countOther
+            FROM rides r
+            LEFT JOIN location l ON r.location_id = l.location_id
+        `;
+
+        let whereQuery = "";
+        if (whereClauses.length > 0) {
+            whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        // Execute the summary query
+        const [summaryResult] = await pool.query(summaryQuery + whereQuery, params);
+        const counts = summaryResult[0]; // Our object with all the counts
+
+        // --- 7. Handle Sort Query ---
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
                 name: 'r.ride_name',
@@ -1159,37 +1239,32 @@ app.get('/rides', isAuthenticated, canViewRides, async (req, res) => {
             }
         }
 
-        // --- Build Final Query ---
+        // --- 8. Build Main Query ---
         let query = `
             SELECT r.*, l.location_name
             FROM rides r
             LEFT JOIN location l ON r.location_id = l.location_id
         `;
 
-        if (whereClauses.length > 0) {
-            query += ` WHERE ${whereClauses.join(' AND ')}`;
-        }
-
-        query += orderBy;
+        query += whereQuery + orderBy; // Re-use the whereQuery
 
         const [rides] = await pool.query(query, params);
 
-        // --- 6. Render with all data ---
+        // --- 9. Render with all data ---
         res.render('rides', {
             rides: rides,
             search: search || "",
             currentSort: sort,
             currentDir: dir,
-            // Pass filter data to the view
             locations: allLocations,
             types: allTypes,
             statuses: allStatuses,
-            // Pass current filter selections back to the view
             filters: {
                 type: filter_type || "",
                 status: filter_status || "",
                 location: filter_location || ""
-            }
+            },
+            counts: counts // <-- NEW: Pass the counts object
         });
 
     } catch (error) {
@@ -1601,36 +1676,146 @@ app.post('/maintenance/reassign/:maintenance_id', isAuthenticated, (req, res, ne
 // UPDATED: Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
 app.get('/members', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
-        // UPDATED QUERY: Join with membership_type to get the type_name
-        const query = `
-            SELECT m.*, mt.type_name 
+        // --- 1. Get query params (added filter_status) ---
+        const { search, sort, dir, filter_type, filter_status } = req.query;
+
+        let whereClauses = [];
+        let params = [];
+        let orderBy = ' ORDER BY m.last_name ASC, m.first_name ASC'; // Default sort
+
+        // --- 2. Fetch data for filters ---
+        const [memberTypes] = await pool.query(
+            'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
+        );
+
+        // --- 3. Handle Search Query ---
+        if (search) {
+            whereClauses.push(
+                '(m.first_name LIKE ? OR m.last_name LIKE ? OR m.email LIKE ? OR m.phone_number LIKE ?)'
+            );
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        }
+
+        // --- 4. Handle Filter Query (UPDATED to 'expired') ---
+        if (filter_type) {
+            whereClauses.push('m.type_id = ?');
+            params.push(filter_type);
+        }
+
+        if (filter_status === 'active') {
+            whereClauses.push('m.end_date >= CURDATE()');
+        } else if (filter_status === 'expired') {
+            whereClauses.push('m.end_date < CURDATE()');
+        }
+
+        // --- 5. NEW: Build and Run Summary Query ---
+        // We build this *before* adding the sorting/ordering
+
+        let summaryQuery = `
+            SELECT 
+                COUNT(m.membership_id) AS totalMembers,
+                SUM(CASE WHEN m.end_date >= CURDATE() THEN 1 ELSE 0 END) AS activeMembers,
+                SUM(CASE WHEN m.end_date < CURDATE() THEN 1 ELSE 0 END) AS expiredMembers
             FROM membership m
             LEFT JOIN membership_type mt ON m.type_id = mt.type_id
-            ORDER BY m.last_name, m.first_name
         `;
-        const [members] = await pool.query(query);
-        // This now passes 'type_name' to your 'members.ejs' file
-        res.render('members', { members: members });
+
+        if (whereClauses.length > 0) {
+            summaryQuery += ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        // Execute the summary query (uses the same params as the main query)
+        const [summaryResult] = await pool.query(summaryQuery, params);
+        const counts = summaryResult[0]; // This is our object: { totalMembers, activeMembers, expiredMembers }
+
+
+        // --- 6. Handle Sort Query ---
+        if (sort && dir && (dir === 'asc' || dir === 'desc')) {
+            const validSorts = {
+                'name': 'm.last_name',
+                'email': 'm.email',
+                'phone': 'm.phone_number',
+                'type': 'mt.type_name',
+                'start_date': 'm.start_date',
+                'end_date': 'm.end_date',
+                'status': 'member_status'
+            };
+
+            if (validSorts[sort]) {
+                if (sort === 'name') {
+                    orderBy = ` ORDER BY m.last_name ${dir.toUpperCase()}, m.first_name ${dir.toUpperCase()}`;
+                } else {
+                    orderBy = ` ORDER BY ${validSorts[sort]} ${dir.toUpperCase()}`;
+                }
+            }
+        }
+
+        // --- 7. Build Final SQL Query (Main query) ---
+        let query = `
+            SELECT 
+                m.first_name, m.last_name, m.email, m.phone_number,
+                mt.type_name,
+                DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
+                DATE_FORMAT(m.end_date, '%m/%d/%Y') AS end_date_formatted,
+                CASE 
+                    WHEN m.end_date >= CURDATE() THEN 'Active' 
+                    ELSE 'Expired' 
+                END AS member_status,
+                m.start_date, m.end_date
+            FROM membership m
+            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+        `;
+
+        if (whereClauses.length > 0) {
+            query += ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        query += orderBy;
+
+        // --- 8. Execute Main Query ---
+        const [members] = await pool.query(query, params);
+
+        // --- 9. Render View (Pass new 'counts' object) ---
+        res.render('members', {
+            members: members,
+            types: memberTypes,
+            search: search || "",
+            currentSort: sort,
+            currentDir: dir,
+            filters: {
+                type: filter_type || "",
+                status: filter_status || ""
+            },
+            counts: counts // <-- NEW
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching members');
     }
 });
+
+// GET form to add a new member
 app.get('/members/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // UPDATED: Fetch active membership types to pass to the view
     try {
         const [types] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
-        // This now passes 'types' to your 'add-member.ejs' file
         res.render('add-member', { error: null, types: types });
     } catch (error) {
         console.error(error);
         res.render('add-member', { error: "Error fetching membership types.", types: [] });
     }
 });
+
+// POST to create a new member (WITH PHONE FORMATTING)
 app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date } = req.body;
+    const { first_name, last_name, email, date_of_birth, type_id, start_date, end_date } = req.body;
+
+    // --- UPDATED: Use the formatter ---
+    const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
+
     let connection;
     try {
         connection = await pool.getConnection();
@@ -1639,11 +1824,14 @@ app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) =
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await connection.query(sql, [
-            first_name, last_name, email, phone_number || null, date_of_birth, type_id, start_date, end_date
+            first_name, last_name, email,
+            formattedPhoneNumber, // Use the formatted number
+            date_of_birth, type_id, start_date, end_date
         ]);
         res.redirect('/members');
     } catch (error) {
         console.error(error);
+        // Re-fetch types to render form again on error
         const [types] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
@@ -1656,65 +1844,69 @@ app.post('/members', isAuthenticated, canManageMembersVisits, async (req, res) =
     }
 });
 
-// Apply canManageMembersAndVisits (Staff+, excluding HR) middleware
+// Apply canManageMembersVisits (Staff+, excluding HR) middleware
 app.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         const [ticketTypes] = await pool.query(
             "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
         );
-        
+
+        // --- UPDATED QUERY ---
         const [activeMembers] = await pool.query(
-            "SELECT membership_id, first_name, last_name, email FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name"
+            "SELECT membership_id, first_name, last_name, email, phone_number FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name"
         );
-        
+
         const [promos] = await pool.query(
             "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
         );
 
         const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
 
-        res.render('log-visit', { 
+        res.render('log-visit', {
             error: null,
             ticketTypes: ticketTypes,
             activeMembers: activeMembers,
-            currentDiscount: currentDiscount
+            currentDiscount: currentDiscount,
+            normalizePhone: normalizePhone // <-- Pass the helper function to the view
         });
 
     } catch (error) {
         console.error("Error loading log visit page:", error);
         res.render('log-visit', {
-             error: "Error fetching park data. Please try again.",
-             ticketTypes: [],
-             activeMembers: [],
-             currentDiscount: 0
+            error: "Error fetching park data. Please try again.",
+            ticketTypes: [],
+            activeMembers: [],
+            currentDiscount: 0,
+            normalizePhone: (phone) => phone || "" // Provide a fallback
         });
     }
 });
 app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // Phase 3: Rebuilt to calculate price on server
     const { ticket_type_id, membership_id } = req.body;
-    const visit_date = new Date();
-    
+    const visit_date = new Date(); // Use a single Date object
+
     let connection;
     try {
         connection = await pool.getConnection();
-        
-        // --- 1. Get Ticket Type Info (Server-side) ---
+        await connection.beginTransaction(); // Start transaction
+
+        // --- 1. Get Ticket Type Info ---
         const [ticketResult] = await pool.query(
-            "SELECT base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?", 
+            "SELECT type_name, base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?",
             [ticket_type_id]
         );
-        
+
         if (ticketResult.length === 0) {
             throw new Error("Invalid ticket type submitted.");
         }
         const ticket = ticketResult[0];
 
-        // --- 2. Get Promotion Info (Server-side) ---
+        // --- 2. Get Promotion Info ---
         const [promos] = await pool.query(
-            "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
+            "SELECT event_name, discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
         );
         const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
+        const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
 
         // --- 3. Calculate Price & Set Member ID ---
         let finalTicketPrice = 0.00;
@@ -1722,16 +1914,11 @@ app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) =>
         let finalMembershipId = null;
 
         if (ticket.is_member_type) {
-            // It's a member. Price is $0.
             if (!membership_id || membership_id === "") {
                 throw new Error("A membership ID is required for a 'Member' ticket type.");
             }
             finalMembershipId = membership_id;
-            finalTicketPrice = 0.00;
-            finalDiscountAmount = 0.00;
         } else {
-            // It's a standard (non-member) ticket. Calculate price.
-            finalMembershipId = null; // Ensure member ID is null
             finalTicketPrice = parseFloat(ticket.base_price);
             finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
         }
@@ -1741,39 +1928,81 @@ app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) =>
             INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount)
             VALUES (?, ?, ?, ?, ?)
         `;
-        await connection.query(sql, [
-            visit_date, 
-            ticket_type_id, 
-            finalMembershipId, 
-            finalTicketPrice, 
+        const [insertResult] = await connection.query(sql, [
+            visit_date,
+            ticket_type_id,
+            finalMembershipId,
+            finalTicketPrice,
             finalDiscountAmount
         ]);
-        
-        // Success
-        res.redirect('/dashboard');
+
+        const newVisitId = insertResult.insertId;
+
+        // --- 5. NEW: Fetch all data for the receipt ---
+        let receiptData = {
+            visit_id: newVisitId,
+            visit_date: formatReceiptDate(visit_date),
+            ticket_name: ticket.type_name,
+            base_price: finalTicketPrice,
+            discount_amount: finalDiscountAmount,
+            total_cost: finalTicketPrice - finalDiscountAmount,
+            promo_applied: promoName,
+            is_member: ticket.is_member_type,
+            staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+            // Member-specific fields
+            member_id: null,
+            member_name: null,
+            member_type: null,
+            member_phone: null
+        };
+
+        if (ticket.is_member_type && finalMembershipId) {
+            const [memberInfo] = await pool.query(`
+                SELECT 
+                    m.first_name, m.last_name, m.phone_number,
+                    mt.type_name AS membership_type_name
+                FROM membership m
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+                WHERE m.membership_id = ?
+            `, [finalMembershipId]);
+
+            if (memberInfo.length > 0) {
+                receiptData.member_id = finalMembershipId;
+                receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
+                receiptData.member_type = memberInfo[0].membership_type_name;
+                receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
+            }
+        }
+
+        // --- 6. Commit and Render Receipt ---
+        await connection.commit();
+        res.render('visit-receipt', { receipt: receiptData });
 
     } catch (error) {
-        // Error: Re-render the form with an error message
+        // Error: Rollback and re-render the form
+        if (connection) await connection.rollback();
         console.error("Error logging visit:", error.message);
+
         try {
+            // Re-fetch all data needed for the log-visit page
             const [ticketTypes] = await pool.query("SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name");
-            const [activeMembers] = await pool.query("SELECT membership_id, first_name, last_name, email FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name");
+            const [activeMembers] = await pool.query("SELECT membership_id, first_name, last_name, email, phone_number FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name");
             const [promos] = await pool.query("SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
             const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
 
-            res.render('log-visit', { 
+            res.render('log-visit', {
                 error: `Database error logging visit: ${error.message}`,
                 ticketTypes: ticketTypes,
                 activeMembers: activeMembers,
-                currentDiscount: currentDiscount
+                currentDiscount: currentDiscount,
+                normalizePhone: (phone) => (phone || "").replace(/\D/g, '') // Pass normalize function
             });
         } catch (fetchError) {
             console.error("Error fetching data for log-visit error page:", fetchError);
             res.render('log-visit', {
-                 error: "A critical error occurred. Please try again.",
-                 ticketTypes: [],
-                 activeMembers: [],
-                 currentDiscount: 0
+                error: "A critical error occurred. Please try again.",
+                ticketTypes: [], activeMembers: [], currentDiscount: 0,
+                normalizePhone: (phone) => (phone || "").replace(/\D/g, '')
             });
         }
     } finally {

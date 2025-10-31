@@ -16,8 +16,11 @@ CREATE TABLE employee_demographics (
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Vendor Manager', 'Park Manager', 'Head of HR', 'HR Staff', 'Admin') NOT NULL,
-    location_id INT,
+    
+    -- UPDATED: Removed 'Vendor Manager'
+    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Head of HR', 'HR Staff', 'Admin') NOT NULL,
+    
+    location_id INT, -- WE ARE KEEPING THIS. It is the key to our new plan.
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
@@ -35,9 +38,9 @@ CREATE TABLE employee_demographics (
     FOREIGN KEY (rate_change_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
 
     -- Constraints
-    CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date), -- force termination date to be not null for active employees, OR if terminated, the termination date must be after hire date
-    CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)), -- force employeees to be at least 16 years old (no child labor allowed)
-    CONSTRAINT chk_rate_positive CHECK (hourly_rate >= 0) -- force pay to not be negative 
+    CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date),
+    CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)),
+    CONSTRAINT chk_rate_positive CHECK (hourly_rate >= 0)
 );
 
 CREATE TABLE employee_auth (
@@ -64,6 +67,7 @@ CREATE TABLE location (
         ON DELETE SET NULL -- if a manager is deleted, the manager id for the location is Null
 );
 
+-- This link is CRITICAL for the new plan
 ALTER TABLE employee_demographics
 ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
@@ -215,22 +219,19 @@ CREATE TABLE daily_stats (
     CONSTRAINT chk_stats_count_positive CHECK (visitor_count >= 0)
 );
 
-
+-- UPDATED: Removed manager_id and its foreign key
 CREATE TABLE vendors (
     vendor_id INT NOT NULL AUTO_INCREMENT,
     vendor_name VARCHAR(100) NOT NULL UNIQUE,
     location_id INT,
-    manager_id INT,
+    -- manager_id INT, -- REMOVED
     -- keys
     PRIMARY KEY (vendor_id),
     FOREIGN KEY (location_id)
         REFERENCES location (location_id)
         ON DELETE SET NULL
-        ON UPDATE CASCADE,
-    FOREIGN KEY (manager_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL
         ON UPDATE CASCADE
+    -- REMOVED: Foreign key for manager_id
 );
 
 CREATE TABLE item (
@@ -267,36 +268,4 @@ CREATE TABLE daily_ride (
     -- constraints
     CONSTRAINT chk_ride_count_positive CHECK (ride_count >= 0),
     CONSTRAINT chk_run_count_positive CHECK (run_count >= 0)
-);
-
-CREATE TABLE employee_ride_assignments (
-    assignment_id INT NOT NULL AUTO_INCREMENT, -- Simple key for editing/deleting
-    employee_id INT NOT NULL,
-    ride_id INT NOT NULL,
-    assignment_date DATE NOT NULL,
-    role VARCHAR(50), -- Optional: e.g., 'Operator', 'Attendant'
-    -- Keys
-    PRIMARY KEY (assignment_id),
-    UNIQUE KEY uk_employee_per_day (employee_id, assignment_date),
-    FOREIGN KEY (employee_id) 
-        REFERENCES employee_demographics(employee_id) 
-        ON DELETE CASCADE,
-    FOREIGN KEY (ride_id) 
-        REFERENCES rides(ride_id) 
-        ON DELETE CASCADE
-);
-
-CREATE TABLE zone_entry (
-    visit_id INT NOT NULL,
-    location_id INT NOT NULL,
-    entry_time DATETIME NOT NULL,
-    -- Keys
-    PRIMARY KEY (visit_id, location_id),
-    FOREIGN KEY (visit_id) 
-        REFERENCES visits (visit_id)
-        ON DELETE CASCADE,
-    -- Constraints
-    FOREIGN KEY (location_id) 
-        REFERENCES location (location_id)
-        ON DELETE RESTRICT
 );
