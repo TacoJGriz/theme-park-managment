@@ -1,5 +1,3 @@
-USE park_database;
-
 -- 1. LOCATION
 -- Must be inserted first, as employees and vendors depend on it.
 INSERT INTO location (location_name, summary, manager_id, manager_start) VALUES

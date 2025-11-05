@@ -34,6 +34,7 @@ BEGIN
     -- Variables for membership, time calculation, and pricing
     DECLARE is_member BOOL;
     DECLARE member_id INT;
+    DECLARE v_employee_id INT; -- <-- NEW: To store the staff member ID
     DECLARE random_hour INT;
     DECLARE random_minute INT;
     DECLARE random_second INT;
@@ -182,15 +183,23 @@ BEGIN
             END IF;
         END IF;
 
+        -- --- NEW: Get a random, active 'Staff' employee to be the cashier ---
+        SELECT employee_id INTO v_employee_id
+        FROM employee_demographics
+        WHERE employee_type = 'Staff' AND is_active = TRUE
+        ORDER BY RAND()
+        LIMIT 1;
+        
         -- Insert the visit record
-        INSERT INTO visits (membership_id, visit_date, exit_time, ticket_type_id, ticket_price, discount_amount)
+        INSERT INTO visits (membership_id, visit_date, exit_time, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id)
         VALUES (
             member_id,
             visit_date_time,
             exit_time_str,
             ticket_id,
             final_price,
-            discount
+            discount,
+            v_employee_id -- <-- NEWLY ADDED
         );
 
         SET i = i + 1;

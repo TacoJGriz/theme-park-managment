@@ -1,8 +1,6 @@
-DELIMITER //
-
--- Drop the procedure if it already exists to prevent Error Code 1304
 DROP PROCEDURE IF EXISTS GenerateMembers;
 
+DELIMITER //
 -- Stored Procedure to Generate a specified number of random park members
 CREATE PROCEDURE GenerateMembers(
     IN num_members INT,
@@ -103,8 +101,7 @@ DELIMITER ;
 
 -- Cleanup existing initial dummy members (IDs 1, 2, 3) to prevent conflicts and ensure a clean slate
 DELETE FROM visits WHERE membership_id IS NOT NULL; 
-DELETE FROM membership WHERE membership_id <= 3;
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
--- Call the procedure to generate 500 new members starting in the year 2024
-CALL GenerateMembers(500, 2024);
+-- Call the procedure to generate x new members starting in the year y
+CALL GenerateMembers(5000, 2024);

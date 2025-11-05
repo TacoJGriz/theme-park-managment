@@ -16,17 +16,13 @@ CREATE TABLE employee_demographics (
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    
-    -- UPDATED: Removed 'Vendor Manager'
     employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Head of HR', 'HR Staff', 'Admin') NOT NULL,
-    
-    location_id INT, -- WE ARE KEEPING THIS. It is the key to our new plan.
+    location_id INT,
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
     is_pending_approval BOOL NOT NULL DEFAULT FALSE,
     
-    -- NEW COLUMNS FOR HR WAGE APPROVAL
     pending_hourly_rate DECIMAL(10, 2) DEFAULT NULL,
     rate_change_requested_by INT DEFAULT NULL,
     
@@ -67,7 +63,6 @@ CREATE TABLE location (
         ON DELETE SET NULL -- if a manager is deleted, the manager id for the location is Null
 );
 
--- This link is CRITICAL for the new plan
 ALTER TABLE employee_demographics
 ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
@@ -98,7 +93,6 @@ CREATE TABLE maintenance (
     employee_id INT,
     cost DECIMAL(10,2),
 
-    -- NEW COLUMNS FOR MAINTENANCE REASSIGNMENT APPROVAL
     pending_employee_id INT DEFAULT NULL,
     assignment_requested_by INT DEFAULT NULL,
 
@@ -171,12 +165,16 @@ CREATE TABLE visits (
     ticket_type_id INT NOT NULL,
     ticket_price DECIMAL(10,2),
     discount_amount DECIMAL(10,2),
+    logged_by_employee_id INT,
     -- Keys
     PRIMARY KEY (visit_id),
     FOREIGN KEY (membership_id)
         REFERENCES membership (membership_id),
-    FOREIGN KEY (ticket_type_id)      -- NEW: Foreign key
+    FOREIGN KEY (ticket_type_id)
         REFERENCES ticket_types(ticket_type_id),
+	FOREIGN KEY (logged_by_employee_id)
+		REFERENCES employee_demographics(employee_id)
+		ON DELETE SET NULL,
     -- Constraints
     CONSTRAINT chk_positive_prices CHECK (ticket_price >= 0 AND discount_amount >= 0),
     CONSTRAINT chk_valid_discount CHECK (discount_amount <= ticket_price)
@@ -229,6 +227,7 @@ CREATE TABLE vendors (
         REFERENCES location (location_id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
+    -- REMOVED: Foreign key for manager_id
 );
 
 CREATE TABLE item (
@@ -284,4 +283,15 @@ CREATE TABLE daily_ride (
     -- constraints
     CONSTRAINT chk_ride_count_positive CHECK (ride_count >= 0),
     CONSTRAINT chk_run_count_positive CHECK (run_count >= 0)
+);
+
+CREATE TABLE member_auth (
+    membership_id INT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    
+    -- Keys
+    PRIMARY KEY (membership_id),
+    FOREIGN KEY (membership_id)
+        REFERENCES membership (membership_id)
+        ON DELETE CASCADE -- If a member is deleted, their login is automatically deleted.
 );

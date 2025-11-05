@@ -194,47 +194,56 @@
                 <tr>
                     <th class="sortable">
                         <a href="<%= nameSort.href %>">
-                            <span>Name</span>
+                
+            <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+             
+       <th class="sortable">
                         <a href="<%= emailSort.href %>">
                             <span>Email</span>
                             <span class="sort-indicator"><%= emailSort.indicator %></span>
-                        </a>
+      
+                  </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= phoneSort.href %>">
-                            <span>Phone</span>
+              
+              <span>Phone</span>
                             <span class="sort-indicator"><%= phoneSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+           
+         <th class="sortable">
                         <a href="<%= typeSort.href %>">
                             <span>Member Type</span>
                             <span class="sort-indicator"><%= typeSort.indicator %></span>
-                        </a>
+   
+                     </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= startDateSort.href %>">
-                            <span>Start Date</span>
+           
+                 <span>Start Date</span>
                             <span class="sort-indicator"><%= startDateSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+       
+             <th class="sortable">
                         <a href="<%= endDateSort.href %>">
                             <span>End Date</span>
-                            <span class="sort-indicator"><%= endDateSort.indicator %></span>
+                            <span class="sort-indicator"><%=endDateSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= statusSort.href %>">
-                            <span>Status</span>
+       
+                     <span>Status</span>
                             <span class="sort-indicator"><%= statusSort.indicator %></span>
                         </a>
                     </th>
-                </tr>
+                    <th>Actions</th>              </tr>
            </thead>
            <tbody>
                 <% members.forEach(member => { %>
@@ -242,12 +251,15 @@
                         <td><%= member.first_name %> <%= member.last_name %></td>
                         <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
-                        <td><%= member.type_name || 'N/A' %></td>
+                        <td><%= member.type_name ||'N/A' %></td>
                         <td><%= member.start_date_formatted %></td>
                         <td><%= member.end_date_formatted %></td>
                         <td class="status-<%= member.member_status %>"><%= member.member_status %></td>
+                        <td>
+                            <a href="/members/history/<%= member.membership_id %>" class="action-link" style="color: #17a2b8;">View History</a>
+                        </td>
                     </tr>
-                <% }); %>
+                <% });%>
             </tbody>
         </table>
     </div>

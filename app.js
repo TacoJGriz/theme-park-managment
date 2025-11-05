@@ -40,8 +40,8 @@ const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
         return next(); // User is logged in, proceed to the route
     }
-    // User is not logged in, redirect to login page
-    res.redirect('/login');
+    // User is not logged in, redirect to PUBLIC HOMEPAGE
+    res.redirect('/');
 };
 const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Admin') { return next(); }
@@ -283,20 +283,90 @@ const censorPhone = (phone) => {
     }
     return phone; // Return as-is if too short to censor
 };
+// For Member Portal: Checks if a member is logged in
+const isMemberAuthenticated = (req, res, next) => {
+    if (req.session && req.session.member) {
+        return next(); // Member is logged in
+    }
+    // Member is not logged in, redirect to member login
+    res.redirect('/member/login');
+};
 
-// Middleware to pass user data to all views
+// For Login Pages: Redirects if anyone is already logged in
+const isGuest = (req, res, next) => {
+    if (req.session && req.session.user) {
+        // Logged-in employee
+        return res.redirect('/dashboard');
+    }
+    if (req.session && req.session.member) {
+        // Logged-in member
+        return res.redirect('/member/dashboard');
+    }
+    // No one is logged in
+    return next();
+};
+
+// --- GLOBAL MIDDLEWARE ---
 app.use((req, res, next) => {
-    res.locals.user = req.session.user;
+    res.locals.user = req.session.user; // For Employee Portal
+    res.locals.member = req.session.member; // For Member Portal
     next();
 });
-// --- LOGIN & LOGOUT ROUTES --- (Corrected Login)
-app.get('/login', (req, res) => {
+
+app.get('/', async (req, res) => {
+    // Check if anyone is logged in
+    if (req.session && req.session.user) {
+        return res.redirect('/dashboard'); // Employee redirect
+    }
+    if (req.session && req.session.member) {
+        return res.redirect('/member/dashboard'); // Member redirect
+    }
+
+    try {
+        // Query 1: Get active promotions
+        const [promotions] = await pool.query(
+            "SELECT event_name, event_type, start_date, end_date, discount_percent, summary FROM event_promotions WHERE end_date >= CURDATE() ORDER BY start_date LIMIT 3"
+        );
+
+        // Query 2: Get all locations
+        const [locations] = await pool.query("SELECT location_id, location_name, summary FROM location ORDER BY location_name");
+
+        // Query 3: Get all OPEN rides
+        const [rides] = await pool.query(
+            "SELECT ride_id, ride_name, ride_type, location_id FROM rides WHERE ride_status = 'OPEN' ORDER BY ride_name"
+        );
+
+        // Query 4: Get ticket & membership types
+        const [tickets] = await pool.query(
+            "SELECT type_name, base_price FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
+        );
+        const [memberships] = await pool.query(
+            "SELECT type_name, base_price, description FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
+        );
+
+        // Render the new homepage view with all this data
+        res.render('index', {
+            promotions: promotions,
+            locations: locations,
+            allRides: rides,
+            tickets: tickets,
+            memberships: memberships
+        });
+
+    } catch (error) {
+        console.error("Error loading homepage:", error);
+        res.status(500).send("Error loading park homepage.");
+    }
+});
+
+// --- LOGIN & LOGOUT ROUTES ---
+app.get('/login', isGuest, (req, res) => {
     if (req.session.user) {
         return res.redirect('/dashboard');
     }
     res.render('login', { error: null });
 });
-app.post('/login', async (req, res) => {
+app.post('/login', isGuest, async (req, res) => {
     try {
         const email = req.body.username;
         const password = req.body.password;
@@ -341,14 +411,14 @@ app.post('/login', async (req, res) => {
         return res.status(500).render('login', { error: 'An unexpected error occurred during login. Please try again later.' });
     }
 });
-app.get('/logout', (req, res) => {
+app.get('/employee/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             console.error("Logout error:", err);
             return res.redirect('/dashboard');
         }
         res.clearCookie('connect.sid');
-        res.redirect('/login');
+        res.redirect('/');
     });
 });
 
@@ -413,7 +483,7 @@ app.post('/change-password', isAuthenticated, async (req, res) => {
 });
 
 // --- DASHBOARD ---
-app.get(['/', '/dashboard'], isAuthenticated, (req, res) => {
+app.get('/dashboard', isAuthenticated, (req, res) => {
     res.render('dashboard');
 });
 
@@ -2033,6 +2103,7 @@ app.get('/members', isAuthenticated, canManageMembersVisits, async (req, res) =>
         // --- 7. Build Final SQL Query (Main query) ---
         let query = `
             SELECT 
+                m.membership_id, -- <-- ADDED THIS LINE
                 m.first_name, m.last_name, m.email, m.phone_number,
                 mt.type_name,
                 DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
@@ -2162,7 +2233,8 @@ app.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, res)
 });
 app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { ticket_type_id, membership_id } = req.body;
-    const visit_date = new Date(); // Use a single Date object
+    const visit_date = new Date(); 
+    const { id: actorId } = req.session.user;
 
     let connection;
     try {
@@ -2204,15 +2276,16 @@ app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) =>
 
         // --- 4. Insert the Visit ---
         const sql = `
-            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
         const [insertResult] = await connection.query(sql, [
             visit_date,
             ticket_type_id,
             finalMembershipId,
             finalTicketPrice,
-            finalDiscountAmount
+            finalDiscountAmount,
+            actorId
         ]);
 
         const newVisitId = insertResult.insertId;
@@ -2284,6 +2357,413 @@ app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) =>
                 normalizePhone: (phone) => (phone || "").replace(/\D/g, '')
             });
         }
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// --- NEW: MEMBER PORTAL ROUTES ---
+// (Add this entire block before the Membership Type Management)
+
+// GET Member Login Page
+app.get('/member/login', isGuest, (req, res) => {
+    res.render('member-login', { error: null });
+});
+
+// POST Member Login
+app.post('/member/login', isGuest, async (req, res) => {
+    try {
+        const email = req.body.username;
+        const password = req.body.password;
+
+        const query = `
+            SELECT 
+                m.membership_id, m.first_name, m.last_name, m.email,
+                auth.password_hash
+            FROM membership AS m
+            JOIN member_auth AS auth ON m.membership_id = auth.membership_id
+            WHERE m.email = ?
+        `;
+        const [results] = await pool.query(query, [email]);
+        if (results.length === 0) {
+            return res.render('member-login', { error: 'Invalid email or password' });
+        }
+
+        const member = results[0];
+        const match = await bcrypt.compare(password, member.password_hash);
+
+        if (match) {
+            req.session.regenerate(function (err) {
+                if (err) {
+                    console.error("Session regeneration error:", err);
+                    return res.status(500).render('member-login', { error: 'Session error during login.' });
+                }
+
+                // Set MEMBER session
+                req.session.member = {
+                    id: member.membership_id,
+                    firstName: member.first_name,
+                    lastName: member.last_name,
+                    email: member.email
+                };
+                res.redirect('/member/dashboard');
+            });
+        } else {
+            res.render('member-login', { error: 'Invalid email or password' });
+        }
+    } catch (error) {
+        console.error("Member login error:", error);
+        return res.status(500).render('member-login', { error: 'An unexpected error occurred.' });
+    }
+});
+
+// GET Member Registration Page
+app.get('/member/register', isGuest, (req, res) => {
+    res.render('member-register', { error: null });
+});
+
+// POST Member Registration
+app.post('/member/register', isGuest, async (req, res) => {
+    const { membership_id, email, password, confirm_password } = req.body;
+
+    if (password !== confirm_password) {
+        return res.render('member-register', { error: 'Passwords do not match.' });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Check if a valid member exists with this ID and Email
+        const [memberResult] = await connection.query(
+            'SELECT * FROM membership WHERE membership_id = ? AND email = ?',
+            [membership_id, email]
+        );
+
+        if (memberResult.length === 0) {
+            throw new Error('Invalid Membership ID or Email. Please check your member card.');
+        }
+
+        // 2. Check if an account *already* exists for this member
+        const [authResult] = await connection.query(
+            'SELECT * FROM member_auth WHERE membership_id = ?',
+            [membership_id]
+        );
+
+        if (authResult.length > 0) {
+            throw new Error('An account has already been created for this membership.');
+        }
+
+        // 3. Create the account
+        const hash = await bcrypt.hash(password, saltRounds);
+        await connection.query(
+            'INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)',
+            [membership_id, hash]
+        );
+
+        await connection.commit();
+
+        // Redirect to login with a success message (we can't easily pass one, so just redirect)
+        res.redirect('/member/login');
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error registering member:", error);
+        res.render('member-register', { error: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// GET Member Logout
+app.get('/member/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            console.error("Member logout error:", err);
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/'); // Redirect to public homepage
+    });
+});
+
+// GET Member Dashboard (Profile)
+app.get('/member/dashboard', isMemberAuthenticated, async (req, res) => {
+    try {
+        const memberId = req.session.member.id;
+        const [result] = await pool.query(`
+            SELECT 
+                m.first_name, m.last_name, m.email, m.phone_number, m.date_of_birth, m.end_date,
+                mt.type_name,
+                CASE 
+                    WHEN m.end_date >= CURDATE() THEN 'Active' 
+                    ELSE 'Expired' 
+                END AS member_status
+            FROM membership m
+            JOIN membership_type mt ON m.type_id = mt.type_id
+            WHERE m.membership_id = ?
+        `, [memberId]);
+
+        if (result.length === 0) {
+            // This should not happen if they are logged in, but as a safeguard
+            return res.redirect('/member/logout');
+        }
+
+        const memberData = result[0];
+
+        // Pass all data to the view
+        res.render('member-dashboard', {
+            member: {
+                id: memberId,
+                firstName: memberData.first_name,
+                lastName: memberData.last_name,
+                email: memberData.email,
+                phone: memberData.phone_number,
+                dob: memberData.date_of_birth,
+                endDate: memberData.end_date,
+                typeName: memberData.type_name,
+                status: memberData.member_status
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching member dashboard:", error);
+        res.status(500).send('Error loading dashboard.');
+    }
+});
+
+// GET Member Visit History (reuses employee logic)
+app.get('/member/history', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id; // Get ID from session
+    try {
+        const member = req.session.member;
+
+        // 2. Get Visit History
+        const [visits] = await pool.query(`
+            SELECT 
+                v.visit_id, 
+                v.visit_date, 
+                v.ticket_price, 
+                v.discount_amount, 
+                tt.type_name,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+            FROM visits v
+            JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            WHERE v.membership_id = ?
+            ORDER BY v.visit_date DESC
+        `, [memberId]);
+
+        // 3. Render the existing 'visit-history' view
+        res.render('visit-history', {
+            member: member,
+            visits: visits
+        });
+
+    } catch (error) {
+        console.error("Error fetching member visit history:", error);
+        res.status(500).send('Error loading page.');
+    }
+});
+
+// GET Member Promotions
+app.get('/member/promotions', isMemberAuthenticated, async (req, res) => {
+    try {
+        const [promotions] = await pool.query(
+            "SELECT event_name, event_type, start_date, end_date, discount_percent, summary FROM event_promotions WHERE end_date >= CURDATE() ORDER BY start_date"
+        );
+        res.render('member-promotions', { promotions: promotions });
+    } catch (error) {
+        console.error("Error fetching promotions:", error);
+        res.status(500).send('Error loading promotions.');
+    }
+});
+
+// GET Member-Specific Receipt (with security check)
+app.get('/member/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
+    const { visit_id } = req.params;
+    const memberId = req.session.member.id;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Get the base visit info
+        const [visitResult] = await connection.query(`
+            SELECT 
+                v.*, 
+                tt.type_name AS ticket_name, 
+                tt.is_member_type,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+            FROM visits v
+            JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            WHERE v.visit_id = ?
+        `, [visit_id]);
+
+        if (visitResult.length === 0) {
+            return res.status(404).send('Visit not found');
+        }
+        const visit = visitResult[0];
+
+        // --- SECURITY CHECK ---
+        // Ensure the visit being requested belongs to the logged-in member
+        if (visit.membership_id !== memberId) {
+            return res.status(403).send('Forbidden: You can only view your own receipts.');
+        }
+
+        // 2. Build the receiptData object
+        let receiptData = {
+            visit_id: visit.visit_id,
+            visit_date: formatReceiptDate(visit.visit_date),
+            ticket_name: visit.ticket_name,
+            base_price: parseFloat(visit.ticket_price),
+            discount_amount: parseFloat(visit.discount_amount),
+            total_cost: parseFloat(visit.ticket_price) - parseFloat(visit.discount_amount),
+            promo_applied: visit.discount_amount > 0 ? 'Promotion' : 'N/A',
+            is_member: visit.is_member_type,
+            staff_name: visit.staff_name || 'N/A',
+            member_id: null,
+            member_name: null,
+            member_type: null,
+            member_phone: null
+        };
+
+        // 3. Get member details
+        const [memberInfo] = await connection.query(`
+            SELECT 
+                m.first_name, m.last_name, m.phone_number,
+                mt.type_name AS membership_type_name
+            FROM membership m
+            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            WHERE m.membership_id = ?
+        `, [memberId]);
+
+        if (memberInfo.length > 0) {
+            receiptData.member_id = memberId;
+            receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
+            receiptData.member_type = memberInfo[0].membership_type_name;
+            receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
+        }
+
+        // 4. Render the existing receipt template
+        res.render('visit-receipt', { receipt: receiptData });
+
+    } catch (error) {
+        console.error("Error fetching receipt:", error);
+        res.status(500).send("Error loading receipt.");
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+app.get('/members/history/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    const { member_id } = req.params;
+    try {
+        // 1. Get Member's Name
+        const [memberResult] = await pool.query(
+            'SELECT first_name, last_name FROM membership WHERE membership_id = ?',
+            [member_id]
+        );
+
+        if (memberResult.length === 0) {
+            return res.status(404).send('Member not found');
+        }
+        const member = memberResult[0];
+
+        // 2. Get Visit History
+        const [visits] = await pool.query(`
+            SELECT 
+                v.visit_id, 
+                v.visit_date, 
+                v.ticket_price, 
+                v.discount_amount, 
+                tt.type_name,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+            FROM visits v
+            JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            WHERE v.membership_id = ?
+            ORDER BY v.visit_date DESC
+        `, [member_id]);
+
+        // 3. Render the new history view
+        res.render('visit-history', {
+            member: member,
+            visits: visits
+        });
+
+    } catch (error) {
+        console.error("Error fetching member visit history:", error);
+        res.status(500).send('Error loading page.');
+    }
+});
+
+app.get('/visits/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    const { visit_id } = req.params;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Get the base visit info
+        const [visitResult] = await connection.query(`
+            SELECT 
+                v.*, 
+                tt.type_name AS ticket_name, 
+                tt.is_member_type,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+            FROM visits v
+            JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            WHERE v.visit_id = ?
+        `, [visit_id]);
+
+        if (visitResult.length === 0) {
+            return res.status(404).send('Visit not found');
+        }
+        const visit = visitResult[0];
+
+        // 2. Build the receiptData object
+        let receiptData = {
+            visit_id: visit.visit_id,
+            visit_date: formatReceiptDate(visit.visit_date),
+            ticket_name: visit.ticket_name,
+            base_price: parseFloat(visit.ticket_price),
+            discount_amount: parseFloat(visit.discount_amount),
+            total_cost: parseFloat(visit.ticket_price) - parseFloat(visit.discount_amount),
+            // We can't know the *exact* promo name from the past, so we'll use a generic label
+            promo_applied: visit.discount_amount > 0 ? 'Promotion' : 'N/A',
+            is_member: visit.is_member_type,
+            staff_name: visit.staff_name || 'N/A',
+            member_id: null,
+            member_name: null,
+            member_type: null,
+            member_phone: null
+        };
+
+        // 3. If it's a member visit, get member details
+        if (visit.is_member_type && visit.membership_id) {
+            const [memberInfo] = await connection.query(`
+                SELECT 
+                    m.first_name, m.last_name, m.phone_number,
+                    mt.type_name AS membership_type_name
+                FROM membership m
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+                WHERE m.membership_id = ?
+            `, [visit.membership_id]);
+
+            if (memberInfo.length > 0) {
+                receiptData.member_id = visit.membership_id;
+                receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
+                receiptData.member_type = memberInfo[0].membership_type_name;
+                receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
+            }
+        }
+
+        // 4. Render the existing receipt template
+        res.render('visit-receipt', { receipt: receiptData });
+
+    } catch (error) {
+        console.error("Error fetching receipt:", error);
+        res.status(500).send("Error loading receipt.");
     } finally {
         if (connection) connection.release();
     }
@@ -2687,6 +3167,82 @@ app.get('/inventory', isAuthenticated, canViewInventory, async (req, res) => {
     }
 });
 
+app.get('/inventory/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { request_id } = req.params;
+    const { id: actorId } = req.session.user;
+
+    try {
+        const [reqResult] = await pool.query(`
+            SELECT ir.*, it.item_name, v.vendor_name
+            FROM inventory_requests ir
+            JOIN item it ON ir.item_id = it.item_id
+            JOIN vendors v ON ir.vendor_id = v.vendor_id
+            WHERE ir.request_id = ?
+        `, [request_id]);
+
+        if (reqResult.length === 0) {
+            return res.status(404).send('Request not found.');
+        }
+        const request = reqResult[0];
+
+        if (request.requested_by_id !== actorId) {
+            return res.status(403).send('Forbidden: You can only edit your own requests.');
+        }
+        if (request.status !== 'Pending') {
+            return res.status(400).send('This request has already been processed and cannot be edited.');
+        }
+
+        res.render('inventory-request-edit', { request: request, error: null });
+
+    } catch (error) {
+        console.error("Error loading edit request form:", error);
+        res.status(500).send("Error loading page.");
+    }
+});
+
+app.post('/inventory/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { request_id } = req.params;
+    const { requested_count } = req.body;
+    const { id: actorId } = req.session.user;
+
+    let request; // For catch block
+    try {
+        const [reqResult] = await pool.query('SELECT * FROM inventory_requests WHERE request_id = ?', [request_id]);
+        if (reqResult.length === 0) {
+            return res.status(404).send('Request not found.');
+        }
+        request = reqResult[0];
+
+        if (request.requested_by_id !== actorId) {
+            return res.status(403).send('Forbidden: You can only edit your own requests.');
+        }
+        if (request.status !== 'Pending') {
+            return res.status(400).send('This request has already been processed and cannot be edited.');
+        }
+        if (requested_count <= 0) {
+            throw new Error("Requested amount must be greater than zero.");
+        }
+
+        await pool.query('UPDATE inventory_requests SET requested_count = ? WHERE request_id = ?', [requested_count, request_id]);
+        res.redirect('/inventory/requests');
+
+    } catch (error) {
+        console.error("Error updating request:", error);
+        const [fullReqResult] = await pool.query(`
+            SELECT ir.*, it.item_name, v.vendor_name
+            FROM inventory_requests ir
+            JOIN item it ON ir.item_id = it.item_id
+            JOIN vendors v ON ir.vendor_id = v.vendor_id
+            WHERE ir.request_id = ?
+        `, [request_id]);
+
+        res.render('inventory-request-edit', {
+            request: fullReqResult[0] || request,
+            error: error.message
+        });
+    }
+});
+
 // --- NEW: GET form to request a restock ---
 app.get('/inventory/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { vendor_id, item_id } = req.params;
@@ -2806,92 +3362,6 @@ app.get('/inventory/requests', isAuthenticated, canManageInventory, async (req, 
     } catch (error) {
         console.error("Error fetching inventory requests:", error);
         res.status(500).send("Error loading page.");
-    }
-});
-
-// --- NEW: GET form to edit a pending request ---
-app.get('/inventory/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { request_id } = req.params;
-    const { id: actorId } = req.session.user;
-
-    try {
-        const [reqResult] = await pool.query(`
-            SELECT ir.*, it.item_name, v.vendor_name
-            FROM inventory_requests ir
-            JOIN item it ON ir.item_id = it.item_id
-            JOIN vendors v ON ir.vendor_id = v.vendor_id
-            WHERE ir.request_id = ?
-        `, [request_id]);
-
-        if (reqResult.length === 0) {
-            return res.status(404).send('Request not found.');
-        }
-
-        const request = reqResult[0];
-
-        // Security: Only the user who created the request can edit it
-        if (request.requested_by_id !== actorId) {
-            return res.status(403).send('Forbidden: You can only edit your own requests.');
-        }
-        // Can only edit pending requests
-        if (request.status !== 'Pending') {
-            return res.status(400).send('This request has already been processed and cannot be edited.');
-        }
-
-        res.render('inventory-request-edit', { request: request, error: null });
-
-    } catch (error) {
-        console.error("Error loading edit request form:", error);
-        res.status(500).send("Error loading page.");
-    }
-});
-
-// --- NEW: POST to update a pending request ---
-app.post('/inventory/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { request_id } = req.params;
-    const { requested_count } = req.body;
-    const { id: actorId } = req.session.user;
-
-    let request; // For catch block
-    try {
-        // Get the request to check for permission
-        const [reqResult] = await pool.query('SELECT * FROM inventory_requests WHERE request_id = ?', [request_id]);
-        if (reqResult.length === 0) {
-            return res.status(404).send('Request not found.');
-        }
-        request = reqResult[0];
-
-        // Security check
-        if (request.requested_by_id !== actorId) {
-            return res.status(403).send('Forbidden: You can only edit your own requests.');
-        }
-        if (request.status !== 'Pending') {
-            return res.status(400).send('This request has already been processed and cannot be edited.');
-        }
-
-        if (requested_count <= 0) {
-            throw new Error("Requested amount must be greater than zero.");
-        }
-
-        // Update the request
-        await pool.query('UPDATE inventory_requests SET requested_count = ? WHERE request_id = ?', [requested_count, request_id]);
-        res.redirect('/inventory/requests');
-
-    } catch (error) {
-        console.error("Error updating request:", error);
-        // Need to re-fetch joined data for the form
-        const [fullReqResult] = await pool.query(`
-            SELECT ir.*, it.item_name, v.vendor_name
-            FROM inventory_requests ir
-            JOIN item it ON ir.item_id = it.item_id
-            JOIN vendors v ON ir.vendor_id = v.vendor_id
-            WHERE ir.request_id = ?
-        `, [request_id]);
-
-        res.render('inventory-request-edit', {
-            request: fullReqResult[0] || request,
-            error: error.message
-        });
     }
 });
 

@@ -1,0 +1,49 @@
+<style>
+	.navbar {
+	background-color: #17a2b8; /* Member-themed color */
+	padding: 0 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	color: white;
+	margin-bottom: 1em;
+	min-height: 50px;
+	}
+	.nav-links { display: flex; height: 100%; }
+	.nav-links a {
+	color: #f8f9fa;
+	text-decoration: none;
+	padding: 15px 12px;
+	transition: background-color 0.2s;
+	margin-right: 5px;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	box-sizing: border-box;
+	}
+	.nav-links a:hover { background-color: #138496; }
+	.user-info { font-weight: bold; }
+	.user-info a {
+	color: #fff3cd; /* Light yellow for contrast */
+	font-weight: bold;
+	margin-left: 20px;
+	text-decoration: none;
+	}
+	.user-info a:hover { text-decoration: underline; }
+</style>
+
+<% if (member) { %>
+<nav class="navbar">
+	<div class="nav-links">
+		<a href="/member/dashboard">My Dashboard</a>
+        <a href="/member/history">My Visit History</a>
+		<a href="/member/promotions">View Promotions</a>
+	</div>
+	<div class="user-info">
+		<span>
+			Welcome, <%= member.firstName %>!
+		</span>
+		<a href="/member/logout" style="color: #ffc107;">Logout</a>
+	</div>
+</nav>
+<% } %>

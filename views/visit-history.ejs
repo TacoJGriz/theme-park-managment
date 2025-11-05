@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Member Visit History</title>
+     <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        h1 small { color: #17a2b8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #17a2b8; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
+        .action-link:hover { text-decoration: underline; }
+        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Visit History for <br><small><%= member.first_name %> <%= member.last_name %></small></h1>
+        
+        <a href="/members" class="back-link">&laquo; Back to Members List</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Visit ID</th>
+                    <th>Date & Time</th>
+                    <th>Ticket Type</th>
+                    <th>Price Paid</th>
+                    <th>Cashier</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (visits.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">No visit records found for this member.</td>
+                    </tr>
+                <% } %>
+                <% visits.forEach(visit => { %>
+                    <tr>
+                        <td><%= visit.visit_id %></td>
+                        <td><%= visit.visit_date.toLocaleString() %></td>
+                        <td><%= visit.type_name %></td>
+                        <td>$<%= (visit.ticket_price - visit.discount_amount).toFixed(2) %></td>
+                        <td><%= visit.staff_name || 'N/A' %></td>
+                        <td>
+                            <a href="/visits/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
