@@ -1552,7 +1552,7 @@ app.get('/rides/log/:ride_id', isAuthenticated, canLogRideRun, async (req, res) 
 
     try {
         // 1. Get Ride info and check location
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity FROM rides WHERE ride_id = ?', [rideId]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
@@ -1581,19 +1581,20 @@ app.get('/rides/log/:ride_id', isAuthenticated, canLogRideRun, async (req, res) 
 // --- Log a single ride run ---
 app.post('/rides/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
     const rideId = req.params.ride_id;
-    const { capacity_percentage } = req.body; // Get new field from form
+    const { rider_count } = req.body; // <-- MODIFIED: Get rider_count
     const { role, locationId } = req.session.user;
     let connection;
+    let ride; // <-- MODIFIED: Defined ride here for access in catch
 
     try {
         connection = await pool.getConnection();
 
         // 1. Get Ride Capacity and check location
-        const [rideResult] = await pool.query('SELECT capacity, location_id, ride_name FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT capacity, location_id, ride_name, ride_id FROM rides WHERE ride_id = ?', [rideId]); // <-- MODIFIED: Added ride_id
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
-        const ride = rideResult[0];
+        ride = rideResult[0]; // <-- MODIFIED: Assign to outer variable
 
         // 2. Security check for Staff and Location Manager
         if (role === 'Location Manager' || role === 'Staff') {
@@ -1602,10 +1603,28 @@ app.post('/rides/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res)
             }
         }
 
-        // 3. Calculate riders count
-        const capacityPercent = parseFloat(capacity_percentage) / 100.0;
-        const estimatedRiders = Math.round(ride.capacity * capacityPercent);
+        // --- 3. NEW: Server-side Validation ---
+        const numRiders = parseInt(rider_count, 10);
+        const maxCapacity = parseInt(ride.capacity, 10);
 
+        if (isNaN(numRiders) || numRiders < 0) {
+            return res.render('log-ride-run', {
+                ride: ride,
+                error: 'Invalid number of riders submitted.'
+            });
+        }
+
+        if (numRiders > maxCapacity) {
+            return res.render('log-ride-run', {
+                ride: ride,
+                error: `Error: Number of riders (${numRiders}) cannot exceed the max capacity of ${maxCapacity}.`
+            });
+        }
+        // --- End of Validation ---
+
+
+        // 3. Calculate riders count (it's just the number submitted)
+        const estimatedRiders = numRiders; // <-- MODIFIED: No more percentage math
         const today = new Date().toISOString().substring(0, 10);
 
         await connection.beginTransaction();
@@ -1628,10 +1647,10 @@ app.post('/rides/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res)
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error logging ride run:", error);
-        // Render the form again with an error
-        const rideName = (rideResult && rideResult.length > 0) ? rideResult[0].ride_name : 'Unknown Ride';
+
+        // MODIFIED: Use the 'ride' object directly
         res.render('log-ride-run', {
-            ride: { ride_id: rideId, ride_name: rideName },
+            ride: ride || { ride_id: rideId, ride_name: 'Unknown Ride', capacity: 0 },
             error: 'Error saving ride data. Please try again.'
         });
     } finally {

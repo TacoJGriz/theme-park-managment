@@ -4,44 +4,106 @@
     <meta charset="UTF-8">
     <title>Log Ride Run</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        h1 small { color: #007bff; font-weight: bold; }
-        form { max-width: 500px; margin: 1em auto 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 1.1em; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
-        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #218838; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
-        .cancel-link:hover { text-decoration: underline; }
+        body { font-family: sans-serif;
+        margin: 0; background-color: #f4f4f9; color: #333; }
+        
+        h1 { color: #444; text-align: center;
+        margin-top: 2em; /* MODIFIED: This now creates all the space */
+        }
+        h1 small { color: #007bff; font-weight: bold;
+        }
+
+        /* MODIFIED: Changed margins to flow naturally */
+        .capacity-note {
+            text-align: center;
+            font-size: 1.1em;
+            color: #6c757d;
+            margin-top: 0.5em; /* MODIFIED: Was -1em */
+            margin-bottom: 2em;  /* MODIFIED: Was 1.5em */
+        }
+        
+        /* MODIFIED: Removed top margin */
+        form { 
+            max-width: 500px; 
+            margin: 0 auto 2em auto; /* MODIFIED: Was 1em auto 2em auto */
+            background: white;
+            padding: 2em; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+
+        div { margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+        }
+        input[type="number"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+        border: 1px solid #ccc; font-size: 1.1em; }
+        .error { color: #d9534f; font-weight: bold;
+        background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        button { padding: 12px 20px;
+        background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+        }
+        button:hover { background-color: #218838;
+        }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+        }
+        .cancel-link:hover { text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
+    
+    <%# --- REMOVED container div --- %>
+    
+    <%# --- MODIFIED: Title and new capacity note --- %>
     <h1>Log Run for: <small><%= ride.ride_name %></small></h1>
+    <p class="capacity-note">
+        <strong>Max Capacity: <%= ride.capacity %></strong>
+    </p>
 
     <% if (typeof error !== 'undefined' && error) { %>
         <p class="error"><%= error %></p>
     <% } %>
 
-    <form action="/rides/run/<%= ride.ride_id %>" method="POST">
+    <%# --- MODIFIED: Form points to new ID and has new input --- %>
+    <form action="/rides/run/<%= ride.ride_id %>" method="POST" id="logRunForm">
         <div>
-            <label for="capacity_percentage">Estimated Capacity Percentage:</label>
-            <select id="capacity_percentage" name="capacity_percentage" required>
-                <option value="1">1% (Testing/Empty)</option>
-                <option value="5">5%</option>
-                <option value="10">10%</option>
-                <option value="25">25%</option>
-                <option value="50">50%</option>
-                <option value="75">75%</option>
-                <option value="100">100% (Full)</option>
-            </select>
+            <label for="rider_count">Number of Riders:</label>
+            <input type="number" id="rider_count" name="rider_count" min="0" max="<%= ride.capacity %>" required>
         </div>
         <br>
         <button type="submit">Submit Run</button>
         <a href="/rides" class="cancel-link">Cancel</a>
     </form>
+
+    <%# --- NEW: Client-side validation script --- %>
+    <script>
+        const form = document.getElementById('logRunForm');
+        const riderInput = document.getElementById('rider_count');
+        // Get the max capacity from EJS
+        const maxCapacity = parseInt('<%= ride.capacity %>', 10);
+
+        form.addEventListener('submit', function(event) {
+            const riderCount = parseInt(riderInput.value, 10);
+
+            if (isNaN(riderCount)) {
+                return; // Let 'required' attribute handle it
+            }
+
+            if (riderCount > maxCapacity) {
+                // 1. Stop the form from submitting
+                event.preventDefault();
+                
+                // 2. Show the error popup
+                alert('Error: Number of riders (' + riderCount + ') cannot exceed the max capacity of ' + maxCapacity + '.');
+                
+                // 3. Optional: Clear the bad value and focus the input
+                riderInput.value = '';
+                riderInput.focus();
+            }
+        });
+    </script>
+    <%# --- REMOVED closing /div --- %>
 </body>
 </html>
