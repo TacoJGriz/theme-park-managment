@@ -279,10 +279,7 @@ CREATE TABLE daily_ride (
     -- keys
     PRIMARY KEY (ride_id , dat_date),
     FOREIGN KEY (ride_id) REFERENCES rides (ride_id),
-    FOREIGN KEY (dat_date) REFERENCES daily_stats (date_rec),
-    -- constraints
-    CONSTRAINT chk_ride_count_positive CHECK (ride_count >= 0),
-    CONSTRAINT chk_run_count_positive CHECK (run_count >= 0)
+    FOREIGN KEY (dat_date) REFERENCES daily_stats (date_rec)
 );
 
 CREATE TABLE member_auth (

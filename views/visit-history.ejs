@@ -50,7 +50,14 @@
                         <td>$<%= (visit.ticket_price - visit.discount_amount).toFixed(2) %></td>
                         <td><%= visit.staff_name || 'N/A' %></td>
                         <td>
-                            <a href="/visits/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
+                            <%# Check if a member is logged in (res.locals.member) %>
+                            <% if (typeof member !== 'undefined' && member) { %>
+                                <%# Member is logged in, use member-specific route %>
+                                <a href="/member/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
+                            <% } else { %>
+                                <%# Employee is logged in, use general route %>
+                                <a href="/visits/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
+                            <% } %>
                         </td>
                     </tr>
                 <% }); %>
