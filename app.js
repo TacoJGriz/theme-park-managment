@@ -364,13 +364,15 @@ app.get('/login', isGuest, (req, res) => {
     if (req.session.user) {
         return res.redirect('/dashboard');
     }
-    res.render('login', { error: null });
+    res.render('global-login', { error: null });
 });
 app.post('/login', isGuest, async (req, res) => {
     try {
         const email = req.body.username;
         const password = req.body.password;
-        const query = `
+
+        // --- 1. Check for an EMPLOYEE match first ---
+        const employeeQuery = `
             SELECT 
                 demo.employee_id, demo.first_name, demo.last_name, demo.employee_type, 
                 demo.location_id, loc.location_name, auth.password_hash
@@ -379,36 +381,76 @@ app.post('/login', isGuest, async (req, res) => {
             LEFT JOIN location AS loc ON demo.location_id = loc.location_id
             WHERE demo.email = ? AND demo.is_active = TRUE AND demo.is_pending_approval = FALSE
         `;
-        const [results] = await pool.query(query, [email]);
-        if (results.length === 0) {
-            return res.render('login', { error: 'Invalid email or password' });
-        }
-        const user = results[0];
-        const match = await bcrypt.compare(password, user.password_hash);
-        if (match) {
-            req.session.regenerate(function (err) {
-                if (err) {
-                    console.error("Session regeneration error:", err);
-                    return res.status(500).render('login', { error: 'Session error during login.' });
-                }
+        const [employeeResults] = await pool.query(employeeQuery, [email]);
 
-                // Set session for all roles
-                req.session.user = {
-                    id: user.employee_id,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    role: user.employee_type,
-                    locationId: user.location_id, // Used by Location Manager AND Staff
-                    locationName: user.location_name // --- NEWLY ADDED ---
-                };
-                res.redirect('/dashboard');
-            });
-        } else {
-            res.render('login', { error: 'Invalid email or password' });
+        if (employeeResults.length > 0) {
+            // Employee email found, check password
+            const user = employeeResults[0];
+            const match = await bcrypt.compare(password, user.password_hash);
+
+            if (match) {
+                // Employee login successful
+                return req.session.regenerate(function (err) {
+                    if (err) {
+                        console.error("Session regeneration error:", err);
+                        return res.status(500).render('global-login', { error: 'Session error during login.' });
+                    }
+                    // Set EMPLOYEE session
+                    req.session.user = {
+                        id: user.employee_id,
+                        firstName: user.first_name,
+                        lastName: user.last_name,
+                        role: user.employee_type,
+                        locationId: user.location_id,
+                        locationName: user.location_name
+                    };
+                    res.redirect('/dashboard');
+                });
+            }
         }
+
+        // --- 2. No employee match, check for a MEMBER match ---
+        const memberQuery = `
+            SELECT 
+                m.membership_id, m.first_name, m.last_name, m.email,
+                auth.password_hash
+            FROM membership AS m
+            JOIN member_auth AS auth ON m.membership_id = auth.membership_id
+            WHERE m.email = ?
+        `;
+        const [memberResults] = await pool.query(memberQuery, [email]);
+
+        if (memberResults.length > 0) {
+            // Member email found, check password
+            const member = memberResults[0];
+            const match = await bcrypt.compare(password, member.password_hash);
+
+            if (match) {
+                // Member login successful
+                return req.session.regenerate(function (err) {
+                    if (err) {
+                        console.error("Session regeneration error:", err);
+                        return res.status(500).render('global-login', { error: 'Session error during login.' });
+                    }
+                    // Set MEMBER session
+                    req.session.member = {
+                        id: member.membership_id,
+                        firstName: member.first_name,
+                        lastName: member.last_name,
+                        email: member.email
+                    };
+                    res.redirect('/member/dashboard');
+                });
+            }
+        }
+
+        // --- 3. No match for either ---
+        // If we're here, the email wasn't found OR the password was wrong
+        res.render('global-login', { error: 'Invalid email or password' });
+
     } catch (error) {
-        console.error("Login error:", error);
-        return res.status(500).render('login', { error: 'An unexpected error occurred during login. Please try again later.' });
+        console.error("Global login error:", error);
+        return res.status(500).render('global-login', { error: 'An unexpected error occurred. Please try again later.' });
     }
 });
 app.get('/employee/logout', (req, res) => {
@@ -2381,14 +2423,11 @@ app.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) =>
     }
 });
 
-// --- NEW: MEMBER PORTAL ROUTES ---
-// (Add this entire block before the Membership Type Management)
-
+// --- MEMBER PORTAL ROUTES ---
 // GET Member Login Page
 app.get('/member/login', isGuest, (req, res) => {
-    res.render('member-login', { error: null });
+    res.redirect('/login');
 });
-
 // POST Member Login
 app.post('/member/login', isGuest, async (req, res) => {
     try {

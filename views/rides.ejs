@@ -314,13 +314,14 @@
                             
                             <%# --- Log Ride Run Link with disabled state --- %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <% if (ride.ride_status === 'BROKEN') { %>
-                                    <span class="log-run-link-disabled">Log Run</span>
-                                <% } else { %>
-                                    <a href="/rides/log/<%= ride.ride_id %>" class="action-link log-run-link">Log Run</a>
+                                <%# MODIFIED: Button is disabled if ride is BROKEN or CLOSED %>
+                                <% if (ride.ride_status === 'BROKEN' || ride.ride_status === 'CLOSED') { %>
+ 
+                                   <span class="log-run-link-disabled">Log Run</span>
+                                <% } else { %> <a href="/rides/log/<%= ride.ride_id %>" class="action-link log-run-link">Log Run</a>
                                 <% } %>
                             <% } %>
-                        </td>
+                         </td>
                     </tr>
                 <% }); %>
             </tbody>

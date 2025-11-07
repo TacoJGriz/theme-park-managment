@@ -22,13 +22,28 @@
             transition: background-color 0.2s;
         }
         .nav-links a:hover { background-color: #495057; }
+        
+        /* --- MODIFICATIONS START HERE --- */
         .nav-links a.login-btn {
-            background-color: #007bff;
+            /* background-color: #007bff; <-- Removed */
             border-radius: 4px;
             margin-left: 1em;
             font-weight: bold;
         }
-        .nav-links a.login-btn:hover { background-color: #0056b3; }
+        .nav-links a.login-btn:hover { 
+            /* background-color: #0056b3; <-- Removed */
+            color: white; /* Ensure text is white on hover */
+        }
+
+        .nav-links a.global-login-btn {
+            background-color: transparent; /* MODIFIED: No fill */
+            color: #17a2b8; /* ADDED: Set text to "blue" (cyan) */
+        }
+        .nav-links a.global-login-btn:hover {
+            background-color: #495057; /* Use default hover */
+            color: white; /* Ensure text is white on hover */
+        }
+        /* --- MODIFICATIONS END HERE --- */
 
         .hero {
             background-color: #007bff;
@@ -126,8 +141,10 @@
             <a href="#promotions">Promotions</a>
             <a href="#attractions">Attractions</a>
             <a href="#tickets">Tickets</a>
-            <a href="/member/login" class="login-btn" style="background-color: #17a2b8;">Member Login</a>
-            <a href="/login" class="login-btn">Employee Login</a>
+            
+            <%# Replaced the two separate login buttons with a single one %>
+            <a href="/login" class="login-btn global-login-btn">Login</a>
+            
             </div>
     </nav>
 
@@ -139,7 +156,7 @@
     <div class="container">
 
         <section id="promotions">
-            <h2>Current Promotions</h2>
+            <h2>Current & Upcoming Promotions</h2>
             <div class="card-container">
                 <% if (promotions.length > 0) { %>
                     <% promotions.forEach(promo => { %>
