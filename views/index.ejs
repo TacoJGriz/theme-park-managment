@@ -130,7 +130,21 @@
             font-size: 1.1em;
             color: #343a40;
         }
-
+        .purchase-button {
+            display: block;
+            text-align: center;
+            padding: 12px 20px;
+            background-color: #17a2b8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 1em;
+            transition: background-color 0.2s;
+        }
+        .purchase-button:hover {
+            background-color: #138496;
+        }
     </style>
 </head>
 <body>
@@ -214,16 +228,17 @@
             <h3 style="margin-top: 2em;">Memberships</h3>
             <div class="card-container">
                 <% memberships.forEach(pass => { %>
-                    <div class="card price">
-                        <h3><%= pass.type_name %> Pass</h3>
-                        <div class="price">$<%= parseFloat(pass.base_price).toFixed(2) %> <span class="price-sub">/ year</span></div>
-                        <p><%= pass.description %></p>
+                    <div class_name="card price" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h3><%= pass.type_name %> Pass</h3>
+                            <div class="price">$<%= parseFloat(pass.base_price).toFixed(2) %> <span class="price-sub">/ year</span></div>
+                            <p><%= pass.description %></p>
+                        </div>
+                        <a href="/signup?type=<%= pass.type_id %>" class="purchase-button">Purchase Now</a>
                     </div>
                 <% }); %>
             </div>
         </section>
-
     </div>
-
 </body>
 </html>

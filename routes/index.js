@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
             "SELECT type_name, base_price FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
         const [memberships] = await pool.query(
-            "SELECT type_name, base_price, description FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
+            "SELECT type_id, type_name, base_price, description FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
         );
 
         // Render the new homepage view with all this data

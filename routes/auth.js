@@ -4,10 +4,145 @@ const bcrypt = require('bcrypt');
 const pool = require('../db'); // Adjust path to db.js
 const {
     isAuthenticated,
-    isGuest
+    isGuest,
+    formatPhoneNumber
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 const saltRounds = 10; // This was in app.js, we need it here for hashing
+
+// GET /signup
+// Renders the new purchase & registration form
+router.get('/signup', isGuest, async (req, res) => {
+    try {
+        const { type: type_id } = req.query;
+        if (!type_id) {
+            return res.redirect('/'); // If no type is selected, go back to homepage
+        }
+
+        const [typeResult] = await pool.query(
+            'SELECT * FROM membership_type WHERE type_id = ? AND is_active = TRUE',
+            [type_id]
+        );
+
+        if (typeResult.length === 0) {
+            // If type is invalid or not active, go back to homepage
+            return res.redirect('/');
+        }
+
+        res.render('member-signup', {
+            type: typeResult[0],
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading signup page:", error);
+        res.redirect('/');
+    }
+});
+
+// POST /signup
+// Processes the new member purchase and creates their account
+router.post('/signup', isGuest, async (req, res) => {
+    const {
+        type_id,
+        first_name,
+        last_name,
+        date_of_birth,
+        email,
+        password,
+        confirm_password
+    } = req.body;
+
+    const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
+
+    let type; // To re-render the page on error
+
+    try {
+        // Get Membership Type details for re-render (on error) and for logic
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        if (typeResult.length === 0) {
+            throw new Error("Invalid membership type submitted.");
+        }
+        type = typeResult[0];
+
+        // --- Validation ---
+        if (password !== confirm_password) {
+            throw new Error("Passwords do not match.");
+        }
+
+        // Check if email is already in use by an employee or member
+        const [empEmail] = await pool.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
+        const [memEmail] = await pool.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
+
+        if (empEmail.length > 0 || memEmail.length > 0) {
+            throw new Error("This email address is already in use.");
+        }
+
+        // --- (Mock Payment Processing would go here) ---
+        // Since payment is successful, we proceed.
+
+        // --- Database Transaction ---
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // 1. Create the membership record
+            const today = new Date();
+            const endDate = new Date(today.setFullYear(today.getFullYear() + 1));
+
+            const memSql = `
+                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
+                VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?)
+            `;
+            const [memResult] = await connection.query(memSql, [
+                first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, endDate
+            ]);
+
+            const newMembershipId = memResult.insertId;
+
+            // 2. Create the member_auth record
+            const hash = await bcrypt.hash(password, saltRounds);
+            const authSql = "INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)";
+            await connection.query(authSql, [newMembershipId, hash]);
+
+            // 3. Commit the transaction
+            await connection.commit();
+
+            // 4. Log the user in
+            req.session.regenerate(function (err) {
+                if (err) {
+                    console.error("Session regeneration error:", err);
+                    throw new Error("Error creating your login session.");
+                }
+
+                // Set MEMBER session
+                req.session.member = {
+                    id: newMembershipId,
+                    firstName: first_name,
+                    lastName: last_name,
+                    email: email
+                };
+
+                // 5. Redirect to their new dashboard
+                res.redirect('/member/dashboard');
+            });
+
+        } catch (dbError) {
+            await connection.rollback(); // Rollback on error
+            throw dbError; // Pass error to outer catch block
+        } finally {
+            connection.release();
+        }
+
+    } catch (error) {
+        console.error("Error processing signup:", error);
+        // On error, re-render the signup page with the error message
+        res.render('member-signup', {
+            type: type || { type_id: type_id, type_name: 'Error', base_price: 0 }, // Fallback type
+            error: error.message || "An unexpected error occurred."
+        });
+    }
+});
 
 // --- LOGIN & LOGOUT ROUTES ---
 // GET /login
