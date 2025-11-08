@@ -1,0 +1,270 @@
+// In routes/approvals.js
+
+const express = require('express');
+const router = express.Router();
+const pool = require('../db'); // Adjust path to db.js
+const {
+    isAuthenticated,
+    canViewApprovals,
+    canApproveWages,
+    canApproveMaintenance,
+    canApproveInventory
+} = require('../middleware/auth'); // Adjust path to auth.js
+
+// --- APPROVAL WORKFLOW ROUTES ---
+
+// GET /approvals
+// Path changed to /
+router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
+    try {
+        const { role, locationId } = req.session.user;
+        let rateChanges = [];
+        let reassignments = [];
+        let inventoryRequests = [];
+
+        // Only fetch wage approvals if user is Admin or Head of HR
+        if (role === 'Admin' || role === 'Head of HR') {
+            const rateChangeQuery = `
+                SELECT 
+                    target.employee_id, 
+                    target.first_name, 
+                    target.last_name, 
+                    target.hourly_rate, 
+                    target.pending_hourly_rate,
+                    requester.first_name as requester_first_name,
+                    requester.last_name as requester_last_name
+                FROM employee_demographics as target
+                JOIN employee_demographics as requester ON target.rate_change_requested_by = requester.employee_id
+                WHERE target.pending_hourly_rate IS NOT NULL
+            `;
+            const [rateResults] = await pool.query(rateChangeQuery);
+            rateChanges = rateResults;
+        }
+
+        // Only fetch maintenance approvals if user is Admin or Park Manager
+        if (role === 'Admin' || role === 'Park Manager') {
+            const reassignmentQuery = `
+                SELECT
+                    m.maintenance_id,
+                    r.ride_name,
+                    m.summary,
+                    CONCAT(current_emp.first_name, ' ', current_emp.last_name) as current_employee_name,
+                    CONCAT(pending_emp.first_name, ' ', pending_emp.last_name) as pending_employee_name,
+                    CONCAT(requester.first_name, ' ', requester.last_name) as requester_name
+                FROM maintenance m
+                JOIN rides r ON m.ride_id = r.ride_id
+                LEFT JOIN employee_demographics current_emp ON m.employee_id = current_emp.employee_id
+                JOIN employee_demographics pending_emp ON m.pending_employee_id = pending_emp.employee_id
+                JOIN employee_demographics requester ON m.assignment_requested_by = requester.employee_id
+                WHERE m.pending_employee_id IS NOT NULL AND m.end_date IS NULL
+            `;
+            const [reassignmentResults] = await pool.query(reassignmentQuery);
+            reassignments = reassignmentResults;
+        }
+
+        // Fetch inventory approvals if user is Admin, Park Manager, or Location Manager
+        if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
+            let inventoryQuery = `
+                SELECT 
+                    ir.request_id, 
+                    ir.requested_count,
+                    v.vendor_name,
+                    i.item_name,
+                    CONCAT(e.first_name, ' ', e.last_name) as requester_name,
+                    COALESCE(inv.count, 0) as current_count
+                FROM inventory_requests ir
+                JOIN vendors v ON ir.vendor_id = v.vendor_id
+                JOIN item i ON ir.item_id = i.item_id
+                JOIN employee_demographics e ON ir.requested_by_id = e.employee_id
+                LEFT JOIN inventory inv ON ir.vendor_id = inv.vendor_id AND ir.item_id = inv.item_id
+                WHERE ir.status = 'Pending'
+            `;
+            let inventoryParams = [];
+
+            if (role === 'Location Manager') {
+                inventoryQuery += ' AND v.location_id = ?';
+                inventoryParams.push(locationId);
+            }
+
+            const [invResults] = await pool.query(inventoryQuery, inventoryParams);
+            inventoryRequests = invResults;
+        }
+
+        res.render('approvals', { rateChanges, reassignments, inventoryRequests });
+    } catch (error) {
+        console.error("Error fetching approvals:", error);
+        res.status(500).send("Error loading approvals page.");
+    }
+});
+
+// POST /approve/rate/:employee_id
+// Path changed to /approve/rate/:employee_id
+router.post('/approve/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE employee_demographics 
+            SET hourly_rate = pending_hourly_rate, 
+                pending_hourly_rate = NULL, 
+                rate_change_requested_by = NULL 
+            WHERE employee_id = ?
+        `;
+        await pool.query(sql, [req.params.employee_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error approving rate change:", error);
+        res.status(500).send("Error processing approval.");
+    }
+});
+
+// POST /reject/rate/:employee_id
+// Path changed to /reject/rate/:employee_id
+router.post('/reject/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE employee_demographics 
+            SET pending_hourly_rate = NULL, 
+                rate_change_requested_by = NULL 
+            WHERE employee_id = ?
+        `;
+        await pool.query(sql, [req.params.employee_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error rejecting rate change:", error);
+        res.status(500).send("Error processing rejection.");
+    }
+});
+
+// POST /approve/reassignment/:maintenance_id
+// Path changed to /approve/reassignment/:maintenance_id
+router.post('/approve/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE maintenance
+            SET employee_id = pending_employee_id,
+                pending_employee_id = NULL,
+                assignment_requested_by = NULL
+            WHERE maintenance_id = ?
+        `;
+        await pool.query(sql, [req.params.maintenance_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error approving reassignment:", error);
+        res.status(500).send("Error processing approval.");
+    }
+});
+
+// POST /reject/reassignment/:maintenance_id
+// Path changed to /reject/reassignment/:maintenance_id
+router.post('/reject/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+    try {
+        const sql = `
+            UPDATE maintenance
+            SET pending_employee_id = NULL,
+                assignment_requested_by = NULL
+            WHERE maintenance_id = ?
+        `;
+        await pool.query(sql, [req.params.maintenance_id]);
+        res.redirect('/approvals');
+    } catch (error) {
+        console.error("Error rejecting reassignment:", error);
+        res.status(500).send("Error processing rejection.");
+    }
+});
+
+// POST /approve/inventory/:request_id
+// Path changed to /approve/inventory/:request_id
+router.post('/approve/inventory/:request_id', isAuthenticated, canApproveInventory, async (req, res) => {
+    const { request_id } = req.params;
+    const { role, locationId } = req.session.user;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        const [reqResult] = await connection.query(
+            `SELECT ir.vendor_id, ir.item_id, ir.requested_count, v.location_id
+             FROM inventory_requests ir
+             JOIN vendors v ON ir.vendor_id = v.vendor_id
+             WHERE ir.request_id = ? AND ir.status = 'Pending'`,
+            [request_id]
+        );
+
+        if (reqResult.length === 0) {
+            throw new Error("Request not found or already processed.");
+        }
+        const request = reqResult[0];
+
+        if (role === 'Location Manager' && request.location_id !== locationId) {
+            return res.status(403).send('Forbidden: You can only approve requests for your location.');
+        }
+
+        const updateSql = `
+            INSERT INTO inventory (vendor_id, item_id, count)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE count = count + ?
+        `;
+        await connection.query(updateSql, [
+            request.vendor_id,
+            request.item_id,
+            request.requested_count,
+            request.requested_count
+        ]);
+
+        await connection.query(
+            "UPDATE inventory_requests SET status = 'Approved' WHERE request_id = ?",
+            [request_id]
+        );
+
+        await connection.commit();
+        res.redirect('/approvals');
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error approving inventory request:", error);
+        res.status(500).send("Error processing approval.");
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// POST /reject/inventory/:request_id
+// Path changed to /reject/inventory/:request_id
+router.post('/reject/inventory/:request_id', isAuthenticated, canApproveInventory, async (req, res) => {
+    const { request_id } = req.params;
+    const { role, locationId } = req.session.user;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        const [reqResult] = await connection.query(
+            `SELECT v.location_id
+             FROM inventory_requests ir
+             JOIN vendors v ON ir.vendor_id = v.vendor_id
+             WHERE ir.request_id = ?`,
+            [request_id]
+        );
+
+        if (reqResult.length > 0) {
+            if (role === 'Location Manager' && reqResult[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden: You can only reject requests for your location.');
+            }
+
+            await connection.query(
+                "UPDATE inventory_requests SET status = 'Rejected' WHERE request_id = ?",
+                [request_id]
+            );
+        }
+        res.redirect('/approvals');
+    }
+
+    catch (error) {
+        console.error("Error rejecting inventory request:", error);
+        res.status(500).send("Error processing rejection.");
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+module.exports = router;
