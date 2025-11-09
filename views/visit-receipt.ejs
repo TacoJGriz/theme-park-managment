@@ -180,8 +180,12 @@
         </div>
     </div>
 
-    <% if (user) { %>
+    <% if (user && typeof fromLogVisit !== 'undefined' && fromLogVisit) { %>
         <a href="/visits/new" class="close-button">Log New Visit</a>
+    
+    <% } else if (user) { %>
+        <a href="/members/history/<%= receipt.member_id %>" class="close-button">&laquo Back to Visit History</a>
+    
     <% } else if (member) { %>
         <a href="/member/history" class="close-button" style="background-color: #17a2b8;">&laquo Back to My History</a>
     <% } %>

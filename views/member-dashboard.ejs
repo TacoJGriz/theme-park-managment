@@ -4,57 +4,81 @@
     <meta charset="UTF-8">
     <title>Member Dashboard</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .dashboard-container { padding: 2em; max-width: 900px; margin: 0 auto; }
-        h1 { color: #444; }
-        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em; border-bottom: 1px solid #ddd;}
+        /* ... (all <style> content is unchanged) ... */
+        body { font-family: sans-serif;
+margin: 0; background-color: #f4f4f9; color: #333; }
+        .dashboard-container { padding: 2em; max-width: 900px;
+margin: 0 auto; }
+        h1 { color: #444;
+}
+        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em;
+border-bottom: 1px solid #ddd;}
         
         .profile-container {
             background: white;
-            padding: 1em 2em 2em 2em; /* More padding on top/bottom */
+padding: 1em 2em 2em 2em; /* More padding on top/bottom */
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         .profile-container h3 {
             margin-top: 1.5em;
-            border-bottom: 1px solid #eee;
+border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             font-size: 1.3em;
             color: #17a2b8;
-        }
+}
         .profile-container h3:first-child {
-            margin-top: 0; /* No top margin for the first heading */
+            margin-top: 0;
+/* No top margin for the first heading */
         }
         
         .info-pair {
             display: flex;
-            justify-content: space-between; /* Pushes label and value apart */
+justify-content: space-between; /* Pushes label and value apart */
             align-items: center;
-            font-size: 1.1em;
+font-size: 1.1em;
             padding: 1em 0.5em; /* Padding top/bottom, slight left/right */
             border-bottom: 1px solid #f0f0f0;
-        }
+}
         .info-pair:last-child {
-            border-bottom: none; /* No border on the last item */
+            border-bottom: none;
+/* No border on the last item */
         }
 
         .info-pair strong { 
             color: #333;
-            margin-right: 2em; /* Space between label and value */
+margin-right: 2em; /* Space between label and value */
         }
         .info-pair span { 
             color: #555;
-            /* Long text (like email) will no longer overflow */
+/* Long text (like email) will no longer overflow */
         }
         
         .info-pair .status-Active { 
-            color: #28a745; 
-            font-weight: bold; 
+            color: #28a745;
+font-weight: bold; 
         }
         .info-pair .status-Expired { 
-            color: #dc3545; 
-            font-weight: bold; 
+            color: #dc3545;
+font-weight: bold; 
+        }
+
+        /* --- NEW STYLE FOR THE LINK --- */
+        .action-link-bar {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 1em;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .action-link-bar a {
+            font-weight: bold;
+            text-decoration: none;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+        .action-link-bar a:hover {
+            text-decoration: underline;
         }
 
     </style>
@@ -66,7 +90,7 @@
 
         <p class="welcome-message">
             Hello, <strong><%= member.firstName %> <%= member.lastName %></strong>!
-        </p>
+</p>
 
         <div class="profile-container">
             
@@ -75,33 +99,40 @@
                 <strong>Member ID:</strong>
                 <span><%= member.id %></span>
             </div>
-            <div class="info-pair">
+      
+      <div class="info-pair">
                 <strong>Membership Type:</strong>
                 <span><%= member.typeName %></span>
             </div>
             <div class="info-pair">
                 <strong>Status:</strong>
-                <span class="status-<%= member.status %>"><%= member.status %></span>
+                <span 
+class="status-<%= member.status %>"><%= member.status %></span>
             </div>
             <div class="info-pair">
                 <strong>Valid Through:</strong>
                 <span><%= new Date(member.endDate).toLocaleDateString() %></span>
             </div>
 
+            <div class="action-link-bar">
+                <a href="/member/purchase-receipt">View Original Purchase Receipt</a>
+            </div>
             <h3>My Contact Info</h3>
-            <div class="info-pair">
+         
+   <div class="info-pair">
                 <strong>Email:</strong>
                 <span><%= member.email %></span>
             </div>
             <div class="info-pair">
                 <strong>Phone:</strong>
-                <span><%= member.phone || 'N/A' %></span>
+                <span><%= member.phone ||
+'N/A' %></span>
             </div>
              <div class="info-pair">
                 <strong>Date of Birth:</strong>
                 <span><%= new Date(member.dob).toLocaleDateString() %></span>
             </div>
         </div>
-        </div>
+    </div>
 </body>
 </html>

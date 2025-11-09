@@ -62,13 +62,8 @@ app.use('/', indexRoutes);
 const rideRoutes = require('./routes/rides');
 app.use('/rides', rideRoutes);
 
-const maintenanceRoutes = require('./routes/maintenance'); 
-app.use('/maintenance', maintenanceRoutes);             
-
-const memberRoutes = require('./routes/members');
-app.use('/members', memberRoutes);
-app.use('/visits', memberRoutes);
-app.use('/member', memberRoutes);
+const maintenanceRoutes = require('./routes/maintenance');
+app.use('/maintenance', maintenanceRoutes);
 
 const authRoutes = require('./routes/auth');
 app.use('/', authRoutes);
@@ -92,6 +87,15 @@ app.use('/inventory', inventoryRoutes);
 
 const reportRoutes = require('./routes/reports');
 app.use('/reports', reportRoutes);
+
+const memberRoutes = require('./routes/members'); // Employee-facing /members routes
+app.use('/members', memberRoutes);
+
+const memberPortalRoutes = require('./routes/members'); // Member-facing /member routes
+app.use('/member', memberPortalRoutes);
+
+const visitRoutes = require('./routes/visits'); // Employee-facing /visits routes
+app.use('/visits', visitRoutes);
 
 // --- Start Server ---
 app.listen(port, () => {
