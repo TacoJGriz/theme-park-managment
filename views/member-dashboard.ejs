@@ -62,24 +62,7 @@ font-weight: bold;
         .info-pair .status-Expired { 
             color: #dc3545;
 font-weight: bold; 
-        }
-
-        /* --- NEW STYLE FOR THE LINK --- */
-        .action-link-bar {
-            text-align: center;
-            background: #f8f9fa;
-            padding: 1em;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .action-link-bar a {
-            font-weight: bold;
-            text-decoration: none;
-            color: #007bff;
-            font-size: 1.1em;
-        }
-        .action-link-bar a:hover {
-            text-decoration: underline;
-        }
+        }       
 
     </style>
 </head>
@@ -114,9 +97,6 @@ class="status-<%= member.status %>"><%= member.status %></span>
                 <span><%= new Date(member.endDate).toLocaleDateString() %></span>
             </div>
 
-            <div class="action-link-bar">
-                <a href="/member/purchase-receipt">View Original Purchase Receipt</a>
-            </div>
             <h3>My Contact Info</h3>
          
    <div class="info-pair">

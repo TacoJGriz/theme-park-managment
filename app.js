@@ -91,7 +91,7 @@ app.use('/reports', reportRoutes);
 const memberRoutes = require('./routes/members'); // Employee-facing /members routes
 app.use('/members', memberRoutes);
 
-const memberPortalRoutes = require('./routes/members'); // Member-facing /member routes
+const memberPortalRoutes = require('./routes/member-portal'); // Member-facing /member routes
 app.use('/member', memberPortalRoutes);
 
 const visitRoutes = require('./routes/visits'); // Employee-facing /visits routes

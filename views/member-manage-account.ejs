@@ -69,6 +69,81 @@
             font-weight: bold;
             margin-top: 1em;
         }
+        .card label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .card input[type="text"],
+        .card input[type="tel"],
+        .card input[type="password"],
+        .card select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1em;
+        }
+        .payment-choice {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+        }
+        .payment-choice label {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            font-weight: normal; 
+        }
+        .payment-choice input[type="radio"] {
+            width: auto;
+        }
+        .payment-details-group {
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 1.5em;
+            border-radius: 4px;
+            margin-top: 1em;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            font-weight: normal;
+            margin-top: 1.5em;
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+        }
+        .input-error {
+            border-color: #dc3545;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+        .form-submit-btn {
+            padding: 12px 20px;
+            background-color: #28a745; /* Green for "add" */
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: bold;
+            margin-top: 1.5em;
+        }
+        .form-submit-btn:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
@@ -129,6 +204,222 @@
                 <p>You have no saved payment methods.</p>
             <% } %>
         </div>
+        <div class="card">
+            <h3>Add New Payment Method</h3>
+
+            <%# This form is copied from member-signup.ejs, with a new action URL %>
+            <form action="/member/payment/add" method="POST" id="addPaymentForm" novalidate>
+                <div class="payment-choice" style="margin-top: 1.5em;">
+                    <label>
+                        <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
+                        Pay with Card
+                    </label>
+                    <label>
+                        <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
+                        Pay with Bank Account
+                    </label>
+                </div>
+
+                <div id="cardPaymentGroup" class="payment-details-group">
+                    <div class="form-grid">
+                        <div>
+                            <label for="mock_card_brand">Card Brand:</label>
+                            <select id="mock_card_brand" name="mock_card_brand">
+                                <option value="Visa">Visa</option>
+                                <option value="Mastercard">Mastercard</option>
+                                <option value="Amex">American Express</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mock_card_number">Card Number:</label>
+                            <input type="text" id="mock_card_number" name="mock_card_number" placeholder="e.g., .... .... .... 4242">
+                        </div>
+                        <div>
+                            <label for="mock_card_expiry">Expiration:</label>
+                            <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
+                        </div>
+                        <div>
+                            <label for="mock_card_cvv">Security Code:</label>
+                            <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="e.g., 123">
+                        </div>
+                    </div>
+                    <label class="checkbox-label">
+                        <%# Changed name to set_as_default_card %>
+                        <input type="checkbox" name="set_as_default_card" value="true">
+                        Set this as my default payment method.
+                    </label>
+                </div>
+
+                <div id="bankPaymentGroup" class="payment-details-group" style="display: none;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="mock_routing_number">Routing Number:</label>
+                            <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="e.g., 000123456">
+                        </div>
+                        <div>
+                            <label for="mock_account_number">Account Number:</label>
+                            <input type="text" id="mock_account_number" name="mock_account_number" placeholder="e.g., ....7890">
+                        </div>
+                    </div>
+                    <label class="checkbox-label">
+                        <%# Changed name to set_as_default_bank %>
+                        <input type="checkbox" name="set_as_default_bank" value="true">
+                        Set this as my default payment method.
+                    </label>
+                </div>
+                
+                <button type="submit" class="action-btn" style="background-color: #28a745; margin-top: 1.5em;">Add Method</button>
+            </form>
+        </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Get All Form Elements ---
+            const addPaymentForm = document.getElementById('addPaymentForm');
+            
+            // Payment choice radios
+            const cardRadio = document.getElementById('payWithCard');
+            const bankRadio = document.getElementById('payWithBank');
+            const cardGroup = document.getElementById('cardPaymentGroup');
+            const bankGroup = document.getElementById('bankPaymentGroup');
+            
+            // Card payment fields
+            const cardInput = document.getElementById('mock_card_number');
+            const expiryInput = document.getElementById('mock_card_expiry');
+            const cvvInput = document.getElementById('mock_card_cvv');
+            
+            // Bank payment fields
+            const routingInput = document.getElementById('mock_routing_number');
+            const accountInput = document.getElementById('mock_account_number');
+
+            // --- Regex patterns for validation ---
+            const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/; // MM/YY
+            const cvvRegex = /^\d{3,4}$/; // 3 or 4 digits
+            const routingRegex = /^\d{9}$/; // 9 digits
+            const accountRegex = /^\d{4,17}$/; // 4 to 17 digits
+
+            // --- Toggle Payment Forms ---
+            cardRadio.addEventListener('change', () => {
+                if (cardRadio.checked) {
+                    cardGroup.style.display = 'block';
+                    bankGroup.style.display = 'none';
+                }
+            });
+            bankRadio.addEventListener('change', () => {
+                if (bankRadio.checked) {
+                    cardGroup.style.display = 'none';
+                    bankGroup.style.display = 'block';
+                }
+            });
+
+            // --- Helper: Removes all error messages and highlights ---
+            function clearErrors() {
+                const errorMessages = document.querySelectorAll('.error-message');
+                errorMessages.forEach(msg => msg.remove());
+                
+                const errorInputs = document.querySelectorAll('.input-error');
+                errorInputs.forEach(input => input.classList.remove('input-error'));
+            }
+
+            // --- Helper: Shows an error message and highlights the field ---
+            function showError(inputElement, message) {
+                // Add red border
+                inputElement.classList.add('input-error');
+                // Create and show error message
+                const errorSpan = document.createElement('span');
+                errorSpan.className = 'error-message';
+                errorSpan.textContent = message;
+                // Insert after the input field's parent div
+                inputElement.parentElement.appendChild(errorSpan);
+            }
+
+            // --- Main Validation on Form Submit ---
+            addPaymentForm.addEventListener('submit', (event) => {
+                
+                clearErrors();
+                let isValid = true;
+                let firstErrorField = null; // To scroll to the first error
+
+                // --- VALIDATE PAYMENT ---
+                if (cardRadio.checked) {
+                    const cardDigits = cardInput.value.replace(/\D/g, '');
+                    if (cardDigits.length < 16) {
+                        isValid = false;
+                        showError(cardInput, 'Card number must be at least 16 digits.');
+                        if (!firstErrorField) firstErrorField = cardInput;
+                    }
+                    
+                    if (!expiryRegex.test(expiryInput.value)) {
+                        isValid = false;
+                        showError(expiryInput, 'Expiration must be in MM/YY format (e.g., 08/28).');
+                        if (!firstErrorField) firstErrorField = expiryInput;
+                    }
+
+                    if (!cvvRegex.test(cvvInput.value)) {
+                        isValid = false;
+                        showError(cvvInput, 'Security code must be 3 or 4 digits.');
+                        if (!firstErrorField) firstErrorField = cvvInput;
+                    }
+
+                } else { // Bank is checked
+                    if (!routingRegex.test(routingInput.value)) {
+                        isValid = false;
+                        showError(routingInput, 'Routing number must be exactly 9 digits.');
+                        if (!firstErrorField) firstErrorField = routingInput;
+                    }
+
+                    if (!accountRegex.test(accountInput.value)) {
+                        isValid = false;
+                        showError(accountInput, 'Account number must be between 4 and 17 digits.');
+                        if (!firstErrorField) firstErrorField = accountInput;
+                    }
+                }
+
+                // --- FINAL CHECK ---
+                if (!isValid) {
+                    event.preventDefault(); // Stop the form!
+                    
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Add this CSS to your <style> block to support the validation
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .input-error {
+                border-color: #dc3545; /* Red border for invalid fields */
+            }
+            .error-message {
+                color: #dc3545; /* Red text */
+                font-size: 0.9em;
+                font-weight: bold;
+                display: block;
+                margin-top: 5px;
+            }
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1em;
+            }
+            .checkbox-label {
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+                font-weight: normal; /* Override bold label */
+                margin-top: 1.5em;
+            }
+            .checkbox-label input[type="checkbox"] {
+                width: auto;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

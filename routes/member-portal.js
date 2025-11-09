@@ -279,6 +279,83 @@ router.get('/purchase-receipt', isMemberAuthenticated, async (req, res) => {
     }
 });
 
+router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
+    const { id: memberId } = req.session.member;
+    const {
+        payment_method_choice, // 'card' or 'bank'
+        set_as_default_card,   // 'true' or undefined
+        set_as_default_bank,   // 'true' or undefined
+        mock_card_brand,
+        mock_card_number,
+        mock_card_expiry,
+        mock_routing_number,
+        mock_account_number
+    } = req.body;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        const isDefault = set_as_default_card === 'true' || set_as_default_bank === 'true';
+        let finalIsDefault = isDefault;
+
+        if (isDefault) {
+            // If this new one is default, unset all others first.
+            await connection.query(
+                "UPDATE member_payment_methods SET is_default = FALSE WHERE membership_id = ?",
+                [memberId]
+            );
+        } else {
+            // If it's NOT set as default, check if it's the *first* card.
+            // If so, force it to be default.
+            const [countResult] = await connection.query(
+                "SELECT COUNT(*) as count FROM member_payment_methods WHERE membership_id = ?",
+                [memberId]
+            );
+            if (countResult[0].count === 0) {
+                finalIsDefault = true;
+            }
+        }
+
+        const insertSql = `
+            INSERT INTO member_payment_methods 
+            (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+
+        if (payment_method_choice === 'card') {
+            const cardDigits = (mock_card_number || '').replace(/\D/g, '');
+            const lastFour = cardDigits.slice(-4);
+            const identifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
+
+            await connection.query(insertSql, [
+                memberId, 'Card', finalIsDefault, identifier, mock_card_expiry || null
+            ]);
+
+        } else if (payment_method_choice === 'bank') {
+            const accountDigits = (mock_account_number || '').replace(/\D/g, '');
+            const lastFour = accountDigits.slice(-4);
+            const identifier = `Bank Account ending in ${lastFour}`;
+
+            await connection.query(insertSql, [
+                memberId, 'Bank', finalIsDefault, identifier, null
+            ]);
+        }
+
+        await connection.commit();
+        res.redirect('/member/manage');
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error adding payment method:", error);
+        // In a real app, you'd use a flash message to show the error
+        res.redirect('/member/manage');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 // POST /member/payment/delete/:method_id
 router.post('/payment/delete/:method_id', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;

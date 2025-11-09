@@ -44,7 +44,7 @@
 	</div>
 	<div class="user-info">
 		<span>
-			Welcome, <%= member.firstName %>!
+			Welcome, <%= member.firstName || member.first_name %>!
 		</span>
 		<a href="/member/logout" style="color: #ffc107;">Logout</a>
 	</div>
