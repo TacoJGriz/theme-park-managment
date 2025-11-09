@@ -50,27 +50,38 @@ router.post('/signup', isGuest, async (req, res) => {
         date_of_birth,
         email,
         password,
-        confirm_password
+        confirm_password,
+        payment_method_choice, // 'card' or 'bank'
+        save_payment_card,   // 'true' or undefined
+        save_payment_bank,   // 'true' or undefined
+        mock_card_brand,
+        mock_card_number,
+        mock_card_expiry,
+        mock_routing_number,
+        mock_account_number
     } = req.body;
 
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
     let type; // To re-render the page on error
 
+    // --- Define saltRounds here ---
+    const saltRounds = 10;
+
     try {
-        // Get Membership Type details for re-render (on error) and for logic
+        // Get Membership Type details
         const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) {
             throw new Error("Invalid membership type submitted.");
         }
         type = typeResult[0];
 
-        // --- Validation ---
+        // --- Validation (from form) ---
         if (password !== confirm_password) {
             throw new Error("Passwords do not match.");
         }
 
-        // Check if email is already in use by an employee or member
+        // Check if email is already in use
         const [empEmail] = await pool.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
         const [memEmail] = await pool.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
 
@@ -78,40 +89,66 @@ router.post('/signup', isGuest, async (req, res) => {
             throw new Error("This email address is already in use.");
         }
 
-        // --- (Mock Payment Processing would go here) ---
-        // Since payment is successful, we proceed.
-
         // --- Database Transaction ---
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        let newMembershipId;
+        const purchaseDate = new Date();
+        const endDate = new Date(new Date().setFullYear(purchaseDate.getFullYear() + 1));
+
         try {
             // 1. Create the membership record
-            const today = new Date();
-            const endDate = new Date(today.setFullYear(today.getFullYear() + 1));
-
             const memSql = `
                 INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
-                VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const [memResult] = await connection.query(memSql, [
-                first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, endDate
+                first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, purchaseDate, endDate
             ]);
 
-            const newMembershipId = memResult.insertId;
+            newMembershipId = memResult.insertId;
 
             // 2. Create the member_auth record
             const hash = await bcrypt.hash(password, saltRounds);
             const authSql = "INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)";
             await connection.query(authSql, [newMembershipId, hash]);
 
-            // 3. Commit the transaction
+            // 3. NEW: Save Payment Method if checked
+            const shouldSaveCard = (payment_method_choice === 'card' && save_payment_card === 'true');
+            const shouldSaveBank = (payment_method_choice === 'bank' && save_payment_bank === 'true');
+
+            if (shouldSaveCard) {
+                const cardDigits = (mock_card_number || '').replace(/\D/g, '');
+                const lastFour = cardDigits.slice(-4);
+                const identifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
+
+                await connection.query(
+                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                     VALUES (?, 'Card', TRUE, ?, ?)`,
+                    [newMembershipId, identifier, mock_card_expiry || null]
+                );
+
+            } else if (shouldSaveBank) {
+                const accountDigits = (mock_account_number || '').replace(/\D/g, '');
+                const lastFour = accountDigits.slice(-4);
+                const identifier = `Bank Account ending in ${lastFour}`;
+
+                await connection.query(
+                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                     VALUES (?, 'Bank', TRUE, ?, NULL)`,
+                    [newMembershipId, identifier]
+                );
+            }
+
+            // 4. Commit the transaction
             await connection.commit();
 
-            // 4. Log the user in
+            // 5. Log the user in
             req.session.regenerate(function (err) {
                 if (err) {
                     console.error("Session regeneration error:", err);
+                    // If session fails, we can't show the success page, so render error on signup page
                     throw new Error("Error creating your login session.");
                 }
 
@@ -123,8 +160,16 @@ router.post('/signup', isGuest, async (req, res) => {
                     email: email
                 };
 
-                // 5. Redirect to their new dashboard
-                res.redirect('/member/dashboard');
+                // 6. NEW: Render the success page with a receipt object
+                const receiptData = {
+                    memberName: `${first_name} ${last_name}`,
+                    membershipId: newMembershipId,
+                    typeName: type.type_name,
+                    endDate: endDate.toLocaleDateString(), // Format as MM/DD/YYYY
+                    pricePaid: parseFloat(type.base_price)
+                };
+
+                res.render('member-signup-success', { receipt: receiptData });
             });
 
         } catch (dbError) {

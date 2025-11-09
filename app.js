@@ -82,17 +82,13 @@ app.use('/', approvalRoutes);
 app.use('/approvals', approvalRoutes);
 
 const managementRoutes = require('./routes/management');
-app.use('/locations', managementRoutes);
-app.use('/vendors', managementRoutes);
-app.use('/assign-manager', managementRoutes);
-app.use('/memberships/types', managementRoutes);
-app.use('/ticket-types', managementRoutes);
-app.use('/weather', managementRoutes);
-app.use('/promotions', managementRoutes);
+app.use('/', managementRoutes);
 
-const retailRoutes = require('./routes/retail');
-app.use('/items', retailRoutes);
-app.use('/inventory', retailRoutes);
+const itemRoutes = require('./routes/items');
+app.use('/items', itemRoutes);
+
+const inventoryRoutes = require('./routes/inventory');
+app.use('/inventory', inventoryRoutes);
 
 const reportRoutes = require('./routes/reports');
 app.use('/reports', reportRoutes);

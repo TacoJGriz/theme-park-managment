@@ -1,5 +1,3 @@
-// In routes/approvals.js
-
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // Adjust path to db.js

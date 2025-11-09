@@ -8,6 +8,7 @@ const {
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 // --- LOCATION & VENDOR MANAGEMENT --- 
+// Path is '/locations'
 router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const query = `
@@ -24,10 +25,12 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
     }
 });
 
+// Path is '/locations/new'
 router.get('/locations/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     res.render('add-location', { error: null });
 });
 
+// Path is '/locations'
 router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { location_name, summary } = req.body;
     let connection;
@@ -44,6 +47,7 @@ router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res
     }
 });
 
+// Path is '/vendors'
 router.get('/vendors', isAuthenticated, canManageRetail, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
@@ -69,6 +73,7 @@ router.get('/vendors', isAuthenticated, canManageRetail, async (req, res) => {
     }
 });
 
+// Path is '/vendors/new'
 router.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
@@ -79,6 +84,7 @@ router.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, re
     }
 });
 
+// Path is '/vendors'
 router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { vendor_name, location_id } = req.body;
     let connection;
@@ -100,6 +106,7 @@ router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) 
     }
 });
 
+// Path is '/assign-manager/:type/:id'
 router.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type, id } = req.params;
     try {
@@ -139,6 +146,7 @@ router.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, a
     }
 });
 
+// Path is '/assign-manager/:type/:id'
 router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type, id } = req.params;
     const { manager_id } = req.body;
@@ -201,6 +209,7 @@ router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, 
 });
 
 // --- MEMBERSHIP TYPE MANAGEMENT ---
+// Path is '/memberships/types'
 router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
@@ -217,10 +226,12 @@ router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (r
     }
 });
 
+// Path is '/memberships/types/new'
 router.get('/memberships/types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     res.render('add-membership-type', { error: null });
 });
 
+// Path is '/memberships/types'
 router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_name, base_price, description } = req.body;
     let connection;
@@ -238,6 +249,7 @@ router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (
     }
 });
 
+// Path is '/memberships/types/edit/:type_id'
 router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     try {
@@ -252,6 +264,7 @@ router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMan
     }
 });
 
+// Path is '/memberships/types/edit/:type_id'
 router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     const { type_name, base_price, description } = req.body;
@@ -278,6 +291,7 @@ router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMa
     }
 });
 
+// Path is '/memberships/types/toggle/:type_id'
 router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     let connection;
@@ -305,6 +319,7 @@ router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrPark
 });
 
 // --- TICKET TYPE MANAGEMENT ---
+// Path is '/ticket-types'
 router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [types] = await pool.query('SELECT * FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
@@ -322,10 +337,12 @@ router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, r
     }
 });
 
+// Path is '/ticket-types/new'
 router.get('/ticket-types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
     res.render('add-ticket-type', { error: null });
 });
 
+// Path is '/ticket-types'
 router.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_name, base_price, description } = req.body;
     let connection;
@@ -343,6 +360,7 @@ router.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, 
     }
 });
 
+// Path is '/ticket-types/edit/:type_id'
 router.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     try {
@@ -357,6 +375,7 @@ router.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager,
     }
 });
 
+// Path is '/ticket-types/edit/:type_id'
 router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     const { type_name, base_price, description } = req.body;
@@ -398,6 +417,7 @@ router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager
     }
 });
 
+// Path is '/ticket-types/toggle/:type_id'
 router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     let connection;
@@ -430,6 +450,7 @@ router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManag
 });
 
 // --- PARK OPERATIONS (Weather, Promos) ---
+// Path is '/weather'
 router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [events] = await pool.query('SELECT * FROM weather_events ORDER BY event_date DESC');
@@ -440,10 +461,12 @@ router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) =
     }
 });
 
+// Path is '/weather/new'
 router.get('/weather/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     res.render('add-weather-event', { error: null });
 });
 
+// Path is '/weather'
 router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { event_date, weather_type } = req.body;
     const end_time = req.body.end_time ? req.body.end_time : null;
@@ -466,6 +489,7 @@ router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) 
     }
 });
 
+// Path is '/promotions'
 router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [promotions] = await pool.query('SELECT * FROM event_promotions ORDER BY start_date DESC');
@@ -476,10 +500,12 @@ router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res
     }
 });
 
+// Path is '/promotions/new'
 router.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     res.render('add-promotion', { error: null });
 });
 
+// Path is '/promotions'
 router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body;
     let connection;

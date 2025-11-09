@@ -226,7 +226,7 @@ const isMemberAuthenticated = (req, res, next) => {
     if (req.session && req.session.member) {
         return next();
     }
-    res.redirect('/member/login');
+    res.redirect('/login'); // <-- FIXED (was /member/login)
 };
 
 const isGuest = (req, res, next) => {

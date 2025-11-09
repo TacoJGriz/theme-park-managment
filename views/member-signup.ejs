@@ -4,24 +4,88 @@
     <meta charset="UTF-8">
     <title>Purchase Membership</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #17a2b8; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 1em; }
-        .full-width { grid-column: 1 / -1; }
-        .plan-summary { background: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; margin-bottom: 1.5em; text-align: center; }
-        .plan-summary h2 { margin: 0 0 0.5em 0; color: #17a2b8; }
-        .plan-summary p { margin: 0; font-size: 1.5em; font-weight: bold; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+        body { font-family: sans-serif;
+margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+}
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
+border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-grid { display: grid;
+grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px;
+}
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+}
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #17a2b8;
+color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+}
+        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
+margin-bottom: 1em; }
+        .full-width { grid-column: 1 / -1;
+}
+        .plan-summary { background: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px;
+margin-bottom: 1.5em; text-align: center; }
+        .plan-summary h2 { margin: 0 0 0.5em 0;
+color: #17a2b8; }
+        .plan-summary p { margin: 0; font-size: 1.5em; font-weight: bold;
+}
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+}
+
+        /* --- STYLES FOR PAYMENT SECTION --- */
+        .payment-choice {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+        }
+        .payment-choice label {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            font-weight: normal; /* Override bold label */
+        }
+        .payment-choice input[type="radio"] {
+            width: auto; /* Override 100% width */
+        }
+        .payment-details-group {
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 1.5em;
+            border-radius: 4px;
+            margin-top: 1em;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            font-weight: normal; /* Override bold label */
+            margin-top: 1.5em;
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: auto; /* Override 100% width */
+        }
+        
+        /* --- STYLES FOR VALIDATION --- */
+        .input-error {
+            border-color: #dc3545; /* Red border for invalid fields */
+        }
+        .error-message {
+            color: #dc3545; /* Red text */
+            font-size: 0.9em;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+        /* --- END NEW STYLES --- */
+
     </style>
 </head>
 <body>
-    <%- include('partials/header') %> <form action="/signup" method="POST">
+    <%- include('partials/header') %> 
+    
+    <form action="/signup" method="POST" id="signupForm" novalidate>
         <h1>Purchase Membership</h1>
 
         <% if (typeof error !== 'undefined' && error) { %>
@@ -30,7 +94,8 @@
 
         <div class="plan-summary">
             <h2>You are purchasing:</h2>
-            <p><%= type.type_name %> - $<%= parseFloat(type.base_price).toFixed(2) %></p>
+            <p><%= 
+type.type_name %> - $<%= parseFloat(type.base_price).toFixed(2) %></p>
         </div>
 
         <input type="hidden" name="type_id" value="<%= type.type_id %>">
@@ -40,13 +105,15 @@
             <div>
                 <label for="first_name">First Name:</label>
                 <input type="text" id="first_name" name="first_name" required>
-            </div>
+ 
+           </div>
             <div>
                 <label for="last_name">Last Name:</label>
                 <input type="text" id="last_name" name="last_name" required>
             </div>
             <div>
-                <label for="phone_number">Phone Number:</label>
+               
+ <label for="phone_number">Phone Number:</label>
                 <input type="tel" id="phone_number" name="phone_number">
             </div>
             <div>
@@ -54,28 +121,265 @@
                 <input type="date" id="date_of_birth" name="date_of_birth" required>
             </div>
 
-            <div class="full-width"><h3>Create Your Account</h3></div>
+   
+         <div class="full-width"><h3>Create Your Account</h3></div>
             <div class="full-width">
                 <label for="email">Email (This will be your username):</label>
                 <input type="email" id="email" name="email" required>
             </div>
             <div>
-                <label for="password">Password:</label>
+         
+       <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
             </div>
             <div>
                 <label for="confirm_password">Confirm Password:</label>
                 <input type="password" id="confirm_password" name="confirm_password" required>
-            </div>
+          
+  </div>
 
             <div class="full-width">
                 <h3>Payment</h3>
-                <p><i>(Payment processing is mocked for this demo. Clicking "Complete Purchase" will create your account.)</i></p>
+                
+                <div class="payment-choice">
+                    <label>
+                        <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
+                        Pay with Card
+                    </label>
+                    <label>
+                        <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
+                        Pay with Bank Account
+                    </label>
+                </div>
+
+                <div id="cardPaymentGroup" class="payment-details-group">
+                    <div class="form-grid">
+                        <div>
+                            <label for="mock_card_brand">Card Brand (Mock):</label>
+                            <select id="mock_card_brand" name="mock_card_brand">
+                                <option value="Visa">Visa</option>
+                                <option value="Mastercard">Mastercard</option>
+                                <option value="Amex">American Express</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mock_card_number">Card Number (Mock):</label>
+                            <input type="text" id="mock_card_number" name="mock_card_number" placeholder="e.g., .... .... .... 4242">
+                        </div>
+                        <div>
+                            <label for="mock_card_expiry">Expiration (Mock):</label>
+                            <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
+                        </div>
+                        <div>
+                            <label for="mock_card_cvv">Security Code (Mock):</label>
+                            <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="e.g., 123">
+                        </div>
+                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="save_payment_card" value="true">
+                        Save this card for future purchases or renewals.
+                    </label>
+                </div>
+
+                <div id="bankPaymentGroup" class="payment-details-group" style="display: none;">
+                    <div class="form-grid">
+                        <div>
+                            <label for="mock_routing_number">Routing Number (Mock):</label>
+                            <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="e.g., 000123456">
+                        </div>
+                        <div>
+                            <label for="mock_account_number">Account Number (Mock):</label>
+                            <input type="text" id="mock_account_number" name="mock_account_number" placeholder="e.g., ....7890">
+                        </div>
+                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="save_payment_bank" value="true">
+                        Save this account for future purchases or renewals.
+                    </label>
+                </div>
+
+                <p style="margin-top: 1em;"><i>(Payment processing is mocked for this demo.
+Clicking "Complete Purchase" will create your account.)</i></p>
             </div>
-        </div>
+            </div>
         <br>
         <button type="submit">Complete Purchase</button>
         <a href="/" class="cancel-link">Cancel</a>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Get All Form Elements ---
+            const signupForm = document.getElementById('signupForm');
+            
+            // User Info fields
+            const firstNameInput = document.getElementById('first_name');
+            const lastNameInput = document.getElementById('last_name');
+            const dobInput = document.getElementById('date_of_birth');
+
+            // Account fields
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            
+            // Payment choice radios
+            const cardRadio = document.getElementById('payWithCard');
+            const bankRadio = document.getElementById('payWithBank');
+            const cardGroup = document.getElementById('cardPaymentGroup');
+            const bankGroup = document.getElementById('bankPaymentGroup');
+
+            // Card payment fields
+            const cardInput = document.getElementById('mock_card_number');
+            const expiryInput = document.getElementById('mock_card_expiry');
+            const cvvInput = document.getElementById('mock_card_cvv');
+            
+            // Bank payment fields
+            const routingInput = document.getElementById('mock_routing_number');
+            const accountInput = document.getElementById('mock_account_number');
+
+            // --- Regex patterns for validation ---
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+            const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/; // MM/YY
+            const cvvRegex = /^\d{3,4}$/; // 3 or 4 digits
+            const routingRegex = /^\d{9}$/; // 9 digits
+            const accountRegex = /^\d{4,17}$/; // 4 to 17 digits
+
+            // --- Toggle Payment Forms ---
+            cardRadio.addEventListener('change', () => {
+                if (cardRadio.checked) {
+                    cardGroup.style.display = 'block';
+                    bankGroup.style.display = 'none';
+                }
+            });
+
+            bankRadio.addEventListener('change', () => {
+                if (bankRadio.checked) {
+                    cardGroup.style.display = 'none';
+                    bankGroup.style.display = 'block';
+                }
+            });
+
+            // --- Helper: Removes all error messages and highlights ---
+            function clearErrors() {
+                const errorMessages = document.querySelectorAll('.error-message');
+                errorMessages.forEach(msg => msg.remove());
+                
+                const errorInputs = document.querySelectorAll('.input-error');
+                errorInputs.forEach(input => input.classList.remove('input-error'));
+            }
+
+            // --- Helper: Shows an error message and highlights the field ---
+            function showError(inputElement, message) {
+                // Add red border
+                inputElement.classList.add('input-error');
+                
+                // Create and show error message
+                const errorSpan = document.createElement('span');
+                errorSpan.className = 'error-message';
+                errorSpan.textContent = message;
+                // Insert after the input field's parent div
+                inputElement.parentElement.appendChild(errorSpan);
+            }
+
+            // --- Main Validation on Form Submit ---
+            signupForm.addEventListener('submit', (event) => {
+                
+                clearErrors();
+                let isValid = true;
+                let firstErrorField = null; // To scroll to the first error
+
+                // --- VALIDATE USER INFO & ACCOUNT ---
+                
+                if (firstNameInput.value.trim() === '') {
+                    isValid = false;
+                    showError(firstNameInput, 'First name is required.');
+                    if (!firstErrorField) firstErrorField = firstNameInput;
+                }
+
+                if (lastNameInput.value.trim() === '') {
+                    isValid = false;
+                    showError(lastNameInput, 'Last name is required.');
+                    if (!firstErrorField) firstErrorField = lastNameInput;
+                }
+
+                if (dobInput.value.trim() === '') {
+                    isValid = false;
+                    showError(dobInput, 'Date of birth is required.');
+                    if (!firstErrorField) firstErrorField = dobInput;
+                }
+
+                if (!emailRegex.test(emailInput.value)) {
+                    isValid = false;
+                    showError(emailInput, 'Please enter a valid email address.');
+                    if (!firstErrorField) firstErrorField = emailInput;
+                }
+                
+                // You can add more rules, e.g., password length
+                if (passwordInput.value.length < 8) {
+                    isValid = false;
+                    showError(passwordInput, 'Password must be at least 8 characters.');
+                    if (!firstErrorField) firstErrorField = passwordInput;
+                }
+
+                if (confirmPasswordInput.value !== passwordInput.value) {
+                    isValid = false;
+                    showError(confirmPasswordInput, 'Passwords do not match.');
+                    if (!firstErrorField) firstErrorField = confirmPasswordInput;
+                } else if (confirmPasswordInput.value.trim() === '') {
+                     isValid = false;
+                    showError(confirmPasswordInput, 'Please confirm your password.');
+                    if (!firstErrorField) firstErrorField = confirmPasswordInput;
+                }
+
+                // --- VALIDATE PAYMENT ---
+                if (cardRadio.checked) {
+                    const cardDigits = cardInput.value.replace(/\D/g, '');
+                    if (cardDigits.length < 16) {
+                        isValid = false;
+                        showError(cardInput, 'Card number must be at least 16 digits.');
+                        if (!firstErrorField) firstErrorField = cardInput;
+                    }
+                    
+                    if (!expiryRegex.test(expiryInput.value)) {
+                        isValid = false;
+                        showError(expiryInput, 'Expiration must be in MM/YY format (e.g., 08/28).');
+                        if (!firstErrorField) firstErrorField = expiryInput;
+                    }
+
+                    if (!cvvRegex.test(cvvInput.value)) {
+                        isValid = false;
+                        showError(cvvInput, 'Security code must be 3 or 4 digits.');
+                        if (!firstErrorField) firstErrorField = cvvInput;
+                    }
+
+                } else { // Bank is checked
+                    if (!routingRegex.test(routingInput.value)) {
+                        isValid = false;
+                        showError(routingInput, 'Routing number must be exactly 9 digits.');
+                        if (!firstErrorField) firstErrorField = routingInput;
+                    }
+
+                    if (!accountRegex.test(accountInput.value)) {
+                        isValid = false;
+                        showError(accountInput, 'Account number must be between 4 and 17 digits.');
+                        if (!firstErrorField) firstErrorField = accountInput;
+                    }
+                }
+
+                // --- FINAL CHECK ---
+                if (!isValid) {
+                    event.preventDefault(); // Stop the form!
+                    
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

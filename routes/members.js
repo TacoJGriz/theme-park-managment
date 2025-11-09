@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // Adjust path to db.js
 const bcrypt = require('bcrypt');
-const { 
+const {
     isAuthenticated,
     canManageMembersVisits,
     isMemberAuthenticated,
@@ -13,17 +13,17 @@ const {
     censorPhone
 } = require('../middleware/auth'); // Adjust path to auth.js
 
-// --- GUEST & VISITS MANAGEMENT ---
+// --- GUEST & VISITS MANAGEMENT (Handled by /members prefix in app.js) ---
 
 // GET /members
-// Path changed to /
+// Corrected Path: Was '/' (which is correct)
 router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         const { search, sort, dir, filter_type, filter_status } = req.query;
 
         let whereClauses = [];
         let params = [];
-        let orderBy = ' ORDER BY m.last_name ASC, m.first_name ASC'; 
+        let orderBy = ' ORDER BY m.last_name ASC, m.first_name ASC';
 
         const [memberTypes] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
@@ -62,7 +62,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         }
 
         const [summaryResult] = await pool.query(summaryQuery, params);
-        const counts = summaryResult[0]; 
+        const counts = summaryResult[0];
 
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
@@ -118,7 +118,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 type: filter_type || "",
                 status: filter_status || ""
             },
-            counts: counts 
+            counts: counts
         });
 
     } catch (error) {
@@ -128,7 +128,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 });
 
 // GET /members/new
-// Path changed to /new
+// Corrected Path: Was '/new' (which is correct)
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         const [types] = await pool.query(
@@ -142,7 +142,7 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 });
 
 // POST /members
-// Path changed to /
+// Corrected Path: Was '/' (which is correct)
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { first_name, last_name, email, date_of_birth, type_id, start_date, end_date } = req.body;
 
@@ -157,7 +157,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         `;
         await connection.query(sql, [
             first_name, last_name, email,
-            formattedPhoneNumber, 
+            formattedPhoneNumber,
             date_of_birth, type_id, start_date, end_date
         ]);
         res.redirect('/members');
@@ -176,7 +176,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 });
 
 // GET /members/history/:member_id
-// Path changed to /history/:member_id
+// Corrected Path: Was '/history/:member_id' (which is correct)
 router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { member_id } = req.params;
     try {
@@ -217,71 +217,32 @@ router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async
 });
 
 
-// --- MEMBER PORTAL ROUTES ---
-// These are prefixed with /member
+// --- MEMBER PORTAL ROUTES (Handled by /member prefix in app.js) ---
 
 // GET /member/login
-// Path changed to /member/login
-router.get('/member/login', isGuest, (req, res) => {
-    res.redirect('/login');
+// Corrected Path: Was '/member/login'
+router.get('/login', isGuest, (req, res) => {
+    res.redirect('/login'); // Redirect to global login
 });
 
 // POST /member/login
-// Path changed to /member/login
-router.post('/member/login', isGuest, async (req, res) => {
-    try {
-        const email = req.body.username;
-        const password = req.body.password;
-
-        const query = `
-            SELECT 
-                m.membership_id, m.first_name, m.last_name, m.email,
-                auth.password_hash
-            FROM membership AS m
-            JOIN member_auth AS auth ON m.membership_id = auth.membership_id
-            WHERE m.email = ?
-        `;
-        const [results] = await pool.query(query, [email]);
-        if (results.length === 0) {
-            return res.render('member-login', { error: 'Invalid email or password' });
-        }
-
-        const member = results[0];
-        const match = await bcrypt.compare(password, member.password_hash);
-
-        if (match) {
-            req.session.regenerate(function (err) {
-                if (err) {
-                    console.error("Session regeneration error:", err);
-                    return res.status(500).render('member-login', { error: 'Session error during login.' });
-                }
-
-                req.session.member = {
-                    id: member.membership_id,
-                    firstName: member.first_name,
-                    lastName: member.last_name,
-                    email: member.email
-                };
-                res.redirect('/member/dashboard');
-            });
-        } else {
-            res.render('member-login', { error: 'Invalid email or password' });
-        }
-    } catch (error) {
-        console.error("Member login error:", error);
-        return res.status(500).render('member-login', { error: 'An unexpected error occurred.' });
-    }
+// Corrected Path: Was '/member/login'
+// This route is now handled by POST /login in routes/auth.js
+/*
+router.post('/login', isGuest, async (req, res) => {
+    // ... logic removed as it's now in routes/auth.js ...
 });
+*/
 
 // GET /member/register
-// Path changed to /member/register
-router.get('/member/register', isGuest, (req, res) => {
+// Corrected Path: Was '/member/register'
+router.get('/register', isGuest, (req, res) => {
     res.render('member-register', { error: null });
 });
 
 // POST /member/register
-// Path changed to /member/register
-router.post('/member/register', isGuest, async (req, res) => {
+// Corrected Path: Was '/member/register'
+router.post('/register', isGuest, async (req, res) => {
     const { membership_id, email, password, confirm_password } = req.body;
 
     if (password !== confirm_password) {
@@ -311,6 +272,7 @@ router.post('/member/register', isGuest, async (req, res) => {
             throw new Error('An account has already been created for this membership.');
         }
 
+        const saltRounds = 10; // Make sure this is defined
         const hash = await bcrypt.hash(password, saltRounds);
         await connection.query(
             'INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)',
@@ -319,7 +281,7 @@ router.post('/member/register', isGuest, async (req, res) => {
 
         await connection.commit();
 
-        res.redirect('/member/login');
+        res.redirect('/login'); // Redirect to global login
 
     } catch (error) {
         if (connection) await connection.rollback();
@@ -331,20 +293,20 @@ router.post('/member/register', isGuest, async (req, res) => {
 });
 
 // GET /member/logout
-// Path changed to /member/logout
-router.get('/member/logout', (req, res) => {
+// Corrected Path: Was '/member/logout'
+router.get('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             console.error("Member logout error:", err);
         }
         res.clearCookie('connect.sid');
-        res.redirect('/'); 
+        res.redirect('/');
     });
 });
 
 // GET /member/dashboard
-// Path changed to /member/dashboard
-router.get('/member/dashboard', isMemberAuthenticated, async (req, res) => {
+// Corrected Path: Was '/member/dashboard'
+router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
     try {
         const memberId = req.session.member.id;
         const [result] = await pool.query(`
@@ -361,6 +323,7 @@ router.get('/member/dashboard', isMemberAuthenticated, async (req, res) => {
         `, [memberId]);
 
         if (result.length === 0) {
+            // Path needs to be /member/logout to match the prefix in app.js
             return res.redirect('/member/logout');
         }
 
@@ -386,9 +349,9 @@ router.get('/member/dashboard', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/history
-// Path changed to /member/history
-router.get('/member/history', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id; 
+// Corrected Path: Was '/member/history'
+router.get('/history', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
     try {
         const member = req.session.member;
 
@@ -419,8 +382,8 @@ router.get('/member/history', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/promotions
-// Path changed to /member/promotions
-router.get('/member/promotions', isMemberAuthenticated, async (req, res) => {
+// Corrected Path: Was '/member/promotions'
+router.get('/promotions', isMemberAuthenticated, async (req, res) => {
     try {
         const [promotions] = await pool.query(
             "SELECT event_name, event_type, start_date, end_date, discount_percent, summary FROM event_promotions WHERE end_date >= CURDATE() ORDER BY start_date"
@@ -433,8 +396,8 @@ router.get('/member/promotions', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/receipt/:visit_id
-// Path changed to /member/receipt/:visit_id
-router.get('/member/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
+// Corrected Path: Was '/member/receipt/:visit_id'
+router.get('/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
     const { visit_id } = req.params;
     const memberId = req.session.member.id;
     let connection;
@@ -505,12 +468,11 @@ router.get('/member/receipt/:visit_id', isMemberAuthenticated, async (req, res) 
 });
 
 
-// --- VISIT ROUTES ---
-// These are prefixed with /visits
+// --- VISIT ROUTES (Handled by /visits prefix in app.js) ---
 
 // GET /visits/new
-// Path changed to /visits/new
-router.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
+// Corrected Path: Was '/visits/new'
+router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         const [ticketTypes] = await pool.query(
             "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
@@ -531,7 +493,7 @@ router.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, r
             ticketTypes: ticketTypes,
             activeMembers: activeMembers,
             currentDiscount: currentDiscount,
-            normalizePhone: normalizePhone 
+            normalizePhone: normalizePhone
         });
 
     } catch (error) {
@@ -541,22 +503,22 @@ router.get('/visits/new', isAuthenticated, canManageMembersVisits, async (req, r
             ticketTypes: [],
             activeMembers: [],
             currentDiscount: 0,
-            normalizePhone: (phone) => phone || "" 
+            normalizePhone: (phone) => phone || ""
         });
     }
 });
 
 // POST /visits
-// Path changed to /visits
-router.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res) => {
+// Corrected Path: Was '/visits'
+router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { ticket_type_id, membership_id } = req.body;
-    const visit_date = new Date(); 
+    const visit_date = new Date();
     const { id: actorId } = req.session.user;
 
     let connection;
     try {
         connection = await pool.getConnection();
-        await connection.beginTransaction(); 
+        await connection.beginTransaction();
 
         const [ticketResult] = await pool.query(
             "SELECT type_name, base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?",
@@ -655,7 +617,7 @@ router.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res)
                 ticketTypes: ticketTypes,
                 activeMembers: activeMembers,
                 currentDiscount: currentDiscount,
-                normalizePhone: (phone) => (phone || "").replace(/\D/g, '') 
+                normalizePhone: (phone) => (phone || "").replace(/\D/g, '')
             });
         } catch (fetchError) {
             console.error("Error fetching data for log-visit error page:", fetchError);
@@ -671,8 +633,8 @@ router.post('/visits', isAuthenticated, canManageMembersVisits, async (req, res)
 });
 
 // GET /visits/receipt/:visit_id
-// Path changed to /visits/receipt/:visit_id
-router.get('/visits/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
+// Corrected Path: Was '/visits/receipt/:visit_id'
+router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { visit_id } = req.params;
     let connection;
     try {

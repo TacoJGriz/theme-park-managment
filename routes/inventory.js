@@ -1,53 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // Adjust path to db.js
+const pool = require('../db');
 const {
     isAuthenticated,
-    canManageRetail,
     canViewInventory,
     canManageInventory
-} = require('../middleware/auth'); // Adjust path to auth.js
-
-// --- PARK OPERATIONS (Items, Inventory) ---
-
-// GET /items
-// Path changed to /items
-router.get('/items', isAuthenticated, canManageRetail, async (req, res) => {
-    try {
-        const [items] = await pool.query('SELECT * FROM item ORDER BY item_name');
-        res.render('items', { items: items });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error fetching items');
-    }
-});
-
-// GET /items/new
-// Path changed to /items/new
-router.get('/items/new', isAuthenticated, canManageRetail, async (req, res) => {
-    res.render('add-item', { error: null });
-});
-
-// POST /items
-// Path changed to /items
-router.post('/items', isAuthenticated, canManageRetail, async (req, res) => {
-    const { item_name, item_type, price, summary } = req.body;
-    let connection;
-    try {
-        connection = await pool.getConnection();
-        const sql = "INSERT INTO item (item_name, item_type, price, summary) VALUES (?, ?, ?, ?)";
-        await connection.query(sql, [item_name, item_type, price, summary || null]);
-        res.redirect('/items');
-    } catch (error) {
-        console.error(error);
-        res.render('add-item', { error: "Database error adding item." });
-    } finally {
-        if (connection) connection.release();
-    }
-});
+} = require('../middleware/auth');
 
 // GET /inventory
-// Path changed to /
+// This is the root (/) because app.js adds the /inventory prefix
 router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
     try {
         const { role, locationId, id: userId } = req.session.user;
@@ -85,7 +46,7 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
 });
 
 // GET /inventory/request/edit/:request_id
-// Path changed to /request/edit/:request_id
+// This path is /request/edit/:request_id
 router.get('/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { request_id } = req.params;
     const { id: actorId } = req.session.user;
@@ -120,7 +81,7 @@ router.get('/request/edit/:request_id', isAuthenticated, canManageInventory, asy
 });
 
 // POST /inventory/request/edit/:request_id
-// Path changed to /request/edit/:request_id
+// This path is /request/edit/:request_id
 router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { request_id } = req.params;
     const { requested_count } = req.body;
@@ -165,7 +126,7 @@ router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, as
 });
 
 // GET /inventory/request/:vendor_id/:item_id
-// Path changed to /request/:vendor_id/:item_id
+// This path is /request/:vendor_id/:item_id
 router.get('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { vendor_id, item_id } = req.params;
     const { role, locationId } = req.session.user;
@@ -200,12 +161,12 @@ router.get('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, 
 });
 
 // POST /inventory/request/:vendor_id/:item_id
-// Path changed to /request/:vendor_id/:item_id
+// This path is /request/:vendor_id/:item_id
 router.post('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { vendor_id, item_id } = req.params;
     const { requested_count } = req.body;
     const { role, locationId, id: actorId } = req.session.user;
-    let item; 
+    let item;
 
     try {
         const [itemResult] = await pool.query(`
@@ -220,7 +181,7 @@ router.post('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory,
         if (itemResult.length === 0) {
             return res.status(404).send('Item or Vendor not found.');
         }
-        item = itemResult[0]; 
+        item = itemResult[0];
 
         if ((role === 'Location Manager' || role === 'Staff') && item.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only restock items in your location.');
@@ -248,7 +209,7 @@ router.post('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory,
 });
 
 // GET /inventory/requests
-// Path changed to /requests
+// This path is /requests
 router.get('/requests', isAuthenticated, canManageInventory, async (req, res) => {
     const { role, locationId } = req.session.user;
 
@@ -286,5 +247,4 @@ router.get('/requests', isAuthenticated, canManageInventory, async (req, res) =>
     }
 });
 
-// At the very bottom of routes/retail.js
 module.exports = router;

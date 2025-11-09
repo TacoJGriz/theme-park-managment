@@ -14,8 +14,8 @@ const saltRounds = 10; // Needed for hashing passwords
 
 // --- USER & EMPLOYEE MANAGEMENT ---
 
-// GET /users
-// Path changed to /
+// GET / (Handled by /users or /employees prefix)
+// Path is correct
 router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
@@ -46,8 +46,8 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
     }
 });
 
-// GET /employees/new
-// Path changed to /new
+// GET /new (Handled by /users/new or /employees/new)
+// Path is correct
 router.get('/new', isAuthenticated, canAddEmployees, async (req, res) => {
     try {
         const actorRole = req.session.user.role;
@@ -68,8 +68,8 @@ router.get('/new', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// POST /employees
-// Path changed to /
+// POST / (Handled by /users or /employees)
+// Path is correct
 router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     const {
         first_name, last_name, gender, phone_number, email,
@@ -137,7 +137,10 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
         await connection.query(authSql, [newEmployeeId, hash]);
 
         await connection.commit();
-        res.redirect('/users');
+
+        // On success, redirect to the base path this router is mounted on.
+        // req.baseUrl will be either '/users' or '/employees'
+        res.redirect(req.baseUrl); // <-- FIXED
 
     } catch (error) {
         if (connection) await connection.rollback();
@@ -153,8 +156,8 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// GET /employees/edit/:id
-// Path changed to /edit/:id
+// GET /edit/:id (Handled by /users/edit/:id or /employees/edit/:id)
+// Path is correct
 router.get('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user;
@@ -191,8 +194,8 @@ router.get('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// POST /employees/edit/:id
-// Path changed to /edit/:id
+// POST /edit/:id (Handled by /users/edit/:id or /employees/edit/:id)
+// Path is correct
 router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user;
@@ -290,7 +293,7 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
             }
         }
 
-        res.redirect('/users'); // Success
+        res.redirect(req.baseUrl); // <-- FIXED
 
     } catch (error) {
         console.error("Error updating employee:", error);
@@ -315,8 +318,8 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// GET /employees/reset-password/:id
-// Path changed to /reset-password/:id
+// GET /reset-password/:id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
+// Path is correct
 router.get('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user;
@@ -336,8 +339,8 @@ router.get('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, 
     }
 });
 
-// POST /employees/reset-password/:id
-// Path changed to /reset-password/:id
+// POST /reset-password/:id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
+// Path is correct
 router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     const employeeId = req.params.id;
     const actor = req.session.user;
@@ -363,7 +366,7 @@ router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req,
         const sql = "UPDATE employee_auth SET password_hash = ? WHERE employee_id = ?";
         await pool.query(sql, [hash, employeeId]);
 
-        res.redirect('/users');
+        res.redirect(req.baseUrl); // <-- FIXED
 
     } catch (error) {
         console.error("Error resetting password:", error);
@@ -376,8 +379,8 @@ router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req,
 
 // --- ROUTES FOR EMPLOYEE APPROVAL ---
 
-// GET /employees/pending
-// Path changed to /pending
+// GET /pending (Handled by /users/pending or /employees/pending)
+// Path is correct
 router.get('/pending', isAuthenticated, canViewPendingEmployees, async (req, res) => {
     try {
         const [pendingUsers] = await pool.query(`
@@ -398,8 +401,8 @@ router.get('/pending', isAuthenticated, canViewPendingEmployees, async (req, res
     }
 });
 
-// POST /employees/approve/:id
-// Path changed to /approve/:id
+// POST /approve/:id (Handled by /users/approve/:id or /employees/approve/:id)
+// Path is correct
 router.post('/approve/:id', isAuthenticated, canApproveEmployees, async (req, res) => {
     const employeeId = req.params.id;
 
@@ -408,7 +411,10 @@ router.post('/approve/:id', isAuthenticated, canApproveEmployees, async (req, re
         await pool.query(sql, [employeeId]);
         req.session.success = "Employee approved successfully.";
 
-        res.redirect('/employees/pending');
+        // This redirect needs to be to the '/pending' route, but relative
+        // to the base URL.
+        res.redirect(req.baseUrl + '/pending'); // <-- FIXED
+
     } catch (error) {
         console.error("Error approving employee:", error);
         res.status(500).send("Error approving employee.");
