@@ -218,7 +218,7 @@ router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res)
     }
 });
 
-// --- YOUR NEW ROUTES ARE ADDED HERE ---
+// --- ACCOUNT MANAGEMENT & PURCHASE HISTORY ---
 
 // GET /member/manage
 router.get('/manage', isMemberAuthenticated, async (req, res) => {
@@ -236,48 +236,195 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
             JOIN membership_type mt ON m.type_id = mt.type_id
             WHERE m.membership_id = ?
         `, [memberId]);
+
         if (memberResult.length === 0) {
             return res.redirect('/member/logout');
         }
+
+        // *** NEW LOGIC: Check if member is eligible for renewal ***
+        const today = new Date();
+        const endDate = new Date(memberResult[0].end_date);
+
+        // Calculate the date 60 days *before* the end date
+        const renewalWindowStartDate = new Date(endDate);
+        renewalWindowStartDate.setDate(endDate.getDate() - 60);
+
+        // Member can renew if today is *after* the window start date OR if the pass is already expired
+        const isExpired = endDate < today;
+        const canRenew = (today >= renewalWindowStartDate) || isExpired;
+        // *** END NEW LOGIC ***
+
         const [paymentMethods] = await pool.query(
             `SELECT * FROM member_payment_methods 
              WHERE membership_id = ? 
              ORDER BY is_default DESC, payment_method_id ASC`,
             [memberId]
         );
+
         res.render('member-manage-account', {
             member: memberResult[0],
-            paymentMethods: paymentMethods
+            paymentMethods: paymentMethods,
+            canRenew: canRenew, // Pass the new variable
+            success: req.session.success,
+            error: req.session.error // Pass error flash message
         });
+        req.session.success = null; // Clear flash messages
+        req.session.error = null;
     } catch (error) {
         console.error("Error loading manage account page:", error);
         res.status(500).send("Error loading page.");
     }
 });
 
-// GET /member/purchase-receipt
-router.get('/purchase-receipt', isMemberAuthenticated, async (req, res) => {
+// GET /member/purchases - Shows the list of all membership purchases
+router.get('/purchases', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
+        const [purchases] = await pool.query(`
+            SELECT 
+                h.purchase_id,
+                h.purchase_date,
+                h.price_paid,
+                h.purchased_start_date,
+                h.purchased_end_date,
+                mt.type_name
+            FROM membership_purchase_history h
+            JOIN membership_type mt ON h.type_id = mt.type_id
+            WHERE h.membership_id = ?
+            ORDER BY h.purchase_date DESC
+        `, [memberId]);
+
+        res.render('member-purchase-history', {
+            purchases: purchases
+        });
+
+    } catch (error) {
+        console.error("Error fetching purchase history:", error);
+        res.status(500).send("Error loading history.");
+    }
+});
+
+// GET /member/purchases/receipt/:purchase_id - Shows a single receipt from history
+router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
+    const { purchase_id } = req.params;
+
+    try {
+        // Query for the specific purchase, joining with member and type tables
         const [purchaseResult] = await pool.query(`
             SELECT 
-                m.membership_id, m.first_name, m.last_name, m.start_date,
-                mt.type_name, mt.base_price
-            FROM membership m
-            JOIN membership_type mt ON m.type_id = mt.type_id
-            WHERE m.membership_id = ?
-        `, [memberId]);
+                h.purchase_id, h.purchase_date, h.price_paid, 
+                h.purchased_start_date, h.purchased_end_date,
+                m.membership_id, m.first_name, m.last_name,
+                mt.type_name
+            FROM membership_purchase_history h
+            JOIN membership m ON h.membership_id = m.membership_id
+            JOIN membership_type mt ON h.type_id = mt.type_id
+            WHERE h.purchase_id = ? AND h.membership_id = ?
+        `, [purchase_id, memberId]);
+
         if (purchaseResult.length === 0) {
-            return res.status(404).send("Could not find membership purchase data.");
+            // Not found or doesn't belong to this member
+            return res.status(404).send("Purchase receipt not found or access denied.");
         }
-        res.render('member-purchase-receipt', {
+
+        // Render a new receipt detail view
+        res.render('member-purchase-receipt-detail', {
             purchase: purchaseResult[0]
         });
+
     } catch (error) {
         console.error("Error fetching purchase receipt:", error);
         res.status(500).send("Error loading receipt.");
     }
 });
+
+// POST /member/renew - Simulates a renewal
+router.post('/renew', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Get member's current info
+        const [memberResult] = await connection.query(
+            `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name
+             FROM membership m
+             JOIN membership_type mt ON m.type_id = mt.type_id
+             WHERE m.membership_id = ?`,
+            [memberId]
+        );
+
+        if (memberResult.length === 0) {
+            throw new Error("Member not found.");
+        }
+
+        const member = memberResult[0];
+        const currentEndDate = new Date(member.end_date);
+        const today = new Date();
+
+        // *** NEW BUSINESS RULE CHECK ***
+        // Calculate the date 60 days *before* the end date
+        const renewalWindowStartDate = new Date(currentEndDate);
+        renewalWindowStartDate.setDate(currentEndDate.getDate() - 60);
+        const isExpired = currentEndDate < today;
+
+        // If today is *before* that 60-day window AND the pass is not expired, block the renewal.
+        if (today < renewalWindowStartDate && !isExpired) {
+            req.session.error = "You can only renew when your membership is within 60 days of expiring.";
+            return res.redirect('/member/manage');
+        }
+        // *** END NEW CHECK ***
+
+
+        // 2. Determine new start/end dates
+        // If expired (end date < today), new term starts today. 
+        // If active, it extends from the *current end date*.
+        const newStartDate = isExpired ? today : currentEndDate;
+
+        const newEndDate = new Date(newStartDate);
+        newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+
+        // 3. Update the main membership table with the new end date AND the current type_id/price
+        // This ensures if they renew, they renew their *current* plan
+        await connection.query(
+            "UPDATE membership SET end_date = ?, type_id = ? WHERE membership_id = ?",
+            [newEndDate, member.type_id, memberId]
+        );
+
+        // 4. Log this renewal in the new history table
+        const historySql = `
+            INSERT INTO membership_purchase_history 
+                (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        await connection.query(historySql, [
+            memberId,
+            member.type_id,
+            today, // Purchase date is today
+            member.base_price, // Use the price from the *current* type
+            newStartDate, // The start of this new term
+            newEndDate    // The end of this new term
+        ]);
+
+        await connection.commit();
+
+        // Set a success message
+        req.session.success = `Membership renewed successfully for ${member.type_name}! Your new expiration date is ${newEndDate.toLocaleDateString()}.`;
+        res.redirect('/member/manage');
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error renewing membership:", error);
+        req.session.error = "An error occurred while processing your renewal."; // Use flash message
+        res.redirect('/member/manage'); // Redirect back
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 
 router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
     const { id: memberId } = req.session.member;

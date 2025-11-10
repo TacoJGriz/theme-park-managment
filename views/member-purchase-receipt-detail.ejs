@@ -99,6 +99,10 @@
 
         <div class="receipt-body">
             <div class="receipt-item">
+                <span class="label">Purchase ID:</span>
+                <span class="value"><%= purchase.purchase_id %></span>
+            </div>
+            <div class="receipt-item">
                 <span class="label">Member ID:</span>
                 <span class="value"><%= purchase.membership_id %></span>
             </div>
@@ -108,17 +112,24 @@
             </div>
             <div class="receipt-item">
                 <span class="label">Purchase Date:</span>
-                <span class="value"><%= new Date(purchase.start_date).toLocaleDateString() %></span>
+                <span class="value"><%= new Date(purchase.purchase_date).toLocaleString() %></span>
             </div>
             <div class="receipt-item">
                 <span class="label">Item:</span>
                 <span class="value"><%= purchase.type_name %></span>
             </div>
+            <div class="receipt-item">
+                <span class="label">Term Valid:</span>
+                <span class="value">
+                    <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
+                    <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
+                </span>
+            </div>
             
             <div class="receipt-total">
                 <div class="receipt-item">
                     <span class="label">TOTAL:</span>
-                    <span class="value">$<%= parseFloat(purchase.base_price).toFixed(2) %></span>
+                    <span class="value">$<%= parseFloat(purchase.price_paid).toFixed(2) %></span>
                 </div>
             </div>
         </div>
@@ -128,7 +139,7 @@
         </div>
     </div>
 
-    <a href="/member/manage" class="close-button">&laquo Back to Manage Account</a>
+    <a href="/member/purchases" class="close-button">&laquo Back to Purchase History</a>
 
 </body>
 </html>

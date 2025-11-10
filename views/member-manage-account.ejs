@@ -69,6 +69,24 @@
             font-weight: bold;
             margin-top: 1em;
         }
+        /* New button for Renew */
+        .btn-renew {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 1em;
+            margin-left: 10px; /* Space it from the other button */
+            border: none;
+            font-family: sans-serif;
+            font-size: 0.9em;
+        }
+        .btn-renew:hover {
+            background-color: #218838;
+        }
         .card label {
             display: block;
             margin-bottom: 5px;
@@ -144,12 +162,47 @@
         .form-submit-btn:hover {
             background-color: #218838;
         }
+        
+        /* Message styles for success and error */
+        .message-success {
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            background-color: #d4edda;
+        }
+        .message-error {
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+        .renewal-note {
+            font-style: italic;
+            color: #555;
+            margin-top: 1em;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/member-header') %>
     <div class="container">
         <h1>Manage Your Account</h1>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message-success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message-error"><%= error %></div>
+        <% } %>
 
         <div class="card">
             <h3>Membership Details</h3>
@@ -169,8 +222,21 @@
                 <strong>Valid Through:</strong>
                 <span><%= new Date(member.end_date).toLocaleDateString() %></span>
             </div>
-            <a href="/member/purchase-receipt" class="btn-receipt">View Original Purchase Receipt</a>
-        </div>
+            
+            <a href="/member/purchases" class="btn-receipt">View Membership Purchases</a>
+            
+            <% if (canRenew) { %>
+                <form action="/member/renew" method="POST" style="display: inline;" onsubmit="return confirm('Renew your membership for one year using your default payment method?');">
+                    <button type="submit" class="btn-renew">
+                        Renew Membership
+                    </button>
+                </form>
+            <% } else { %>
+                <p class="renewal-note">
+                    <i>You can renew your membership when it is within 60 days of its expiration date.</i>
+                </p>
+            <% } %>
+            </div>
 
         <div class="card">
             <h3>Saved Payment Methods</h3>
@@ -207,7 +273,6 @@
         <div class="card">
             <h3>Add New Payment Method</h3>
 
-            <%# This form is copied from member-signup.ejs, with a new action URL %>
             <form action="/member/payment/add" method="POST" id="addPaymentForm" novalidate>
                 <div class="payment-choice" style="margin-top: 1.5em;">
                     <label>
@@ -244,7 +309,6 @@
                         </div>
                     </div>
                     <label class="checkbox-label">
-                        <%# Changed name to set_as_default_card %>
                         <input type="checkbox" name="set_as_default_card" value="true">
                         Set this as my default payment method.
                     </label>
@@ -262,7 +326,6 @@
                         </div>
                     </div>
                     <label class="checkbox-label">
-                        <%# Changed name to set_as_default_bank %>
                         <input type="checkbox" name="set_as_default_bank" value="true">
                         Set this as my default payment method.
                     </label>

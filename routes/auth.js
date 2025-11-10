@@ -141,10 +141,25 @@ router.post('/signup', isGuest, async (req, res) => {
                 );
             }
 
-            // 4. Commit the transaction
+            // 4. Log this initial purchase in the history table
+            const historySql = `
+                INSERT INTO membership_purchase_history 
+                    (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            await connection.query(historySql, [
+                newMembershipId,
+                type.type_id,
+                purchaseDate,
+                type.base_price,
+                purchaseDate, // For initial purchase, start date is now
+                endDate       // End date is one year from now
+            ]);
+
+            // 5. Commit the transaction
             await connection.commit();
 
-            // 5. Log the user in
+            // 6. Log the user in
             req.session.regenerate(function (err) {
                 if (err) {
                     console.error("Session regeneration error:", err);
@@ -160,7 +175,7 @@ router.post('/signup', isGuest, async (req, res) => {
                     email: email
                 };
 
-                // 6. NEW: Render the success page with a receipt object
+                // 7. NEW: Render the success page with a receipt object
                 const receiptData = {
                     memberName: `${first_name} ${last_name}`,
                     membershipId: newMembershipId,

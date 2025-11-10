@@ -307,16 +307,28 @@ CREATE TABLE member_payment_methods (
         ON DELETE CASCADE -- If a member is deleted, their saved payment methods are also deleted
 );
 
-CREATE TABLE member_payment_methods (
-    payment_method_id INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE membership_purchase_history (
+    purchase_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT NOT NULL,
-    payment_type ENUM('Card', 'Bank') NOT NULL,
-    is_default BOOL NOT NULL DEFAULT FALSE,
-    mock_identifier VARCHAR(50) COMMENT 'Stores safe, displayable info like "Visa ending in 4242"',
-    mock_expiration VARCHAR(5) COMMENT 'Stores mock MM/YY for cards, NULL for bank',
-
-    PRIMARY KEY (payment_method_id),
-    FOREIGN KEY (membership_id)
-        REFERENCES membership (membership_id)
-        ON DELETE CASCADE
+    purchase_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    type_id INT NOT NULL,
+    type_name_snapshot VARCHAR(50) NOT NULL COMMENT 'Name of the type at time of purchase',
+    price_paid DECIMAL(10, 2) NOT NULL,
+    term_start_date DATE NOT NULL,
+    term_end_date DATE NOT NULL,
+    payment_method_id INT NULL COMMENT 'Which saved payment method was used, if any',
+    
+    PRIMARY KEY (purchase_id),
+    
+    FOREIGN KEY (membership_id) 
+        REFERENCES membership(membership_id) 
+        ON DELETE CASCADE,
+        
+    FOREIGN KEY (type_id) 
+        REFERENCES membership_type(type_id) 
+        ON DELETE RESTRICT,
+        
+    FOREIGN KEY (payment_method_id) 
+        REFERENCES member_payment_methods(payment_method_id) 
+        ON DELETE SET NULL
 );
