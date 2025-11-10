@@ -314,8 +314,8 @@ CREATE TABLE membership_purchase_history (
     type_id INT NOT NULL,
     type_name_snapshot VARCHAR(50) NOT NULL COMMENT 'Name of the type at time of purchase',
     price_paid DECIMAL(10, 2) NOT NULL,
-    term_start_date DATE NOT NULL,
-    term_end_date DATE NOT NULL,
+    purchased_start_date DATE NOT NULL,
+    purchased_end_date DATE NOT NULL,
     payment_method_id INT NULL COMMENT 'Which saved payment method was used, if any',
     
     PRIMARY KEY (purchase_id),

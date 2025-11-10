@@ -22,14 +22,16 @@
 	box-sizing: border-box;
 	}
 	.nav-links a:hover { background-color: #138496; }
-	.user-info { font-weight: bold; }
+	.user-info { font-weight: bold;
+	}
 	.user-info a {
 	color: #fff3cd; /* Light yellow for contrast */
 	font-weight: bold;
 	margin-left: 20px;
 	text-decoration: none;
 	}
-	.user-info a:hover { text-decoration: underline; }
+	.user-info a:hover { text-decoration: underline;
+	}
 </style>
 
 <% if (member) { %>
@@ -37,15 +39,15 @@
 	<div class="nav-links">
 		<a href="/member/dashboard">My Dashboard</a>
 		<a href="/member/history">My Visit History</a>
-
 		<a href="/member/manage">Manage Account</a>
-
 		<a href="/member/promotions">View Promotions</a>
 	</div>
 	<div class="user-info">
 		<span>
-			Welcome, <%= member.firstName || member.first_name %>!
+			Welcome, <%= member.firstName ||
+			member.first_name %>!
 		</span>
+		<a href="/member/change-password">Change Password</a>
 		<a href="/member/logout" style="color: #ffc107;">Logout</a>
 	</div>
 </nav>

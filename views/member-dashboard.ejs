@@ -13,6 +13,61 @@ margin: 0 auto; }
 }
         .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em;
 border-bottom: 1px solid #ddd;}
+
+        .renewal-banner {
+            padding: 1em 1.5em;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+        .renewal-banner.expiring {
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+            color: #856404;
+        }
+        .renewal-banner.expired {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .renewal-banner p {
+            margin: 0;
+            font-weight: bold;
+        }
+        .renewal-banner .controls {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+        }
+        .renewal-banner .renew-btn {
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+        .renewal-banner.expiring .renew-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .renewal-banner.expired .renew-btn {
+            background-color: #dc3545;
+        }
+        .renewal-banner .close-btn {
+            font-family: monospace;
+            font-size: 1.5em;
+            text-decoration: none;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+        }
+        .renewal-banner .close-btn:hover {
+            opacity: 1;
+        }
         
         .profile-container {
             background: white;
@@ -69,6 +124,28 @@ font-weight: bold;
 <body>
     <%- include('partials/member-header') %>
     <div class="dashboard-container">
+        <% if (showRenewalBanner) { %>
+            <% 
+                let bannerClass = 'expiring';
+                let bannerText = `Your membership expires on ${new Date(member.endDate).toLocaleDateString()}!`;
+                if (member.status === 'Expired') {
+                    bannerClass = 'expired';
+                    bannerText = 'Your membership has expired!';
+                }
+            %>
+            <div class="renewal-banner <%= bannerClass %>" id="renewalBanner">
+                <p><%= bannerText %></p>
+                <div class="controls">
+                    <% if (hasPaymentMethods) { %>
+                        <a href="/member/renew" class="renew-btn">Renew Now</a>
+                    <% } else { %>
+                        <a href="/member/manage" class="renew-btn">Add Payment to Renew</a>
+                    <% } %>
+                    <a class="close-btn" onclick="document.getElementById('renewalBanner').style.display='none'">&times;</a>
+                </div>
+            </div>
+        <% } %>
+
         <h1>Member Dashboard</h1>
 
         <p class="welcome-message">

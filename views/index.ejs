@@ -41,6 +41,17 @@ text-decoration: none;
 /* Ensure text is white on hover */
         }
 
+        .nav-links a.activate-btn {
+            color: #ffc107; /* Yellow */
+            font-weight: bold;
+            margin-left: 1em;
+            border-radius: 4px;
+        }
+        .nav-links a.activate-btn:hover {
+            background-color: #495057;
+            color: #ffc107;
+        }
+
         .nav-links a.global-login-btn {
             background-color: transparent;
 /* MODIFIED: No fill */
@@ -181,6 +192,7 @@ text-align: center;
             <%# Replaced the two separate 
 login buttons with a single one %>
             <a href="/login" class="login-btn global-login-btn">Login</a>
+            <a href="/member/register" class="activate-btn">Activate Your Pass</a>
             
             </div>
     </nav>
@@ -266,6 +278,10 @@ Check back soon!</p>
             </div> <%# This closing div was missing in your provided file, which would also break layout %>
 
             <h3 style="margin-top: 2em;">Memberships</h3>
+            <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
+                Already bought your pass in the park? 
+                <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
+            </p>
             <div class="card-container">
                 <% memberships.forEach(pass => { %>
                     <div class="card price">

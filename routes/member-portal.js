@@ -6,11 +6,16 @@ const {
     isMemberAuthenticated,
     isGuest,
     formatReceiptDate,
-    censorPhone
+    censorPhone,
+    formatPhoneNumber // --- NEW: Added for profile edits
 } = require('../middleware/auth');
+
+const saltRounds = 10; // --- NEW: Added for password hashing
 
 // --- MEMBER-FACING PORTAL ---
 // All routes are prefixed with /member by app.js
+
+// ... (existing GET /login, GET /register, POST /register, GET /logout routes are unchanged) ...
 
 // GET /member/login
 router.get('/login', isGuest, (req, res) => {
@@ -46,7 +51,7 @@ router.post('/register', isGuest, async (req, res) => {
         if (authResult.length > 0) {
             throw new Error('An account has already been created for this membership.');
         }
-        const saltRounds = 10;
+        // const saltRounds = 10; // Moved to top of file
         const hash = await bcrypt.hash(password, saltRounds);
         await connection.query(
             'INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)',
@@ -94,6 +99,24 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
             return res.redirect('/member/logout');
         }
         const memberData = result[0];
+
+        // *** Renewal eligibility check ***
+        const [paymentResult] = await pool.query(
+            "SELECT COUNT(*) as count FROM member_payment_methods WHERE membership_id = ?",
+            [memberId]
+        );
+        const hasPaymentMethods = paymentResult[0].count > 0;
+
+        const today = new Date();
+        const endDate = new Date(memberData.end_date);
+        const renewalWindowStartDate = new Date(endDate);
+        renewalWindowStartDate.setDate(endDate.getDate() - 60);
+
+        const isExpired = endDate < today;
+        const canRenew = (today >= renewalWindowStartDate) || isExpired;
+
+        const showRenewalBanner = canRenew; // Show banner if they are eligible
+
         res.render('member-dashboard', {
             member: {
                 id: memberId,
@@ -105,7 +128,9 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
                 endDate: memberData.end_date,
                 typeName: memberData.type_name,
                 status: memberData.member_status
-            }
+            },
+            showRenewalBanner: showRenewalBanner, // Pass new variable
+            hasPaymentMethods: hasPaymentMethods  // Pass new variable
         });
     } catch (error) {
         console.error("Error fetching member dashboard:", error);
@@ -156,6 +181,7 @@ router.get('/promotions', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/history/receipt/:visit_id
+// ... (This route is unchanged) ...
 router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
     const { visit_id } = req.params;
     const memberId = req.session.member.id;
@@ -221,6 +247,7 @@ router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res)
 // --- ACCOUNT MANAGEMENT & PURCHASE HISTORY ---
 
 // GET /member/manage
+// ... (This route is unchanged) ...
 router.get('/manage', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
@@ -276,7 +303,8 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// GET /member/purchases - Shows the list of all membership purchases
+// GET /member/purchases
+// ... (This route is unchanged) ...
 router.get('/purchases', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
@@ -287,15 +315,20 @@ router.get('/purchases', isMemberAuthenticated, async (req, res) => {
                 h.price_paid,
                 h.purchased_start_date,
                 h.purchased_end_date,
-                mt.type_name
+                h.type_name_snapshot 
             FROM membership_purchase_history h
-            JOIN membership_type mt ON h.type_id = mt.type_id
             WHERE h.membership_id = ?
             ORDER BY h.purchase_date DESC
         `, [memberId]);
 
+        // Use type_name_snapshot from history table
+        const mappedPurchases = purchases.map(p => ({
+            ...p,
+            type_name: p.type_name_snapshot
+        }));
+
         res.render('member-purchase-history', {
-            purchases: purchases
+            purchases: mappedPurchases
         });
 
     } catch (error) {
@@ -304,22 +337,24 @@ router.get('/purchases', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// GET /member/purchases/receipt/:purchase_id - Shows a single receipt from history
+// GET /member/purchases/receipt/:purchase_id
+// ... (This route is unchanged) ...
 router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     const { purchase_id } = req.params;
 
     try {
-        // Query for the specific purchase, joining with member and type tables
+        // *** MODIFIED QUERY to JOIN payment methods ***
         const [purchaseResult] = await pool.query(`
             SELECT 
                 h.purchase_id, h.purchase_date, h.price_paid, 
                 h.purchased_start_date, h.purchased_end_date,
+                h.type_name_snapshot,
                 m.membership_id, m.first_name, m.last_name,
-                mt.type_name
+                pm.mock_identifier AS payment_method_name
             FROM membership_purchase_history h
             JOIN membership m ON h.membership_id = m.membership_id
-            JOIN membership_type mt ON h.type_id = mt.type_id
+            LEFT JOIN member_payment_methods pm ON h.payment_method_id = pm.payment_method_id
             WHERE h.purchase_id = ? AND h.membership_id = ?
         `, [purchase_id, memberId]);
 
@@ -328,9 +363,15 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
             return res.status(404).send("Purchase receipt not found or access denied.");
         }
 
+        // Map snapshot name to the view
+        const purchaseData = {
+            ...purchaseResult[0],
+            type_name: purchaseResult[0].type_name_snapshot
+        };
+
         // Render a new receipt detail view
         res.render('member-purchase-receipt-detail', {
-            purchase: purchaseResult[0]
+            purchase: purchaseData
         });
 
     } catch (error) {
@@ -339,12 +380,77 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
     }
 });
 
-// POST /member/renew - Simulates a renewal
+
+// GET /member/renew
+// ... (This route is unchanged) ...
+router.get('/renew', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
+    try {
+        // 1. Get all payment methods
+        const [paymentMethods] = await pool.query(
+            "SELECT * FROM member_payment_methods WHERE membership_id = ? ORDER BY is_default DESC",
+            [memberId]
+        );
+
+        // 2. If no payment methods, redirect back with an error
+        if (paymentMethods.length === 0) {
+            req.session.error = "You must add a payment method before you can renew.";
+            return res.redirect('/member/manage');
+        }
+
+        // 3. Get member's current info to show renewal details
+        const [memberResult] = await pool.query(
+            `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name
+             FROM membership m
+             JOIN membership_type mt ON m.type_id = mt.type_id
+             WHERE m.membership_id = ?`,
+            [memberId]
+        );
+
+        if (memberResult.length === 0) { throw new Error("Member not found."); }
+        const member = memberResult[0];
+
+        // 4. Determine new start/end dates for display
+        const currentEndDate = new Date(member.end_date);
+        const today = new Date();
+        const isExpired = currentEndDate < today;
+        const newStartDate = isExpired ? today : currentEndDate;
+        const newEndDate = new Date(newStartDate);
+        newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+
+        // 5. Render the new renewal page
+        res.render('member-renew', {
+            renewal: {
+                type_name: member.type_name,
+                base_price: member.base_price,
+                new_end_date: newEndDate.toLocaleDateString()
+            },
+            paymentMethods: paymentMethods,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading renewal page:", error);
+        req.session.error = "An error occurred while loading the renewal page.";
+        res.redirect('/member/manage');
+    }
+});
+
+
+// POST /member/renew
+// ... (This route is unchanged) ...
 router.post('/renew', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
+    // --- NEW: Get payment method from form ---
+    const { payment_method_id } = req.body;
     let connection;
 
     try {
+        // --- NEW: Check if a payment method was selected ---
+        if (!payment_method_id) {
+            throw new Error("You must select a payment method.");
+        }
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
@@ -357,48 +463,47 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
             [memberId]
         );
 
-        if (memberResult.length === 0) {
-            throw new Error("Member not found.");
-        }
-
+        if (memberResult.length === 0) { throw new Error("Member not found."); }
         const member = memberResult[0];
+
+        // --- NEW: Verify the selected payment method belongs to this member ---
+        const [paymentResult] = await connection.query(
+            "SELECT * FROM member_payment_methods WHERE payment_method_id = ? AND membership_id = ?",
+            [payment_method_id, memberId]
+        );
+        if (paymentResult.length === 0) {
+            throw new Error("Invalid payment method selected.");
+        }
+        // --- End verification ---
+
         const currentEndDate = new Date(member.end_date);
         const today = new Date();
 
-        // *** NEW BUSINESS RULE CHECK ***
-        // Calculate the date 60 days *before* the end date
+        // *** BUSINESS RULE CHECK ***
         const renewalWindowStartDate = new Date(currentEndDate);
         renewalWindowStartDate.setDate(currentEndDate.getDate() - 60);
         const isExpired = currentEndDate < today;
-
-        // If today is *before* that 60-day window AND the pass is not expired, block the renewal.
         if (today < renewalWindowStartDate && !isExpired) {
             req.session.error = "You can only renew when your membership is within 60 days of expiring.";
             return res.redirect('/member/manage');
         }
-        // *** END NEW CHECK ***
-
 
         // 2. Determine new start/end dates
-        // If expired (end date < today), new term starts today. 
-        // If active, it extends from the *current end date*.
         const newStartDate = isExpired ? today : currentEndDate;
-
         const newEndDate = new Date(newStartDate);
         newEndDate.setFullYear(newEndDate.getFullYear() + 1);
 
-        // 3. Update the main membership table with the new end date AND the current type_id/price
-        // This ensures if they renew, they renew their *current* plan
+        // 3. Update the main membership table
         await connection.query(
             "UPDATE membership SET end_date = ?, type_id = ? WHERE membership_id = ?",
             [newEndDate, member.type_id, memberId]
         );
 
-        // 4. Log this renewal in the new history table
+        // 4. Log this renewal in the history table
         const historySql = `
             INSERT INTO membership_purchase_history 
-                (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await connection.query(historySql, [
             memberId,
@@ -406,26 +511,193 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
             today, // Purchase date is today
             member.base_price, // Use the price from the *current* type
             newStartDate, // The start of this new term
-            newEndDate    // The end of this new term
+            newEndDate,    // The end of this new term
+            member.type_name, // <-- NEW: Save snapshot of type name
+            payment_method_id // <-- NEW: Save the selected payment ID
         ]);
 
         await connection.commit();
 
-        // Set a success message
         req.session.success = `Membership renewed successfully for ${member.type_name}! Your new expiration date is ${newEndDate.toLocaleDateString()}.`;
         res.redirect('/member/manage');
 
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error renewing membership:", error);
-        req.session.error = "An error occurred while processing your renewal."; // Use flash message
-        res.redirect('/member/manage'); // Redirect back
+
+        // --- NEW: Error handling for this page ---
+        // If it fails, we need to re-render the renewal page with the error
+        try {
+            const [paymentMethods] = await pool.query("SELECT * FROM member_payment_methods WHERE membership_id = ? ORDER BY is_default DESC", [memberId]);
+            const [memberResult] = await pool.query("SELECT mt.type_name, mt.base_price, m.end_date FROM membership m JOIN membership_type mt ON m.type_id = mt.type_id WHERE m.membership_id = ?", [memberId]);
+            const member = memberResult[0];
+            const currentEndDate = new Date(member.end_date);
+            const today = new Date();
+            const isExpired = currentEndDate < today;
+            const newStartDate = isExpired ? today : currentEndDate;
+            const newEndDate = new Date(newStartDate);
+            newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+
+            res.render('member-renew', {
+                renewal: {
+                    type_name: member.type_name,
+                    base_price: member.base_price,
+                    new_end_date: newEndDate.toLocaleDateString()
+                },
+                paymentMethods: paymentMethods,
+                error: error.message // Pass the error message
+            });
+        } catch (renderError) {
+            // Fallback if re-rendering fails
+            req.session.error = "An error occurred while processing your renewal.";
+            res.redirect('/member/manage');
+        }
     } finally {
         if (connection) connection.release();
     }
 });
 
 
+// *** NEW ROUTE ***
+// GET /member/edit - Show the form to edit member's own profile
+router.get('/edit', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
+    try {
+        const [memberResult] = await pool.query(
+            "SELECT first_name, last_name, email, phone_number, date_of_birth FROM membership WHERE membership_id = ?",
+            [memberId]
+        );
+        if (memberResult.length === 0) {
+            return res.redirect('/member/logout');
+        }
+        res.render('member-edit-profile', {
+            member: memberResult[0],
+            error: null
+        });
+    } catch (error) {
+        console.error("Error loading member edit page:", error);
+        res.status(500).send("Error loading page.");
+    }
+});
+
+// *** NEW ROUTE ***
+// POST /member/edit - Handle the profile update
+router.post('/edit', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id;
+    const { first_name, last_name, date_of_birth } = req.body;
+    const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
+
+    try {
+        if (!first_name || !last_name || !date_of_birth) {
+            throw new Error("First Name, Last Name, and Date of Birth are required.");
+        }
+
+        const sql = `
+            UPDATE membership 
+            SET first_name = ?, last_name = ?, phone_number = ?, date_of_birth = ?
+            WHERE membership_id = ?
+        `;
+        await pool.query(sql, [
+            first_name,
+            last_name,
+            formattedPhoneNumber,
+            date_of_birth,
+            memberId
+        ]);
+
+        // Update session data
+        req.session.member.firstName = first_name;
+        req.session.member.lastName = last_name;
+
+        req.session.success = "Your profile has been updated successfully.";
+        res.redirect('/member/manage');
+
+    } catch (error) {
+        console.error("Error updating member profile:", error);
+        try {
+            // Re-fetch data to render form with error
+            const [memberResult] = await pool.query(
+                "SELECT first_name, last_name, email, phone_number, date_of_birth FROM membership WHERE membership_id = ?",
+                [memberId]
+            );
+            res.render('member-edit-profile', {
+                member: memberResult[0] || { email: req.session.member.email },
+                error: error.message
+            });
+        } catch (fetchError) {
+            res.redirect('/member/manage');
+        }
+    }
+});
+
+// *** NEW ROUTE ***
+// GET /member/change-password - Show the change password form
+router.get('/change-password', isMemberAuthenticated, (req, res) => {
+    res.render('member-change-password', { error: null, success: null });
+});
+
+// *** NEW ROUTE ***
+// POST /member/change-password - Handle the password change
+router.post('/change-password', isMemberAuthenticated, async (req, res) => {
+    const { old_password, new_password, confirm_password } = req.body;
+    const memberId = req.session.member.id;
+
+    if (new_password !== confirm_password) {
+        return res.render('member-change-password', {
+            error: "New passwords do not match.",
+            success: null
+        });
+    }
+    if (new_password.length < 8) {
+        return res.render('member-change-password', {
+            error: "Password must be at least 8 characters.",
+            success: null
+        });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        const [authResult] = await connection.query('SELECT password_hash FROM member_auth WHERE membership_id = ?', [memberId]);
+        if (authResult.length === 0) {
+            return res.render('member-change-password', {
+                error: "Could not find user authentication record.",
+                success: null
+            });
+        }
+        const currentHash = authResult[0].password_hash;
+
+        const match = await bcrypt.compare(old_password, currentHash);
+        if (!match) {
+            return res.render('member-change-password', {
+                error: "Incorrect old password.",
+                success: null
+            });
+        }
+
+        const newHash = await bcrypt.hash(new_password, saltRounds);
+        await connection.query('UPDATE member_auth SET password_hash = ? WHERE membership_id = ?', [newHash, memberId]);
+
+        res.render('member-change-password', {
+            error: null,
+            success: "Password updated successfully!"
+        });
+
+    } catch (error) {
+        console.error("Error changing member password:", error);
+        res.render('member-change-password', {
+            error: "A database error occurred. Please try again.",
+            success: null
+        });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+
+// --- Payment Method Routes ---
+// ... (The /payment/add, /payment/delete, and /payment/default routes are unchanged) ...
 router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
     const { id: memberId } = req.session.member;
     const {

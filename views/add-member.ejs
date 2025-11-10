@@ -4,80 +4,163 @@
     <meta charset="UTF-8">
     <title>Add New Member</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #17a2b8; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .error { color: red; font-weight: bold; }
+        body { font-family: sans-serif;
+margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+}
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
+border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-grid { display: grid;
+grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px;
+}
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+}
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+border: 1px solid #ccc; }
+        
+        /* --- NEW: Make readonly inputs look disabled --- */
+        input[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        button { padding: 12px 20px; background-color: #17a2b8;
+color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+}
+        .error { color: red; font-weight: bold;
+}
         .full-width { grid-column: 1 / -1;}
+
+        /* --- Style for Price Display --- */
+        .price-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-top: 1em;
+            text-align: center;
+        }
+        .price-display h3 { margin: 0; color: #444; }
+        .price-display p { margin: 0; font-size: 1.5em; font-weight: bold; color: #28a745; }
 
         .cancel-link {
             display: inline-block;
-            margin-left: 15px;
+margin-left: 15px;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
         }
         .cancel-link:hover {
             text-decoration: underline;
-        }
+}
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>Add New Park Member</h1>
+    <h1>New Membership Purchase</h1>
     <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
     <form action="/members" method="POST">
         <div class="form-grid">
             <div>
                 <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" required>
+                <input type="text" id="first_name" name="first_name" 
+required>
             </div>
             <div>
                 <label for="last_name">Last Name:</label>
                 <input type="text" id="last_name" name="last_name" required>
             </div>
             <div class="full-width">
-                <label for="email">Email:</label>
+             
+   <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required>
             </div>
             <div>
                 <label for="phone_number">Phone Number:</label>
                 <input type="tel" id="phone_number" name="phone_number">
             </div>
-            <div>
+   
+         <div>
                 <label for="date_of_birth">Date of Birth:</label>
                 <input type="date" id="date_of_birth" name="date_of_birth" required>
             </div>
             <div>
                 <label for="type_id">Membership Type:</label>
-                <select id="type_id" name="type_id" required>
+          
+      <select id="type_id" name="type_id" required>
                     <% if (types.length === 0) { %>
                         <option value="" disabled>-- No active types available --</option>
                     <% } else { %>
-                        <option value="" disabled selected>-- Select a Type --</option>
+          
+              <option value="" disabled selected>-- Select a Type --</option>
                         <% types.forEach(type => { %>
-                            <option value="<%= type.type_id %>"><%= type.type_name %></option>
-                        <% }); %>
+                            <option value="<%= type.type_id %>" data-price="<%= type.base_price %>">
+                                <%= type.type_name %>
+                            </option>
+                  
+      <% }); %>
                     <% } %>
                 </select>
                 </div>
+            
+            <div class="full-width">
+                <div class="price-display">
+                    <h3>Amount Due</h3>
+                    <p id="priceDisplay">$--.--</p>
+                </div>
+            </div>
+            
             <div>
                 <label for="start_date">Start Date:</label>
-                <input type="date" id="start_date" name="start_date" required>
+                        <input type="date" id="start_date" name="start_date" readonly>
             </div>
             <div>
                 <label for="end_date">End Date:</label>
-                <input type="date" id="end_date" name="end_date" required>
+                <input type="date" id="end_date" name="end_date" readonly>
             </div>
         </div>
-        <br>
-        <button type="submit">Add Member</button>
+      
+  <br>
+        <button type="submit">Add Member & Print Receipt</button>
         <a href="/members" class="cancel-link">Cancel</a>
     </form>
+
+    <script>
+        // Helper function to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Set dates on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            
+            // Calculate end date (start date + 1 year - 1 day)
+            const endDate = new Date(today);
+            endDate.setFullYear(today.getFullYear() + 1);
+            endDate.setDate(today.getDate() - 1);
+
+            // Set the readonly input fields
+            document.getElementById('start_date').value = formatDate(today);
+            document.getElementById('end_date').value = formatDate(endDate);
+        });
+    
+        // Price display logic
+        document.getElementById('type_id').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.dataset.price;
+            const priceDisplay = document.getElementById('priceDisplay');
+            
+            if (price) {
+                priceDisplay.textContent = '$' + parseFloat(price).toFixed(2);
+            } else {
+                priceDisplay.textContent = '$--.--';
+            }
+        });
+    </script>
 </body>
 </html>

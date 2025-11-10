@@ -6,58 +6,59 @@
     <style>
         body {
             font-family: sans-serif;
-            margin: 0;
+margin: 0;
             background-color: #f4f4f9;
             color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
-        }
+}
         .container {
             max-width: 500px;
-            width: 100%;
+width: 100%;
             background: white;
             padding: 2.5em;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             text-align: center;
-        }
+}
         h1 {
-            color: #28a745; /* Green for success */
+            color: #28a745;
+/* Green for success */
             margin-top: 0;
             margin-bottom: 0.5em;
-        }
+}
         .receipt {
             background: #f8f9fa;
-            border: 1px solid #dee2e6;
+border: 1px solid #dee2e6;
             padding: 1.5em;
             border-radius: 8px;
             text-align: left;
             margin-top: 2em;
             margin-bottom: 2em;
-        }
+}
         .receipt-item {
             display: flex;
-            justify-content: space-between;
+justify-content: space-between;
             padding: 0.5em 0;
             border-bottom: 1px solid #eee;
         }
         .receipt-item:last-child {
             border-bottom: none;
-        }
+}
         .receipt-item strong {
             color: #555;
-        }
+}
         .receipt-total {
             font-size: 1.2em;
-            font-weight: bold;
+font-weight: bold;
             color: #000;
             margin-top: 0.5em;
         }
         .continue-button {
             display: block;
-            width: 100%;
+width: 100%;
             box-sizing: border-box;
             padding: 12px 20px;
             background-color: #17a2b8;
@@ -66,20 +67,21 @@
             cursor: pointer;
             border-radius: 4px;
             font-size: 1.1em;
-            font-weight: bold;
+font-weight: bold;
             text-decoration: none;
             text-align: center;
         }
         .continue-button:hover {
             background-color: #138496;
-        }
+}
     </style>
 </head>
 <body>
     
     <div class="container">
         <h1>Thank You For Your Purchase!</h1>
-        <p>Your membership is now active and your account has been created. A copy of this receipt has been saved to your account.</p>
+        <p>Your membership is now active and your account has been created.
+A copy of this receipt has been saved to your account.</p>
 
         <div class="receipt">
             <h3>Purchase Confirmation</h3>
@@ -87,20 +89,28 @@
                 <strong>Member Name:</strong>
                 <span><%= receipt.memberName %></span>
             </div>
-            <div class="receipt-item">
+        
+    <div class="receipt-item">
                 <strong>Membership ID:</strong>
                 <span><%= receipt.membershipId %></span>
             </div>
             <div class="receipt-item">
                 <strong>Membership Type:</strong>
-                <span><%= receipt.typeName %></span>
+                <span><%= receipt.typeName 
+%></span>
             </div>
             <div class="receipt-item">
                 <strong>Valid Through:</strong>
                 <span><%= receipt.endDate %></span>
             </div>
+            
+            <div class="receipt-item">
+                <strong>Payment Method:</strong>
+                <span><%= receipt.paymentMethod %></span>
+            </div>
             <div class="receipt-item receipt-total">
-                <strong>Amount Paid:</strong>
+              
+  <strong>Amount Paid:</strong>
                 <span>$<%= receipt.pricePaid.toFixed(2) %></span>
             </div>
         </div>

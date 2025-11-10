@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Renew Membership</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: 2em auto; }
+        h1 { color: #444; }
+        .card {
+            background: white;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2em;
+        }
+        .card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+            color: #28a745;
+        }
+        .info-pair {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1em;
+            padding: 1em 0.5em;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-pair:last-child { border-bottom: none; }
+        .info-pair strong { color: #333; }
+        .info-pair span { color: #555; }
+        .price { font-weight: bold; font-size: 1.3em !important; color: #000 !important; }
+
+        .payment-option {
+            display: block;
+            padding: 1em;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-bottom: 0.5em;
+            cursor: pointer;
+        }
+        .payment-option:hover { background-color: #e9ecef; }
+        .payment-option input[type="radio"] { margin-right: 1em; }
+        .payment-option label { font-weight: bold; cursor: pointer; }
+        .payment-option .default { color: #28a745; font-size: 0.9em; margin-left: 1em; }
+
+        .btn-confirm {
+            padding: 12px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-top: 1.5em;
+            width: 100%;
+        }
+        .btn-confirm:hover { background-color: #218838; }
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .message-error {
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/member-header') %>
+    <div class="container">
+        <h1>Confirm Your Renewal</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message-error"><%= error %></div>
+        <% } %>
+
+        <div class="card">
+            <h3>Renewal Details</h3>
+            <div class="info-pair">
+                <strong>Membership Type:</strong>
+                <span><%= renewal.type_name %></span>
+            </div>
+            <div class="info-pair">
+                <strong>Renewal Price:</strong>
+                <span class="price">$<%= parseFloat(renewal.base_price).toFixed(2) %></span>
+            </div>
+            <div class="info-pair">
+                <strong>New Expiration Date:</strong>
+                <span><%= renewal.new_end_date %></span>
+            </div>
+        </div>
+
+        <div class="card" style="border-left: 5px solid #007bff;">
+            <h3 style="color: #007bff;">Select Payment Method</h3>
+            <form action="/member/renew" method="POST">
+                <% paymentMethods.forEach(method => { %>
+                    <div class="payment-option">
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="payment_method_id" 
+                                value="<%= method.payment_method_id %>"
+                                <% if (method.is_default) { %>checked<% } %>
+                            >
+                            <%= method.mock_identifier %>
+                            <% if (method.mock_expiration) { %>
+                                (Exp: <%= method.mock_expiration %>)
+                            <% } %>
+                            <% if (method.is_default) { %>
+                                <span class="default">(Default)</span>
+                            <% } %>
+                        </label>
+                    </div>
+                <% }); %>
+                
+                <button type="submit" class="btn-confirm">Confirm and Pay</button>
+            </form>
+            <a href="/member/manage" class="cancel-link">Cancel</a>
+        </div>
+    </div>
+</body>
+</html>

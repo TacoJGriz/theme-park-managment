@@ -242,7 +242,7 @@ DELETE FROM daily_stats WHERE YEAR(date_rec) = 2025;
 DELETE FROM visits WHERE YEAR(visit_date) = 2025;
 
 -- Call the procedure (e.g., for 10 million visits)
-CALL GenerateVisits(100000, 2025);
+CALL GenerateVisits(10000, 2025);
 
 -- Update daily_stats with the newly generated visitor counts
 INSERT INTO daily_stats (date_rec, visitor_count)

@@ -6,14 +6,20 @@
     <style>
         body { font-family: sans-serif;
 margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px;
+        
+        .container { max-width: 1400px;
 margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
 }
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
 }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+        
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
 }
         th { background-color: #17a2b8; color: white;
 }
@@ -34,7 +40,7 @@ color: white; display: flex; justify-content: space-between; align-items: center
         .sort-indicator { font-size: 1.2em; margin-left: 5px;
 }
 
-        /* --- NEW: Stats Bar Styles --- */
+        /* --- Stats Bar Styles --- */
         .stats-bar {
             display: grid;
 grid-template-columns: repeat(3, 1fr);
@@ -94,6 +100,38 @@ border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-dec
 font-weight: bold; }
         .status-Expired { color: #dc3545; font-weight: bold;
 }
+        
+        /* --- NEW: Action Link Styles --- */
+        .action-link {
+            text-decoration: none;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .action-link:hover { text-decoration: underline; }
+        .link-history { color: #17a2b8; }
+        .link-edit { color: #007bff; }
+        .link-reset { color: #dc3545; }
+
+        /* --- NEW: Flash Message Styles --- */
+        .message {
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            border: 1px solid transparent;
+        }
+        .success {
+            color: #155724; 
+            background-color: #d4edda; 
+            border-color: #c3e6cb;
+        }
+        .error {
+            color: #721c24; 
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
     </style>
 </head>
 <body>
@@ -101,7 +139,12 @@ font-weight: bold; }
     <div class="container">
         <h1>Park Members</h1>
 
-        <%# --- NEW: Stats Bar --- %>
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3 class="total"><%= counts.totalMembers ||
@@ -126,20 +169,24 @@ font-weight: bold; }
                 <div class="filter-controls">
                     
   
+
                   <div>
                         <label for="search">Search Member (Name, Email, Phone)</label>
                         <input type="search" id="search" name="search" 
                          
+
       placeholder="Search..." 
                                value="<%= search %>">
                     </div>
                     
                     
+
 <div>
                         <label for="filter_type">Membership Type</label>
                         <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                   
+
           <% types.forEach(type => { %>
                                 <option value="<%= type.type_id %>" 
                                         <%= String(filters.type) === String(type.type_id) ?
@@ -147,6 +194,7 @@ font-weight: bold; }
                                     <%= type.type_name %>
                                 </option>
                            
+
  <% }); %>
                         </select>
                     </div>
@@ -154,6 +202,7 @@ font-weight: bold; }
                     <div>
                         <label for="filter_status">Status</label>
         
+
                 <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <option value="active" <%= filters.status === 'active' ?
@@ -166,12 +215,14 @@ font-weight: bold; }
                     <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
      
+
                    <a href="/members" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
                 
                 <% if (currentSort && currentDir) { %>
     
+
                 <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
                 <% } %>
@@ -182,6 +233,7 @@ font-weight: bold; }
         <a href="/members/new" class="add-button">Add New Member</a>
 
     
+
     <% 
             const getSortState = (column) => {
                 let nextDir = 'asc';
@@ -215,6 +267,7 @@ if (filters.type) {
                 };
 };
             
+            const idSort = getSortState('id');
             const nameSort = getSortState('name');
             const emailSort = getSortState('email');
             const phoneSort = getSortState('phone');
@@ -228,8 +281,15 @@ const startDateSort = getSortState('start_date');
             <thead>
                 <tr>
                     <th class="sortable">
+                        <a href="<%= idSort.href %>">
+                            <span>Member ID</span>
+                            <span class="sort-indicator"><%= idSort.indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
                         <a href="<%= nameSort.href %>">
                 
+
 
             <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
@@ -237,11 +297,13 @@ const startDateSort = getSortState('start_date');
                     </th>
              
 
+
        <th class="sortable">
                         <a href="<%= emailSort.href %>">
                             <span>Email</span>
                             <span class="sort-indicator"><%= emailSort.indicator %></span>
       
+
 
                   </a>
                     </th>
@@ -249,11 +311,13 @@ const startDateSort = getSortState('start_date');
                         <a href="<%= phoneSort.href %>">
               
 
+
               <span>Phone</span>
                             <span class="sort-indicator"><%= phoneSort.indicator %></span>
                         </a>
                     </th>
            
+
 
          <th class="sortable">
                         <a href="<%= typeSort.href %>">
@@ -261,11 +325,13 @@ const startDateSort = getSortState('start_date');
                             <span class="sort-indicator"><%= typeSort.indicator %></span>
    
 
+
                      </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= startDateSort.href %>">
            
+
 
                  <span>Start Date</span>
                             <span class="sort-indicator"><%= startDateSort.indicator %></span>
@@ -273,10 +339,12 @@ const startDateSort = getSortState('start_date');
                     </th>
        
 
+
              <th class="sortable">
                         <a href="<%= endDateSort.href %>">
                             <span>End Date</span>
                             <span class="sort-indicator"><%=endDateSort.indicator 
+
 %></span>
                         </a>
                     </th>
@@ -284,31 +352,45 @@ const startDateSort = getSortState('start_date');
                         <a href="<%= statusSort.href %>">
        
  
+
                     <span>Status</span>
                             <span class="sort-indicator"><%= statusSort.indicator %></span>
                         </a>
                     </th>
      
+
                <th>Actions</th>              </tr>
            </thead>
            <tbody>
+                <% if (members.length === 0) { %>
+                    <tr>
+                        <td colspan="9" style="text-align: center;">No members found matching criteria.</td>
+                    </tr>
+                <% } %>
                 <% members.forEach(member => { %>
                     <tr>
+                        <td><%= member.membership_id %></td>
          
+
                <td><%= member.first_name %> <%= member.last_name %></td>
                         <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
                         <td><%= member.type_name ||'N/A' %></td>
  
+
                        <td><%= member.start_date_formatted %></td>
                         <td><%= member.end_date_formatted %></td>
                         <td class="status-<%= member.member_status %>"><%= member.member_status %></td>
                     
+
     <td>
-                            <a href="/members/history/<%= member.membership_id %>" class="action-link" style="color: #17a2b8;">View History</a>
+                            <a href="/members/history/<%= member.membership_id %>" class="action-link link-history">View History</a>
+                            <a href="/members/edit/<%= member.membership_id %>" class="action-link link-edit">Edit Member</a>
+                            <a href="/members/reset-password/<%= member.membership_id %>" class="action-link link-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset Password</a>
                         </td>
                     </tr>
                 <% 
+
 });%>
             </tbody>
         </table>

@@ -97,6 +97,10 @@ router.post('/signup', isGuest, async (req, res) => {
         const purchaseDate = new Date();
         const endDate = new Date(new Date().setFullYear(purchaseDate.getFullYear() + 1));
 
+        // --- NEW: Variables for payment info ---
+        let newPaymentMethodId = null;
+        let paymentIdentifier = 'N/A'; // Default for receipt
+
         try {
             // 1. Create the membership record
             const memSql = `
@@ -118,34 +122,40 @@ router.post('/signup', isGuest, async (req, res) => {
             const shouldSaveCard = (payment_method_choice === 'card' && save_payment_card === 'true');
             const shouldSaveBank = (payment_method_choice === 'bank' && save_payment_bank === 'true');
 
-            if (shouldSaveCard) {
+            // --- NEW: Determine payment identifier for receipt ---
+            if (payment_method_choice === 'card') {
                 const cardDigits = (mock_card_number || '').replace(/\D/g, '');
                 const lastFour = cardDigits.slice(-4);
-                const identifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
-
-                await connection.query(
-                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-                     VALUES (?, 'Card', TRUE, ?, ?)`,
-                    [newMembershipId, identifier, mock_card_expiry || null]
-                );
-
-            } else if (shouldSaveBank) {
+                paymentIdentifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
+            } else if (payment_method_choice === 'bank') {
                 const accountDigits = (mock_account_number || '').replace(/\D/g, '');
                 const lastFour = accountDigits.slice(-4);
-                const identifier = `Bank Account ending in ${lastFour}`;
+                paymentIdentifier = `Bank Account ending in ${lastFour}`;
+            }
 
-                await connection.query(
+
+            if (shouldSaveCard) {
+                const [paymentResult] = await connection.query( // <-- Capture result
+                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                     VALUES (?, 'Card', TRUE, ?, ?)`,
+                    [newMembershipId, paymentIdentifier, mock_card_expiry || null]
+                );
+                newPaymentMethodId = paymentResult.insertId; // <-- Save the ID
+
+            } else if (shouldSaveBank) {
+                const [paymentResult] = await connection.query( // <-- Capture result
                     `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
                      VALUES (?, 'Bank', TRUE, ?, NULL)`,
-                    [newMembershipId, identifier]
+                    [newMembershipId, paymentIdentifier]
                 );
+                newPaymentMethodId = paymentResult.insertId; // <-- Save the ID
             }
 
             // 4. Log this initial purchase in the history table
             const historySql = `
                 INSERT INTO membership_purchase_history 
-                    (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date)
-                VALUES (?, ?, ?, ?, ?, ?)
+                    (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
             await connection.query(historySql, [
                 newMembershipId,
@@ -153,7 +163,9 @@ router.post('/signup', isGuest, async (req, res) => {
                 purchaseDate,
                 type.base_price,
                 purchaseDate, // For initial purchase, start date is now
-                endDate       // End date is one year from now
+                endDate,       // End date is one year from now
+                type.type_name, // <-- NEW: Save snapshot of type name
+                newPaymentMethodId // <-- NEW: Save the payment method ID (will be NULL if not saved)
             ]);
 
             // 5. Commit the transaction
@@ -181,7 +193,8 @@ router.post('/signup', isGuest, async (req, res) => {
                     membershipId: newMembershipId,
                     typeName: type.type_name,
                     endDate: endDate.toLocaleDateString(), // Format as MM/DD/YYYY
-                    pricePaid: parseFloat(type.base_price)
+                    pricePaid: parseFloat(type.base_price),
+                    paymentMethod: paymentIdentifier // <-- NEW: Pass payment info
                 };
 
                 res.render('member-signup-success', { receipt: receiptData });
