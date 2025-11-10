@@ -7,7 +7,7 @@
 	align-items: center;
 	color: white;
 	margin-bottom: 1em;
-	min-height: 50px; /* Set a fixed height */
+min-height: 50px; /* Set a fixed height */
 	}
 	.nav-links {
 	display: flex;
@@ -16,19 +16,21 @@
 	.nav-links a, .dropdown .dropbtn {
 	color: #f8f9fa;
 	text-decoration: none;
-	padding: 15px 12px; /* Standard padding for all links */
+padding: 15px 12px; /* Standard padding for all links */
 	transition: background-color 0.2s;
 	margin-right: 5px; /* Spacing between links */
-	display: flex; /* Use flex to align text */
+	display: flex;
+/* Use flex to align text */
 	align-items: center;
 	/* Center text vertically */
-	height: 100%; /* Make link fill the nav height */
+	height: 100%;
+/* Make link fill the nav height */
 	box-sizing: border-box;
 	/* Include padding in height */
 	background-color: transparent;
 	border: none;
 	font-family: inherit;
-	font-size: inherit;
+font-size: inherit;
 	cursor: pointer;
 	}
 	.nav-links a:hover, .dropdown:hover .dropbtn {
@@ -40,7 +42,7 @@
 	.user-info a {
 	color: #dc3545;
 	font-weight: bold;
-	margin-left: 20px;
+margin-left: 20px;
 	text-decoration: none;
 	}
 	.user-info a:hover {
@@ -52,7 +54,7 @@
 	position: relative;
 	display: inline-block;
 	height: 100%;
-	}
+}
 	.dropdown .dropbtn {
 	font-weight: normal;
 	/* Match normal link weight */
@@ -62,14 +64,14 @@
 	position: absolute;
 	background-color: #f9f9f9;
 	min-width: 200px;
-	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 	z-index: 1000;
 	border-radius: 0 0 4px 4px;
 	}
 	.dropdown-content a {
 	color: black;
 	padding: 12px 16px;
-	text-decoration: none;
+text-decoration: none;
 	display: block;
 	height: auto;
 	/* Override nav-link height */
@@ -77,7 +79,7 @@
 	}
 	.dropdown-content a:hover {
 	background-color: #f1f1f1;
-	}
+}
 	.dropdown:hover .dropdown-content {
 	display: block;
 	}
@@ -85,7 +87,7 @@
 	.special-link {
 	color: #dc3545 !important;
 	font-weight: bold;
-	}
+}
 </style>
 
 <%# The user object is passed to every view from app.js via res.locals %>
@@ -106,11 +108,14 @@
 			<div class="dropdown-content">
 				<a href="/users">Employees</a>
 				<% if (user.role === 'Admin' || user.role === 'Head of HR' 
+
 || user.role === 'HR Staff') { %>
 				<a href="/employees/pending" class="special-link">Pending Hires</a>
 				<% } %>
 				<%# MODIFIED: Added Location Manager for inventory approvals %>
-				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+				<% if (user.role === 'Admin' ||
+user.role === 'Head of HR' || user.role === 'Park Manager' ||
+user.role === 'Location Manager') { %>
 				<a href="/approvals" class="special-link">Pending Requests</a>
 				<% } %>
 			</div>
@@ -137,11 +142,13 @@ user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 
 		<%# --- MODIFIED: Retail Dropdown (Removed Vendor Manager, Added Staff) --- %>
 		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-		<div class="dropdown">
+		<div 
+class="dropdown">
 			<button class="dropbtn">Retail ▼</button>
 			<div class="dropdown-content">
 				<%# MODIFIED: Staff cannot see master item list %>
-				<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+				<% if (user.role === 'Admin' ||
+user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 				<a href="/items">Items</a>
 				<% } %>
 				<a href="/inventory">Inventory</a>
@@ -172,6 +179,8 @@ user.role === 'Park Manager') { %>
 			<button class="dropbtn">Reports ▼</button>
 			<div class="dropdown-content">
 				<a href="/reports/attendance">Attendance Report</a>
+				<a href="/reports/ride-popularity">Ride Popularity Report</a>
+				<a href="/reports/rainouts">Rainout Report</a>
 			</div>
 		</div>
 		<% } %>
@@ -180,7 +189,8 @@ user.role === 'Park Manager') { %>
 	<%# --- User Info (Right Side) --- %>
 	<div class="user-info">
 		<span>
-			Welcome, <%= user.firstName %> (<%= user.role %>)
+			Welcome, <%= user.firstName %> (<%= 
+user.role %>)
 		</span>
 		<a href="/change-password" style="color: #ffc107;">Change Password</a>
 		<a href="/employee/logout">Logout</a>
