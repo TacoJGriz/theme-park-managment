@@ -394,7 +394,6 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             if (membershipType.base_members > 1) {
                 // This is a multi-member pass
                 subMemberSection.style.display = 'block';
-                createSubMemberForm();
                 addMemberBtn.addEventListener('click', createSubMemberForm);
             } else {
                 // This is a single-member pass

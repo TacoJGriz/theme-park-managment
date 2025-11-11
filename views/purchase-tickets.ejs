@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Day Tickets</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em; }
+        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 1em; }
+        .full-width { grid-column: 1 / -1; }
+        .price-summary { background: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; margin: 1.5em 0; text-align: center; }
+        .price-summary h3 { margin: 0 0 0.5em 0; color: #444; }
+        .price-summary p { margin: 0; font-size: 1.5em; font-weight: bold; color: #28a745; }
+        .payment-choice {
+        display: flex;
+        gap: 1em;
+        margin-bottom: 1em;
+        }
+        .payment-choice label {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            font-weight: normal; 
+        }
+        .payment-choice input[type="radio"] {
+            width: auto;
+        }
+        .payment-details-group { 
+            background-color: #f8f9fa; 
+            border: 1px solid #eee; 
+            padding: 1.5em; 
+            border-radius: 4px; 
+            margin-top: 1em; 
+        }
+        .input-error {
+            border-color: #dc3545;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %> 
+    
+    <form action="/purchase-tickets" method="POST" id="purchaseForm">
+        <h1>Purchase Day Tickets</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error"><%= error %></p>
+        <% } %>
+
+        <h3>Select Tickets</h3>
+        <% ticketTypes.forEach(type => { %>
+            <div class="form-grid">
+                <div>
+                    <label for="qty_<%= type.ticket_type_id %>">
+                        <%= type.type_name %> ($<%= parseFloat(type.base_price).toFixed(2) %>)
+                    </label>
+                </div>
+                <div>
+                    <input type="number" id="qty_<%= type.ticket_type_id %>" name="quantities[<%= type.ticket_type_id %>]" value="0" min="0" data-price="<%= type.base_price %>">
+                </div>
+            </div>
+        <% }); %>
+
+        <div class="price-summary">
+            <h3>TOTAL PRICE</h3>
+            <p id="totalPrice">$0.00</p>
+        </div>
+
+        <div class="full-width">
+            <h3>Guest Information & Payment</h3>
+            <div style="margin-bottom: 1.5em;">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div style="margin-bottom: 1.5em;">
+                <label for="phone_number">Phone Number (Optional):</label>
+                <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
+                <small><i>Enter either an Email or Phone Number for ticket delivery.</i></small>
+            </div>
+            <div class="payment-choice">
+                <label>
+                    <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
+                    Pay with Card
+                </label>
+                <label>
+                    <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
+                    Pay with Bank Account
+                </label>
+            </div>
+
+            <div id="cardPaymentGroup" class="payment-details-group">
+                <div class="form-grid">
+                    <div>
+                        <label for="mock_card_brand">Card Brand:</label>
+                        <select id="mock_card_brand" name="mock_card_brand">
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="Amex">American Express</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="mock_card_number">Card Number:</label>
+                        <input type="text" id="mock_card_number" name="mock_card_number" placeholder="e.g., .... .... .... 4242">
+                    </div>
+                    <div>
+                        <label for="mock_card_expiry">Expiration:</label>
+                        <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
+                    </div>
+                    <div>
+                        <label for="mock_card_cvv">Security Code:</label>
+                        <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="e.g., 123">
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankPaymentGroup" class="payment-details-group" style="display: none;">
+                <div class="form-grid">
+                    <div>
+                        <label for="mock_routing_number">Routing Number:</label>
+                        <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="e.g., 000123456">
+                    </div>
+                    <div>
+                        <label for="mock_account_number">Account Number:</label>
+                        <input type="text" id="mock_account_number" name="mock_account_number" placeholder="e.g., ....7890">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <button type="submit">Complete Purchase</button>
+    </form>
+
+    <script>
+        // Simple script to calculate total price
+        const form = document.getElementById('purchaseForm');
+        const priceDisplay = document.getElementById('totalPrice');
+        let total = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for a query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketTypeFromURL = urlParams.get('type');
+            
+            if (ticketTypeFromURL) {
+                // Find the input corresponding to that type
+                const input = document.getElementById(`qty_${ticketTypeFromURL}`);
+                if (input) {
+                    // Set its quantity to 1
+                    input.value = 1;
+                    
+                    // Manually trigger the 'input' event to update the price
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+
+        // Get Payment Elements
+        const cardRadio = document.getElementById('payWithCard');
+        const bankRadio = document.getElementById('payWithBank');
+        const cardGroup = document.getElementById('cardPaymentGroup');
+        const bankGroup = document.getElementById('bankPaymentGroup');
+        
+        // Get Input Fields
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone_number');
+        const cardInput = document.getElementById('mock_card_number');
+        const expiryInput = document.getElementById('mock_card_expiry');
+        const cvvInput = document.getElementById('mock_card_cvv');
+        const routingInput = document.getElementById('mock_routing_number');
+        const accountInput = document.getElementById('mock_account_number');
+
+        // Regex for validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/; // MM/YY
+        const cvvRegex = /^\d{3,4}$/;
+        const routingRegex = /^\d{9}$/;
+        const accountRegex = /^\d{4,17}$/;
+
+        // Payment Toggle Logic
+        cardRadio.addEventListener('change', () => {
+            if (cardRadio.checked) {
+                cardGroup.style.display = 'block';
+                bankGroup.style.display = 'none';
+            }
+        });
+        bankRadio.addEventListener('change', () => {
+            if (bankRadio.checked) {
+                cardGroup.style.display = 'none';
+                bankGroup.style.display = 'block';
+            }
+        });
+
+        // --- Validation Helpers ---
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(msg => msg.remove());
+            document.querySelectorAll('.input-error').forEach(input => input.classList.remove('input-error'));
+        }
+
+        function showError(inputElement, message) {
+            inputElement.classList.add('input-error');
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'error-message';
+            errorSpan.textContent = message;
+            inputElement.parentElement.appendChild(errorSpan);
+        }
+
+        form.addEventListener('input', (e) => {
+            if (e.target.type === 'number') {
+                total = 0;
+                form.querySelectorAll('input[type="number"]').forEach(input => {
+                    const price = parseFloat(input.dataset.price) || 0;
+                    const quantity = parseInt(input.value, 10) || 0;
+                    total += price * quantity;
+                });
+                priceDisplay.textContent = `$${total.toFixed(2)}`;
+            }
+        });
+
+        form.addEventListener('submit', (event) => {
+            clearErrors();
+            let isValid = true;
+            let firstErrorField = null;
+
+            // 1. Validate Email OR Phone
+            if (emailInput.value.trim() === '' && phoneInput.value.trim() === '') {
+                isValid = false;
+                showError(emailInput, 'Please enter a valid Email or Phone Number.');
+                showError(phoneInput, 'Please enter a valid Email or Phone Number.');
+                firstErrorField = emailInput;
+            } else if (emailInput.value.trim() !== '' && !emailRegex.test(emailInput.value)) {
+                // Only validate email if it's not empty
+                isValid = false;
+                showError(emailInput, 'Please enter a valid email address.');
+                firstErrorField = emailInput;
+            }
+
+            // 2. Validate Ticket Quantities
+            if (total <= 0) {
+                isValid = false;
+                // Find the first ticket input to show error
+                const firstTicketInput = form.querySelector('input[type="number"]');
+                showError(firstTicketInput, 'You must select at least one ticket.');
+                if (!firstErrorField) firstErrorField = firstTicketInput;
+            }
+
+            // 3. Validate Payment
+            if (cardRadio.checked) {
+                const cardDigits = cardInput.value.replace(/\D/g, '');
+                if (cardDigits.length < 16) {
+                    isValid = false;
+                    showError(cardInput, 'Card number must be at least 16 digits.');
+                    if (!firstErrorField) firstErrorField = cardInput;
+                }
+                if (!expiryRegex.test(expiryInput.value)) {
+                    isValid = false;
+                    showError(expiryInput, 'Expiration must be in MM/YY format (e.g., 08/28).');
+                    if (!firstErrorField) firstErrorField = expiryInput;
+                }
+                if (!cvvRegex.test(cvvInput.value)) {
+                    isValid = false;
+                    showError(cvvInput, 'Security code must be 3 or 4 digits.');
+                    if (!firstErrorField) firstErrorField = cvvInput;
+                }
+            } else { // Bank is checked
+                if (!routingRegex.test(routingInput.value)) {
+                    isValid = false;
+                    showError(routingInput, 'Routing number must be exactly 9 digits.');
+                    if (!firstErrorField) firstErrorField = routingInput;
+                }
+                if (!accountRegex.test(accountInput.value)) {
+                    isValid = false;
+                    showError(accountInput, 'Account number must be between 4 and 17 digits.');
+                    if (!firstErrorField) firstErrorField = accountInput;
+                }
+            }
+
+            // --- FINAL CHECK ---
+            if (!isValid) {
+                event.preventDefault(); // Stop the form!
+                if (firstErrorField) {
+                    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

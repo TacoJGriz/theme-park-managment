@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Successful!</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; display: flex; flex-direction: column; align-items: center; padding: 2em; }
+        .container { max-width: 500px; width: 100%; background: white; padding: 2.5em; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #28a745; margin-top: 0; margin-bottom: 0.5em; }
+        .receipt-info { text-align: left; font-size: 0.9em; margin-bottom: 1.5em; }
+        
+        /* --- Ticket Carousel Styles --- */
+        .ticket-carousel { position: relative; border: 2px dashed #ccc; border-radius: 8px; background: #fdfdfd; }
+        .ticket-display { padding: 2em; text-align: center; display: none; /* Hidden by default */ }
+        .ticket-display.active { display: block; /* Shown by JS */ }
+        .ticket-display h2 { margin: 0 0 0.5em 0; color: #17a2b8; }
+        .ticket-display .ticket-code { font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; color: #dc3545; background: #f8f9fa; padding: 10px; border-radius: 4px; display: block; margin-top: 1em; }
+        .ticket-display p { margin: 0.5em 0; }
+        .carousel-nav { display: flex; justify-content: space-between; align-items: center; padding: 0 1em 1em 1em; }
+        .nav-arrow { background-color: #007bff; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5em; font-weight: bold; cursor: pointer; }
+        .nav-arrow:hover { background-color: #0056b3; }
+        .nav-arrow:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .ticket-counter { font-weight: bold; font-size: 1.1em; }
+        
+        .continue-button { display: block; width: 100%; box-sizing: border-box; padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1.1em; font-weight: bold; text-decoration: none; text-align: center; margin-top: 1.5em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Purchase Confirmed!</h1>
+        <p>Thank you! Your tickets have been processed.</p>
+        <p>Please show these tickets at the gate. A copy will also be sent to:</p>
+        
+        <div class="receipt-info">
+            <% if (receipt.email) { %><strong>Email:</strong> <%= receipt.email %><br><% } %>
+            <% if (receipt.phone) { %><strong>Phone:</strong> <%= receipt.phone %><br><% } %>
+            <strong>Total Paid:</strong> $<%= receipt.total.toFixed(2) %>
+        </div>
+
+        <div class="ticket-carousel">
+            <% receipt.tickets.forEach((ticket, index) => { %>
+                <div class="ticket-display <%= index === 0 ? 'active' : '' %>" id="ticket-<%= index %>">
+                    <h2><%= ticket.name %></h2>
+                    <p>Park Admission E-Ticket</p>
+                    <p><strong>Price Paid: $<%= ticket.price.toFixed(2) %></strong></p>
+                    <span class="ticket-code"><%= ticket.code %></span>
+                </div>
+            <% }); %>
+            
+            <div class="carousel-nav">
+                <button id="prevBtn" class="nav-arrow">&larr;</button>
+                <span id="ticketCounter" class="ticket-counter">Ticket 1 of <%= receipt.tickets.length %></span>
+                <button id="nextBtn" class="nav-arrow">&rarr;</button>
+            </div>
+        </div>
+
+        <a href="/" class="continue-button">Back to Homepage</a>
+    </div>
+
+    <script>
+        const tickets = document.querySelectorAll('.ticket-display');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('ticketCounter');
+        let currentIndex = 0;
+        const totalTickets = tickets.length;
+
+        function showTicket(index) {
+            // Hide all tickets
+            tickets.forEach(t => t.classList.remove('active'));
+            // Show the correct one
+            tickets[index].classList.add('active');
+            // Update counter
+            counter.textContent = `Ticket ${index + 1} of ${totalTickets}`;
+            // Update buttons
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === totalTickets - 1;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showTicket(currentIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < totalTickets - 1) {
+                currentIndex++;
+                showTicket(currentIndex);
+            }
+        });
+
+        // Initialize
+        showTicket(0);
+    </script>
+</body>
+</html>

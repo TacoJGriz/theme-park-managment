@@ -176,8 +176,76 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     }
 });
 
+// POST /visits/redeem
+router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    const { ticket_code } = req.body;
+    const { id: actorId } = req.session.user;
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Find the ticket
+        const [ticketResult] = await connection.query(
+            "SELECT * FROM prepaid_tickets WHERE ticket_code = ?",
+            [ticket_code]
+        );
+
+        if (ticketResult.length === 0) {
+            req.session.error = `Ticket code "${ticket_code}" not found.`;
+            return res.redirect('/visits/new');
+        }
+
+        const ticket = ticketResult[0];
+
+        // 2. Check if already redeemed
+        if (ticket.is_redeemed) {
+            req.session.error = `This ticket was already redeemed on ${new Date(ticket.redeemed_date).toLocaleString()}.`;
+            return res.redirect('/visits/new');
+        }
+
+        // 3. Redeem the ticket
+        await connection.beginTransaction();
+
+        // 3a. Create the visit log
+        const visitSql = `
+            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
+            VALUES (?, ?, NULL, ?, ?, ?)
+        `;
+        const visit_date = new Date();
+        const [visitInsert] = await connection.query(visitSql, [
+            visit_date,
+            ticket.ticket_type_id,
+            ticket.base_price,    // Log the price from the ticket
+            ticket.discount_amount, // Log the discount from the ticket
+            actorId
+        ]);
+
+        const newVisitId = visitInsert.insertId;
+
+        // 3b. Mark the e-ticket as redeemed and link the visit
+        await connection.query(
+            "UPDATE prepaid_tickets SET is_redeemed = TRUE, redeemed_date = ?, visit_id = ? WHERE e_ticket_id = ?",
+            [visit_date, newVisitId, ticket.e_ticket_id]
+        );
+
+        await connection.commit();
+
+        // 4. Success!
+        req.session.success = `Ticket ${ticket.ticket_code} redeemed successfully.`;
+        res.redirect('/visits/new'); // Redirect back to the log visit page
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error redeeming e-ticket:", error);
+        req.session.error = "A database error occurred during redemption.";
+        res.redirect('/visits/new');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 // GET /visits/receipt/:visit_id
-// ... (This route is unchanged) ...
 router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { visit_id } = req.params;
     let connection;

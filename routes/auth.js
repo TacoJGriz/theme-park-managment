@@ -62,10 +62,9 @@ router.post('/signup', isGuest, async (req, res) => {
     } = req.body;
 
     // --- Standardize sub-member fields into arrays ---
-    // [].concat ensures it's an array even if 0 or 1 are submitted
-    const subFirstNames = [].concat(req.body['sub_first_name[]'] || []);
-    const subLastNames = [].concat(req.body['sub_last_name[]'] || []);
-    const subDobs = [].concat(req.body['sub_dob[]'] || []);
+    const subFirstNames = [].concat(req.body.sub_first_name || []);
+    const subLastNames = [].concat(req.body.sub_last_name || []);
+    const subDobs = [].concat(req.body.sub_dob || []);
 
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 

@@ -249,10 +249,9 @@ router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res)
 router.get('/manage', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
-        // --- MODIFIED: Fetch full member profile ---
         const [memberResult] = await pool.query(`
             SELECT 
-                m.first_name, m.last_name, m.end_date, m.primary_member_id,
+                m.membership_id, m.first_name, m.last_name, m.end_date, m.primary_member_id,
                 mt.type_name,
                 CASE 
                     WHEN m.end_date >= CURDATE() THEN 'Active' 
@@ -375,7 +374,6 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
     const { purchase_id } = req.params;
 
     try {
-        // *** MODIFIED QUERY to JOIN payment methods ***
         const [purchaseResult] = await pool.query(`
             SELECT 
                 h.purchase_id, h.purchase_date, h.price_paid, 
@@ -399,6 +397,15 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
             ...purchaseResult[0],
             type_name: purchaseResult[0].type_name_snapshot
         };
+
+        const [subMembers] = await pool.query(
+            `SELECT membership_id, first_name, last_name
+             FROM membership 
+             WHERE primary_member_id = ?`,
+            [purchaseData.membership_id] // This is the primary member's ID from the query above
+        );
+
+        purchaseData.subMembers = subMembers;
 
         // Render a new receipt detail view
         res.render('member-purchase-receipt-detail', {
@@ -794,12 +801,13 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
         }
 
         await connection.commit();
+        req.session.success = "Payment method added successfully.";
         res.redirect('/member/manage');
 
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error adding payment method:", error);
-        // In a real app, you'd use a flash message to show the error
+        req.session.error = "Error adding payment method.";
         res.redirect('/member/manage');
     } finally {
         if (connection) connection.release();
@@ -815,6 +823,7 @@ router.post('/payment/delete/:method_id', isMemberAuthenticated, async (req, res
             "DELETE FROM member_payment_methods WHERE payment_method_id = ? AND membership_id = ?",
             [method_id, memberId]
         );
+        req.session.success = "Payment method deleted.";
         res.redirect('/member/manage');
     } catch (error) {
         console.error("Error deleting payment method:", error);
@@ -839,6 +848,7 @@ router.post('/payment/default/:method_id', isMemberAuthenticated, async (req, re
             [method_id, memberId]
         );
         await connection.commit();
+        req.session.success = "Default payment method updated.";
         res.redirect('/member/manage');
     } catch (error) {
         if (connection) await connection.rollback();
@@ -846,6 +856,77 @@ router.post('/payment/default/:method_id', isMemberAuthenticated, async (req, re
         res.status(500).send("Error processing request.");
     } finally {
         if (connection) connection.release();
+    }
+});
+
+// GET /member/edit-sub/:id
+// Renders the edit form for a sub-member
+router.get('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
+    const primaryMemberId = req.session.member.id;
+    const subMemberId = req.params.id;
+
+    try {
+        // Security Check: Fetch the sub-member AND verify they belong to the logged-in primary member
+        const [subResult] = await pool.query(
+            "SELECT * FROM membership WHERE membership_id = ? AND primary_member_id = ?",
+            [subMemberId, primaryMemberId]
+        );
+
+        if (subResult.length === 0) {
+            req.session.error = "You do not have permission to edit this member.";
+            return res.redirect('/member/manage');
+        }
+
+        // Render a new view, passing in the sub-member's data
+        res.render('member-edit-sub-profile', {
+            subMember: subResult[0],
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading sub-member edit page:", error);
+        req.session.error = "Error loading page.";
+        res.redirect('/member/manage');
+    }
+});
+
+// POST /member/edit-sub/:id
+// Handles the update for a sub-member
+router.post('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
+    const primaryMemberId = req.session.member.id;
+    const subMemberId = req.params.id;
+    const { first_name, last_name, date_of_birth } = req.body;
+
+    let subMember; // To pass back to form on error
+    try {
+        // Security Check: Fetch the sub-member again to be 100% sure
+        const [subResult] = await pool.query(
+            "SELECT * FROM membership WHERE membership_id = ? AND primary_member_id = ?",
+            [subMemberId, primaryMemberId]
+        );
+
+        if (subResult.length === 0) {
+            req.session.error = "You do not have permission to edit this member.";
+            return res.redirect('/member/manage');
+        }
+        subMember = subResult[0]; // For the catch block
+
+        // Update the sub-member's details
+        await pool.query(
+            "UPDATE membership SET first_name = ?, last_name = ?, date_of_birth = ? WHERE membership_id = ?",
+            [first_name, last_name, date_of_birth, subMemberId]
+        );
+
+        req.session.success = `Profile for ${first_name} ${last_name} updated.`;
+        res.redirect('/member/manage');
+
+    } catch (error) {
+        console.error("Error updating sub-member:", error);
+        // On error, re-render the edit form with the error message
+        res.render('member-edit-sub-profile', {
+            subMember: subMember || { ...req.body, membership_id: subMemberId },
+            error: "An error occurred while updating the profile."
+        });
     }
 });
 

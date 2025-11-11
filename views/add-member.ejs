@@ -310,8 +310,6 @@ required value="<%= typeof member !== 'undefined' ? member.first_name : '' %>">
                 if (membershipType.base_members > 1) {
                     // This is a multi-member pass, show the section
                     subMemberSection.style.display = 'block';
-                    // Add the first "sub-member" form (which is member #2)
-                    createSubMemberForm(); 
                 } else {
                     // This is an individual pass, hide the section
                     subMemberSection.style.display = 'none';

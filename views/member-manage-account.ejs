@@ -79,6 +79,42 @@ justify-content: space-between;
             color: #555;
         }
 
+        .card-header-actions {
+            display: flex;
+            gap: 10px;
+            float: right; /* Aligns buttons to the right */
+        }
+        .btn-header {
+            font-size: 0.8em;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .btn-header-edit {
+            background-color: #007bff; /* Blue */
+        }
+        .btn-header-edit:hover {
+            background-color: #0056b3;
+        }
+        .btn-header-history {
+            background-color: #17a2b8; /* Cyan */
+        }
+        .btn-header-history:hover {
+            background-color: #138496;
+        }
+        .sub-member-edit-link {
+            font-size: 0.9em;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .sub-member-edit-link:hover {
+            text-decoration: underline;
+        }
+
         .payment-method {
             display: flex;
 justify-content: space-between;
@@ -256,13 +292,20 @@ color: #555;
        <% } %>
 
         <div class="card">
-            <h3>Membership Details <a href="/member/edit">Edit Profile</a></h3>
+            <div class="card-header-actions">
+                <a href="/member/purchases" class="btn-header btn-header-history">View Purchase History</a>
+                <a href="/member/edit" class="btn-header btn-header-edit">Edit My Profile</a>
+            </div>
+            <h3>Membership Details</h3>
+            <div class="info-pair">
+                <strong>Member ID:</strong>
+                <span><%= member.membership_id %></span>
+            </div>
             <div class="info-pair">
                 <strong>Member Name:</strong>
                 <span><%= member.first_name %> <%= member.last_name %></span>
             </div>
-      
-      <div class="info-pair">
+            <div class="info-pair">
                 <strong>Membership Type:</strong>
                 <span><%= member.type_name %></span>
             </div>
@@ -286,8 +329,13 @@ class="status-<%= member.member_status %>"><%= member.member_status %></span>
                     </li>
                     <% familyMembers.forEach(person => { %>
                         <li>
-                            <span><%= person.first_name %> <%= person.last_name %></span>
-                            <span>ID: <%= person.membership_id %></span>
+                            <div>
+                                <span><%= person.first_name %> <%= person.last_name %></span>
+                                <span style="color: #6c757d; font-size: 0.9em; display: block;">ID: <%= person.membership_id %></span>
+                            </div>
+                            <% if (isPrimaryMember) { %>
+                                <a href="/member/edit-sub/<%= person.membership_id %>" class="sub-member-edit-link">Edit Profile</a>
+                            <% } %>
                         </li>
                     <% }); %>
                 </ul>
@@ -297,7 +345,7 @@ class="status-<%= member.member_status %>"><%= member.member_status %></span>
 
         <% if (isPrimaryMember) { %>
             <div class="card">
-                <h3>Saved Payment Methods <a href="/member/purchases" style="font-size: 0.7em; font-weight: normal; float: right; margin-top: 4px;">View Purchase History</a></h3>
+                <h3>Saved Payment Methods</h3>
                 <% if (paymentMethods.length > 0) { %>
                     <% paymentMethods.forEach(method => { %>
                         <div class="payment-method">

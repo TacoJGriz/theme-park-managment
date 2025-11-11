@@ -133,9 +133,9 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
     // --- NEW: Get sub-member data arrays ---
-    const subFirstNames = [].concat(req.body['sub_first_name[]'] || []);
-    const subLastNames = [].concat(req.body['sub_last_name[]'] || []);
-    const subDobs = [].concat(req.body['sub_dob[]'] || []);
+    const subFirstNames = [].concat(req.body.sub_first_name || []);
+    const subLastNames = [].concat(req.body.sub_last_name || []);
+    const subDobs = [].concat(req.body.sub_dob || []);
 
     // --- MODIFIED: Generate dates on server ---
     const purchaseTime = new Date();

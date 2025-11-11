@@ -281,17 +281,20 @@ Check back soon!</p>
                 <% tickets.forEach(ticket => { %>
                 
 
-    <div class="card price">
+    <div class="card price" style="justify-content: space-between;">
                         <div>
                             <h3><%= ticket.type_name %></h3>
                             <div class="price">$<%= parseFloat(ticket.base_price).toFixed(2) %></div>
          
+
                    <p><%= ticket.description || 'Standard park admission.' %></p>
                         </div>
-         </div>
-                <% });
+                        
+                        <a href="/purchase-tickets?type=<%= ticket.ticket_type_id %>" class="purchase-button" style="background-color: #28a745;">Purchase Tickets</a>
+                        </div>
+                <% }); %>
 %>
-            </div> <%# This closing div was missing in your provided file, which would also break layout %>
+            </div>
 
             <h3 style="margin-top: 2em;">Memberships</h3>
             

@@ -4,74 +4,114 @@
     <meta charset="UTF-8">
     <title>Log Park Entry</title>
     <style>
-        body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em;
-}
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2.5em;
-border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        form > div { margin-bottom: 1.5em;
-} 
-        
-        label { display: block;
-margin-bottom: 5px; font-weight: bold;
- }
-        input, select { width: 100%; padding: 10px;
-box-sizing: border-box; border-radius: 4px;
- border: 1px solid #ccc; }
-        
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #444;
+            text-align: center;
+            margin-top: 1em;
+        }
+        form {
+            max-width: 500px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        form > div {
+            margin-bottom: 1.5em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
         input#memberSearchPhone {
             margin-bottom: 10px;
-}
-        
+        }
+
         .price-display {
             background-color: #f9f9f9;
-border: 1px solid #eee;
+            border: 1px solid #eee;
             border-radius: 8px;
             padding: 1em;
             margin-top: 1.5em;
-}
+        }
         .price-display h3 {
             margin-top: 0;
-border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
             padding-bottom: 0.5em;
         }
         .price-display p {
             display: flex;
-justify-content: space-between;
+            justify-content: space-between;
             margin: 0.5em 0;
             font-size: 1.1em;
         }
         .price-display .final-price {
             font-weight: bold;
-font-size: 1.3em;
+            font-size: 1.3em;
             color: #28a745;
             border-top: 2px solid #28a745;
             padding-top: 0.5em;
             margin-top: 0.5em;
-}
-        
-        button { padding: 12px 20px;
-background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; width: 100%;
-}
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
-margin-bottom: 15px; }
-        
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1em;
+            width: 100%;
+        }
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+            background-color: #f2dede;
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
         /* --- NEW: Success Message Style --- */
-        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; padding: 1em; border-radius: 4px;
-margin-bottom: 15px; font-weight: bold; }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
 
         .cancel-link {
             display: block;
-margin-top: 1em;
+            margin-top: 1em;
             text-align: center;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
-}
-        .cancel-link:hover { text-decoration: underline;
-}
+        }
+        .cancel-link:hover {
+            text-decoration: underline;
+        }
 
         /* --- NEW: Member Checklist Styles --- */
         #memberSelectionArea {
@@ -111,91 +151,156 @@ margin-top: 1em;
             padding: 5px;
             width: auto;
         }
+
+        /* --- START: ADDED TAB STYLES --- */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 1.5em;
+        }
+        .tab-btn {
+            padding: 1em 1.5em;
+            cursor: pointer;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+            font-size: 1em;
+        }
+        .tab-btn.active {
+            background: #fff;
+            border-bottom: 2px solid #fff;
+            position: relative;
+            top: 2px;
+        }
+        .tab-content {
+            display: none; /* Hide all tabs by default */
+        }
+        .tab-content.active {
+            display: block; /* Show active tab */
+        }
+        .redeem-form-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 1em;
+            align-items: flex-end;
+        }
+          /* --- END: ADDED TAB STYLES --- */
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    
-    <form action="/visits" method="POST" id="logVisitForm">
-        <h1>Log Park Entry</h1>
-        
-        <% if (typeof error !== 'undefined' && error) { %>
-            <p class="error"><%= error %></p>
-        <% } %>
-        <% if (typeof success !== 'undefined' && success) { %>
+
+    <div style="max-width: 500px; margin: 2em auto;">
+
+        <form style="padding: 2.5em; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h1>Log Park Entry</h1>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <p class="error"><%= error %></p>
+            <% } %>
+            <% if (typeof success !== 'undefined' && success) { %>
+
             <p class="success"><%= success %></p>
-        <% } %>
+            <% } %>
 
-        <div>
-           
-<label for="ticket_type_id">Ticket Type:</label>
-            <select id="ticket_type_id" name="ticket_type_id" required>
-                <option value="" selected disabled>-- Select a ticket type --</option>
-                <% ticketTypes.forEach(type => { %>
-                    <option 
-                  
-      value="<%= type.ticket_type_id %>"
-                        data-price="<%= type.base_price %>"
-                        data-is-member="<%= type.is_member_type %>"
-                    >
-                    
-    <%= type.type_name %>
-                    </option>
-                <% });
-%>
-            </select>
-        </div>
-        
-        <div id="memberSelectBlock" style="display: none;">
-            <label for="memberSearchPhone">Search Member by Phone:</label>
-            <input type="text" id="memberSearchPhone" placeholder="Type phone number...">
-            
-            <div id="memberSelectionArea">
-                <p style="text-align: center; color: #6c757d;"><i>Search for a member to see their group.</i></p>
+            <div class="tab-container">
+                <div class="tab-btn active" data-tab="standard">Log Standard Ticket</div>
+                <div class="tab-btn" data-tab="redeem">Redeem E-Ticket</div>
             </div>
+        </form>
+
+        <div id="tab-standard" class="tab-content active" style="margin-top: -3.5em;">
+            <form action="/visits" method="POST" id="logVisitForm" style="margin: 0; box-shadow: none; padding-top: 0;">
+                <div>
+                    <label for="ticket_type_id">Ticket Type:</label>
+                    <select id="ticket_type_id" name="ticket_type_id" required>
+                        <option value="" selected disabled>-- Select a ticket type --</option>
+                        <%
+                        ticketTypes.forEach(type => { %>
+                            <option
+                                value="<%= type.ticket_type_id %>"
+                                data-price="<%= type.base_price %>"
+                                data-is-member="<%= type.is_member_type %>"
+                            >
+                            <%= type.type_name %>
+                            </option>
+                        <% });
+                        %>
+                    </select>
+                </div>
+
+                <div id="memberSelectBlock" style="display: none;">
+                    <label for="memberSearchPhone">Search Member by Phone:</label>
+                    <input type="text" id="memberSearchPhone" placeholder="Type phone number...">
+
+                    <div id="memberSelectionArea">
+
+                        <p style="text-align: center; color: #6c757d;"><i>Search for a member to see their group.</i></p>
+                    </div>
+                </div>
+
+                <div class="price-display">
+                    <h3>Calculated Price</h3>
+                    <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
+                    <p><span>Promotion:</span> <span id="priceDiscount">$ --.--</span></p>
+
+                    <p class="final-price"><span>Final Price:</span> <span id="priceFinal">$ --.--</span></p>
+                </div>
+
+
+                <br>
+                <button type="submit">Log Visit</button>
+                <a href="/dashboard" class="cancel-link">Cancel</a>
+            </form>
         </div>
 
-        <div class="price-display">
-            <h3>Calculated Price</h3>
-            <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
-            <p><span>Promotion:</span> <span id="priceDiscount">$ --.--</span></p>
-            <p class="final-price"><span>Final Price:</span> <span id="priceFinal">$ --.--</span></p>
-         </div>
- 
-       
-        <br>
-        <button type="submit">Log Visit</button>
-        <a href="/dashboard" class="cancel-link">Cancel</a>
-    </form>
+        <div id="tab-redeem" class="tab-content" style="margin-top: -3.5em;">
+            <form action="/visits/redeem" method="POST" style="margin: 0; box-shadow: none; padding-top: 0;">
+                <div class="redeem-form-grid">
+                    <div>
+                        <label for="ticket_code">E-Ticket Code:</label>
+                        <input type="text" id="ticket_code" name="ticket_code" required>
+                    </div>
+                    <button type="submit" style="padding: 10px; background-color: #28a745;">Redeem Ticket</button>
+                </div>
+                <a href="/dashboard" class="cancel-link" style="margin-top: 2em;">Cancel</a>
+            </form>
+        </div>
+    </div>
 
     <script>
         // --- Pass data from EJS to JavaScript ---
         const ticketTypeData = new Map();
-<% ticketTypes.forEach(type => { %>
+        <% ticketTypes.forEach(type => { %>
             ticketTypeData.set('<%= type.ticket_type_id %>', {
                 price: parseFloat('<%= type.base_price %>'),
                 isMember: Boolean(<%= type.is_member_type %>)
             });
         <% });
-%>
+        %>
         const currentDiscountPercent = parseFloat('<%= currentDiscount %>') || 0;
-        
         // --- NEW: Pass full member list ---
         const allActiveMembers = <%- JSON.stringify(activeMembers) %>;
         // Function to normalize phone numbers (passed from server)
         const normalizePhone = (phone) => (phone || "").replace(/\D/g, '');
-
         // --- NEW: Build member lookup maps ---
-        const memberSearchMap = new Map(); // phone -> memberId
-        const memberDataMap = new Map(); // memberId -> memberObject
-        const memberGroupMap = new Map(); // primaryId -> [member Objects]
+        const memberSearchMap = new Map();
+        // phone -> memberId
+        const memberDataMap = new Map();
+        // memberId -> memberObject
+        const memberGroupMap = new Map();
+        // primaryId -> [member Objects]
 
         allActiveMembers.forEach(member => {
             // Add to data map
             memberDataMap.set(member.membership_id, member);
-            
+
             // Add to phone search map
             if (member.phone_number) {
+
                 const normalizedPhone = normalizePhone(member.phone_number);
                 if (normalizedPhone) {
                     memberSearchMap.set(normalizedPhone, member.membership_id);
@@ -203,22 +308,21 @@ margin-top: 1em;
             }
 
             // Add to group map
+
             const primaryId = member.primary_member_id || member.membership_id;
             if (!memberGroupMap.has(primaryId)) {
                 memberGroupMap.set(primaryId, []);
             }
             memberGroupMap.get(primaryId).push(member);
         });
-
-
-// --- Get DOM Elements ---
+        // --- Get DOM Elements ---
         const ticketSelect = document.getElementById('ticket_type_id');
-const memberSelectBlock = document.getElementById('memberSelectBlock');
+        const memberSelectBlock = document.getElementById('memberSelectBlock');
         const memberSearchInput = document.getElementById('memberSearchPhone');
         const memberSelectionArea = document.getElementById('memberSelectionArea');
-        
+
         const priceBaseEl = document.getElementById('priceBase');
-const priceDiscountEl = document.getElementById('priceDiscount');
+        const priceDiscountEl = document.getElementById('priceDiscount');
         const priceFinalEl = document.getElementById('priceFinal');
 
         // --- Event Listener for Ticket Type ---
@@ -229,30 +333,29 @@ const priceDiscountEl = document.getElementById('priceDiscount');
                 return;
             }
 
- 
-           const ticket = ticketTypeData.get(selectedTypeId);
+            const ticket = ticketTypeData.get(selectedTypeId);
             if (!ticket) {
                 resetPriceDisplay();
                 return;
             }
 
             if (ticket.isMember) {
-              
-  memberSelectBlock.style.display = 'block'; 
+                memberSelectBlock.style.display = 'block';
+
                 // memberSelect.required = true; // No longer a single select
-                updatePriceDisplay(0, 0, 0); 
+                updatePriceDisplay(0, 0, 0);
             } else {
-                memberSelectBlock.style.display = 'none'; 
-                // memberSelect.required = false; 
-     
-           
-                memberSearchInput.value = ''; 
+                memberSelectBlock.style.display = 'none';
+                // memberSelect.required = false;
+
+
+                memberSearchInput.value = '';
                 clearMemberChecklist();
-                
-                const basePrice 
-= ticket.price;
-                const discountAmount = basePrice * (currentDiscountPercent / 100);
-const finalPrice = basePrice - discountAmount;
+
+                const basePrice = ticket.price;
+                const
+                discountAmount = basePrice * (currentDiscountPercent / 100);
+                const finalPrice = basePrice - discountAmount;
                 updatePriceDisplay(basePrice, discountAmount, finalPrice);
             }
         });
@@ -260,9 +363,10 @@ const finalPrice = basePrice - discountAmount;
         // --- NEW: Event Listener for Member Phone Search ---
         memberSearchInput.addEventListener('input', function() {
             const searchTerm = this.value.replace(/\D/g, '');
-            
+
             // Find the *first* matching member ID
             let foundMemberId = null;
+
             for (const [phone, memberId] of memberSearchMap.entries()) {
                 if (phone.startsWith(searchTerm)) {
                     foundMemberId = memberId;
@@ -270,16 +374,17 @@ const finalPrice = basePrice - discountAmount;
                 }
             }
 
+
             if (foundMemberId) {
                 const member = memberDataMap.get(foundMemberId);
                 const primaryId = member.primary_member_id || member.membership_id;
                 const group = memberGroupMap.get(primaryId);
                 buildMemberChecklist(group);
             } else {
+
                 clearMemberChecklist();
             }
         });
-        
         // --- NEW: Function to build the checklist ---
         function buildMemberChecklist(group) {
             if (!group || group.length === 0) {
@@ -287,24 +392,26 @@ const finalPrice = basePrice - discountAmount;
                 return;
             }
 
-            memberSelectionArea.innerHTML = ''; // Clear the "search..." text
-            
+            memberSelectionArea.innerHTML = '';
+            // Clear the "search..." text
+
             group.forEach(member => {
                 const label = document.createElement('label');
                 label.className = 'member-checklist-label';
-                
-                const checkbox = document.createElement('input');
+
+                const
+                checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.name = 'member_ids[]';
                 checkbox.value = member.membership_id;
-                
+
                 label.appendChild(checkbox);
+
                 label.appendChild(document.createTextNode(
                     ` ${member.first_name} ${member.last_name} (${member.email || 'No Email'})`
                 ));
                 memberSelectionArea.appendChild(label);
             });
-            
             // Add "Select All" / "Select None"
             const controls = document.createElement('div');
             controls.className = 'checklist-controls';
@@ -313,7 +420,7 @@ const finalPrice = basePrice - discountAmount;
                 <button type="button" id="selectNoneBtn">Select None</button>
             `;
             memberSelectionArea.appendChild(controls);
-            
+
             document.getElementById('selectAllBtn').addEventListener('click', () => {
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
             });
@@ -321,31 +428,50 @@ const finalPrice = basePrice - discountAmount;
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             });
         }
-        
+
         // --- NEW: Function to clear the checklist ---
         function clearMemberChecklist() {
             memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d;"><i>Search for a member to see their group.</i></p>';
         }
 
-function updatePriceDisplay(base, discount, final) {
+        function updatePriceDisplay(base, discount, final) {
             priceBaseEl.textContent = formatAsCurrency(base);
-priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
+            priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
             priceFinalEl.textContent = formatAsCurrency(final);
         }
 
         function resetPriceDisplay() {
             priceBaseEl.textContent = '$ --.--';
-priceDiscountEl.textContent = '$ --.--';
+            priceDiscountEl.textContent = '$ --.--';
             priceFinalEl.textContent = '$ --.--';
-            
+
             memberSelectBlock.style.display = 'none';
             memberSearchInput.value = '';
-clearMemberChecklist();
+            clearMemberChecklist();
         }
 
         function formatAsCurrency(amount) {
             return `$${amount.toFixed(2)}`;
-}
+        }
+
+        // --- START: ADD TAB-SWITCHING SCRIPT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Deactivate all
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+
+                    // Activate clicked
+                    tab.classList.add('active');
+                    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                });
+            });
+        });
+        // --- END: ADD TAB-SWITCHING SCRIPT ---
     </script>
 </body>
 </html>

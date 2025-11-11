@@ -157,6 +157,7 @@ CREATE TABLE ticket_types (
     ticket_type_id INT NOT NULL AUTO_INCREMENT,
     type_name VARCHAR(50) NOT NULL UNIQUE,
     base_price DECIMAL(10, 2) NOT NULL,
+    description VARCHAR(250) NULL,
     is_active BOOL NOT NULL DEFAULT TRUE,
     is_member_type BOOL NOT NULL DEFAULT FALSE,
     
@@ -170,8 +171,8 @@ CREATE TABLE visits (
     visit_date DATETIME,
     exit_time TIME,
     ticket_type_id INT NOT NULL,
-    ticket_price DECIMAL(10,2),
-    discount_amount DECIMAL(10,2),
+    ticket_price DECIMAL(10,2) NULL,
+    discount_amount DECIMAL(10,2) NULL,
     logged_by_employee_id INT,
     -- Keys
     PRIMARY KEY (visit_id),
@@ -338,4 +339,30 @@ CREATE TABLE membership_purchase_history (
     FOREIGN KEY (payment_method_id) 
         REFERENCES member_payment_methods(payment_method_id) 
         ON DELETE SET NULL
+);
+
+CREATE TABLE prepaid_tickets (
+    e_ticket_id INT NOT NULL AUTO_INCREMENT,
+    purchase_id VARCHAR(50) NOT NULL COMMENT 'Groups tickets from one transaction',
+    ticket_code VARCHAR(36) NOT NULL UNIQUE COMMENT 'UUID for redemption',
+    ticket_type_id INT NOT NULL,
+    purchase_date DATETIME NOT NULL,
+    
+    -- Store customer info for lookup
+    email VARCHAR(50),
+    phone_number VARCHAR(15),
+    
+    -- Store price at time of purchase
+    base_price DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    
+    -- Redemption status
+    is_redeemed BOOL NOT NULL DEFAULT FALSE,
+    redeemed_date DATETIME,
+    visit_id INT NULL,
+    
+    PRIMARY KEY (e_ticket_id),
+    FOREIGN KEY (ticket_type_id) REFERENCES ticket_types(ticket_type_id),
+    FOREIGN KEY (visit_id) REFERENCES visits(visit_id) ON DELETE SET NULL,
+    INDEX idx_purchase_id (purchase_id)
 );
