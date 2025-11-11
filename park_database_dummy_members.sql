@@ -135,4 +135,4 @@ DELETE FROM visits WHERE membership_id IS NOT NULL;
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
 -- Call the procedure to generate x new members starting in the year y
-CALL GenerateMembers(5000, 2024);
+CALL GenerateMembers(500, 2024);

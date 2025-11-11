@@ -119,8 +119,6 @@ CREATE TABLE membership_type (
     type_id INT NOT NULL AUTO_INCREMENT,
     type_name VARCHAR(50) NOT NULL UNIQUE,
     base_price DECIMAL(10, 2) NOT NULL,
-    
-    -- *** NEW COLUMNS for multi-member ***
     base_members INT NOT NULL DEFAULT 1 COMMENT 'Members included in base price',
     additional_member_price DECIMAL(10, 2) NULL DEFAULT NULL COMMENT 'Price for each member above the base',
     
