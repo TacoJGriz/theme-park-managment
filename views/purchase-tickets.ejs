@@ -64,7 +64,7 @@
         <% ticketTypes.forEach(type => { %>
             <%
                 // Construct the name string here to avoid parsing errors
-                const inputName = `quantities[${type.ticket_type_id}]`;
+                const inputName = `quantities[]`;
             %>
             <div class="form-grid">
                 <div>
