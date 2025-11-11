@@ -150,24 +150,6 @@
         const priceDisplay = document.getElementById('totalPrice');
         let total = 0;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check for a query parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const ticketTypeFromURL = urlParams.get('type');
-            
-            if (ticketTypeFromURL) {
-                // Find the input corresponding to that type
-                const input = document.getElementById(`qty_${ticketTypeFromURL}`);
-                if (input) {
-                    // Set its quantity to 1
-                    input.value = 1;
-                    
-                    // Manually trigger the 'input' event to update the price
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            }
-        });
-
         // Get Payment Elements
         const cardRadio = document.getElementById('payWithCard');
         const bankRadio = document.getElementById('payWithBank');
@@ -249,7 +231,12 @@
             }
 
             // 2. Validate Ticket Quantities
-            if (total <= 0) {
+            let validationTotal = 0;
+            form.querySelectorAll('input[type="number"]').forEach(input => {
+                validationTotal += parseInt(input.value, 10) || 0;
+            });
+            
+            if (validationTotal <= 0) {
                 isValid = false;
                 // Find the first ticket input to show error
                 const firstTicketInput = form.querySelector('input[type="number"]');

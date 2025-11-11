@@ -118,30 +118,30 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
 
         // --- START: CRITICAL BUG FIX ---
         // 3. Loop through the 'quantities' object keys sent from the form
-        for (const ticketIdKey in quantities) {
-            const quantity = parseInt(quantities[ticketIdKey], 10) || 0;
+        for (const ticketIdKey in quantities) { //
+            const quantity = parseInt(quantities[ticketIdKey], 10) || 0; //
 
             // 4. Check if quantity is > 0 AND if the key is a valid ticket type
-            if (quantity > 0 && ticketTypeMap.has(ticketIdKey)) {
+            if (quantity > 0 && ticketTypeMap.has(ticketIdKey)) { //
 
-                // Get the correct ticket type from our safe Map
-                const type = ticketTypeMap.get(ticketIdKey);
+                // 5. GET THE TYPE *INSIDE* THE LOOP
+                // This ensures we get "Child" for the Child ticket, "Senior" for the Senior, etc.
+                const type = ticketTypeMap.get(ticketIdKey); //
 
-                const basePrice = parseFloat(type.base_price);
+                const basePrice = parseFloat(type.base_price); //
                 const discountAmount = basePrice * (currentDiscountPercent / 100);
                 const finalPrice = basePrice - discountAmount;
 
                 totalCost += finalPrice * quantity;
 
-                // 5. Insert one e-ticket record *per ticket*
+                // 6. Insert one e-ticket record *per ticket*
                 for (let i = 0; i < quantity; i++) {
-                    // Generate a unique, unguessable code for *each* ticket
                     const ticketCode = crypto.randomUUID();
 
                     await connection.query(ticketSql, [
                         purchaseId,
                         ticketCode,
-                        type.ticket_type_id, // This is now the correct ID
+                        type.ticket_type_id, // This correctly uses the type's ID
                         purchaseDate,
                         email || null,
                         formattedPhoneNumber || null,
@@ -149,9 +149,9 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
                         discountAmount
                     ]);
 
-                    // 6. Add the full ticket info to our receipt list
+                    // 7. Add the full ticket info to our receipt list
                     ticketsPurchased.push({
-                        name: type.type_name, // This is now the correct name
+                        name: type.type_name, // This correctly uses the type's name
                         code: ticketCode,
                         price: finalPrice,
                         promo: promoName,
@@ -161,16 +161,15 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
                 }
             }
         }
-        // --- END: CRITICAL BUG FIX ---
 
         if (ticketsPurchased.length === 0) {
             throw new Error("No tickets were selected.");
         }
 
-        // 7. Commit
+        // 8. Commit
         await connection.commit();
 
-        // 8. Render the new receipt page
+        // 9. Render the new receipt page
         res.render('ticket-purchase-success', {
             receipt: {
                 email: email,
