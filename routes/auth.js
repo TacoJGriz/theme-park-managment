@@ -159,7 +159,7 @@ router.post('/signup', isGuest, async (req, res) => {
                 newPaymentMethodId = paymentResult.insertId;
             }
 
-            // 4. --- NEW: Create SUB-MEMBER records ---
+            // 4. --- *** ADDED THIS BLOCK *** ---
             const subMemberSql = `
                 INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
                 VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?)
@@ -170,11 +170,12 @@ router.post('/signup', isGuest, async (req, res) => {
                     subLastNames[i],
                     subDobs[i],
                     type_id,
-                    purchaseDate,
-                    endDate,
+                    purchaseDate, // Use 'purchaseDate' from this route
+                    endDate,      // Use 'endDate' from this route
                     newPrimaryMemberId // Link to the primary member
                 ]);
             }
+            // --- *** END OF ADDED BLOCK *** ---
 
             // 5. Log this initial purchase in the history table
             const historySql = `
@@ -211,14 +212,19 @@ router.post('/signup', isGuest, async (req, res) => {
                 };
 
                 // 8. Render the success page with a receipt object
+                // --- *** MODIFIED THIS OBJECT *** ---
                 const receiptData = {
                     memberName: `${first_name} ${last_name}`,
                     membershipId: newPrimaryMemberId,
                     typeName: type.type_name,
                     endDate: endDate.toLocaleDateString(),
-                    pricePaid: parseFloat(finalPrice), // Use final price
-                    paymentMethod: paymentIdentifier
+                    pricePaid: parseFloat(finalPrice),
+                    paymentMethod: paymentIdentifier,
+                    subMembers: subFirstNames.map((firstName, index) => {
+                        return { firstName: firstName, lastName: subLastNames[index] };
+                    })
                 };
+                // --- *** END OF MODIFICATION *** ---
 
                 res.render('member-signup-success', { receipt: receiptData });
             });
