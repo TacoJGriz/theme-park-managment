@@ -81,12 +81,10 @@ router.post('/signup', isGuest, async (req, res) => {
         }
         type = typeResult[0];
 
-        // --- Validation (from form) ---
+        // --- Validation ---
         if (password !== confirm_password) {
             throw new Error("Passwords do not match.");
         }
-        // ... (other basic validations) ...
-
         // Check if email is already in use
         const [empEmail] = await connection.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
         const [memEmail] = await connection.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
@@ -175,8 +173,6 @@ router.post('/signup', isGuest, async (req, res) => {
                     newPrimaryMemberId // Link to the primary member
                 ]);
             }
-            // --- *** END OF ADDED BLOCK *** ---
-
             // 5. Log this initial purchase in the history table
             const historySql = `
                 INSERT INTO membership_purchase_history 

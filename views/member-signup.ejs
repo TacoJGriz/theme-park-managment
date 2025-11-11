@@ -390,15 +390,11 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                 updatePriceAndText();
             }
 
-            // --- *** MODIFIED THIS BLOCK *** ---
             // --- Initialize Multi-Member UI ---
             if (membershipType.base_members > 1) {
                 // This is a multi-member pass
                 subMemberSection.style.display = 'block';
-                
-                // --- *** THIS IS THE FIX: Add the first form *** ---
-                createSubMemberForm(); 
-                
+                createSubMemberForm();
                 addMemberBtn.addEventListener('click', createSubMemberForm);
             } else {
                 // This is a single-member pass
