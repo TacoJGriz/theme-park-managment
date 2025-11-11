@@ -17,40 +17,122 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         const { search, sort, dir, filter_type, filter_status } = req.query;
         let whereClauses = [];
         let params = [];
-        let orderBy = ' ORDER BY m.end_date >= CURDATE() DESC, m.last_name ASC, m.first_name ASC';
+        let summaryParams = []; // Params for the summary query
+        let orderBy = ' ORDER BY m.membership_id ASC'; // Default sort to group families
 
         const [memberTypes] = await pool.query(
             'SELECT type_id, type_name FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
+
+        let query;
+        let summaryQuery;
+
         if (search) {
-            whereClauses.push(
-                '(m.first_name LIKE ? OR m.last_name LIKE ? OR m.email LIKE ? OR m.phone_number LIKE ?)'
-            );
+            // --- NEW SEARCH LOGIC: Find matching groups ---
             const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+            const searchWhere = `(m_search.first_name LIKE ? OR m_search.last_name LIKE ? OR m_search.email LIKE ? OR m_search.phone_number LIKE ? OR m_search.membership_id LIKE ?)`;
+            const searchParams = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+
+            // 1. Main Query: Select all members belonging to a matched group
+            query = `
+                SELECT 
+                    m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
+                    m.primary_member_id, 
+                    mt.type_name,
+                    DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
+                    DATE_FORMAT(m.end_date, '%m/%d/%Y') AS end_date_formatted,
+                    CASE 
+                        WHEN m.end_date >= CURDATE() THEN 'Active' 
+                        ELSE 'Expired' 
+                    END AS member_status,
+                    m.start_date, m.end_date
+                FROM membership m
+                JOIN (
+                    SELECT DISTINCT COALESCE(m_search.primary_member_id, m_search.membership_id) AS group_id
+                    FROM membership m_search
+                    WHERE ${searchWhere}
+                ) AS matched_groups ON COALESCE(m.primary_member_id, m.membership_id) = matched_groups.group_id
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            `;
+
+            // 2. Summary Query: Get counts based on the matched groups
+            summaryQuery = `
+                SELECT 
+                    COUNT(m.membership_id) AS totalMembers,
+                    SUM(CASE WHEN m.end_date >= CURDATE() THEN 1 ELSE 0 END) AS activeMembers,
+                    SUM(CASE WHEN m.end_date < CURDATE() THEN 1 ELSE 0 END) AS expiredMembers
+                FROM membership m
+                JOIN (
+                    SELECT DISTINCT COALESCE(m_search.primary_member_id, m_search.membership_id) AS group_id
+                    FROM membership m_search
+                    WHERE ${searchWhere}
+                ) AS matched_groups ON COALESCE(m.primary_member_id, m.membership_id) = matched_groups.group_id
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            `;
+
+            params = [...searchParams];
+            summaryParams = [...searchParams];
+
+            // Add filters *after* grouping
+            if (filter_type) whereClauses.push('m.type_id = ?');
+            if (filter_status === 'active') whereClauses.push('m.end_date >= CURDATE()');
+            if (filter_status === 'expired') whereClauses.push('m.end_date < CURDATE()');
+
+        } else {
+            // --- ORIGINAL LOGIC (when not searching) ---
+            query = `
+                SELECT 
+                    m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
+                    m.primary_member_id,
+                    mt.type_name,
+                    DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
+                    DATE_FORMAT(m.end_date, '%m/%d/%Y') AS end_date_formatted,
+                    CASE 
+                        WHEN m.end_date >= CURDATE() THEN 'Active' 
+                        ELSE 'Expired' 
+                    END AS member_status,
+                    m.start_date, m.end_date
+                FROM membership m
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            `;
+
+            summaryQuery = `
+                SELECT 
+                    COUNT(m.membership_id) AS totalMembers,
+                    SUM(CASE WHEN m.end_date >= CURDATE() THEN 1 ELSE 0 END) AS activeMembers,
+                    SUM(CASE WHEN m.end_date < CURDATE() THEN 1 ELSE 0 END) AS expiredMembers
+                FROM membership m
+                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            `;
+
+            // Add filters
+            if (filter_type) {
+                whereClauses.push('m.type_id = ?');
+                params.push(filter_type);
+            }
+            if (filter_status === 'active') {
+                whereClauses.push('m.end_date >= CURDATE()');
+            } else if (filter_status === 'expired') {
+                whereClauses.push('m.end_date < CURDATE()');
+            }
+            summaryParams = [...params]; // Summary and main params are the same here
         }
-        if (filter_type) {
-            whereClauses.push('m.type_id = ?');
-            params.push(filter_type);
-        }
-        if (filter_status === 'active') {
-            whereClauses.push('m.end_date >= CURDATE()');
-        } else if (filter_status === 'expired') {
-            whereClauses.push('m.end_date < CURDATE()');
-        }
-        let summaryQuery = `
-            SELECT 
-                COUNT(m.membership_id) AS totalMembers,
-                SUM(CASE WHEN m.end_date >= CURDATE() THEN 1 ELSE 0 END) AS activeMembers,
-                SUM(CASE WHEN m.end_date < CURDATE() THEN 1 ELSE 0 END) AS expiredMembers
-            FROM membership m
-            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
-        `;
+
+        // Apply filters to queries
         if (whereClauses.length > 0) {
-            summaryQuery += ` WHERE ${whereClauses.join(' AND ')}`;
+            const whereString = ` WHERE ${whereClauses.join(' AND ')}`;
+            query += whereString;
+            summaryQuery += whereString;
+
+            if (filter_type) params.push(filter_type);
+            if (filter_type) summaryParams.push(filter_type);
         }
-        const [summaryResult] = await pool.query(summaryQuery, params);
+
+        // Get Summary Counts
+        const [summaryResult] = await pool.query(summaryQuery, summaryParams);
         const counts = summaryResult[0];
+
+        // Handle Sorting
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
                 'id': 'm.membership_id',
@@ -70,26 +152,20 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 }
             }
         }
-        let query = `
-            SELECT 
-                m.membership_id, 
-                m.first_name, m.last_name, m.email, m.phone_number,
-                mt.type_name,
-                DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
-                DATE_FORMAT(m.end_date, '%m/%d/%Y') AS end_date_formatted,
-                CASE 
-                    WHEN m.end_date >= CURDATE() THEN 'Active' 
-                    ELSE 'Expired' 
-                END AS member_status,
-                m.start_date, m.end_date
-            FROM membership m
-            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
-        `;
-        if (whereClauses.length > 0) {
-            query += ` WHERE ${whereClauses.join(' AND ')}`;
-        }
+
         query += orderBy;
+
+        // Get Member List
         const [members] = await pool.query(query, params);
+
+        const queryParams = new URLSearchParams();
+        if (search) queryParams.set('search', search);
+        if (sort) queryParams.set('sort', sort);
+        if (dir) queryParams.set('dir', dir);
+        if (filter_type) queryParams.set('filter_type', filter_type);
+        if (filter_status) queryParams.set('filter_status', filter_status);
+        const currentQueryString = queryParams.toString();
+
         res.render('members', {
             members: members,
             types: memberTypes,
@@ -102,7 +178,8 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             },
             counts: counts,
             success: req.session.success,
-            error: req.session.error
+            error: req.session.error,
+            currentQueryString: currentQueryString
         });
         req.session.success = null;
         req.session.error = null;
@@ -256,10 +333,24 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
 // GET /members/history/:member_id
 router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { member_id } = req.params;
+    const { member_id } = req.params; // Member being viewed
+    let connection;
+
+    // --- NEW: Rebuild the query string to pass to the template ---
+    const queryParams = new URLSearchParams();
+    if (req.query.search) queryParams.set('search', req.query.search);
+    if (req.query.sort) queryParams.set('sort', req.query.sort);
+    if (req.query.dir) queryParams.set('dir', req.query.dir);
+    if (req.query.filter_type) queryParams.set('filter_type', req.query.filter_type);
+    if (req.query.filter_status) queryParams.set('filter_status', req.query.filter_status);
+    const currentQueryString = queryParams.toString();
+
     try {
+        connection = await pool.getConnection();
+
+        // 1. Get the member's info (for the page title)
         const [memberResult] = await pool.query(
-            'SELECT first_name, last_name FROM membership WHERE membership_id = ?',
+            'SELECT first_name, last_name, primary_member_id FROM membership WHERE membership_id = ?',
             [member_id]
         );
         if (memberResult.length === 0) {
@@ -267,29 +358,44 @@ router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async
         }
         const memberData = memberResult[0];
 
+        // 2. Find all membership IDs associated with this member's group
+        const primaryId = memberData.primary_member_id || member_id;
+
+        const [allGroupIds] = await connection.query(
+            'SELECT membership_id FROM membership WHERE membership_id = ? OR primary_member_id = ?',
+            [primaryId, primaryId]
+        );
+        const memberGroupIds = allGroupIds.map(m => m.membership_id);
+
+        // 3. Fetch visits, grouping them by the visit_group_id
         const [visits] = await pool.query(`
             SELECT 
-                v.visit_id, 
-                v.visit_date, 
-                v.ticket_price, 
-                v.discount_amount, 
+                v.visit_group_id,
+                MIN(v.visit_id) as representative_visit_id,
+                MIN(v.visit_date) as visit_date,
                 tt.type_name,
-                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+                COUNT(v.visit_id) as group_size,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name,
+                SUM(v.ticket_price - v.discount_amount) as total_paid
             FROM visits v
             JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
             LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
-            WHERE v.membership_id = ?
-            ORDER BY v.visit_date DESC
-        `, [member_id]);
+            WHERE v.membership_id IN (?) AND v.visit_group_id IS NOT NULL
+            GROUP BY v.visit_group_id, tt.type_name, e.first_name, e.last_name
+            ORDER BY visit_date DESC
+        `, [memberGroupIds]);
 
         res.render('visit-history', {
             member: memberData,
-            visits: visits
+            visits: visits,
+            currentQueryString: currentQueryString // <-- Pass the query string
         });
 
     } catch (error) {
         console.error("Error fetching member visit history:", error);
         res.status(500).send('Error loading page.');
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -299,6 +405,16 @@ router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async
 // GET /members/edit/:member_id
 router.get('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { member_id } = req.params;
+
+    // --- NEW: Rebuild the query string to pass to the template ---
+    const queryParams = new URLSearchParams();
+    if (req.query.search) queryParams.set('search', req.query.search);
+    if (req.query.sort) queryParams.set('sort', req.query.sort);
+    if (req.query.dir) queryParams.set('dir', req.query.dir);
+    if (req.query.filter_type) queryParams.set('filter_type', req.query.filter_type);
+    if (req.query.filter_status) queryParams.set('filter_status', req.query.filter_status);
+    const currentQueryString = queryParams.toString();
+
     try {
         const [memberResult] = await pool.query(
             "SELECT * FROM membership WHERE membership_id = ?",
@@ -309,7 +425,8 @@ router.get('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (r
         }
         res.render('member-edit-employee', {
             member: memberResult[0],
-            error: null
+            error: null,
+            currentQueryString: currentQueryString // <-- Pass the query string
         });
     } catch (error) {
         console.error("Error loading member edit page:", error);
@@ -324,23 +441,50 @@ router.post('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
     try {
-        if (!first_name || !last_name || !date_of_birth || !email) {
-            throw new Error("All fields are required.");
+        if (!first_name || !last_name || !date_of_birth) {
+            throw new Error("First Name, Last Name, and Date of Birth are required.");
         }
 
-        const sql = `
-            UPDATE membership 
-            SET first_name = ?, last_name = ?, email = ?, phone_number = ?, date_of_birth = ?
-            WHERE membership_id = ?
-        `;
-        await pool.query(sql, [
-            first_name,
-            last_name,
-            email,
-            formattedPhoneNumber,
-            date_of_birth,
-            member_id
-        ]);
+        // --- NEW: Fetch member first to check if they are a sub-member ---
+        const [memberResult] = await pool.query(
+            "SELECT primary_member_id FROM membership WHERE membership_id = ?",
+            [member_id]
+        );
+        if (memberResult.length === 0) {
+            throw new Error("Member not found.");
+        }
+        const isSubMember = memberResult[0].primary_member_id;
+
+        let sql;
+        let sqlParams;
+
+        if (isSubMember) {
+            // Sub-member: DO NOT update email or phone
+            sql = `
+                UPDATE membership 
+                SET first_name = ?, last_name = ?, date_of_birth = ?
+                WHERE membership_id = ?
+            `;
+            sqlParams = [first_name, last_name, date_of_birth, member_id];
+        } else {
+            // Primary member: Update all fields
+            sql = `
+                UPDATE membership 
+                SET first_name = ?, last_name = ?, email = ?, phone_number = ?, date_of_birth = ?
+                WHERE membership_id = ?
+            `;
+            sqlParams = [
+                first_name,
+                last_name,
+                email,
+                formattedPhoneNumber,
+                date_of_birth,
+                member_id
+            ];
+        }
+
+        await pool.query(sql, sqlParams);
+        // --- END NEW LOGIC ---
 
         req.session.success = "Member profile updated successfully.";
         res.redirect('/members');
@@ -367,6 +511,16 @@ router.post('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (
 // GET /members/reset-password/:member_id
 router.get('/reset-password/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { member_id } = req.params;
+
+    // --- NEW: Rebuild the query string to pass to the template ---
+    const queryParams = new URLSearchParams();
+    if (req.query.search) queryParams.set('search', req.query.search);
+    if (req.query.sort) queryParams.set('sort', req.query.sort);
+    if (req.query.dir) queryParams.set('dir', req.query.dir);
+    if (req.query.filter_type) queryParams.set('filter_type', req.query.filter_type);
+    if (req.query.filter_status) queryParams.set('filter_status', req.query.filter_status);
+    const currentQueryString = queryParams.toString();
+
     try {
         const [memberResult] = await pool.query(
             "SELECT membership_id, first_name, last_name FROM membership WHERE membership_id = ?",
@@ -377,14 +531,14 @@ router.get('/reset-password/:member_id', isAuthenticated, canManageMembersVisits
         }
         res.render('member-reset-password', {
             member: memberResult[0],
-            error: null
+            error: null,
+            currentQueryString: currentQueryString // <-- Pass the query string
         });
     } catch (error) {
         console.error("Error loading member reset password page:", error);
         res.status(500).send("Error loading page.");
     }
 });
-
 // POST /members/reset-password/:member_id
 router.post('/reset-password/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { member_id } = req.params;

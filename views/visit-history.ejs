@@ -43,8 +43,7 @@ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shado
         <h1>Visit History for <br><small><%= member.firstName %> <%= member.lastName %></small></h1>
         
         <% if (user) { %>
-            <a href="/members" class="back-link">&laquo;
-Back to Members List</a>
+            <a href="/members<%= currentQueryString ? '?' + currentQueryString : '' %>" class="back-link">&laquo; Back to Members List</a>
         <% } else { %>
             <a href="/member/dashboard" class="back-link">&laquo; Back to My Dashboard</a>
         <% } %>
@@ -52,48 +51,38 @@ Back to Members List</a>
         <table>
             <thead>
                 <tr>
-                    <th>Visit ID</th>
-                    <th>Date & Time</th>
-                  
-  <th>Ticket Type</th>
+                    <th>Visit Date & Time</th>
+                    <th>Ticket Type</th>
+                    <th>Group Size</th>
                     <th>Price Paid</th>
                     <th>Cashier</th>
                     <th>Action</th>
                 </tr>
             </thead>
-        
-    <tbody>
+            <tbody>
                 <% if (visits.length === 0) { %>
                     <tr>
                         <td colspan="6" style="text-align: center;">No visit records found for this member.</td>
                     </tr>
- 
-               <% } %>
+                <% } %>
                 <% visits.forEach(visit => { %>
                     <tr>
-                        <td><%= visit.visit_id %></td>
-                 
-       <td><%= visit.visit_date.toLocaleString() %></td>
+                        <td><%= visit.visit_date.toLocaleString() %></td>
                         <td><%= visit.type_name %></td>
-                        <td>$<%= (visit.ticket_price - visit.discount_amount).toFixed(2) %></td>
-                        <td><%= visit.staff_name ||
-'N/A' %></td>
-                        <td>
-                            <%# --- THIS IS THE FIX --- %>
-                            <% if (user) { %>
-                                <%# Employee is logged in, use general route %>
-                                <a href="/visits/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
-
+                        <td><%= visit.group_size %> <%= visit.group_size > 1 ? 'Members' : 'Member' %></td>
                         
-    <% } else { %>
-                                <%# Member is logged in, use NEW member-specific route %>
-                                <a href="/member/history/receipt/<%= visit.visit_id %>" class="action-link">View Receipt</a>
-               
-             <% } %>
+                        <td>$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
+                        
+                        <td><%= visit.staff_name || 'N/A' %></td>
+                        <td>
+                            <% if (user) { %>
+                                <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
+                            <% } else { %>
+                                <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
+                            <% } %>
                         </td>
                     </tr>
-                <% });
-%>
+                <% }); %>
             </tbody>
         </table>
     </div>

@@ -141,29 +141,53 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
 // GET /member/history
 router.get('/history', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
+    let connection;
     try {
-        const member = req.session.member; // This is the logged-in member
+        connection = await pool.getConnection();
+
+        // 1. Get the logged-in member's info
+        const member = req.session.member;
+
+        // 2. Find all membership IDs associated with this member's group
+        const [memberGroup] = await connection.query(
+            'SELECT primary_member_id FROM membership WHERE membership_id = ?',
+            [memberId]
+        );
+        const primaryId = memberGroup[0].primary_member_id || memberId;
+
+        const [allGroupIds] = await connection.query(
+            'SELECT membership_id FROM membership WHERE membership_id = ? OR primary_member_id = ?',
+            [primaryId, primaryId]
+        );
+        const memberGroupIds = allGroupIds.map(m => m.membership_id); // e.g., [501, 502, 503, 504]
+
+        // 3. Fetch visits, grouping them by the visit_group_id
         const [visits] = await pool.query(`
             SELECT 
-                v.visit_id, 
-                v.visit_date, 
-                v.ticket_price, 
-                v.discount_amount, 
+                v.visit_group_id,
+                MIN(v.visit_id) as representative_visit_id,
+                MIN(v.visit_date) as visit_date,
                 tt.type_name,
-                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+                COUNT(v.visit_id) as group_size,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name,
+                SUM(v.ticket_price - v.discount_amount) as total_paid
             FROM visits v
             JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
             LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
-            WHERE v.membership_id = ?
-            ORDER BY v.visit_date DESC
-        `, [memberId]);
+            WHERE v.membership_id IN (?) AND v.visit_group_id IS NOT NULL
+            GROUP BY v.visit_group_id, tt.type_name, e.first_name, e.last_name
+            ORDER BY visit_date DESC
+        `, [memberGroupIds]);
+
         res.render('visit-history', {
-            member: member, // Pass the logged-in member's data
-            visits: visits
+            member: member,
+            visits: visits // Pass the new grouped visits
         });
     } catch (error) {
         console.error("Error fetching member visit history:", error);
         res.status(500).send('Error loading page.');
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -180,63 +204,84 @@ router.get('/promotions', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// GET /member/history/receipt/:visit_id
-router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
-    const { visit_id } = req.params;
-    const memberId = req.session.member.id;
+// GET /member/history/receipt-group/:visit_group_id
+router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, async (req, res) => {
+    const { visit_group_id } = req.params;
+    const memberId = req.session.member.id; // Logged-in user
     let connection;
+
     try {
         connection = await pool.getConnection();
-        const [visitResult] = await connection.query(`
+
+        // 1. Get all visits in this group
+        const [visitsInGroup] = await connection.query(`
             SELECT 
                 v.*, 
-                tt.type_name AS ticket_name, 
-                tt.is_member_type,
-                CONCAT(e.first_name, ' ', e.last_name) as staff_name
+                tt.type_name AS ticket_name,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name,
+                m.primary_member_id, m.first_name, m.last_name, m.phone_number
             FROM visits v
+            JOIN membership m ON v.membership_id = m.membership_id
             JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
             LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
-            WHERE v.visit_id = ?
-        `, [visit_id]);
-        if (visitResult.length === 0) {
-            return res.status(404).send('Visit not found');
+            WHERE v.visit_group_id = ?
+        `, [visit_group_id]);
+
+        if (visitsInGroup.length === 0) {
+            return res.status(404).send('Visit not found.');
         }
-        const visit = visitResult[0];
-        if (visit.membership_id !== memberId) {
-            return res.status(403).send('Forbidden: You can only view your own receipts.');
+
+        // 2. Security Check: Find out the primary ID of the logged-in user
+        const [myGroup] = await connection.query('SELECT primary_member_id FROM membership WHERE membership_id = ?', [memberId]);
+        const myPrimaryId = myGroup[0].primary_member_id || memberId;
+
+        // Find out the primary ID of the visit group
+        const visitPrimaryId = visitsInGroup[0].primary_member_id || visitsInGroup.find(v => v.primary_member_id === null).membership_id;
+
+        // If my primary ID doesn't match the visit's primary ID, deny access
+        if (myPrimaryId !== visitPrimaryId) {
+            return res.status(403).send('Forbidden: You can only view receipts for your own membership group.');
         }
-        let receiptData = {
-            visit_id: visit.visit_id,
-            visit_date: formatReceiptDate(visit.visit_date),
-            ticket_name: visit.ticket_name,
-            base_price: parseFloat(visit.ticket_price),
-            discount_amount: parseFloat(visit.discount_amount),
-            total_cost: parseFloat(visit.ticket_price) - parseFloat(visit.discount_amount),
-            promo_applied: visit.discount_amount > 0 ? 'Promotion' : 'N/A',
-            is_member: visit.is_member_type,
-            staff_name: visit.staff_name || 'N/A',
-            member_id: null,
-            member_name: null,
-            member_type: null,
-            member_phone: null
-        };
-        const [memberInfo] = await connection.query(`
-            SELECT 
-                m.first_name, m.last_name, m.phone_number,
-                mt.type_name AS membership_type_name
+
+        // 3. Get Primary Member's full data (for the receipt header)
+        const [primaryMemberData] = await connection.query(`
+            SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
             FROM membership m
-            LEFT JOIN membership_type mt ON m.type_id = mt.type_id
+            JOIN membership_type mt ON m.type_id = mt.type_id
             WHERE m.membership_id = ?
-        `, [memberId]);
-        if (memberInfo.length > 0) {
-            receiptData.member_id = memberId;
-            receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
-            receiptData.member_type = memberInfo[0].membership_type_name;
-            receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
-        }
+        `, [visitPrimaryId]);
+        const primaryMember = primaryMemberData[0];
+
+        // 4. Build the receipt object
+        const receiptData = {
+            visit_ids: visitsInGroup.map(v => v.visit_id), // Array of all visit IDs
+            visit_group_id: visit_group_id,
+            visit_date: formatReceiptDate(visitsInGroup[0].visit_date),
+            ticket_name: visitsInGroup[0].ticket_name,
+            base_price: 0.00,
+            discount_amount: 0.00,
+            total_cost: 0.00,
+            promo_applied: 'N/A',
+            is_member: true,
+            staff_name: visitsInGroup[0].staff_name || 'N/A',
+            member_id: visitPrimaryId,
+            member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
+            member_type: primaryMember.type_name,
+            member_phone: censorPhone(primaryMember.phone_number),
+            // Create sub-member list from all visits that aren't the primary member
+            subMembers: visitsInGroup
+                .filter(v => v.membership_id !== visitPrimaryId)
+                .map(v => ({
+                    first_name: v.first_name,
+                    last_name: v.last_name,
+                    membership_id: v.membership_id
+                }))
+        };
+
         res.render('visit-receipt', { receipt: receiptData });
+
     } catch (error) {
-        console.error("Error fetching receipt:", error);
+        console.error("Error fetching receipt group:", error);
         res.status(500).send("Error loading receipt.");
     } finally {
         if (connection) connection.release();

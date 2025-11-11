@@ -174,6 +174,8 @@ CREATE TABLE visits (
     ticket_price DECIMAL(10,2) NULL,
     discount_amount DECIMAL(10,2) NULL,
     logged_by_employee_id INT,
+	visit_group_id VARCHAR(36) NULL, 
+    
     -- Keys
     PRIMARY KEY (visit_id),
     FOREIGN KEY (membership_id)
@@ -183,6 +185,10 @@ CREATE TABLE visits (
 	FOREIGN KEY (logged_by_employee_id)
 		REFERENCES employee_demographics(employee_id)
 		ON DELETE SET NULL,
+        
+    -- for faster group lookups
+    INDEX idx_visit_group (visit_group_id),
+        
     -- Constraints
     CONSTRAINT chk_positive_prices CHECK (ticket_price >= 0 AND discount_amount >= 0),
     CONSTRAINT chk_valid_discount CHECK (discount_amount <= ticket_price)

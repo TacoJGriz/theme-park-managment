@@ -171,7 +171,7 @@ font-weight: bold; }
   
 
                   <div>
-                        <label for="search">Search Member (Name, Email, Phone)</label>
+                        <label for="search">Search Member (Member ID, Name, Email, Phone)</label>
                         <input type="search" id="search" name="search" 
                          
 
@@ -362,37 +362,38 @@ const startDateSort = getSortState('start_date');
                <th>Actions</th>              </tr>
            </thead>
            <tbody>
-                <% if (members.length === 0) { %>
+               <% if (members.length === 0) { %>
                     <tr>
                         <td colspan="9" style="text-align: center;">No members found matching criteria.</td>
                     </tr>
+
                 <% } %>
+
+                <%# --- NEW: Create the query string prefix --- %>
+                <% const queryStringWithPrefix = currentQueryString ? '?' + currentQueryString : '' %>
+
                 <% members.forEach(member => { %>
                     <tr>
                         <td><%= member.membership_id %></td>
-         
-
-               <td><%= member.first_name %> <%= member.last_name %></td>
+                        <td><%= member.first_name %> <%= member.last_name %></td>
                         <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
                         <td><%= member.type_name ||'N/A' %></td>
- 
-
-                       <td><%= member.start_date_formatted %></td>
+                        <td><%= member.start_date_formatted %></td>
                         <td><%= member.end_date_formatted %></td>
                         <td class="status-<%= member.member_status %>"><%= member.member_status %></td>
-                    
-
-    <td>
-                            <a href="/members/history/<%= member.membership_id %>" class="action-link link-history">View History</a>
-                            <a href="/members/edit/<%= member.membership_id %>" class="action-link link-edit">Edit Member</a>
-                            <a href="/members/reset-password/<%= member.membership_id %>" class="action-link link-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset Password</a>
+                        <td>
+                            <%# --- MODIFIED: Appended queryStringWithPrefix to all links --- %>
+                            <a href="/members/history/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-history">View History</a>
+                            <a href="/members/edit/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-edit">Edit Member</a>
+                
+                            <% if (!member.primary_member_id) { %>
+                                <a href="/members/reset-password/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset Password</a>
+                            <% } %>
                         </td>
                     </tr>
-                <% 
-
-});%>
-            </tbody>
+                <% }); %>
+        </tbody>
         </table>
     </div>
 </body>

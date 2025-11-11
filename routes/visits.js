@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const crypto = require('crypto');
 const {
     isAuthenticated,
     canManageMembersVisits,
@@ -66,20 +67,20 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 
 // POST /visits
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // --- MODIFIED: Get ticket_type_id and member_ids ---
     const { ticket_type_id } = req.body;
-    // [].concat ensures it's an array even if 0 or 1 are submitted
-    const member_ids = [].concat(req.body['member_ids[]'] || []);
-
+    const member_ids = [].concat(req.body.member_ids || []);
     const visit_date = new Date();
     const { id: actorId } = req.session.user;
     let connection;
+
+    // Generate one shared ID for this entire transaction
+    const visitGroupId = crypto.randomUUID();
 
     try {
         connection = await pool.getConnection();
 
         // 1. Get Ticket Info
-        const [ticketResult] = await pool.query(
+        const [ticketResult] = await connection.query(
             "SELECT type_name, base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?",
             [ticket_type_id]
         );
@@ -88,38 +89,91 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         }
         const ticket = ticketResult[0];
 
-        // --- 2. LOGIC SPLIT: Member vs. Non-Member ---
+        // --- 2. Member vs. Non-Member ---
 
         if (ticket.is_member_type) {
-            // --- NEW: MEMBER GROUP LOGIC ---
+            // --- MEMBER GROUP LOGIC ---
             if (member_ids.length === 0) {
                 throw new Error("No members were selected for check-in.");
             }
 
             await connection.beginTransaction();
+            // Add visit_group_id to the query
             const sql = `
-                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
-                VALUES (?, ?, ?, 0.00, 0.00, ?)
+                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+                VALUES (?, ?, ?, 0.00, 0.00, ?, ?)
             `;
+
+            const newVisitIds = []; // To store all new visit IDs
 
             // Loop and insert a visit record for each member
             for (const memberId of member_ids) {
-                await connection.query(sql, [
+                const [insertResult] = await connection.query(sql, [
                     visit_date,
                     ticket_type_id,
                     memberId,
-                    actorId
+                    actorId,
+                    visitGroupId // Insert the same group ID for all
                 ]);
+                newVisitIds.push(insertResult.insertId);
             }
+
+            // --- Get Member Data for Receipt ---
+
+            // 1. Get data for all members who were just checked in
+            const [checkedInMembers] = await connection.query(`
+                SELECT m.membership_id, m.primary_member_id, m.first_name, m.last_name, m.phone_number, mt.type_name
+                FROM membership m
+                JOIN membership_type mt ON m.type_id = mt.type_id
+                WHERE m.membership_id IN (?)
+            `, [member_ids]);
+
+            if (checkedInMembers.length === 0) {
+                throw new Error("Could not find member data for receipt.");
+            }
+
+            // 2. Find the Primary Member ID for this group
+            const primaryMemberInList = checkedInMembers.find(m => m.primary_member_id === null);
+            const primaryId = primaryMemberInList ? primaryMemberInList.membership_id : checkedInMembers[0].primary_member_id;
+
+            // 3. Get the Primary Member's full data
+            const [primaryMemberData] = await connection.query(`
+                SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
+                FROM membership m
+                JOIN membership_type mt ON m.type_id = mt.type_id
+                WHERE m.membership_id = ?
+            `, [primaryId]);
+            const primaryMember = primaryMemberData[0];
+
+            // 4. Create a list of all sub-members who were checked in
+            const subMembersOnReceipt = checkedInMembers.filter(m => m.membership_id !== primaryId);
+
+            // 5. Build the receipt object
+            let receiptData = {
+                visit_ids: newVisitIds,
+                visit_group_id: visitGroupId, // Add the group ID to the receipt
+                visit_date: formatReceiptDate(visit_date),
+                ticket_name: ticket.type_name,
+                base_price: 0.00,
+                discount_amount: 0.00,
+                total_cost: 0.00,
+                promo_applied: 'N/A',
+                is_member: true,
+                staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+                member_id: primaryId,
+                member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
+                member_type: primaryMember.type_name,
+                member_phone: censorPhone(primaryMember.phone_number),
+                subMembers: subMembersOnReceipt
+            };
 
             await connection.commit();
 
-            // Redirect back with success message
-            req.session.success = `Successfully checked in ${member_ids.length} member(s).`;
-            res.redirect('/visits/new');
+            // Render the receipt
+            res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true });
 
         } else {
-            // --- EXISTING: NON-MEMBER LOGIC ---
+            // --- NON-MEMBER LOGIC ---
             await connection.beginTransaction();
 
             const [promos] = await pool.query(
@@ -131,21 +185,24 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             let finalTicketPrice = parseFloat(ticket.base_price);
             let finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
 
+            // Add visit_group_id to the query
             const sql = `
-                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
-                VALUES (?, ?, NULL, ?, ?, ?)
+                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+                VALUES (?, ?, NULL, ?, ?, ?, ?)
             `;
             const [insertResult] = await connection.query(sql, [
                 visit_date,
                 ticket_type_id,
                 finalTicketPrice,
                 finalDiscountAmount,
-                actorId
+                actorId,
+                visitGroupId // Insert the group ID
             ]);
 
             const newVisitId = insertResult.insertId;
             let receiptData = {
-                visit_id: newVisitId,
+                visit_ids: [newVisitId],
+                visit_group_id: visitGroupId, // Add the group ID to the receipt
                 visit_date: formatReceiptDate(visit_date),
                 ticket_name: ticket.type_name,
                 base_price: finalTicketPrice,
@@ -157,7 +214,8 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 member_id: null,
                 member_name: null,
                 member_type: null,
-                member_phone: null
+                member_phone: null,
+                subMembers: []
             };
 
             await connection.commit();
@@ -167,7 +225,6 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         if (connection) await connection.rollback();
         console.error("Error logging visit:", error.message);
 
-        // --- MODIFIED: Redirect with error flash message ---
         req.session.error = `Error logging visit: ${error.message}`;
         res.redirect('/visits/new');
 
@@ -300,6 +357,84 @@ router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async 
         res.render('visit-receipt', { receipt: receiptData });
     } catch (error) {
         console.error("Error fetching receipt:", error);
+        res.status(500).send("Error loading receipt.");
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// GET /visits/receipt-group/:visit_group_id
+// (Employee-facing route to see a full group receipt)
+router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    const { visit_group_id } = req.params;
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Get all visits in this group
+        const [visitsInGroup] = await connection.query(`
+            SELECT 
+                v.*, 
+                tt.type_name AS ticket_name,
+                CONCAT(e.first_name, ' ', e.last_name) as staff_name,
+                m.primary_member_id, m.first_name, m.last_name, m.phone_number
+            FROM visits v
+            JOIN membership m ON v.membership_id = m.membership_id
+            JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            WHERE v.visit_group_id = ?
+        `, [visit_group_id]);
+
+        if (visitsInGroup.length === 0) {
+            return res.status(404).send('Visit not found.');
+        }
+
+        // (No security check needed, as canManageMembersVisits already ran)
+
+        // 2. Find the Primary Member ID for this group
+        const primaryMemberInList = visitsInGroup.find(m => m.primary_member_id === null);
+        const visitPrimaryId = primaryMemberInList ? primaryMemberInList.membership_id : visitsInGroup[0].primary_member_id;
+
+        // 3. Get Primary Member's full data (for the receipt header)
+        const [primaryMemberData] = await connection.query(`
+            SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
+            FROM membership m
+            JOIN membership_type mt ON m.type_id = mt.type_id
+            WHERE m.membership_id = ?
+        `, [visitPrimaryId]);
+        const primaryMember = primaryMemberData[0];
+
+        // 4. Build the receipt object
+        const receiptData = {
+            visit_ids: visitsInGroup.map(v => v.visit_id), // Array of all visit IDs
+            visit_group_id: visit_group_id,
+            visit_date: formatReceiptDate(visitsInGroup[0].visit_date),
+            ticket_name: visitsInGroup[0].ticket_name,
+            base_price: 0.00,
+            discount_amount: 0.00,
+            total_cost: 0.00,
+            promo_applied: 'N/A',
+            is_member: true,
+            staff_name: visitsInGroup[0].staff_name || 'N/A',
+            member_id: visitPrimaryId,
+            member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
+            member_type: primaryMember.type_name,
+            member_phone: censorPhone(primaryMember.phone_number),
+            subMembers: visitsInGroup
+                .filter(v => v.membership_id !== visitPrimaryId)
+                .map(v => ({
+                    first_name: v.first_name,
+                    last_name: v.last_name,
+                    membership_id: v.membership_id
+                }))
+        };
+
+        // This is an employee viewing this, so "fromLogVisit" is false.
+        res.render('visit-receipt', { receipt: receiptData, fromLogVisit: false });
+
+    } catch (error) {
+        console.error("Error fetching receipt group:", error);
         res.status(500).send("Error loading receipt.");
     } finally {
         if (connection) connection.release();
