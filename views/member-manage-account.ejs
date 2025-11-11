@@ -297,7 +297,7 @@ class="status-<%= member.member_status %>"><%= member.member_status %></span>
 
         <% if (isPrimaryMember) { %>
             <div class="card">
-                <h3>Saved Payment Methods</h3>
+                <h3>Saved Payment Methods <a href="/member/purchases" style="font-size: 0.7em; font-weight: normal; float: right; margin-top: 4px;">View Purchase History</a></h3>
                 <% if (paymentMethods.length > 0) { %>
                     <% paymentMethods.forEach(method => { %>
                         <div class="payment-method">

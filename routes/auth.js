@@ -19,7 +19,6 @@ router.get('/signup', isGuest, async (req, res) => {
             return res.redirect('/'); // If no type is selected, go back to homepage
         }
 
-        // --- MODIFIED: Select all new columns ---
         const [typeResult] = await pool.query(
             'SELECT * FROM membership_type WHERE type_id = ? AND is_active = TRUE',
             [type_id]
@@ -62,7 +61,7 @@ router.post('/signup', isGuest, async (req, res) => {
         mock_account_number
     } = req.body;
 
-    // --- NEW: Standardize sub-member fields into arrays ---
+    // --- Standardize sub-member fields into arrays ---
     // [].concat ensures it's an array even if 0 or 1 are submitted
     const subFirstNames = [].concat(req.body['sub_first_name[]'] || []);
     const subLastNames = [].concat(req.body['sub_last_name[]'] || []);
@@ -93,7 +92,7 @@ router.post('/signup', isGuest, async (req, res) => {
             throw new Error("This email address is already in use.");
         }
 
-        // --- NEW: Dynamic Price Calculation ---
+        // --- Dynamic Price Calculation ---
         const totalMembers = 1 + subFirstNames.length;
         const additionalMembers = Math.max(0, totalMembers - type.base_members);
         const finalPrice = type.base_price + (additionalMembers * (type.additional_member_price || 0));
