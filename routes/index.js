@@ -33,12 +33,11 @@ router.get('/', async (req, res) => {
         );
 
         // Query 4: Get ticket & membership types
-        // --- FIX: Added ticket_type_id and description ---
         const [tickets] = await pool.query(
             "SELECT ticket_type_id, type_name, base_price, description FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
 
-        // --- MODIFIED: Select new base_members column ---
+        // Query 5: Get membership types
         const [memberships] = await pool.query(
             "SELECT type_id, type_name, base_price, description, base_members FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
         );
@@ -81,6 +80,7 @@ router.get('/purchase-tickets', isGuest, async (req, res) => {
 // POST /purchase-tickets
 // Processes the ticket purchase
 router.post('/purchase-tickets', isGuest, async (req, res) => {
+    // req.body.quantities is an ARRAY: [ '2', '0', '0' ]
     const { quantities, email, phone_number } = req.body;
     let connection;
 
@@ -95,12 +95,11 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
         const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
         const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
 
-        // 2. Fetch ticket prices from DB and create a Map for safe lookup
+        // 2. Fetch the ticket types IN THE SAME ORDER as the form
+        // This makes ticketTypes[0] = Senior, [1] = Child, [2] = Adult
         const [ticketTypes] = await connection.query(
-            "SELECT ticket_type_id, type_name, base_price FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE"
+            "SELECT ticket_type_id, type_name, base_price FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
-        const ticketTypeMap = new Map(ticketTypes.map(t => [t.ticket_type_id.toString(), t]));
-
 
         let totalCost = 0;
         const purchaseDate = new Date();
@@ -112,36 +111,33 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE)
         `;
 
-        // Generate one ID for this entire transaction
         const purchaseId = crypto.randomUUID();
         const formattedPhoneNumber = formatPhoneNumber(phone_number);
 
-        // --- START: CRITICAL BUG FIX ---
-        // 3. Loop through the 'quantities' object keys sent from the form
-        for (const ticketIdKey in quantities) { //
-            const quantity = parseInt(quantities[ticketIdKey], 10) || 0; //
+        // 3. Loop over the 'quantities' array using a numeric index
+        for (let i = 0; i < quantities.length; i++) {
+            const quantity = parseInt(quantities[i], 10) || 0;
 
-            // 4. Check if quantity is > 0 AND if the key is a valid ticket type
-            if (quantity > 0 && ticketTypeMap.has(ticketIdKey)) { //
+            // Check if quantity is > 0 and a ticket type exists at this index
+            if (quantity > 0 && ticketTypes[i]) {
 
-                // 5. GET THE TYPE *INSIDE* THE LOOP
-                // This ensures we get "Child" for the Child ticket, "Senior" for the Senior, etc.
-                const type = ticketTypeMap.get(ticketIdKey); //
+                // Get the 'type' using the *index* from our ordered array
+                const type = ticketTypes[i];
 
-                const basePrice = parseFloat(type.base_price); //
+                const basePrice = parseFloat(type.base_price);
                 const discountAmount = basePrice * (currentDiscountPercent / 100);
                 const finalPrice = basePrice - discountAmount;
 
                 totalCost += finalPrice * quantity;
 
                 // 6. Insert one e-ticket record *per ticket*
-                for (let i = 0; i < quantity; i++) {
+                for (let j = 0; j < quantity; j++) {
                     const ticketCode = crypto.randomUUID();
 
                     await connection.query(ticketSql, [
                         purchaseId,
                         ticketCode,
-                        type.ticket_type_id, // This correctly uses the type's ID
+                        type.ticket_type_id, // This will now be correct (4, 3, or 2)
                         purchaseDate,
                         email || null,
                         formattedPhoneNumber || null,
@@ -151,7 +147,7 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
 
                     // 7. Add the full ticket info to our receipt list
                     ticketsPurchased.push({
-                        name: type.type_name, // This correctly uses the type's name
+                        name: type.type_name, // This will now be correct
                         code: ticketCode,
                         price: finalPrice,
                         promo: promoName,
@@ -175,7 +171,7 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
                 email: email,
                 phone: formattedPhoneNumber,
                 purchaseDate: purchaseDate.toLocaleString(),
-                tickets: ticketsPurchased, // This is now an array of ticket objects
+                tickets: ticketsPurchased,
                 total: totalCost
             }
         });
@@ -202,4 +198,5 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
     res.render('dashboard');
 });
 
+// THIS IS THE CRITICAL LINE THAT WAS LIKELY MISSING
 module.exports = router;

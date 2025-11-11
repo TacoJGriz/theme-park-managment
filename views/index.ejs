@@ -56,14 +56,15 @@ text-decoration: none;
         
         /* --- NEW: Style for Activate Button --- */
         .nav-links a.activate-btn {
-            color: #ffc107; /* Yellow */
+            color: #ffc107;
+/* Yellow */
             font-weight: bold;
             margin-left: 1em;
             border-radius: 4px;
-        }
+}
         .nav-links a.activate-btn:hover {
             background-color: #495057;
-            color: #ffc107;
+color: #ffc107;
         }
         /* --- END NEW --- */
 
@@ -192,6 +193,7 @@ text-align: center;
             
             <%# Replaced the two separate 
 
+
 login buttons with a single one %>
             <a href="/login" class="login-btn global-login-btn">Login</a>
             
@@ -202,7 +204,8 @@ login buttons with a single one %>
 
     <div class="hero">
         <h1>Welcome to Primus Theme Park!</h1>
-        <p>Your magical adventure awaits!</p>
+      
+  <p>Your magical adventure awaits!</p>
     </div>
 
     <div class="container">
@@ -214,16 +217,19 @@ login buttons with a single one %>
             <div class="card-container">
                 <% if (promotions.length > 0) { %>
                     <% promotions.forEach(promo => { %>
-                        <div class="card promo">
+   
+                     <div class="card promo">
      
                        <div>
                        <h3><%= promo.event_name %></h3>
-                                <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
+                        
+        <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
                
                  <p><%= promo.summary %></p>
             
                   <p><strong>Type:</strong> <%= promo.event_type %></p>
-                                <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
+                    
+            <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
        
                      </div>
                         </div>
@@ -243,11 +249,13 @@ Check back soon!</p>
                 <div class="location-section">
     
 
+
                 <h3><%= location.location_name %></h3>
                     <p><em><%= location.summary %></em></p>
                     
                     <h4>Rides in this Area:</h4>
                  
+
 
    <ul class="rides-list">
                         <% const ridesInLocation = allRides.filter(ride => ride.location_id === location.location_id); %>
@@ -255,9 +263,11 @@ Check back soon!</p>
                             <% ridesInLocation.forEach(ride => { %>
  
 
+
                                <li>
                                     <strong><%= ride.ride_name %></strong>
                                
+
 
      (<%= ride.ride_type %>)
                                 </li>
@@ -265,11 +275,13 @@ Check back soon!</p>
                         <% } else { %>
    
 
+
                          <p>No rides currently open in this location.</p>
                         <% } %>
                     </ul>
                 </div>
        
+
 
      <% }); %>
         </section>
@@ -281,46 +293,57 @@ Check back soon!</p>
                 <% tickets.forEach(ticket => { %>
                 
 
+
     <div class="card price" style="justify-content: space-between;">
                         <div>
                             <h3><%= ticket.type_name %></h3>
                             <div class="price">$<%= parseFloat(ticket.base_price).toFixed(2) %></div>
-         
+       
+  
 
                    <p><%= ticket.description || 'Standard park admission.' %></p>
                         </div>
                         
-                        <a href="/purchase-tickets?type=<%= ticket.ticket_type_id %>" class="purchase-button" style="background-color: #28a745;">Purchase Tickets</a>
+                        <%# --- THIS IS THE FIX --- %>
+                        <a href="/purchase-tickets" class="purchase-button" style="background-color: #28a745;">Purchase Tickets</a>
+                        <%# --- END OF FIX --- %>
+                        
                         </div>
-                <% }); %>
+                <% });
+%>
 %>
             </div>
 
             <h3 style="margin-top: 2em;">Memberships</h3>
             
             <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
-                Already bought your pass in the park? 
-                <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
+                Already bought your pass in the park?
+<a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
             </p>
             
             <div class="card-container">
                 <% memberships.forEach(pass => { %>
                     <div class="card price">
    
-                     <div>
+          
+           <div>
                    <h3><%= pass.type_name %> Pass</h3>
                             <div class="price">
-                                <% if (pass.base_members > 1) { %>
+                                <% if (pass.base_members > 1) { 
+%>
                                     Starts at $<%= parseFloat(pass.base_price).toFixed(2) %>
                                     <span class="price-sub">/ year (for <%= pass.base_members %> members)</span>
-                                <% } else { %>
+                 
+               <% } else { %>
                                     $<%= parseFloat(pass.base_price).toFixed(2) %>
                                     <span class="price-sub">/ year</span>
-                                <% } %>
+     
+                           <% } %>
                             </div>
                        
      <p><%= pass.description %></p>
-                        </div>
+             
+           </div>
                                        <a href="/signup?type=<%= pass.type_id %>" class="purchase-button">Purchase Now</a>
                     </div>
      
