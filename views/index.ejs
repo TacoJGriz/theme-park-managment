@@ -41,17 +41,6 @@ text-decoration: none;
 /* Ensure text is white on hover */
         }
 
-        .nav-links a.activate-btn {
-            color: #ffc107; /* Yellow */
-            font-weight: bold;
-            margin-left: 1em;
-            border-radius: 4px;
-        }
-        .nav-links a.activate-btn:hover {
-            background-color: #495057;
-            color: #ffc107;
-        }
-
         .nav-links a.global-login-btn {
             background-color: transparent;
 /* MODIFIED: No fill */
@@ -64,7 +53,19 @@ text-decoration: none;
             color: white;
 /* Ensure text is white on hover */
         }
-        /* --- MODIFICATIONS END HERE --- */
+        
+        /* --- NEW: Style for Activate Button --- */
+        .nav-links a.activate-btn {
+            color: #ffc107; /* Yellow */
+            font-weight: bold;
+            margin-left: 1em;
+            border-radius: 4px;
+        }
+        .nav-links a.activate-btn:hover {
+            background-color: #495057;
+            color: #ffc107;
+        }
+        /* --- END NEW --- */
 
         .hero {
             background-color: #007bff;
@@ -85,7 +86,7 @@ margin: 2em auto;
         /* ADDED: Explicit margin-top for headings following a card grid in the container (from previous step) */
         .container .card-container + h3 {
             margin-top: 2em;
-        }
+}
         h2 {
             font-size: 2.2em;
 color: #444;
@@ -106,9 +107,9 @@ padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-left: 5px solid #007bff;
-            /* --- NEW: Added flex properties to make card contents align --- */
+/* --- NEW: Added flex properties to make card contents align --- */
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             justify-content: space-between;
 }
         .card.promo { border-left-color: #28a745;
@@ -190,8 +191,10 @@ text-align: center;
             <a href="#tickets">Tickets</a>
             
             <%# Replaced the two separate 
+
 login buttons with a single one %>
             <a href="/login" class="login-btn global-login-btn">Login</a>
+            
             <a href="/member/register" class="activate-btn">Activate Your Pass</a>
             
             </div>
@@ -206,22 +209,27 @@ login buttons with a single one %>
 
         <section id="promotions">
      
+
        <h2>Current & Upcoming Promotions</h2>
             <div class="card-container">
                 <% if (promotions.length > 0) { %>
                     <% promotions.forEach(promo => { %>
                         <div class="card promo">
-                            <div>
+     
+                       <div>
                        <h3><%= promo.event_name %></h3>
                                 <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
-                                <p><%= promo.summary %></p>
+               
+                 <p><%= promo.summary %></p>
             
                   <p><strong>Type:</strong> <%= promo.event_type %></p>
                                 <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
-                            </div>
+       
+                     </div>
                         </div>
                     
-<% }); %>
+<% });
+%>
                 <% } else { %>
                     <p>No special promotions are running today.
 Check back soon!</p>
@@ -234,29 +242,35 @@ Check back soon!</p>
             <% locations.forEach(location => { %>
                 <div class="location-section">
     
+
                 <h3><%= location.location_name %></h3>
                     <p><em><%= location.summary %></em></p>
                     
                     <h4>Rides in this Area:</h4>
                  
+
    <ul class="rides-list">
                         <% const ridesInLocation = allRides.filter(ride => ride.location_id === location.location_id); %>
                         <% if (ridesInLocation.length > 0) { %>
                             <% ridesInLocation.forEach(ride => { %>
  
+
                                <li>
                                     <strong><%= ride.ride_name %></strong>
                                
+
      (<%= ride.ride_type %>)
                                 </li>
                             <% }); %>
                         <% } else { %>
    
+
                          <p>No rides currently open in this location.</p>
                         <% } %>
                     </ul>
                 </div>
        
+
      <% }); %>
         </section>
 
@@ -266,11 +280,13 @@ Check back soon!</p>
             <div class="card-container">
                 <% tickets.forEach(ticket => { %>
                 
+
     <div class="card price">
                         <div>
                             <h3><%= ticket.type_name %></h3>
                             <div class="price">$<%= parseFloat(ticket.base_price).toFixed(2) %></div>
-                            <p><%= ticket.description || 'Standard park admission.' %></p>
+         
+                   <p><%= ticket.description || 'Standard park admission.' %></p>
                         </div>
          </div>
                 <% });
@@ -278,21 +294,34 @@ Check back soon!</p>
             </div> <%# This closing div was missing in your provided file, which would also break layout %>
 
             <h3 style="margin-top: 2em;">Memberships</h3>
+            
             <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
                 Already bought your pass in the park? 
                 <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
             </p>
+            
             <div class="card-container">
                 <% memberships.forEach(pass => { %>
                     <div class="card price">
-                        <div>
+   
+                     <div>
                    <h3><%= pass.type_name %> Pass</h3>
-                            <div class="price">$<%= parseFloat(pass.base_price).toFixed(2) %> <span class="price-sub">/ year</span></div>
-                            <p><%= pass.description %></p>
+                            <div class="price">
+                                <% if (pass.base_members > 1) { %>
+                                    Starts at $<%= parseFloat(pass.base_price).toFixed(2) %>
+                                    <span class="price-sub">/ year (for <%= pass.base_members %> members)</span>
+                                <% } else { %>
+                                    $<%= parseFloat(pass.base_price).toFixed(2) %>
+                                    <span class="price-sub">/ year</span>
+                                <% } %>
+                            </div>
+                       
+     <p><%= pass.description %></p>
                         </div>
                                        <a href="/signup?type=<%= pass.type_id %>" class="purchase-button">Purchase Now</a>
                     </div>
-                <% });
+     
+           <% });
 %>
             </div>
         </section>

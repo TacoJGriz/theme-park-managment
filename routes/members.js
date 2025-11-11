@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const bcrypt = require('bcrypt'); // --- NEW: Added for password hashing
+const bcrypt = require('bcrypt');
 const {
     isAuthenticated,
     canManageMembersVisits,
     formatPhoneNumber
 } = require('../middleware/auth');
 
-const saltRounds = 10; // --- NEW: Added for password hashing
+const saltRounds = 10;
 
 // --- EMPLOYEE-FACING MEMBER MANAGEMENT ---
 // GET /members
@@ -101,10 +101,10 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 status: filter_status || ""
             },
             counts: counts,
-            success: req.session.success, // --- NEW: Pass success message
+            success: req.session.success,
             error: req.session.error
         });
-        req.session.success = null; // --- NEW: Clear success message
+        req.session.success = null;
         req.session.error = null;
     } catch (error) {
         console.error(error);
@@ -115,8 +115,9 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 // GET /members/new
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
+        // --- MODIFIED: Select all new pricing columns ---
         const [types] = await pool.query(
-            'SELECT type_id, type_name, base_price FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
+            'SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
         res.render('add-member', { error: null, types: types });
     } catch (error) {
@@ -127,9 +128,16 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 
 // POST /members
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    // --- MODIFIED: Get primary member data ---
     const { first_name, last_name, email, date_of_birth, type_id } = req.body;
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
+    // --- NEW: Get sub-member data arrays ---
+    const subFirstNames = [].concat(req.body['sub_first_name[]'] || []);
+    const subLastNames = [].concat(req.body['sub_last_name[]'] || []);
+    const subDobs = [].concat(req.body['sub_dob[]'] || []);
+
+    // --- MODIFIED: Generate dates on server ---
     const purchaseTime = new Date();
     const serverStartDate = new Date(purchaseTime);
     const serverEndDate = new Date(purchaseTime);
@@ -137,6 +145,8 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     serverEndDate.setDate(serverStartDate.getDate() - 1);
 
     let connection;
+    let type; // For catch block
+
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -146,58 +156,80 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         if (typeResult.length === 0) {
             throw new Error("Invalid membership type selected.");
         }
-        const membershipType = typeResult[0];
+        type = typeResult[0]; // Set type for catch block
 
-        // 2. Create the membership record
-        const sql = `
-            INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        // 2. NEW: Calculate dynamic price
+        const totalMembers = 1 + subFirstNames.length;
+        const additionalMembers = Math.max(0, totalMembers - type.base_members);
+        const finalPrice = type.base_price + (additionalMembers * (type.additional_member_price || 0));
+
+        // 3. Create the PRIMARY membership record
+        const primarySql = `
+            INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
         `;
-        const [memResult] = await connection.query(sql, [
+        const [memResult] = await connection.query(primarySql, [
             first_name, last_name, email,
             formattedPhoneNumber,
             date_of_birth, type_id, serverStartDate, serverEndDate
         ]);
 
-        const newMemberId = memResult.insertId;
+        const newPrimaryMemberId = memResult.insertId;
 
-        // 3. Log this in-park purchase in the history table
+        // 4. NEW: Create SUB-MEMBER records
+        const subMemberSql = `
+            INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+            VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?)
+        `;
+        for (let i = 0; i < subFirstNames.length; i++) {
+            await connection.query(subMemberSql, [
+                subFirstNames[i],
+                subLastNames[i],
+                subDobs[i],
+                type_id,
+                serverStartDate,
+                serverEndDate,
+                newPrimaryMemberId // Link to the primary member
+            ]);
+        }
+
+        // 5. Log this in-park purchase in the history table
         const historySql = `
             INSERT INTO membership_purchase_history 
                 (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
         `;
         const [historyResult] = await connection.query(historySql, [
-            newMemberId,
-            membershipType.type_id,
+            newPrimaryMemberId, // Purchase is tied to primary member
+            type.type_id,
             purchaseTime,
-            membershipType.base_price,
+            finalPrice, // Use dynamically calculated price
             serverStartDate,
             serverEndDate,
-            membershipType.type_name,
-            null
+            type.type_name,
+            null // No payment method ID for in-park sales
         ]);
 
         const newPurchaseId = historyResult.insertId;
 
-        // 4. Commit transaction
+        // 6. Commit transaction
         await connection.commit();
 
-        // 5. Build the receipt object to render
+        // 7. Build the receipt object to render
         const receiptData = {
             purchase_id: newPurchaseId,
-            membership_id: newMemberId,
+            membership_id: newPrimaryMemberId,
             first_name: first_name,
             last_name: last_name,
             purchase_date: purchaseTime,
-            type_name: membershipType.type_name,
+            type_name: type.type_name,
             purchased_start_date: serverStartDate,
             purchased_end_date: serverEndDate,
-            price_paid: membershipType.base_price,
+            price_paid: finalPrice,
             payment_method_name: 'In-Park Transaction'
         };
 
-        // 6. Render the receipt instead of redirecting
+        // 8. Render the receipt
         res.render('member-purchase-receipt-detail', {
             purchase: receiptData,
             fromEmployee: true
@@ -208,11 +240,14 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
         console.error(error);
         const [types] = await pool.query(
-            'SELECT type_id, type_name, base_price FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
+            'SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
         res.render('add-member', {
             error: "Database error adding member. Email might be duplicate.",
-            types: types
+            types: types,
+            // Pass back submitted data on error
+            member: req.body,
+            subMembers: { subFirstNames, subLastNames, subDobs }
         });
     } finally {
         if (connection) connection.release();
@@ -259,7 +294,7 @@ router.get('/history/:member_id', isAuthenticated, canManageMembersVisits, async
 });
 
 
-// *** NEW: EMPLOYEE-SIDE EDIT MEMBER ***
+// *** EMPLOYEE-SIDE EDIT MEMBER ***
 
 // GET /members/edit/:member_id
 router.get('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
@@ -327,7 +362,7 @@ router.post('/edit/:member_id', isAuthenticated, canManageMembersVisits, async (
     }
 });
 
-// *** NEW: EMPLOYEE-SIDE RESET MEMBER PASSWORD ***
+// *** EMPLOYEE-SIDE RESET MEMBER PASSWORD ***
 
 // GET /members/reset-password/:member_id
 router.get('/reset-password/:member_id', isAuthenticated, canManageMembersVisits, async (req, res) => {

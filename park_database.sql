@@ -119,6 +119,11 @@ CREATE TABLE membership_type (
     type_id INT NOT NULL AUTO_INCREMENT,
     type_name VARCHAR(50) NOT NULL UNIQUE,
     base_price DECIMAL(10, 2) NOT NULL,
+    
+    -- *** NEW COLUMNS for multi-member ***
+    base_members INT NOT NULL DEFAULT 1 COMMENT 'Members included in base price',
+    additional_member_price DECIMAL(10, 2) NULL DEFAULT NULL COMMENT 'Price for each member above the base',
+    
     description VARCHAR(250),
     is_active BOOL NOT NULL DEFAULT TRUE,
     
@@ -128,6 +133,7 @@ CREATE TABLE membership_type (
 
 CREATE TABLE membership (
     membership_id INT NOT NULL AUTO_INCREMENT,
+	primary_member_id INT NULL DEFAULT NULL COMMENT 'Links sub-members to a primary account',
     first_name VARCHAR(25) NOT NULL,
     last_name VARCHAR(25) NOT NULL,
     email VARCHAR(50) UNIQUE,
@@ -138,11 +144,14 @@ CREATE TABLE membership (
     end_date DATE NOT NULL,
     
     PRIMARY KEY (membership_id),
-    
     FOREIGN KEY (type_id) 
         REFERENCES membership_type (type_id)
         ON DELETE RESTRICT,
-
+        
+    CONSTRAINT fk_primary_member
+        FOREIGN KEY (primary_member_id)
+        REFERENCES membership(membership_id)
+        ON DELETE SET NULL, -- If primary is deleted, sub-members become their own primary
     CONSTRAINT chk_membership_dates CHECK (end_date > start_date)
 );
 

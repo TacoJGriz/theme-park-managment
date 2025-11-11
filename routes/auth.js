@@ -8,7 +8,7 @@ const {
     formatPhoneNumber
 } = require('../middleware/auth'); // Adjust path to auth.js
 
-const saltRounds = 10; // This was in app.js, we need it here for hashing
+const saltRounds = 10;
 
 // GET /signup
 // Renders the new purchase & registration form
@@ -19,6 +19,7 @@ router.get('/signup', isGuest, async (req, res) => {
             return res.redirect('/'); // If no type is selected, go back to homepage
         }
 
+        // --- MODIFIED: Select all new columns ---
         const [typeResult] = await pool.query(
             'SELECT * FROM membership_type WHERE type_id = ? AND is_active = TRUE',
             [type_id]
@@ -61,16 +62,20 @@ router.post('/signup', isGuest, async (req, res) => {
         mock_account_number
     } = req.body;
 
+    // --- NEW: Standardize sub-member fields into arrays ---
+    // [].concat ensures it's an array even if 0 or 1 are submitted
+    const subFirstNames = [].concat(req.body['sub_first_name[]'] || []);
+    const subLastNames = [].concat(req.body['sub_last_name[]'] || []);
+    const subDobs = [].concat(req.body['sub_dob[]'] || []);
+
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
     let type; // To re-render the page on error
-
-    // --- Define saltRounds here ---
-    const saltRounds = 10;
+    const connection = await pool.getConnection(); // Get connection early
 
     try {
         // Get Membership Type details
-        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        const [typeResult] = await connection.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) {
             throw new Error("Invalid membership type submitted.");
         }
@@ -80,49 +85,52 @@ router.post('/signup', isGuest, async (req, res) => {
         if (password !== confirm_password) {
             throw new Error("Passwords do not match.");
         }
+        // ... (other basic validations) ...
 
         // Check if email is already in use
-        const [empEmail] = await pool.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
-        const [memEmail] = await pool.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
+        const [empEmail] = await connection.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
+        const [memEmail] = await connection.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
 
         if (empEmail.length > 0 || memEmail.length > 0) {
             throw new Error("This email address is already in use.");
         }
 
+        // --- NEW: Dynamic Price Calculation ---
+        const totalMembers = 1 + subFirstNames.length;
+        const additionalMembers = Math.max(0, totalMembers - type.base_members);
+        const finalPrice = type.base_price + (additionalMembers * (type.additional_member_price || 0));
+
         // --- Database Transaction ---
-        const connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        let newMembershipId;
+        let newPrimaryMemberId;
         const purchaseDate = new Date();
         const endDate = new Date(new Date().setFullYear(purchaseDate.getFullYear() + 1));
 
-        // --- NEW: Variables for payment info ---
         let newPaymentMethodId = null;
-        let paymentIdentifier = 'N/A'; // Default for receipt
+        let paymentIdentifier = 'N/A';
 
         try {
-            // 1. Create the membership record
+            // 1. Create the PRIMARY membership record
             const memSql = `
-                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
             `;
             const [memResult] = await connection.query(memSql, [
                 first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, purchaseDate, endDate
             ]);
 
-            newMembershipId = memResult.insertId;
+            newPrimaryMemberId = memResult.insertId;
 
             // 2. Create the member_auth record
             const hash = await bcrypt.hash(password, saltRounds);
             const authSql = "INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)";
-            await connection.query(authSql, [newMembershipId, hash]);
+            await connection.query(authSql, [newPrimaryMemberId, hash]);
 
-            // 3. NEW: Save Payment Method if checked
+            // 3. Save Payment Method if checked
             const shouldSaveCard = (payment_method_choice === 'card' && save_payment_card === 'true');
             const shouldSaveBank = (payment_method_choice === 'bank' && save_payment_bank === 'true');
 
-            // --- NEW: Determine payment identifier for receipt ---
             if (payment_method_choice === 'card') {
                 const cardDigits = (mock_card_number || '').replace(/\D/g, '');
                 const lastFour = cardDigits.slice(-4);
@@ -135,66 +143,81 @@ router.post('/signup', isGuest, async (req, res) => {
 
 
             if (shouldSaveCard) {
-                const [paymentResult] = await connection.query( // <-- Capture result
+                const [paymentResult] = await connection.query(
                     `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
                      VALUES (?, 'Card', TRUE, ?, ?)`,
-                    [newMembershipId, paymentIdentifier, mock_card_expiry || null]
+                    [newPrimaryMemberId, paymentIdentifier, mock_card_expiry || null]
                 );
-                newPaymentMethodId = paymentResult.insertId; // <-- Save the ID
+                newPaymentMethodId = paymentResult.insertId;
 
             } else if (shouldSaveBank) {
-                const [paymentResult] = await connection.query( // <-- Capture result
+                const [paymentResult] = await connection.query(
                     `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
                      VALUES (?, 'Bank', TRUE, ?, NULL)`,
-                    [newMembershipId, paymentIdentifier]
+                    [newPrimaryMemberId, paymentIdentifier]
                 );
-                newPaymentMethodId = paymentResult.insertId; // <-- Save the ID
+                newPaymentMethodId = paymentResult.insertId;
             }
 
-            // 4. Log this initial purchase in the history table
+            // 4. --- NEW: Create SUB-MEMBER records ---
+            const subMemberSql = `
+                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+                VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?)
+            `;
+            for (let i = 0; i < subFirstNames.length; i++) {
+                await connection.query(subMemberSql, [
+                    subFirstNames[i],
+                    subLastNames[i],
+                    subDobs[i],
+                    type_id,
+                    purchaseDate,
+                    endDate,
+                    newPrimaryMemberId // Link to the primary member
+                ]);
+            }
+
+            // 5. Log this initial purchase in the history table
             const historySql = `
                 INSERT INTO membership_purchase_history 
                     (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
             await connection.query(historySql, [
-                newMembershipId,
+                newPrimaryMemberId, // The purchase is tied to the primary member
                 type.type_id,
                 purchaseDate,
-                type.base_price,
-                purchaseDate, // For initial purchase, start date is now
-                endDate,       // End date is one year from now
-                type.type_name, // <-- NEW: Save snapshot of type name
-                newPaymentMethodId // <-- NEW: Save the payment method ID (will be NULL if not saved)
+                finalPrice, // Use the dynamically calculated final price
+                purchaseDate,
+                endDate,
+                type.type_name,
+                newPaymentMethodId
             ]);
 
-            // 5. Commit the transaction
+            // 6. Commit the transaction
             await connection.commit();
 
-            // 6. Log the user in
+            // 7. Log the user in
             req.session.regenerate(function (err) {
                 if (err) {
                     console.error("Session regeneration error:", err);
-                    // If session fails, we can't show the success page, so render error on signup page
                     throw new Error("Error creating your login session.");
                 }
 
-                // Set MEMBER session
                 req.session.member = {
-                    id: newMembershipId,
+                    id: newPrimaryMemberId,
                     firstName: first_name,
                     lastName: last_name,
                     email: email
                 };
 
-                // 7. NEW: Render the success page with a receipt object
+                // 8. Render the success page with a receipt object
                 const receiptData = {
                     memberName: `${first_name} ${last_name}`,
-                    membershipId: newMembershipId,
+                    membershipId: newPrimaryMemberId,
                     typeName: type.type_name,
-                    endDate: endDate.toLocaleDateString(), // Format as MM/DD/YYYY
-                    pricePaid: parseFloat(type.base_price),
-                    paymentMethod: paymentIdentifier // <-- NEW: Pass payment info
+                    endDate: endDate.toLocaleDateString(),
+                    pricePaid: parseFloat(finalPrice), // Use final price
+                    paymentMethod: paymentIdentifier
                 };
 
                 res.render('member-signup-success', { receipt: receiptData });
@@ -208,16 +231,18 @@ router.post('/signup', isGuest, async (req, res) => {
         }
 
     } catch (error) {
+        if (connection) connection.release(); // Ensure release on general error
         console.error("Error processing signup:", error);
         // On error, re-render the signup page with the error message
         res.render('member-signup', {
-            type: type || { type_id: type_id, type_name: 'Error', base_price: 0 }, // Fallback type
+            type: type || { type_id: type_id, ...req.body }, // Fallback type
             error: error.message || "An unexpected error occurred."
         });
     }
 });
 
 // --- LOGIN & LOGOUT ROUTES ---
+// ... (The rest of routes/auth.js is unchanged) ...
 // GET /login
 router.get('/login', isGuest, (req, res) => {
     if (req.session.user) {

@@ -18,25 +18,44 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
         const [ticketTypes] = await pool.query(
             "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
         );
+
+        // --- MODIFIED: Fetch all member details for JS ---
         const [activeMembers] = await pool.query(
-            "SELECT membership_id, first_name, last_name, email, phone_number FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name"
+            `SELECT 
+                membership_id, 
+                primary_member_id, 
+                first_name, 
+                last_name, 
+                email, 
+                phone_number 
+             FROM membership 
+             WHERE end_date >= CURDATE() 
+             ORDER BY last_name, first_name`
         );
+
         const [promos] = await pool.query(
             "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
         );
         const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
 
         res.render('log-visit', {
-            error: null,
+            error: req.session.error, // Pass flash error
+            success: req.session.success, // Pass flash success
             ticketTypes: ticketTypes,
-            activeMembers: activeMembers,
+            activeMembers: activeMembers, // Pass full member list
             currentDiscount: currentDiscount,
             normalizePhone: normalizePhone
         });
+
+        // Clear flash messages
+        req.session.error = null;
+        req.session.success = null;
+
     } catch (error) {
         console.error("Error loading log visit page:", error);
         res.render('log-visit', {
             error: "Error fetching park data. Please try again.",
+            success: null,
             ticketTypes: [],
             activeMembers: [],
             currentDiscount: 0,
@@ -47,13 +66,19 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 
 // POST /visits
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { ticket_type_id, membership_id } = req.body;
+    // --- MODIFIED: Get ticket_type_id and member_ids ---
+    const { ticket_type_id } = req.body;
+    // [].concat ensures it's an array even if 0 or 1 are submitted
+    const member_ids = [].concat(req.body['member_ids[]'] || []);
+
     const visit_date = new Date();
     const { id: actorId } = req.session.user;
     let connection;
+
     try {
         connection = await pool.getConnection();
-        await connection.beginTransaction();
+
+        // 1. Get Ticket Info
         const [ticketResult] = await pool.query(
             "SELECT type_name, base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?",
             [ticket_type_id]
@@ -62,99 +87,97 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             throw new Error("Invalid ticket type submitted.");
         }
         const ticket = ticketResult[0];
-        const [promos] = await pool.query(
-            "SELECT event_name, discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
-        );
-        const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
-        const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
-        let finalTicketPrice = 0.00;
-        let finalDiscountAmount = 0.00;
-        let finalMembershipId = null;
+
+        // --- 2. LOGIC SPLIT: Member vs. Non-Member ---
 
         if (ticket.is_member_type) {
-            if (!membership_id || membership_id === "") {
-                throw new Error("A membership ID is required for a 'Member' ticket type.");
+            // --- NEW: MEMBER GROUP LOGIC ---
+            if (member_ids.length === 0) {
+                throw new Error("No members were selected for check-in.");
             }
-            finalMembershipId = membership_id;
+
+            await connection.beginTransaction();
+            const sql = `
+                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
+                VALUES (?, ?, ?, 0.00, 0.00, ?)
+            `;
+
+            // Loop and insert a visit record for each member
+            for (const memberId of member_ids) {
+                await connection.query(sql, [
+                    visit_date,
+                    ticket_type_id,
+                    memberId,
+                    actorId
+                ]);
+            }
+
+            await connection.commit();
+
+            // Redirect back with success message
+            req.session.success = `Successfully checked in ${member_ids.length} member(s).`;
+            res.redirect('/visits/new');
+
         } else {
-            finalTicketPrice = parseFloat(ticket.base_price);
-            finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
+            // --- EXISTING: NON-MEMBER LOGIC ---
+            await connection.beginTransaction();
+
+            const [promos] = await pool.query(
+                "SELECT event_name, discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
+            );
+            const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
+            const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
+
+            let finalTicketPrice = parseFloat(ticket.base_price);
+            let finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
+
+            const sql = `
+                INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
+                VALUES (?, ?, NULL, ?, ?, ?)
+            `;
+            const [insertResult] = await connection.query(sql, [
+                visit_date,
+                ticket_type_id,
+                finalTicketPrice,
+                finalDiscountAmount,
+                actorId
+            ]);
+
+            const newVisitId = insertResult.insertId;
+            let receiptData = {
+                visit_id: newVisitId,
+                visit_date: formatReceiptDate(visit_date),
+                ticket_name: ticket.type_name,
+                base_price: finalTicketPrice,
+                discount_amount: finalDiscountAmount,
+                total_cost: finalTicketPrice - finalDiscountAmount,
+                promo_applied: promoName,
+                is_member: false,
+                staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+                member_id: null,
+                member_name: null,
+                member_type: null,
+                member_phone: null
+            };
+
+            await connection.commit();
+            res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true });
         }
-        const sql = `
-            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        const [insertResult] = await connection.query(sql, [
-            visit_date,
-            ticket_type_id,
-            finalMembershipId,
-            finalTicketPrice,
-            finalDiscountAmount,
-            actorId
-        ]);
-        const newVisitId = insertResult.insertId;
-        let receiptData = {
-            visit_id: newVisitId,
-            visit_date: formatReceiptDate(visit_date),
-            ticket_name: ticket.type_name,
-            base_price: finalTicketPrice,
-            discount_amount: finalDiscountAmount,
-            total_cost: finalTicketPrice - finalDiscountAmount,
-            promo_applied: promoName,
-            is_member: ticket.is_member_type,
-            staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
-            member_id: null,
-            member_name: null,
-            member_type: null,
-            member_phone: null
-        };
-        if (ticket.is_member_type && finalMembershipId) {
-            const [memberInfo] = await pool.query(`
-                SELECT 
-                    m.first_name, m.last_name, m.phone_number,
-                    mt.type_name AS membership_type_name
-                FROM membership m
-                LEFT JOIN membership_type mt ON m.type_id = mt.type_id
-                WHERE m.membership_id = ?
-            `, [finalMembershipId]);
-            if (memberInfo.length > 0) {
-                receiptData.member_id = finalMembershipId;
-                receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
-                receiptData.member_type = memberInfo[0].membership_type_name;
-                receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
-            }
-        }
-        await connection.commit();
-        res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true });
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error logging visit:", error.message);
-        try {
-            const [ticketTypes] = await pool.query("SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name");
-            const [activeMembers] = await pool.query("SELECT membership_id, first_name, last_name, email, phone_number FROM membership WHERE end_date >= CURDATE() ORDER BY last_name, first_name");
-            const [promos] = await pool.query("SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
-            const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
-            res.render('log-visit', {
-                error: `Database error logging visit: ${error.message}`,
-                ticketTypes: ticketTypes,
-                activeMembers: activeMembers,
-                currentDiscount: currentDiscount,
-                normalizePhone: (phone) => (phone || "").replace(/\D/g, '')
-            });
-        } catch (fetchError) {
-            console.error("Error fetching data for log-visit error page:", fetchError);
-            res.render('log-visit', {
-                error: "A critical error occurred. Please try again.",
-                ticketTypes: [], activeMembers: [], currentDiscount: 0,
-                normalizePhone: (phone) => (phone || "").replace(/\D/g, '')
-            });
-        }
+
+        // --- MODIFIED: Redirect with error flash message ---
+        req.session.error = `Error logging visit: ${error.message}`;
+        res.redirect('/visits/new');
+
     } finally {
         if (connection) connection.release();
     }
 });
 
 // GET /visits/receipt/:visit_id
+// ... (This route is unchanged) ...
 router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { visit_id } = req.params;
     let connection;

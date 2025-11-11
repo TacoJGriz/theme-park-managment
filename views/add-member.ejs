@@ -18,21 +18,16 @@ grid-template-columns: 1fr 1fr; gap: 1em; }
 }
         input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
 border: 1px solid #ccc; }
-        
-        /* --- NEW: Make readonly inputs look disabled --- */
         input[readonly] {
             background-color: #e9ecef;
             cursor: not-allowed;
         }
-
         button { padding: 12px 20px; background-color: #17a2b8;
 color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
 }
-        .error { color: red; font-weight: bold;
-}
+        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; }
         .full-width { grid-column: 1 / -1;}
 
-        /* --- Style for Price Display --- */
         .price-display {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -54,51 +49,105 @@ margin-left: 15px;
         .cancel-link:hover {
             text-decoration: underline;
 }
+        
+        /* --- NEW: Sub-member section styles --- */
+        h3 {
+            color: #444;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-top: 1.5em;
+        }
+        .sub-member-form {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 4px;
+            margin-top: 1em;
+        }
+        .sub-member-form h4 {
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .remove-member-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .add-member-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 1em;
+        }
+        .add-member-btn:hover { background-color: #218838; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>New Membership Purchase</h1>
+    <h1>Add New Park Member</h1>
     <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+    
     <form action="/members" method="POST">
+        <h3>Primary Member Details</h3>
         <div class="form-grid">
             <div>
                 <label for="first_name">First Name:</label>
                 <input type="text" id="first_name" name="first_name" 
-required>
+required value="<%= typeof member !== 'undefined' ? member.first_name : '' %>">
             </div>
             <div>
                 <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" required>
+                <input type="text" id="last_name" name="last_name" required value="<%= typeof member !== 'undefined' ? member.last_name : '' %>">
             </div>
             <div class="full-width">
              
    <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required value="<%= typeof member !== 'undefined' ? member.email : '' %>">
             </div>
             <div>
                 <label for="phone_number">Phone Number:</label>
-                <input type="tel" id="phone_number" name="phone_number">
+                <input type="tel" id="phone_number" name="phone_number" value="<%= typeof member !== 'undefined' ? member.phone_number : '' %>">
             </div>
    
          <div>
                 <label for="date_of_birth">Date of Birth:</label>
-                <input type="date" id="date_of_birth" name="date_of_birth" required>
+                <input type="date" id="date_of_birth" name="date_of_birth" required value="<%= typeof member !== 'undefined' ? member.date_of_birth : '' %>">
             </div>
+        </div>
+
+        <h3 style="margin-top: 2em;">Membership Details</h3>
+        <div class="form-grid">
             <div>
                 <label for="type_id">Membership Type:</label>
-          
       <select id="type_id" name="type_id" required>
                     <% if (types.length === 0) { %>
                         <option value="" disabled>-- No active types available --</option>
                     <% } else { %>
-          
               <option value="" disabled selected>-- Select a Type --</option>
                         <% types.forEach(type => { %>
-                            <option value="<%= type.type_id %>" data-price="<%= type.base_price %>">
+                            <option 
+                                value="<%= type.type_id %>" 
+                                data-price="<%= type.base_price %>"
+                                data-base-members="<%= type.base_members %>"
+                                data-addon-price="<%= type.additional_member_price || 0 %>"
+                                <%= (typeof member !== 'undefined' && member.type_id == type.type_id) ? 'selected' : '' %>
+                            >
                                 <%= type.type_name %>
                             </option>
-                  
       <% }); %>
                     <% } %>
                 </select>
@@ -106,27 +155,49 @@ required>
             
             <div class="full-width">
                 <div class="price-display">
-                    <h3>Amount Due</h3>
+                    <h3>Price to Collect</h3>
                     <p id="priceDisplay">$--.--</p>
                 </div>
             </div>
             
             <div>
                 <label for="start_date">Start Date:</label>
-                        <input type="date" id="start_date" name="start_date" readonly>
+        <input type="date" id="start_date" name="start_date" readonly>
             </div>
             <div>
                 <label for="end_date">End Date:</label>
                 <input type="date" id="end_date" name="end_date" readonly>
             </div>
         </div>
-      
-  <br>
+
+        <div class="full-width" id="subMemberSection" style="display: none;">
+            <h3>Add Family Members</h3>
+            <p id="subMemberIntro"></p>
+            <div id="subMemberContainer">
+                </div>
+            <button type="button" id="addMemberBtn" class="add-member-btn">Add Member</button>
+        </div>
+          <br>
         <button type="submit">Add Member & Print Receipt</button>
         <a href="/members" class="cancel-link">Cancel</a>
     </form>
-
+    
     <script>
+        // --- Pass EJS data (for error re-population) ---
+        <% 
+            let existingSubMembers = [];
+            if (typeof subMembers !== 'undefined') {
+                for (let i = 0; i < subMembers.subFirstNames.length; i++) {
+                    existingSubMembers.push({
+                        first: subMembers.subFirstNames[i],
+                        last: subMembers.subLastNames[i],
+                        dob: subMembers.subDobs[i]
+                    });
+                }
+            }
+        %>
+        const existingSubMembersJSON = <%- JSON.stringify(existingSubMembers) %>;
+
         // Helper function to format date as YYYY-MM-DD
         function formatDate(date) {
             const year = date.getFullYear();
@@ -135,29 +206,139 @@ required>
             return `${year}-${month}-${day}`;
         }
 
-        // Set dates on page load
+        // --- NEW SCRIPT BLOCK ---
         document.addEventListener('DOMContentLoaded', () => {
-            const today = new Date();
+            const typeSelect = document.getElementById('type_id');
+            const priceDisplay = document.getElementById('priceDisplay');
             
-            // Calculate end date (start date + 1 year - 1 day)
+            // Sub-member elements
+            const subMemberSection = document.getElementById('subMemberSection');
+            const subMemberIntro = document.getElementById('subMemberIntro');
+            const subMemberContainer = document.getElementById('subMemberContainer');
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            let subMemberCount = 0;
+
+            // This object will hold the rules for the currently selected pass
+            let membershipType = {
+                base_price: 0,
+                base_members: 1,
+                additional_member_price: 0
+            };
+
+            // --- Date Auto-population ---
+            const today = new Date();
             const endDate = new Date(today);
             endDate.setFullYear(today.getFullYear() + 1);
             endDate.setDate(today.getDate() - 1);
-
-            // Set the readonly input fields
             document.getElementById('start_date').value = formatDate(today);
             document.getElementById('end_date').value = formatDate(endDate);
-        });
-    
-        // Price display logic
-        document.getElementById('type_id').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const price = selectedOption.dataset.price;
-            const priceDisplay = document.getElementById('priceDisplay');
+
+            // --- Sub-member Functions ---
+            function updatePriceAndText() {
+                const totalMembers = 1 + subMemberCount;
+                const additionalMembers = Math.max(0, totalMembers - membershipType.base_members);
+                const totalCost = membershipType.base_price + (additionalMembers * membershipType.additional_member_price);
+
+                priceDisplay.textContent = `$${totalCost.toFixed(2)}`;
+
+                if (membershipType.base_members > 1) {
+                    if (additionalMembers > 0) {
+                        subMemberIntro.textContent = `Pass includes ${membershipType.base_members} members. You have added ${additionalMembers} extra member(s) at $${membershipType.additional_member_price.toFixed(2)} each.`;
+                    } else {
+                        const remainingFree = (membershipType.base_members - totalMembers);
+                        subMemberIntro.textContent = `Pass includes ${membershipType.base_members} members. You can add ${remainingFree} more member(s) at no extra cost.`;
+                    }
+                }
+            }
+
+            function createSubMemberForm(existingData = null) {
+                subMemberCount++;
+                const memberIndex = subMemberCount;
+                
+                const formDiv = document.createElement('div');
+                formDiv.className = 'sub-member-form';
+                
+                // Pre-fill data if it exists (from error re-load)
+                const firstName = existingData ? existingData.first : '';
+                const lastName = existingData ? existingData.last : '';
+                const dob = existingData ? existingData.dob : '';
+
+                formDiv.innerHTML = `
+                    <h4>
+                        Member ${memberIndex + 1}
+                        <button type="button" class="remove-member-btn">&times; Remove</button>
+                    </h4>
+                    <div class="form-grid">
+                        <div>
+                            <label for="sub_first_name_${memberIndex}">First Name:</label>
+                            <input type="text" id="sub_first_name_${memberIndex}" name="sub_first_name[]" value="${firstName}" required>
+                        </div>
+                        <div>
+                            <label for="sub_last_name_${memberIndex}">Last Name:</label>
+                            <input type="text" id="sub_last_name_${memberIndex}" name="sub_last_name[]" value="${lastName}" required>
+                        </div>
+                        <div class="full-width">
+                            <label for="sub_dob_${memberIndex}">Date of Birth:</label>
+                            <input type="date" id="sub_dob_${memberIndex}" name="sub_dob[]" value="${dob}" required>
+                        </div>
+                    </div>
+                `;
+                
+                formDiv.querySelector('.remove-member-btn').addEventListener('click', () => {
+                    formDiv.remove();
+                    subMemberCount--;
+                    updatePriceAndText();
+                });
+
+                subMemberContainer.appendChild(formDiv);
+                updatePriceAndText();
+            }
+
+            // --- Event Listener for Type Select ---
+            typeSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                
+                // Update the membershipType object
+                membershipType.base_price = parseFloat(selectedOption.dataset.price) || 0;
+                membershipType.base_members = parseInt(selectedOption.dataset.baseMembers, 10) || 1;
+                membershipType.additional_member_price = parseFloat(selectedOption.dataset.addonPrice) || 0;
+
+                // Clear existing sub-member forms
+                subMemberContainer.innerHTML = '';
+                subMemberCount = 0;
+                
+                if (membershipType.base_members > 1) {
+                    // This is a multi-member pass, show the section
+                    subMemberSection.style.display = 'block';
+                    // Add the first "sub-member" form (which is member #2)
+                    createSubMemberForm(); 
+                } else {
+                    // This is an individual pass, hide the section
+                    subMemberSection.style.display = 'none';
+                }
+
+                // Update price and text
+                updatePriceAndText();
+            });
+
+            // Add Member Button
+            addMemberBtn.addEventListener('click', createSubMemberForm);
             
-            if (price) {
-                priceDisplay.textContent = '$' + parseFloat(price).toFixed(2);
+            // --- Initialization on Page Load ---
+            // Trigger 'change' on page load if a type is already selected (e.g., on error)
+            if (typeSelect.value) {
+                typeSelect.dispatchEvent(new Event('change'));
+                
+                // Re-populate existing sub-members if they exist
+                if (existingSubMembersJSON.length > 0) {
+                    subMemberContainer.innerHTML = ''; // Clear the one auto-added form
+                    subMemberCount = 0;
+                    existingSubMembersJSON.forEach(member => {
+                        createSubMemberForm(member);
+                    });
+                }
             } else {
+                // If no type is selected, just show default price
                 priceDisplay.textContent = '$--.--';
             }
         });

@@ -7,15 +7,15 @@ const {
     isGuest,
     formatReceiptDate,
     censorPhone,
-    formatPhoneNumber // --- NEW: Added for profile edits
+    formatPhoneNumber
 } = require('../middleware/auth');
 
-const saltRounds = 10; // --- NEW: Added for password hashing
+const saltRounds = 10;
 
 // --- MEMBER-FACING PORTAL ---
 // All routes are prefixed with /member by app.js
 
-// ... (existing GET /login, GET /register, POST /register, GET /logout routes are unchanged) ...
+// ... (routes /login, /register, /logout, /dashboard, /history, /promotions, /history/receipt are all unchanged) ...
 
 // GET /member/login
 router.get('/login', isGuest, (req, res) => {
@@ -181,7 +181,6 @@ router.get('/promotions', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/history/receipt/:visit_id
-// ... (This route is unchanged) ...
 router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res) => {
     const { visit_id } = req.params;
     const memberId = req.session.member.id;
@@ -247,13 +246,13 @@ router.get('/history/receipt/:visit_id', isMemberAuthenticated, async (req, res)
 // --- ACCOUNT MANAGEMENT & PURCHASE HISTORY ---
 
 // GET /member/manage
-// ... (This route is unchanged) ...
 router.get('/manage', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
+        // --- MODIFIED: Fetch full member profile ---
         const [memberResult] = await pool.query(`
             SELECT 
-                m.first_name, m.last_name, m.end_date,
+                m.first_name, m.last_name, m.end_date, m.primary_member_id,
                 mt.type_name,
                 CASE 
                     WHEN m.end_date >= CURDATE() THEN 'Active' 
@@ -268,34 +267,66 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
             return res.redirect('/member/logout');
         }
 
-        // *** NEW LOGIC: Check if member is eligible for renewal ***
-        const today = new Date();
-        const endDate = new Date(memberResult[0].end_date);
+        const member = memberResult[0];
+        const isPrimaryMember = member.primary_member_id === null;
 
-        // Calculate the date 60 days *before* the end date
-        const renewalWindowStartDate = new Date(endDate);
-        renewalWindowStartDate.setDate(endDate.getDate() - 60);
+        let familyMembers = [];
+        let paymentMethods = [];
+        let canRenew = false;
 
-        // Member can renew if today is *after* the window start date OR if the pass is already expired
-        const isExpired = endDate < today;
-        const canRenew = (today >= renewalWindowStartDate) || isExpired;
-        // *** END NEW LOGIC ***
+        // --- NEW: Determine the ID to use for fetching group info ---
+        // If I'm primary, use my ID. If I'm a sub-member, use my primary_member_id.
+        const primaryIdForGroup = member.primary_member_id || memberId;
 
-        const [paymentMethods] = await pool.query(
-            `SELECT * FROM member_payment_methods 
-             WHERE membership_id = ? 
-             ORDER BY is_default DESC, payment_method_id ASC`,
-            [memberId]
-        );
+        if (isPrimaryMember) {
+            // --- Logged in as PRIMARY ---
+            // 1. Check renewal eligibility
+            const today = new Date();
+            const endDate = new Date(member.end_date);
+            const renewalWindowStartDate = new Date(endDate);
+            renewalWindowStartDate.setDate(endDate.getDate() - 60);
+            const isExpired = endDate < today;
+            canRenew = (today >= renewalWindowStartDate) || isExpired;
+
+            // 2. Fetch payment methods
+            [paymentMethods] = await pool.query(
+                `SELECT * FROM member_payment_methods 
+                 WHERE membership_id = ? 
+                 ORDER BY is_default DESC, payment_method_id ASC`,
+                [memberId]
+            );
+
+            // 3. Fetch sub-members
+            [familyMembers] = await pool.query(
+                "SELECT * FROM membership WHERE primary_member_id = ?",
+                [memberId]
+            );
+
+        } else {
+            // --- Logged in as SUB-MEMBER ---
+            // 1. Fetch primary member
+            const [primaryMember] = await pool.query(
+                "SELECT * FROM membership WHERE membership_id = ?",
+                [member.primary_member_id]
+            );
+            // 2. Fetch "sibling" members (other subs, excluding self)
+            const [siblingMembers] = await pool.query(
+                "SELECT * FROM membership WHERE primary_member_id = ? AND membership_id != ?",
+                [member.primary_member_id, memberId]
+            );
+            familyMembers = primaryMember.concat(siblingMembers);
+        }
 
         res.render('member-manage-account', {
-            member: memberResult[0],
-            paymentMethods: paymentMethods,
-            canRenew: canRenew, // Pass the new variable
+            member: member,
+            isPrimaryMember: isPrimaryMember, // Pass flag to view
+            familyMembers: familyMembers, // Pass group list to view
+            paymentMethods: paymentMethods, // Will be [] for sub-members
+            canRenew: canRenew, // Will be false for sub-members
             success: req.session.success,
-            error: req.session.error // Pass error flash message
+            error: req.session.error
         });
-        req.session.success = null; // Clear flash messages
+        req.session.success = null;
         req.session.error = null;
     } catch (error) {
         console.error("Error loading manage account page:", error);
@@ -558,8 +589,8 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
 });
 
 
-// *** NEW ROUTE ***
-// GET /member/edit - Show the form to edit member's own profile
+// GET /member/edit
+// ... (This route is unchanged) ...
 router.get('/edit', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     try {
@@ -580,8 +611,8 @@ router.get('/edit', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// *** NEW ROUTE ***
-// POST /member/edit - Handle the profile update
+// POST /member/edit
+// ... (This route is unchanged) ...
 router.post('/edit', isMemberAuthenticated, async (req, res) => {
     const memberId = req.session.member.id;
     const { first_name, last_name, date_of_birth } = req.body;
@@ -630,14 +661,14 @@ router.post('/edit', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// *** NEW ROUTE ***
-// GET /member/change-password - Show the change password form
+// GET /member/change-password
+// ... (This route is unchanged) ...
 router.get('/change-password', isMemberAuthenticated, (req, res) => {
     res.render('member-change-password', { error: null, success: null });
 });
 
-// *** NEW ROUTE ***
-// POST /member/change-password - Handle the password change
+// POST /member/change-password
+// ... (This route is unchanged) ...
 router.post('/change-password', isMemberAuthenticated, async (req, res) => {
     const { old_password, new_password, confirm_password } = req.body;
     const memberId = req.session.member.id;
@@ -697,7 +728,7 @@ router.post('/change-password', isMemberAuthenticated, async (req, res) => {
 
 
 // --- Payment Method Routes ---
-// ... (The /payment/add, /payment/delete, and /payment/default routes are unchanged) ...
+// ... (These routes are unchanged) ...
 router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
     const { id: memberId } = req.session.member;
     const {

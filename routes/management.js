@@ -8,6 +8,7 @@ const {
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 // --- LOCATION & VENDOR MANAGEMENT --- 
+// ... (routes /locations, /vendors, /assign-manager are all unchanged) ...
 // Path is '/locations'
 router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
@@ -212,6 +213,7 @@ router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, 
 // Path is '/memberships/types'
 router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
+        // --- MODIFIED: SELECT * to get new columns ---
         const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
         res.render('membership-types', {
             types: types,
@@ -233,12 +235,23 @@ router.get('/memberships/types/new', isAuthenticated, isAdminOrParkManager, (req
 
 // Path is '/memberships/types'
 router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_name, base_price, description } = req.body;
+    // --- MODIFIED: Get new fields from req.body ---
+    const { type_name, base_price, description, base_members, additional_member_price } = req.body;
+
+    // --- MODIFIED: Handle NULL values ---
+    const baseMembersNum = parseInt(base_members, 10) || 1;
+    const additionalPriceNum = (baseMembersNum > 1 && additional_member_price) ? parseFloat(additional_member_price) : null;
+
     let connection;
     try {
         connection = await pool.getConnection();
-        const sql = "INSERT INTO membership_type (type_name, base_price, description, is_active) VALUES (?, ?, ?, TRUE)";
-        await connection.query(sql, [type_name, base_price, description || null]);
+        // --- MODIFIED: Updated SQL query ---
+        const sql = `
+            INSERT INTO membership_type 
+            (type_name, base_price, base_members, additional_member_price, description, is_active) 
+            VALUES (?, ?, ?, ?, ?, TRUE)
+        `;
+        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null]);
         req.session.success = "Membership type added successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
@@ -253,6 +266,7 @@ router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (
 router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     try {
+        // --- MODIFIED: SELECT * to get all data for form ---
         const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) {
             return res.status(404).send('Membership type not found');
@@ -267,16 +281,23 @@ router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMan
 // Path is '/memberships/types/edit/:type_id'
 router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
-    const { type_name, base_price, description } = req.body;
+    // --- MODIFIED: Get new fields from req.body ---
+    const { type_name, base_price, description, base_members, additional_member_price } = req.body;
+
+    // --- MODIFIED: Handle NULL values ---
+    const baseMembersNum = parseInt(base_members, 10) || 1;
+    const additionalPriceNum = (baseMembersNum > 1 && additional_member_price) ? parseFloat(additional_member_price) : null;
+
     let connection;
     try {
         connection = await pool.getConnection();
+        // --- MODIFIED: Updated SQL query ---
         const sql = `
             UPDATE membership_type 
-            SET type_name = ?, base_price = ?, description = ?
+            SET type_name = ?, base_price = ?, base_members = ?, additional_member_price = ?, description = ?
             WHERE type_id = ?
         `;
-        await connection.query(sql, [type_name, base_price, description || null, type_id]);
+        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null, type_id]);
         req.session.success = "Membership type updated successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
@@ -292,6 +313,7 @@ router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMa
 });
 
 // Path is '/memberships/types/toggle/:type_id'
+// ... (This route is unchanged) ...
 router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_id } = req.params;
     let connection;
@@ -318,7 +340,9 @@ router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrPark
     }
 });
 
+
 // --- TICKET TYPE MANAGEMENT ---
+// ... (All /ticket-types routes are unchanged) ...
 // Path is '/ticket-types'
 router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
@@ -450,6 +474,7 @@ router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManag
 });
 
 // --- PARK OPERATIONS (Weather, Promos) ---
+// ... (All /weather and /promotions routes are unchanged) ...
 // Path is '/weather'
 router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
