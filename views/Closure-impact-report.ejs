@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Closure Impact Report</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em; align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-grid input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #dc3545; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Closure Impact Report</h1>
+        <p>This report shows all park closures in a given year and the impact on visitor attendance and total rides.</p>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error"><%= error %></p>
+        <% } %>
+
+        <form action="/reports/closure-impact" method="POST">
+            <div class="form-grid">
+                <div>
+                    <label for="selected_date">Select a Date in the Desired Year:</label>
+                    <input type="date" id="selected_date" name="selected_date" value="<%= selected_date %>" required>
+                </div>
+                <div style="align-self: end;">
+                    <button type="submit">Generate Report</button>
+                </div>
+            </div>
+        </form>
+
+        <% if (report_data && report_data.length > 0) { %>
+            <h2>Report for <%= chartTitle %></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Closure Date</th>
+                        <th>Weather Type</th>
+                        <th>Total Visitors</th>
+                        <th>Total Rides Given (All)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% report_data.forEach(event => { %>
+                        <tr>
+                            <td><%= new Date(event.event_date).toLocaleDateString() %></td>
+                            <td><%= event.weather_type %></td>
+                            <td><%= event.visitor_count || 0 %></td>
+                            <td><%= event.total_ride_count || 0 %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else if (report_data && report_data.length === 0) { %>
+            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No park closure data found for the selected year.</p>
+        <% } %>
+
+    </div>
+</body>
+</html>

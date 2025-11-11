@@ -150,16 +150,13 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
 
     try {
         // 1. Get Date Range for the *Month*
-        // We reuse your getReportSettings function by forcing 'month' grouping
         const { startDate, endDate } = getReportSettings(selected_date, 'month');
         
         // 2. Create a custom title for the chart
-        // Note: T00:00:00 avoids time zone issues
         const monthYearFormat = new Date(selected_date + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         const chartTitle = `Total Riders for ${monthYearFormat}`;
 
         // 3. Build SQL Query (Joining 3 Tables)
-        // This query joins daily_ride -> rides -> location
         const reportQuery = `
             SELECT 
                 r.ride_name,
@@ -198,88 +195,76 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
     }
 });
 
-// --- NEW GET ROUTE FOR RAINOUTS ---
-router.get('/rainouts', isAuthenticated, canViewReports, async (req, res) => {
+// --- NEW GET ROUTE FOR CLOSURE IMPACT REPORT ---
+router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
     try {
         const defaultDate = new Date().toISOString().substring(0, 10);
-        res.render('rainout-report', {
+        res.render('closure-impact-report', {
             selected_date: defaultDate,
             report_data: null,
-            chartTitle: 'Park Closure Report',
+            chartTitle: '',
             error: null
         });
     } catch (error) {
-        console.error("Error loading rainout report page:", error);
-        res.render('rainout-report', {
+        console.error("Error loading closure impact report page:", error);
+        res.render('closure-impact-report', {
             selected_date: new Date().toISOString().substring(0, 10),
             report_data: null,
-            chartTitle: 'Park Closure Report',
+            chartTitle: '',
             error: 'Error loading page. Please try again.'
         });
     }
 });
 
-// --- NEW POST ROUTE FOR RAINOUTS ---
-router.post('/rainouts', isAuthenticated, canViewReports, async (req, res) => {
+// --- NEW POST ROUTE FOR CLOSURE IMPACT REPORT ---
+router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
     const { selected_date } = req.body;
 
     try {
         // 1. Get the year from the selected date
         const year = new Date(selected_date + 'T00:00:00').getFullYear();
-        const chartTitle = `Park Closures for ${year}`;
+        const chartTitle = `Year ${year}`;
 
-        // 2. Build SQL Query
-        // This query counts all weather events where park_closure = TRUE
-        // and groups them by month ('YYYY-MM' format) for the selected year.
+        // 2. Build SQL Query (Joining 3 Tables)
+        // Joins weather_events -> daily_stats -> daily_ride
         const reportQuery = `
             SELECT
-                DATE_FORMAT(event_date, '%Y-%m') AS report_month,
-                COUNT(weather_id) AS closure_count
-            FROM weather_events
+                w.event_date,
+                w.weather_type,
+                ds.visitor_count,
+                SUM(dr.ride_count) AS total_ride_count
+            FROM weather_events w
+            LEFT JOIN daily_stats ds ON DATE(w.event_date) = ds.date_rec
+            LEFT JOIN daily_ride dr ON ds.date_rec = dr.dat_date
             WHERE
-                park_closure = TRUE
-                AND YEAR(event_date) = ?
-            GROUP BY report_month
-            ORDER BY report_month ASC;
+                w.park_closure = TRUE
+                AND YEAR(w.event_date) = ?
+            GROUP BY
+                w.event_date, w.weather_type, ds.visitor_count
+            ORDER BY
+                w.event_date ASC;
         `;
         
-        const [dbData] = await pool.query(reportQuery, [year]);
-
-        // 3. Format data for Chart.js (ensuring all 12 months are present)
-        
-        // Create a map of the data we got from the DB
-        // e.g., {'2025-07': 1, '2025-10': 1}
-        const dataMap = new Map(dbData.map(item => [item.report_month, item.closure_count]));
-
-        // Create 12 labels for the X-axis
-        const labels = Array.from({ length: 12 }, (_, i) => {
-            const month = String(i + 1).padStart(2, '0');
-            return `${year}-${month}`;
-        });
-
-        // Create the counts array, using the map or 0
-        const counts = labels.map(label => dataMap.get(label) || 0);
+        const [reportData] = await pool.query(reportQuery, [year]);
 
         // 4. Render View with Data
-        res.render('rainout-report', {
+        res.render('closure-impact-report', {
             selected_date: selected_date,
-            report_data: {
-                labels: labels,
-                counts: counts
-            },
+            report_data: reportData,
             chartTitle: chartTitle,
             error: null
         });
 
     } catch (error) {
-        console.error("Error generating rainout report:", error);
-        res.render('rainout-report', {
+        console.error("Error generating closure impact report:", error);
+        res.render('closure-impact-report', {
             selected_date: selected_date,
             report_data: null,
-            chartTitle: 'Park Closure Report',
+            chartTitle: '',
             error: `Error generating report: ${error.message}`
         });
     }
 });
+
 
 module.exports = router;
