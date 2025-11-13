@@ -194,4 +194,149 @@ router.post('/attendance', isAuthenticated, canViewReports, async (req, res) => 
     }
 });
 
+// --- GET ROUTE FOR RIDE POPULARITY ---
+router.get('/ride-popularity', isAuthenticated, canViewReports, async (req, res) => {
+    try {
+        // Default date to today
+        const defaultDate = new Date().toISOString().substring(0, 10);
+
+        res.render('ride-popularity-report', {
+            selected_date: defaultDate,
+            report_data: null, // No data on initial load
+            chartTitle: 'Ride Popularity Report', // Default title
+            error: null
+        });
+    } catch (error) {
+        console.error("Error loading ride popularity report page:", error);
+        res.render('ride-popularity-report', {
+            selected_date: new Date().toISOString().substring(0, 10),
+            report_data: null,
+            chartTitle: 'Ride Popularity Report',
+            error: 'Error loading page. Please try again.'
+        });
+    }
+});
+
+// --- POST ROUTE FOR RIDE POPULARITY ---
+router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res) => {
+    let { selected_date } = req.body;
+
+    try {
+        // Ensure we have a full date string for the helper function
+        const dateForHelper = selected_date.length === 7 ? selected_date + '-01' : selected_date;
+
+        // 1. Get Date Range
+        const { startDate, endDate } = getReportSettings(dateForHelper, 'month');
+
+        // 2. Create custom title
+        const monthYearFormat = new Date(dateForHelper + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        const chartTitle = `Total Riders for ${monthYearFormat}`;
+
+        // 3. Build SQL Query (Now including ride_type)
+        const reportQuery = `
+            SELECT 
+                r.ride_name,
+                r.ride_type,  /* <--- Added this column */
+                l.location_name,
+                SUM(dr.ride_count) AS total_riders
+            FROM daily_ride dr
+            JOIN rides r ON dr.ride_id = r.ride_id
+            JOIN location l ON r.location_id = l.location_id
+            WHERE dr.dat_date BETWEEN ? AND ?
+            GROUP BY r.ride_id, r.ride_name, r.ride_type, l.location_name /* <--- Group by it too */
+            HAVING total_riders > 0
+            ORDER BY total_riders DESC
+        `;
+
+        const [reportData] = await pool.query(reportQuery, [startDate, endDate]);
+
+        // 4. Render View
+        res.render('ride-popularity-report', {
+            selected_date: selected_date,
+            report_data: reportData,
+            chartTitle: chartTitle,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error generating ride popularity report:", error);
+        res.render('ride-popularity-report', {
+            selected_date: selected_date,
+            report_data: null,
+            chartTitle: 'Ride Popularity Report',
+            error: `Error generating report: ${error.message}`
+        });
+    }
+});
+// --- GET ROUTE FOR CLOSURE IMPACT REPORT ---
+router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
+    try {
+        const defaultDate = new Date().toISOString().substring(0, 10);
+        res.render('Closure-impact-report', {
+            selected_date: defaultDate,
+            report_data: null,
+            chartTitle: '',
+            error: null
+        });
+    } catch (error) {
+        console.error("Error loading closure impact report page:", error);
+        res.render('Closure-impact-report', {
+            selected_date: new Date().toISOString().substring(0, 10),
+            report_data: null,
+            chartTitle: '',
+            error: 'Error loading page. Please try again.'
+        });
+    }
+});
+
+// --- POST ROUTE FOR CLOSURE IMPACT REPORT ---
+router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
+    const { selected_date } = req.body;
+
+    try {
+        // 1. Get the year from the selected date
+        const year = new Date(selected_date + 'T00:00:00').getFullYear();
+        const chartTitle = `Year ${year}`;
+
+        // 2. Build SQL Query (Joining 3 Tables)
+        // Joins weather_events -> daily_stats -> daily_ride
+        const reportQuery = `
+            SELECT
+                w.event_date,
+                w.weather_type,
+                ds.visitor_count,
+                SUM(dr.ride_count) AS total_ride_count
+            FROM weather_events w
+            LEFT JOIN daily_stats ds ON DATE(w.event_date) = ds.date_rec
+            LEFT JOIN daily_ride dr ON ds.date_rec = dr.dat_date
+            WHERE
+                w.park_closure = TRUE
+                AND YEAR(w.event_date) = ?
+            GROUP BY
+                w.event_date, w.weather_type, ds.visitor_count
+            ORDER BY
+                w.event_date ASC;
+        `;
+
+        const [reportData] = await pool.query(reportQuery, [year]);
+
+        // 4. Render View with Data
+        res.render('Closure-impact-report', {
+            selected_date: selected_date,
+            report_data: reportData,
+            chartTitle: chartTitle,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error generating closure impact report:", error);
+        res.render('Closure-impact-report', {
+            selected_date: selected_date,
+            report_data: null,
+            chartTitle: '',
+            error: `Error generating report: ${error.message}`
+        });
+    }
+});
+
 module.exports = router;
