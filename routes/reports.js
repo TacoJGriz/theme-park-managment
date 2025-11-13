@@ -298,22 +298,49 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
         const year = new Date(selected_date + 'T00:00:00').getFullYear();
         const chartTitle = `Year ${year}`;
 
-        // 2. Build SQL Query (Joining 3 Tables)
-        // Joins weather_events -> daily_stats -> daily_ride
+        // 2. Build SQL Query (This is now much more advanced)
         const reportQuery = `
+            WITH MonthlyDOWStats AS (
+                -- First, calculate the average visitors and rides for each day-of-week per month/year
+                SELECT
+                    YEAR(ds.date_rec) AS stat_year,
+                    MONTH(ds.date_rec) AS stat_month,
+                    DAYOFWEEK(ds.date_rec) AS stat_dow,
+                    AVG(ds.visitor_count) AS avg_visitors,
+                    AVG(COALESCE(ride_totals.total_rides, 0)) AS avg_rides
+                FROM daily_stats ds
+                LEFT JOIN (
+                    -- Subquery to get total rides per day
+                    SELECT dat_date, SUM(ride_count) AS total_rides
+                    FROM daily_ride
+                    GROUP BY dat_date
+                ) AS ride_totals ON ds.date_rec = ride_totals.dat_date
+                WHERE ds.date_rec NOT IN (
+                    -- Exclude days the park was actually closed from the average
+                    SELECT DATE(event_date) FROM weather_events WHERE park_closure = TRUE
+                )
+                GROUP BY stat_year, stat_month, stat_dow
+            )
+            -- Now, get the closure day's stats and join our new averages
             SELECT
                 w.event_date,
                 w.weather_type,
-                ds.visitor_count,
-                SUM(dr.ride_count) AS total_ride_count
+                COALESCE(ds.visitor_count, 0) AS actual_visitors,
+                COALESCE(SUM(dr.ride_count), 0) AS actual_rides,
+                COALESCE(ma.avg_visitors, 0) AS benchmark_visitors,
+                COALESCE(ma.avg_rides, 0) AS benchmark_rides
             FROM weather_events w
             LEFT JOIN daily_stats ds ON DATE(w.event_date) = ds.date_rec
             LEFT JOIN daily_ride dr ON ds.date_rec = dr.dat_date
+            LEFT JOIN MonthlyDOWStats ma ON 
+                YEAR(w.event_date) = ma.stat_year 
+                AND MONTH(w.event_date) = ma.stat_month 
+                AND DAYOFWEEK(w.event_date) = ma.stat_dow
             WHERE
                 w.park_closure = TRUE
                 AND YEAR(w.event_date) = ?
             GROUP BY
-                w.event_date, w.weather_type, ds.visitor_count
+                w.event_date, w.weather_type, ds.visitor_count, ma.avg_visitors, ma.avg_rides
             ORDER BY
                 w.event_date ASC;
         `;

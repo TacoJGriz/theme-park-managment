@@ -43,13 +43,31 @@
 
         <% if (report_data && report_data.length > 0) { %>
             <h2>Report for <%= chartTitle %></h2>
+            <%# --- Helper function to format numbers --- %>
+            <%
+                const formatImpact = (num) => {
+                    const n = Math.round(num);
+                    if (n > 0) {
+                        return `<span style="color: green;">+${n.toLocaleString()}</span>`;
+                    }
+                    if (n < 0) {
+                        return `<span style="color: red;">${n.toLocaleString()}</span>`;
+                    }
+                    return n.toLocaleString();
+                };
+            %>
+
             <table>
                 <thead>
                     <tr>
                         <th>Closure Date</th>
                         <th>Weather Type</th>
-                        <th>Total Visitors</th>
-                        <th>Total Rides Given (All)</th>
+                        <th>Actual Visitors</th>
+                        <th>Typical Visitors on the Same Day of Week</th>
+                        <th>Visitor Impact (Loss/Gain)</th>
+                        <th>Actual Total Riders</th>
+                        <th>Typical Total Riders on the Same Day of Week</th>
+                        <th>Ride Impact (Loss/Gain)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,8 +75,16 @@
                         <tr>
                             <td><%= new Date(event.event_date).toLocaleDateString() %></td>
                             <td><%= event.weather_type %></td>
-                            <td><%= event.visitor_count || 0 %></td>
-                            <td><%= event.total_ride_count || 0 %></td>
+                            
+                            <%# --- Visitor Stats --- %>
+                            <td><%= parseInt(event.actual_visitors).toLocaleString() %></td>
+                            <td><%= Math.round(event.benchmark_visitors).toLocaleString() %></td>
+                            <td><%- formatImpact(event.actual_visitors - event.benchmark_visitors) %></td>
+
+                            <%# --- Ride Stats --- %>
+                            <td><%= parseInt(event.actual_rides).toLocaleString() %></td>
+                            <td><%= Math.round(event.benchmark_rides).toLocaleString() %></td>
+                            <td><%- formatImpact(event.actual_rides - event.benchmark_rides) %></td>
                         </tr>
                     <% }); %>
                 </tbody>
