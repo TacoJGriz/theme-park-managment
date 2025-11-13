@@ -291,14 +291,17 @@ router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) 
 
 // --- POST ROUTE FOR CLOSURE IMPACT REPORT ---
 router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
-    const { selected_date } = req.body;
+    const { selected_date } = req.body; // This will now be a string like "2025"
 
     try {
         // 1. Get the year from the selected date
-        const year = new Date(selected_date + 'T00:00:00').getFullYear();
+        const year = parseInt(selected_date, 10);
+        if (isNaN(year)) {
+            throw new Error("Invalid year format submitted.");
+        }
         const chartTitle = `Year ${year}`;
 
-        // 2. Build SQL Query (This is now much more advanced)
+        // 2. Build SQL Query (This logic is already correct)
         const reportQuery = `
             WITH MonthlyDOWStats AS (
                 -- First, calculate the average visitors and rides for each day-of-week per month/year
@@ -349,7 +352,7 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
 
         // 4. Render View with Data
         res.render('Closure-impact-report', {
-            selected_date: selected_date,
+            selected_date: selected_date, // Pass the "2025" string back
             report_data: reportData,
             chartTitle: chartTitle,
             error: null
@@ -358,7 +361,7 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
     } catch (error) {
         console.error("Error generating closure impact report:", error);
         res.render('Closure-impact-report', {
-            selected_date: selected_date,
+            selected_date: selected_date, // Pass back the submitted year
             report_data: null,
             chartTitle: '',
             error: `Error generating report: ${error.message}`

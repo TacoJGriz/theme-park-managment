@@ -23,7 +23,7 @@
     <%- include('partials/header') %>
     <div class="container">
         <h1>Closure Impact Report</h1>
-        <p>This report shows all park closures in a given year and the impact on visitor attendance and total rides.</p>
+        <p>This report shows all park closures in a given year and the impact on visitor attendance and total riders.</p>
 
         <% if (typeof error !== 'undefined' && error) { %>
             <p class="error"><%= error %></p>
@@ -32,8 +32,12 @@
         <form action="/reports/closure-impact" method="POST">
             <div class="form-grid">
                 <div>
-                    <label for="selected_date">Select a Date in the Desired Year:</label>
-                    <input type="date" id="selected_date" name="selected_date" value="<%= selected_date %>" required>
+                    <label for="selected_date">Enter Year:</label>
+                    <input type="number" id="selected_date" name="selected_date" 
+                           value="<%= selected_date.substring(0, 4) %>" 
+                           placeholder="YYYY" 
+                           min="2020" max="2099" step="1" 
+                           required>
                 </div>
                 <div style="align-self: end;">
                     <button type="submit">Generate Report</button>
