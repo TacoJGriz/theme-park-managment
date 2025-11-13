@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17,16 +17,63 @@
         button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
         button:hover { background-color: #0056b3; }
         
-        /* UPDATED: Added min-height, position:relative, and increased padding/radius */
         .chart-container { 
-            margin-top: 2em; 
+            margin-top: 2em;
             border: 1px solid #ddd; 
-            padding: 1.5em; /* Increased padding */
-            background: #fff; 
-            border-radius: 8px; /* Smoother radius */
-            min-height: 500px; /* <-- This gives the chart a larger vertical space */
-            position: relative; /* Recommended for Chart.js responsiveness */
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+    
+            /* CRITICAL FIXES FOR STRETCHING: */
+            position: relative; 
+            height: 50vh;        /* Fixed height relative to viewport */
+            min-height: 300px;
+            max-height: 600px;
+            width: 100%;         /* Fill available width */
+            overflow: hidden;    /* Prevents infinite resizing loops */
         }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2em;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 0.95em;
+        }
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #343a40; /* Matches header */
+            color: white;
+            font-weight: bold;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Highlight rows with spikes */
+        .spike-row {
+            background-color: #ffe6e6 !important; /* Light red background */
+            border-left: 5px solid #dc3545;      /* Red accent on left */
+        }
+        .spike-text {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        /* Summary Footer Styles */
+        .summary-row {
+            background-color: #e9ecef !important;
+            font-weight: bold;
+            border-top: 2px solid #dee2e6;
+            font-size: 1.1em;
+        }
+
         .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
     </style>
 </head>
@@ -40,10 +87,9 @@
         <% } %>
 
         <form action="/reports/attendance" method="POST">
-            <div class="form-grid">
+            <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div>
                     <label for="selected_date">Select Date:</label>
-                    <%# Default value or previously selected date %>
                     <input type="date" id="selected_date" name="selected_date" value="<%= selected_date %>" required>
                 </div>
                 <div>
@@ -67,59 +113,129 @@
                         <% }); %>
                     </select>
                 </div>
-                <div style="grid-column: 4; align-self: end;">
-                    <button type="submit">Generate Report</button>
+
+                <div>
+                    <label for="location_id">Filter by Entry Location:</label>
+                    <select id="location_id" name="location_id">
+                        <option value="all" <%= typeof location_id === 'undefined' || location_id === 'all' ? 'selected' : '' %>>All Locations</option>
+                        <% locations.forEach(loc => { %>
+                            <option value="<%= loc.location_id %>" <%= String(loc.location_id) === location_id ? 'selected' : '' %>>
+                                <%= loc.location_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="ticket_type_id">Filter by Day Ticket:</label>
+                    <select id="ticket_type_id" name="ticket_type_id">
+                        <option value="all" <%= typeof ticket_type_id === 'undefined' || ticket_type_id === 'all' ? 'selected' : '' %>>All Tickets</option>
+                        <% ticket_types.forEach(ticket => { %>
+                            <option value="<%= ticket.ticket_type_id %>" <%= String(ticket.ticket_type_id) === ticket_type_id ? 'selected' : '' %>>
+                                <%= ticket.type_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div style="align-self: end;">
+                    <button type="submit" style="width: 100%;">Generate Report</button>
                 </div>
             </div>
         </form>
 
         <%# Check if report data exists and has entries %>
         <% if (attendance_data && attendance_data.length > 0) { %>
+            
+            <%# --- 1. Calculate Totals & Averages for the Table --- %>
+            <% 
+                let totalVisitors = 0;
+                attendance_data.forEach(d => totalVisitors += d.count);
+                let avgVisitors = (attendance_data.length > 0) ? (totalVisitors / attendance_data.length).toFixed(0) : 0;
+            %>
+
             <div class="chart-container">
                 <canvas id="attendanceChart"></canvas>
             </div>
 
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><%= labelFormat %></th> <th>Visitor Count</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% attendance_data.forEach(row => { %>
+                        <tr class="<%= row.isSpike ? 'spike-row' : '' %>">
+                            <td><%= row.label %></td>
+                            <td><%= row.count.toLocaleString() %></td>
+                            <td>
+                                <% if (row.isSpike) { %>
+                                    <span class="spike-text">⚠ High Traffic Spike</span>
+                                    <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                                        +<%= row.zScore %>x normal variation
+                                    </div>
+                                <% } else { %>
+                                    <span style="color: #28a745;">Normal</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+                <tfoot>
+                    <tr class="summary-row">
+                        <td>SUMMARY</td>
+                        <td>Total: <%= totalVisitors.toLocaleString() %></td>
+                        <td>Avg: ~<%= avgVisitors %> / period</td>
+                    </tr>
+                </tfoot>
+            </table>
+
             <script>
-                // Pass EJS data to JavaScript
+                // Pass EJS data to JavaScript for the Chart
                 const reportData = <%- JSON.stringify(attendance_data) %>;
                 const labels = reportData.map(item => item.label);
                 const counts = reportData.map(item => item.count);
-                // Style points identified as spikes
-                const pointColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)'); // Red for spike, Blue normal
-                const pointRadii = reportData.map(item => item.isSpike ? 8 : 4); // Larger radius for spike
+                
+                // Dynamic arrays for styling spike points on the chart
+                const pointColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)');
+                const pointRadii = reportData.map(item => item.isSpike ? 8 : 4);
+                const pointBorderColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(75, 192, 192, 1)');
 
                 const ctx = document.getElementById('attendanceChart').getContext('2d');
                 new Chart(ctx, {
-                    type: 'line', // Line chart
+                    type: 'line', 
                     data: {
                         labels: labels,
                         datasets: [{
                             label: 'Visitor Count',
                             data: counts,
-                            borderColor: 'rgba(0, 123, 255, 1)', // Blue line
-                            backgroundColor: 'rgba(0, 123, 255, 0.2)', // Light blue fill
+                            borderColor: 'rgba(75, 192, 192, 1)', 
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             borderWidth: 2,
-                            tension: 0.1, // Slight curve to the line
+                            tension: 0.3,
                             fill: true,
-                            pointBackgroundColor: pointColors, // Use dynamic colors
-                            pointRadius: pointRadii,          // Use dynamic radii
-                            pointHoverRadius: 10              // Larger point on hover
+                            pointBackgroundColor: pointColors, 
+                            pointBorderColor: pointBorderColors,
+                            pointRadius: pointRadii,
+                            pointHoverRadius: 10
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false, // Allow chart to resize height
+                        maintainAspectRatio: false, 
                         scales: {
                             y: {
-                                beginAtZero: true, // Start Y-axis at 0
+                                beginAtZero: true,
                                 title: { display: true, text: 'Total Visitors' }
                             },
                             x: {
-                                title: { display: true, text: '<%= labelFormat %>' } // Use dynamic X-axis label
+                                title: { display: true, text: '<%= labelFormat %>' } 
                             }
                         },
                         plugins: {
-                            tooltip: { // Customize tooltips
+                            tooltip: {
                                 callbacks: {
                                     title: function(context) { return context[0].label; },
                                     label: function(context) { return `Visitors: ${context.parsed.y}`; }
@@ -129,8 +245,7 @@
                     }
                 });
             </script>
-        <% } else if (attendance_data && attendance_data.length === 0) { %>
-            <%# Message if data exists but is empty (valid query, no results) %>
+       <% } else if (attendance_data && attendance_data.length === 0) { %>
             <p style="text-align: center; font-weight: bold; margin-top: 2em;">No attendance data found for the selected criteria.</p>
         <% } %>
         <%# If attendance_data is null, nothing is displayed (initial page load) %>
