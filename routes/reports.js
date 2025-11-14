@@ -272,7 +272,7 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
 router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
     try {
         const defaultDate = new Date().toISOString().substring(0, 10);
-        res.render('Closure-impact-report', {
+        res.render('closure-impact-report', {
             selected_date: defaultDate,
             report_data: null,
             chartTitle: '',
@@ -280,7 +280,7 @@ router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) 
         });
     } catch (error) {
         console.error("Error loading closure impact report page:", error);
-        res.render('Closure-impact-report', {
+        res.render('closure-impact-report', {
             selected_date: new Date().toISOString().substring(0, 10),
             report_data: null,
             chartTitle: '',
@@ -351,7 +351,7 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
         const [reportData] = await pool.query(reportQuery, [year]);
 
         // 4. Render View with Data
-        res.render('Closure-impact-report', {
+        res.render('closure-impact-report', {
             selected_date: selected_date, // Pass the "2025" string back
             report_data: reportData,
             chartTitle: chartTitle,
@@ -360,7 +360,7 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
 
     } catch (error) {
         console.error("Error generating closure impact report:", error);
-        res.render('Closure-impact-report', {
+        res.render('closure-impact-report', {
             selected_date: selected_date, // Pass back the submitted year
             report_data: null,
             chartTitle: '',
