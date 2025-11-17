@@ -6,78 +6,78 @@
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
- margin: 0;
+            margin: 0;
             background-color: #f4f4f9;
             color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
- }
+        }
         h1 {
             font-weight: bold;
- margin: 0;
+            margin: 0;
         }
         .receipt-container {
             width: 400px;
- background: #ffffff;
+            background: #ffffff;
             border: 1px solid #ccc;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             padding: 2em;
             box-sizing: border-box;
- }
+        }
         .receipt-header {
             text-align: center;
- border-bottom: 2px dashed #333;
+            border-bottom: 2px dashed #333;
             padding-bottom: 1em;
             margin-bottom: 1em;
         }
         .receipt-header p {
             margin: 4px 0;
- font-size: 0.9em;
+            font-size: 0.9em;
         }
         .receipt-item {
             display: flex;
- justify-content: space-between;
+            justify-content: space-between;
             margin-bottom: 0.75em;
             font-size: 0.95em;
         }
         .receipt-item .label {
             font-weight: bold;
- }
+        }
         .receipt-item .value {
             text-align: right;
- }
+        }
         .receipt-total {
             border-top: 2px solid #333;
- margin-top: 1.5em;
+            margin-top: 1.5em;
             padding-top: 1em;
         }
         .receipt-total .receipt-item .label,
         .receipt-total .receipt-item .value {
             font-size: 1.2em;
- font-weight: bold;
+            font-weight: bold;
             color: #000;
         }
         .receipt-footer {
             text-align: center;
- font-size: 0.85em;
+            font-size: 0.85em;
             margin-top: 2em;
             border-top: 2px dashed #333;
             padding-top: 1em;
- }
+        }
         .member-details {
             border-top: 1px solid #eee;
- margin-top: 1.5em;
+            margin-top: 1.5em;
             padding-top: 1em;
         }
         .member-details h3 {
             margin-top: 0;
- text-align: center;
+            text-align: center;
         }
         .close-button {
             display: block;
- width: 400px;
+            width: 400px;
             box-sizing: border-box;
             padding: 12px 20px;
             background-color: #007bff;
@@ -86,16 +86,16 @@
             cursor: pointer;
             border-radius: 4px;
             font-size: 1em;
- font-weight: bold;
+            font-weight: bold;
             text-decoration: none;
             text-align: center;
             margin-top: 1.5em;
             font-family: sans-serif;
- /* Use a cleaner font for the button */
+            /* Use a cleaner font for the button */
         }
         .close-button:hover {
             background-color: #0056b3;
- }
+        }
     </style>
 </head>
 <body>
@@ -109,135 +109,103 @@
 
         <div class="receipt-body">
             <div class="receipt-item">
-
-   <span class="label">Transaction ID:</span>
-            <span class="value">
-                <%= receipt.visit_group_id.substring(0, 8).toUpperCase() %>
-            </span>
-        </div>
+                <%# Display the clean 8-char Public Transaction ID %>
+                <span class="label">Transaction ID:</span>
+                <span class="value">
+                    <%= (receipt.visit_group_id || '').substring(0, 8).toUpperCase() %>
+                </span>
+            </div>
             <div class="receipt-item">
                 <span class="label">Date & Time:</span>
                 <span class="value"><%= receipt.visit_date %></span>
-         
-   </div>
-         
-     <div class="receipt-item">
+            </div>
+            <div class="receipt-item">
                 <span class="label">Ticket Type:</span>
                 <span class="value"><%= receipt.ticket_name %></span>
             </div>
             <div class="receipt-item">
                 <span class="label">Cashier:</span>
-     
-           <span 
- class="value"><%= receipt.staff_name %></span>
+                <span class="value"><%= receipt.staff_name %></span>
             </div>
 
             <% if (receipt.is_member) { %>
                 <div class="member-details">
                     <h3>Member Details</h3>
                     
-<div class="receipt-item">
-           
-             <span class="label">Member Name:</span>
+                    <div class="receipt-item">
+                        <span class="label">Member Name:</span>
                         <span class="value"><%= receipt.member_name %></span>
                     </div>
                     <div class="receipt-item">
-     
-            
-            <%# CHANGED: Show public member ID %>
-        <span class="label">Member ID:</span>
-                    <span class="value"><%= receipt.member_id.substring(0, 8).toUpperCase() %></span>
-                </div>
+                        <%# Display the clean 8-char Public Member ID %>
+                        <span class="label">Member ID:</span>
+                        <span class="value"><%= (receipt.member_id || '').substring(0, 8).toUpperCase() %></span>
+                    </div>
                     <div class="receipt-item">
-           
-            
-  <span class="label">Member Type:</span>
+                        <span class="label">Member Type:</span>
                         <span class="value"><%= receipt.member_type %></span>
                     </div>
                     <div class="receipt-item">
-                 
-       <span class="label">Phone:</span>
-    
-                     <span class="value"><%= receipt.member_phone %></span>
+                        <span class="label">Phone:</span>
+                        <span class="value"><%= receipt.member_phone %></span>
                     </div>
 
                     <% if (receipt.subMembers && receipt.subMembers.length > 0) { %>
                         <div class="receipt-item">
-    
-                         <span class="label">Group Members:</span>
+                            <span class="label">Group Members:</span>
                             <span class="value"><%= receipt.subMembers.length %> Added</span>
                         </div>
-                  
-       <% receipt.subMembers.forEach(sub => { %>
+                        <% receipt.subMembers.forEach(sub => { %>
                             <div class="receipt-item" style="padding-left: 2em;">
                                 <span class="label">- <%= sub.first_name %> <%= sub.last_name %></span>
-                    
-             <%# CHANGED: Show public member ID for sub-members %>
-             <span class="value">ID: <%= sub.membership_id.substring(0, 8).toUpperCase() %></span>
+                                <%# Display the clean 8-char Public Sub-Member ID %>
+                                <span class="value">ID: <%= (sub.membership_id || '').substring(0, 8).toUpperCase() %></span>
                             </div>
-                        <% });
- %>
-                    </div>
+                        <% }); %>
+                    <% } %>
+                </div>
 
                 <div class="receipt-total">
-            
-        <div class="receipt-item">
-                    
-     <span class="label">TOTAL:</span>
+                    <div class="receipt-item">
+                        <span class="label">TOTAL:</span>
                         <span class="value">$0.00</span>
                     </div>
                 </div>
-     
-           
             <% } else { %>
-  
-               <div class="member-details">
+                <div class="member-details">
                     <h3>Payment Details</h3>
                     <div class="receipt-item">
-              
-          <span class="label">Base Price:</span>
-                 
-       <span class="value">$<%= receipt.base_price.toFixed(2) %></span>
+                        <span class="label">Base Price:</span>
+                        <span class="value">$<%= receipt.base_price.toFixed(2) %></span>
                     </div>
                     <div class="receipt-item">
-                    
-    <span class="label">Discount (<%= receipt.promo_applied %>):</span>
-                     
-     <span class="value">-$<%= receipt.discount_amount.toFixed(2) %></span>
+                        <span class="label">Discount (<%= receipt.promo_applied %>):</span>
+                        <span class="value">-$<%= receipt.discount_amount.toFixed(2) %></span>
                     </div>
                 </div>
 
                 <div class="receipt-total">
-            
-        <div class="receipt-item">
-                    
-     <span class="label">TOTAL:</span>
+                    <div class="receipt-item">
+                        <span class="label">TOTAL:</span>
                         <span class="value">$<%= receipt.total_cost.toFixed(2) %></span>
                     </div>
                 </div>
-   
-         <% } %>
+            <% } %>
         </div>
 
         <div class="receipt-footer">
- 
             <p>Thank you for visiting Primus Theme Park!</p>
             <p>Have a magical day!</p>
         </div>
     </div>
 
     <% if (user && typeof fromLogVisit !== 'undefined' && fromLogVisit) { %>
-        <a href="/visits/new" class="close-button">Log New 
-Visit</a>
-    
+        <a href="/visits/new" class="close-button">Log New Visit</a>
     <% } else if (user) { %>
-        <%# This link is now broken as receipt.member_id is a UUID %>
-        <%# We need to fix this by having the route pass the public_id %>
-        <%# For now, just redirect to the main members list %>
-        <a href="/members" class="close-button">&laquo Back to 
- Members List</a>
-    
+        <%# For employee viewing history %>
+        <a href="/members" class="close-button">&laquo Back to Members List</a>
     <% } else if (member) { %>
+        <%# For member viewing history %>
         <a href="/member/history" class="close-button" style="background-color: #17a2b8;">&laquo Back to My History</a>
     <% } %>
 

@@ -16,17 +16,16 @@ const {
 // GET /visits/new
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
-        // ADDED public_ticket_type_id
+        // 1. Fetch Ticket Types
         const [ticketTypes] = await pool.query(
             "SELECT ticket_type_id, public_ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
         );
 
-        // --- MODIFIED: Fetch all member details for JS ---
-        // ADDED public_membership_id
+        // 2. Fetch Active Members
         const [activeMembers] = await pool.query(
             `SELECT 
                 membership_id, 
-                public_membership_id, -- ADDED
+                public_membership_id, 
                 primary_member_id, 
                 first_name, 
                 last_name, 
@@ -37,21 +36,43 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
              ORDER BY last_name, first_name`
         );
 
+        // 3. Fetch Current Promo
         const [promos] = await pool.query(
             "SELECT discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1"
         );
         const currentDiscount = (promos.length > 0) ? promos[0].discount_percent : 0;
 
+        // --- NEW: Handle Ticket Lookup Search ---
+        let foundTickets = null;
+        const ticketSearchTerm = req.query.ticket_search || '';
+
+        if (ticketSearchTerm) {
+            const searchSql = `
+                SELECT pt.*, tt.type_name 
+                FROM prepaid_tickets pt
+                JOIN ticket_types tt ON pt.ticket_type_id = tt.ticket_type_id
+                WHERE (pt.email LIKE ? OR pt.phone_number LIKE ?) 
+                AND pt.is_redeemed = FALSE
+                ORDER BY pt.purchase_date DESC
+            `;
+            const searchPattern = `%${ticketSearchTerm}%`;
+            const [results] = await pool.query(searchSql, [searchPattern, searchPattern]);
+            foundTickets = results;
+        }
+        // ----------------------------------------
+
         res.render('log-visit', {
-            error: req.session.error, // Pass flash error
-            success: req.session.success, // Pass flash success
-            ticketTypes: ticketTypes, // Now contains public_ticket_type_id
-            activeMembers: activeMembers, // Pass full member list (now contains public_membership_id)
+            error: req.session.error,
+            success: req.session.success,
+            ticketTypes: ticketTypes,
+            activeMembers: activeMembers,
             currentDiscount: currentDiscount,
-            normalizePhone: normalizePhone
+            normalizePhone: normalizePhone,
+            // Pass search results to view
+            foundTickets: foundTickets,
+            ticketSearchTerm: ticketSearchTerm
         });
 
-        // Clear flash messages
         req.session.error = null;
         req.session.success = null;
 
@@ -63,7 +84,9 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
             ticketTypes: [],
             activeMembers: [],
             currentDiscount: 0,
-            normalizePhone: (phone) => phone || ""
+            normalizePhone: (phone) => phone || "",
+            foundTickets: null,
+            ticketSearchTerm: ""
         });
     }
 });
@@ -306,8 +329,9 @@ router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res)
             visit_date: formatReceiptDate(visit_date),
             ticket_name: ticketType[0].type_name,
             base_price: parseFloat(ticket.base_price),
-            discount_amount: parseFloat(ticket.discount_amount),
-            total_cost: parseFloat(ticket.base_price) - parseFloat(ticket.discount_amount),
+            // MODIFIED: Apply full base price as discount to show $0.00 due
+            discount_amount: parseFloat(ticket.base_price),
+            total_cost: 0.00,
             promo_applied: 'Prepaid E-Ticket',
             is_member: false,
             staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,

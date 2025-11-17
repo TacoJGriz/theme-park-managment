@@ -111,17 +111,18 @@
         <div class="full-width">
             <h3>Guest Information & Payment</h3>
             <div style="margin-bottom: 1.5em;">
-          
-       <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                 <%# REMOVED 'required' attribute %>
+                 <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="name@example.com">
             </div>
             
             <div style="margin-bottom: 1.5em;">
-                <label for="phone_number">Phone Number (Optional):</label>
+                <%# REMOVED '(Optional)' text since both are technically optional now %>
+                <label for="phone_number">Phone Number:</label>
                 
- <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
-                <small><i>Enter either an Email or Phone Number for ticket delivery.</i></small>
-            </div>
+                <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
+                <small><i>Enter <strong>either</strong> an Email or Phone Number or <strong>both</strong> for ticket delivery.</i></small>
+            </div> 
             <div class="payment-choice">
                 <label>
                     <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>

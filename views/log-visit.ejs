@@ -6,227 +6,224 @@
     <style>
         body {
             font-family: sans-serif;
- margin: 0;
+            margin: 0;
             background-color: #f4f4f9;
         }
         h1 {
             color: #444;
- text-align: center;
+            text-align: center;
             margin-top: 1em;
         }
         form {
             max-width: 500px;
- margin: 2em auto;
+            margin: 2em auto;
             background: white;
             padding: 2.5em;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
+        }
 
         form > div {
             margin-bottom: 1.5em;
- }
+        }
 
         label {
             display: block;
- margin-bottom: 5px;
+            margin-bottom: 5px;
             font-weight: bold;
         }
         input, select {
             width: 100%;
- padding: 10px;
+            padding: 10px;
             box-sizing: border-box;
             border-radius: 4px;
             border: 1px solid #ccc;
- }
+        }
 
         /* MODIFIED: Styling for the new search grid */
         #memberSearchGrid {
             display: grid;
- grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 1em;
             margin-bottom: 1em;
         }
         #memberSearchGrid > div {
              margin-bottom: 0;
- /* Remove default div margin */
+            /* Remove default div margin */
         }
-        #memberSearchEmailField {
-            grid-column: 1 / -1;
- }
-        /* END MODIFICATION */
+        /* REMOVED: #memberSearchEmailField rule so it fits in the 2x2 grid */
 
         .price-display {
             background-color: #f9f9f9;
- border: 1px solid #eee;
+            border: 1px solid #eee;
             border-radius: 8px;
             padding: 1em;
             margin-top: 1.5em;
- }
+        }
         .price-display h3 {
             margin-top: 0;
- border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
             padding-bottom: 0.5em;
         }
         .price-display p {
             display: flex;
- justify-content: space-between;
+            justify-content: space-between;
             margin: 0.5em 0;
             font-size: 1.1em;
         }
         .price-display .final-price {
             font-weight: bold;
- font-size: 1.3em;
+            font-size: 1.3em;
             color: #28a745;
             border-top: 2px solid #28a745;
             padding-top: 0.5em;
             margin-top: 0.5em;
- }
+        }
 
         button {
             padding: 12px 20px;
- background-color: #28a745;
+            background-color: #28a745;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 4px;
             font-size: 1em;
             width: 100%;
- }
+        }
         .error {
             color: #d9534f;
- font-weight: bold;
+            font-weight: bold;
             background-color: #f2dede;
             padding: 1em;
             border-radius: 4px;
             margin-bottom: 15px;
- }
+        }
 
         /* --- NEW: Success Message Style --- */
         .success {
             color: #155724;
- background-color: #d4edda;
+            background-color: #d4edda;
             border-color: #c3e6cb;
             padding: 1em;
             border-radius: 4px;
             margin-bottom: 15px;
             font-weight: bold;
- }
+        }
 
         .cancel-link {
             display: block;
- margin-top: 1em;
+            margin-top: 1em;
             text-align: center;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
- }
+        }
         .cancel-link:hover {
             text-decoration: underline;
- }
+        }
 
         /* --- MODIFIED: Member Checklist Styles --- */
         #memberSelectionArea {
             background: #f8f9fa;
- border: 1px solid #dee2e6;
+            border: 1px solid #dee2e6;
             padding: 1em;
             border-radius: 4px;
             margin-top: 1em;
- }
+        }
         
         /* MODIFIED: Use flexbox for alignment */
         .member-checklist-label {
             display: flex;
- /* <-- Use flexbox */
+            /* <-- Use flexbox */
             align-items: flex-start;
- /* <-- Align checkbox to the top */
+            /* <-- Align checkbox to the top */
             padding: 10px;
- border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
         }
         .member-checklist-label:last-child {
             border-bottom: none;
- }
+        }
         .member-checklist-label:hover {
             background-color: #e9ecef;
- }
+        }
         .member-checklist-label input {
             width: auto;
- margin-right: 10px;
+            margin-right: 10px;
             margin-top: 5px; /* <-- Add margin to align with text */
         }
         
         /* --- NEW CSS FOR MEMBER DETAILS --- */
         .member-details {
             display: flex;
- flex-direction: column; /* Stack info vertically */
+            flex-direction: column; /* Stack info vertically */
             flex-grow: 1;
- /* Take remaining space */
+            /* Take remaining space */
             word-break: break-all;
- /* Break long emails */
+            /* Break long emails */
         }
         .member-name {
             font-weight: bold;
- font-size: 1.1em;
+            font-size: 1.1em;
             color: #333;
             margin-bottom: 4px;
         }
         .member-info {
             font-size: 0.9em;
- color: #555;
+            color: #555;
             line-height: 1.4;
         }
         /* --- END NEW CSS --- */
 
         .checklist-controls {
             padding-top: 10px;
- margin-top: 10px;
+            margin-top: 10px;
             border-top: 2px solid #ccc;
         }
         .checklist-controls button {
             background: none;
- border: none;
+            border: none;
             color: #007bff;
             cursor: pointer;
             font-weight: bold;
             padding: 5px;
             width: auto;
- }
+        }
 
         /* --- START: ADDED TAB STYLES --- */
         .tab-container {
             display: flex;
- border-bottom: 2px solid #ccc;
+            border-bottom: 2px solid #ccc;
             margin-bottom: 1.5em;
         }
         .tab-btn {
             padding: 1em 1.5em;
- cursor: pointer;
+            cursor: pointer;
             background: #f1f1f1;
             border: 1px solid #ccc;
             border-bottom: none;
             margin-right: 5px;
             border-radius: 4px 4px 0 0;
             font-weight: bold;
- font-size: 1em;
+            font-size: 1em;
         }
         .tab-btn.active {
             background: #fff;
- border-bottom: 2px solid #fff;
+            border-bottom: 2px solid #fff;
             position: relative;
             top: 2px;
         }
         .tab-content {
             display: none;
- /* Hide all tabs by default */
+            /* Hide all tabs by default */
         }
         .tab-content.active {
             display: block;
- /* Show active tab */
+            /* Show active tab */
         }
         .redeem-form-grid {
             display: grid;
- grid-template-columns: 3fr 1fr;
+            grid-template-columns: 3fr 1fr;
             gap: 1em;
             align-items: flex-end;
         }
@@ -242,109 +239,142 @@
             <h1>Log Park Entry</h1>
 
             <% if (typeof error !== 'undefined' && error) { %>
-   
-             <p class="error"><%= error %></p>
+               <p class="error"><%= error %></p>
             <% } %>
             <% if (typeof success !== 'undefined' && success) { %>
-
-            <p class="success"><%= success %></p>
+               <p class="success"><%= success %></p>
             <% } %>
 
             <div class="tab-container">
-       
-         <div class="tab-btn active" data-tab="standard">Log Standard Ticket</div>
+                <div class="tab-btn active" data-tab="standard">Log Standard Ticket</div>
                 <div class="tab-btn" data-tab="redeem">Redeem E-Ticket</div>
             </div>
         </form>
 
         <div id="tab-standard" class="tab-content active" style="margin-top: -3.5em;">
-            <form action="/visits" method="POST" id="logVisitForm" style="margin: 0;
- box-shadow: none; padding-top: 0;">
+            <form action="/visits" method="POST" id="logVisitForm" style="margin: 0; box-shadow: none; padding-top: 0;">
                 <div>
                     <label for="ticket_type_id">Ticket Type:</label>
                     <select id="ticket_type_id" name="ticket_type_id" required>
                         <option value="" selected disabled>-- Select a ticket type --</option>
-    
-                    <%
-                        ticketTypes.forEach(type => { %>
+                        <% ticketTypes.forEach(type => { %>
                             <option
-                         
-       <%# The value is the internal ticket_type_id, which is secure in a form POST %>
-       value="<%= type.ticket_type_id %>"
+                                value="<%= type.ticket_type_id %>"
                                 data-price="<%= type.base_price %>"
                                 data-is-member="<%= type.is_member_type %>"
-                       
-     >
+                            >
                             <%= type.type_name %>
                             </option>
-                        <% });
-            
-            %>
+                        <% }); %>
                     </select>
                 </div>
 
                 <div id="memberSelectBlock" style="display: none;">
                     
-             
-                   <div id="memberSearchGrid">
+                    <div id="memberSearchGrid">
                         <div>
                             <%# CHANGED: Label now references public ID %>
                             <label for="memberSearchID">Search by Member ID:</label>
                             <input type="text" id="memberSearchID" placeholder="Type Member ID...">
-   
-                     </div>
+                        </div>
                         <div>
                             <label for="memberSearchPhone">Search by Phone:</label>
-                        
-     <input type="tel" id="memberSearchPhone" placeholder="Type phone number...">
+                            <input type="tel" id="memberSearchPhone" placeholder="Type phone number...">
                         </div>
-                        <div id="memberSearchEmailField">
+                        <div>
+                            <label for="memberSearchName">Search by Name:</label>
+                            <input type="text" id="memberSearchName" placeholder="Type name...">
+                        </div>
+                        <div>
                             <label for="memberSearchEmail">Search by Email:</label>
-           
-                     <input type="email" id="memberSearchEmail" placeholder="Type email...">
+                            <input type="email" id="memberSearchEmail" placeholder="Type email...">
                         </div>
                     </div>
                     
-               
-     <div id="memberSelectionArea">
-                        <p style="text-align: center;
- color: #6c757d;"><i>Enter search criteria to find members.</i></p>
+                    <div id="memberSelectionArea">
+                        <p style="text-align: center; color: #6c757d;"><i>Enter search criteria to find members.</i></p>
                     </div>
                 </div>
                 <div class="price-display">
                     <h3>Calculated Price</h3>
-                  
-  
- <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
+                    <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
                     <p><span>Promotion:</span> <span id="priceDiscount">$ --.--</span></p>
-
                     <p class="final-price"><span>Final Price:</span> <span id="priceFinal">$ --.--</span></p>
                 </div>
 
-
                 <br>
-              
-  
- <button type="submit">Log Visit</button>
+                <button type="submit">Log Visit</button>
                 <a href="/dashboard" class="cancel-link">Cancel</a>
             </form>
         </div>
 
         <div id="tab-redeem" class="tab-content" style="margin-top: -3.5em;">
-            <form action="/visits/redeem" method="POST" style="margin: 0;
- box-shadow: none; padding-top: 0;">
+            <form action="/visits/redeem" method="POST" style="margin: 0; box-shadow: none; padding-top: 0; border-bottom: 1px solid #eee; padding-bottom: 2em; margin-bottom: 2em;">
                 <div class="redeem-form-grid">
                     <div>
                         <label for="ticket_code">E-Ticket Code:</label>
-                        <input type="text" id="ticket_code" name="ticket_code" required>
-      
- 
-              </div>
-                    <button type="submit" style="padding: 10px;
- background-color: #28a745;">Redeem Ticket</button>
+                        <input type="text" id="ticket_code" name="ticket_code" required placeholder="Scan or enter UUID...">
+                    </div>
+                    <button type="submit" style="padding: 10px; background-color: #28a745;">Redeem Ticket</button>
                 </div>
-                <a href="/dashboard" class="cancel-link" style="margin-top: 2em;">Cancel</a>
             </form>
+
+            <div style="background-color: #e9ecef; padding: 1.5em; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #495057;">Lookup Lost Ticket</h3>
+                <p style="font-size: 0.9em; margin-bottom: 1em;">If a guest cannot find their ticket, search by their email or phone number.</p>
+                
+                <form action="/visits/new" method="GET" style="box-shadow: none; padding: 0; background: transparent; margin: 0;">
+                    <input type="hidden" name="active_tab" value="redeem">
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" name="ticket_search" placeholder="Email or Phone..." value="<%= typeof ticketSearchTerm !== 'undefined' ? ticketSearchTerm : '' %>" required>
+                        <button type="submit" style="width: auto; background-color: #007bff;">Search</button>
+                        <% if (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) { %>
+                            <a href="/visits/new?active_tab=redeem" style="padding: 10px; color: #6c757d; text-decoration: none; align-self: center;">Clear</a>
+                        <% } %>
+                    </div>
+                </form>
+
+                <% if (typeof foundTickets !== 'undefined' && foundTickets !== null) { %>
+                    <div style="margin-top: 1.5em; background: white; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
+                        <% if (foundTickets.length === 0) { %>
+                            <p style="padding: 1em; margin: 0; font-style: italic; text-align: center;">No unredeemed tickets found.</p>
+                        <% } else { %>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                                <thead style="background: #dee2e6;">
+                                    <tr>
+                                        <th style="padding: 8px; text-align: left;">Date</th>
+                                        <th style="padding: 8px; text-align: left;">Type</th>
+                                        <th style="padding: 8px; text-align: left;">Contact</th>
+                                        <th style="padding: 8px; text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% foundTickets.forEach(t => { %>
+                                        <tr style="border-top: 1px solid #eee;">
+                                            <td style="padding: 8px;"><%= new Date(t.purchase_date).toLocaleDateString() %></td>
+                                            <td style="padding: 8px; font-weight: bold;"><%= t.type_name %></td>
+                                            <td style="padding: 8px;">
+                                                <%= t.email || '' %><br>
+                                                <%= t.phone_number || '' %>
+                                            </td>
+                                            <td style="padding: 8px; text-align: right;">
+                                                <button type="button" 
+                                                    onclick="selectTicket('<%= t.ticket_code %>')"
+                                                    style="padding: 4px 8px; font-size: 0.8em; width: auto; background-color: #17a2b8;">
+                                                    Select
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+
+            <a href="/dashboard" class="cancel-link" style="margin-top: 2em;">Cancel</a>
         </div>
     </div>
 
@@ -352,54 +382,52 @@
         // --- Pass data from EJS to JavaScript ---
         const ticketTypeData = new Map();
       
- 
-  <% ticketTypes.forEach(type => { %>
+        <% ticketTypes.forEach(type => { %>
             ticketTypeData.set('<%= type.ticket_type_id %>', {
                 price: parseFloat('<%= type.base_price %>'),
                 isMember: Boolean(<%= type.is_member_type %>)
             });
-        <% });
-        %>
-        const currentDiscountPercent = parseFloat('<%= 
-currentDiscount %>') || 0;
-        // --- NEW: Pass full member list ---
+        <% }); %>
+        
+        const currentDiscountPercent = parseFloat('<%= currentDiscount %>') || 0;
         const allActiveMembers = <%- JSON.stringify(activeMembers) %>;
-        // Function to normalize phone numbers (passed from server)
         const normalizePhone = (phone) => (phone || "").replace(/\D/g, '');
 
-        // --- NEW: Build member lookup maps (REMOVED phone search map) ---
+        // --- Build member lookup maps ---
         const memberDataMap = new Map();
- // memberId -> memberObject
         const memberGroupMap = new Map();
- // primaryId -> [member Objects]
 
         allActiveMembers.forEach(member => {
-            // Add to data map
             memberDataMap.set(member.membership_id, member);
-
-            // Add to group map
             const primaryId = member.primary_member_id || member.membership_id;
-       
-     if (!memberGroupMap.has(primaryId)) {
-          
-       memberGroupMap.set(primaryId, []);
+            if (!memberGroupMap.has(primaryId)) {
+                memberGroupMap.set(primaryId, []);
             }
             memberGroupMap.get(primaryId).push(member);
         });
- // --- Get DOM Elements ---
-        const ticketSelect = document.getElementById('ticket_type_id');
- const memberSelectBlock = document.getElementById('memberSelectBlock');
 
-        // --- MODIFIED: Get all three new search inputs ---
+        // --- Get DOM Elements ---
+        const ticketSelect = document.getElementById('ticket_type_id');
+        const memberSelectBlock = document.getElementById('memberSelectBlock');
+
+        // --- MODIFIED: Get all four search inputs ---
         const memberSearchIDInput = document.getElementById('memberSearchID');
- const memberSearchPhoneInput = document.getElementById('memberSearchPhone');
+        const memberSearchPhoneInput = document.getElementById('memberSearchPhone');
         const memberSearchEmailInput = document.getElementById('memberSearchEmail');
+        const memberSearchNameInput = document.getElementById('memberSearchName'); // ADDED
         
         const memberSelectionArea = document.getElementById('memberSelectionArea');
 
         const priceBaseEl = document.getElementById('priceBase');
         const priceDiscountEl = document.getElementById('priceDiscount');
- const priceFinalEl = document.getElementById('priceFinal');
+        const priceFinalEl = document.getElementById('priceFinal');
+
+        // --- Helper to Select Ticket from Lookup ---
+        function selectTicket(code) {
+            document.getElementById('ticket_code').value = code;
+            document.getElementById('ticket_code').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('ticket_code').style.borderColor = '#28a745';
+        }
 
         // --- Event Listener for Ticket Type ---
         ticketSelect.addEventListener('change', function() {
@@ -409,9 +437,7 @@ currentDiscount %>') || 0;
                 return;
             }
 
-      
- 
-      const ticket = ticketTypeData.get(selectedTypeId);
+            const ticket = ticketTypeData.get(selectedTypeId);
             if (!ticket) {
                 resetPriceDisplay();
                 return;
@@ -419,195 +445,190 @@ currentDiscount %>') || 0;
 
             if (ticket.isMember) {
                 memberSelectBlock.style.display = 'block';
-
- 
-                // memberSelect.required = true; // No longer a single select
                 updatePriceDisplay(0, 0, 0);
             } else {
                 memberSelectBlock.style.display = 'none';
-                // memberSelect.required = false;
-
-       
-         // --- MODIFIED: Clear all three search inputs ---
+                
+                // --- MODIFIED: Clear all search inputs ---
                 memberSearchIDInput.value = '';
                 memberSearchPhoneInput.value = '';
                 memberSearchEmailInput.value = '';
+                memberSearchNameInput.value = ''; // ADDED
                 
-             
-     clearMemberChecklist();
+                clearMemberChecklist();
 
                 const basePrice = ticket.price;
-                const
-                discountAmount = basePrice * (currentDiscountPercent / 100);
- const finalPrice = basePrice - discountAmount;
+                const discountAmount = basePrice * (currentDiscountPercent / 100);
+                const finalPrice = basePrice - discountAmount;
                 updatePriceDisplay(basePrice, discountAmount, finalPrice);
             }
         });
- // --- NEW: Multi-field search function ---
+
+        // --- NEW: Multi-field search function ---
         function performSearch() {
             // 1. Get and normalize all search terms
             const idTerm = memberSearchIDInput.value.trim();
- const phoneTerm = normalizePhone(memberSearchPhoneInput.value);
+            const phoneTerm = normalizePhone(memberSearchPhoneInput.value);
             const emailTerm = memberSearchEmailInput.value.trim().toLowerCase();
+            const nameTerm = memberSearchNameInput.value.trim().toLowerCase(); // ADDED
 
             // 2. If all fields are empty, clear the list and exit
-            if (!idTerm && !phoneTerm && !emailTerm) {
+            if (!idTerm && !phoneTerm && !emailTerm && !nameTerm) {
                 clearMemberChecklist();
- return;
+                return;
             }
 
             const matchedGroupIds = new Set();
- const combinedGroup = [];
+            const combinedGroup = [];
 
             // 3. Loop through the full member list to find matches
             allActiveMembers.forEach(member => {
                 // Get member's data for comparison
-                // CHANGED: Search public_membership_id
                 const memberID = (member.public_membership_id || '').toLowerCase();
                 const memberPhone = normalizePhone(member.phone_number);
-             
-     const memberEmail = (member.email || '').toLowerCase();
+                const memberEmail = (member.email || '').toLowerCase();
+                const memberName = `${member.first_name} ${member.last_name}`; // Construct full name
 
                 // Check for matches (only if a search term is present)
-                const idMatch = idTerm && memberID.startsWith(idTerm.toLowerCase()); // CHANGED
+                const idMatch = idTerm && memberID.startsWith(idTerm.toLowerCase());
                 const phoneMatch = phoneTerm && memberPhone.startsWith(phoneTerm);
                 const emailMatch = emailTerm && memberEmail.startsWith(emailTerm);
+                // ADDED: Name match
+                const nameMatch = nameTerm && memberName.toLowerCase().includes(nameTerm);
 
-   
-             if (idMatch || phoneMatch || emailMatch) {
+                if (idMatch || phoneMatch || emailMatch || nameMatch) {
                     // 4. A match! Find their primary group ID
                     const primaryId = member.primary_member_id || member.membership_id;
                     matchedGroupIds.add(primaryId);
-        
-         }
+                }
             });
- // 5. Build a single combined list of all members from all matched groups
+
+            // 5. Build a single combined list of all members from all matched groups
             matchedGroupIds.forEach(primaryId => {
                 const group = memberGroupMap.get(primaryId);
                 if (group) {
                     combinedGroup.push(...group);
-                
- }
+                }
             });
 
             combinedGroup.sort((a, b) => a.membership_id - b.membership_id);
- // 6. Build the checklist with the (now sorted) combined group
+            // 6. Build the checklist with the (now sorted) combined group
             buildMemberChecklist(combinedGroup);
- }
+        }
 
-        // --- NEW: Add event listeners to all three inputs ---
+        // --- NEW: Add event listeners to all inputs ---
         memberSearchIDInput.addEventListener('input', performSearch);
- memberSearchPhoneInput.addEventListener('input', performSearch);
+        memberSearchPhoneInput.addEventListener('input', performSearch);
         memberSearchEmailInput.addEventListener('input', performSearch);
+        memberSearchNameInput.addEventListener('input', performSearch); // ADDED
         
         // --- MODIFIED: Function to build the checklist ---
         function buildMemberChecklist(group) {
             if (!group || group.length === 0) {
-                // MODIFIED: Show "No results" message if group is empty
                 memberSelectionArea.innerHTML = '<p style="text-align: center; color: #dc3545;"><i>No members found.</i></p>';
- return;
+                return;
             }
 
             memberSelectionArea.innerHTML = '';
- // Clear
 
             group.forEach(member => {
                 const label = document.createElement('label');
                 label.className = 'member-checklist-label';
 
                 // Format the data for display
-                const memberID = member.membership_id; // This is the internal ID for the form value
-                const publicMemberID = member.public_membership_id; // This is for display
-        
-         const memberName = `${member.first_name} ${member.last_name}`;
-                const memberPhone = member.phone_number || 'N/A'; // Use 'N/A' for null/empty
-                const memberEmail = member.email || 'N/A'; // Use 'N/A' for null/empty
+                const memberID = member.membership_id; // Internal ID for form value
+                const publicMemberID = member.public_membership_id; // For display
+                const memberName = `${member.first_name} ${member.last_name}`;
+                const memberPhone = member.phone_number || 'N/A';
+                const memberEmail = member.email || 'N/A';
 
-                // Use innerHTML to create the new, structured layout
-            
-     label.innerHTML = `
+                label.innerHTML = `
                     <input type="checkbox" name="member_ids[]" value="${memberID}">
                     <div class="member-details">
                         <span class="member-name">${memberName}</span>
-                        <%# Show clean 8-char public ID %>
-                        <span 
- class="member-info">ID: ${publicMemberID.substring(0, 8).toUpperCase()}</span>
+                        <span class="member-info">ID: ${publicMemberID ? publicMemberID.substring(0, 8).toUpperCase() : 'N/A'}</span>
                         <span class="member-info">Phone: ${memberPhone}</span>
                         <span class="member-info">Email: ${memberEmail}</span>
                     </div>
                 `;
- memberSelectionArea.appendChild(label);
+                memberSelectionArea.appendChild(label);
             });
 
             // Add "Select All" / "Select None"
             const controls = document.createElement('div');
- controls.className = 'checklist-controls';
+            controls.className = 'checklist-controls';
             controls.innerHTML = `
                 <button type="button" id="selectAllBtn">Select All</button>
                 <button type="button" id="selectNoneBtn">Select None</button>
             `;
- memberSelectionArea.appendChild(controls);
+            memberSelectionArea.appendChild(controls);
 
             document.getElementById('selectAllBtn').addEventListener('click', () => {
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
             });
- document.getElementById('selectNoneBtn').addEventListener('click', () => {
+            document.getElementById('selectNoneBtn').addEventListener('click', () => {
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             });
- }
+        }
 
-        // --- Function to clear the checklist ---
         function clearMemberChecklist() {
-            // MODIFIED: Updated text
             memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d;"><i>Enter search criteria to find members.</i></p>';
- }
+        }
 
         function updatePriceDisplay(base, discount, final) {
             priceBaseEl.textContent = formatAsCurrency(base);
- priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
+            priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
             priceFinalEl.textContent = formatAsCurrency(final);
         }
 
         function resetPriceDisplay() {
             priceBaseEl.textContent = '$ --.--';
- priceDiscountEl.textContent = '$ --.--';
+            priceDiscountEl.textContent = '$ --.--';
             priceFinalEl.textContent = '$ --.--';
-
             memberSelectBlock.style.display = 'none';
- // --- MODIFIED: Clear all three search inputs ---
+            // --- MODIFIED: Clear all inputs ---
             memberSearchIDInput.value = '';
- memberSearchPhoneInput.value = '';
+            memberSearchPhoneInput.value = '';
             memberSearchEmailInput.value = '';
-            
+            memberSearchNameInput.value = ''; // ADDED
             clearMemberChecklist();
-}
+        }
 
         function formatAsCurrency(amount) {
             return `$${amount.toFixed(2)}`;
- }
+        }
 
-        // --- START: ADD TAB-SWITCHING SCRIPT ---
+        // --- TAB SWITCHING LOGIC ---
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('.tab-btn');
             const contents = document.querySelectorAll('.tab-content');
 
+            // NEW: Check URL params for active tab (from search)
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTabName = urlParams.get('active_tab');
+
+            if (activeTabName) {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                const targetTabBtn = document.querySelector(`.tab-btn[data-tab="${activeTabName}"]`);
+                const targetContent = document.getElementById(`tab-${activeTabName}`);
+                
+                if (targetTabBtn && targetContent) {
+                    targetTabBtn.classList.add('active');
+                    targetContent.classList.add('active');
+                }
+            }
+
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-            
- 
-        // Deactivate all
                     tabs.forEach(t => t.classList.remove('active'));
                     contents.forEach(c => c.classList.remove('active'));
-
-                    // Activate clicked
                     tab.classList.add('active');
-    
- 
-                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
                 });
             });
         });
- // --- END: ADD TAB-SWITCHING SCRIPT ---
     </script>
 </body>
 </html>
