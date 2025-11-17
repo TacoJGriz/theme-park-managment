@@ -157,7 +157,8 @@ font-weight: bold;
             <h3>My Membership</h3>
             <div class="info-pair">
                 <strong>Member ID:</strong>
-                <span><%= member.id %></span>
+                <%# Show clean 8-char public ID %>
+                <span><%= member.id.substring(0, 8).toUpperCase() %></span>
             </div>
       
       <div class="info-pair">

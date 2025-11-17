@@ -4,18 +4,32 @@
     <meta charset="UTF-8">
     <title>Activate Your Membership</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        form { max-width: 450px; width: 100%; background: white; padding: 2.5em; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { color: #444; text-align: center; margin-top: 0; margin-bottom: 1.5em; }
-        div { margin-bottom: 1.5em; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 1.5em; text-align: center; }
-        button { width: 100%; padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1.1em; font-weight: bold; }
-        button:hover { background-color: #218838; }
-        .info-note { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 1.5em; margin-bottom: 0; }
-        .info-note a { color: #007bff; text-decoration: none; font-weight: bold; }
-        .info-note a:hover { text-decoration: underline; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+ }
+        form { max-width: 450px; width: 100%; background: white; padding: 2.5em; border-radius: 8px;
+ box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #444; text-align: center;
+ margin-top: 0; margin-bottom: 1.5em; }
+        div { margin-bottom: 1.5em;
+ }
+        label { display: block; margin-bottom: 8px; font-weight: bold;
+ }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede;
+ padding: 1em; border-radius: 4px; margin-bottom: 1.5em; text-align: center; }
+        button { width: 100%;
+ padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1.1em; font-weight: bold;
+ }
+        button:hover { background-color: #218838;
+ }
+        .info-note { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 1.5em; margin-bottom: 0;
+ }
+        .info-note a { color: #007bff; text-decoration: none; font-weight: bold;
+ }
+        .info-note a:hover { text-decoration: underline;
+ }
     </style>
 </head>
 <body>
@@ -28,17 +42,20 @@
 
         <div>
             <label for="email">Membership Email:</label>
-            <input type="email" id="email" name="email" placeholder="Email given at purchase" required>
+            <input type="email" id="email" 
+ name="email" placeholder="Email given at purchase" required>
         </div>
         
         <div>
+            <%# CHANGED: Label and placeholder now refer to the public ID %>
             <label for="membership_id">Membership ID:</label>
             <input type="text" id="membership_id" name="membership_id" placeholder="Found on your member card or receipt" required>
         </div>
 
         <div>
             <label for="password">New Password:</label>
-            <input type="password" id="password" name="password" required>
+    
+         <input type="password" id="password" name="password" required>
         </div>
 
         <div>
@@ -49,8 +66,9 @@
         <button type="submit">Create Account</button>
 
         <p class="info-note">
-            Already have an account? 
-           <a href="/login">Log In</a> <%# MODIFIED: Points to global /login %>
+      
+       Already have an account?
+ <a href="/login">Log In</a> <%# MODIFIED: Points to global /login %>
         </p>
     </form>
 </body>

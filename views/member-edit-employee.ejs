@@ -4,60 +4,75 @@
     <meta charset="UTF-8">
     <title>Edit Member Profile</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        h1 small { color: #17a2b8; font-size: 0.7em; display: block; font-weight: normal; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+ }
+        h1 small { color: #17a2b8; font-size: 0.7em; display: block; font-weight: normal;
+ }
         form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
-            border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+ border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .form-grid { display: grid;
-            grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+ grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 10px;
+ }
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+ }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
         input[readonly] {
-            background-color: #e9ecef; /* Light grey background */
+            background-color: #e9ecef;
+ /* Light grey background */
             cursor: not-allowed;
-        }
+ }
         button { padding: 12px 20px; background-color: #17a2b8;
-            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+            color: white; border: none;
+ cursor: pointer; border-radius: 4px; font-size: 1em;
         }
-        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; }
+        .error { color: red; font-weight: bold;
+ background-color: #f2dede; padding: 1em; border-radius: 4px; }
         .full-width { grid-column: 1 / -1;}
         .cancel-link {
             display: inline-block;
-            margin-left: 15px;
+ margin-left: 15px;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
         }
-        .cancel-link:hover { text-decoration: underline; }
+        .cancel-link:hover { text-decoration: underline;
+ }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <% const isSubMember = member.primary_member_id; %>
+    <% const isSubMember = member.primary_member_id;
+ %>
     <h1>Edit Member Profile
-        <small>For: <%= member.first_name %> <%= member.last_name %> (ID: <%= member.membership_id %>)</small>
+        <%# Show clean 8-char public ID %>
+        <small>For: <%= member.first_name %> <%= member.last_name %> (ID: <%= member.public_membership_id.substring(0, 8).toUpperCase() %>)</small>
     </h1>
     
     <% if (typeof error !== 'undefined' && error) { %>
         <p class="error"><%= error %></p>
     <% } %>
     
-    <form action="/members/edit/<%= member.membership_id %>" method="POST">
+    <%# CHANGED: Action now uses public_membership_id %>
+    <form action="/members/edit/<%= member.public_membership_id %>" method="POST">
         <div class="form-grid">
             <div>
-                <label for="first_name">First Name:</label>
+                 <label for="first_name">First Name:</label>
                 <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
             </div>
             <div>
                 <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
+                <input type="text" id="last_name" name="last_name" value="<%= member.last_name 
+ %>" required>
             </div>
             
             <div class="full-width">
                  <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="<%= member.email %>" <%= isSubMember ? 'readonly' : '' %> required>
+                <input type="email" id="email" name="email" value="<%= member.email %>" <%= isSubMember ?
+ 'readonly' : '' %> required>
                 <% if (isSubMember) { %>
                     <small style="color: #555; font-style: italic;">Email and phone for sub-members are managed by the primary account holder.</small>
                 <% } %>
@@ -65,7 +80,8 @@
             
             <div>
                 <label for="phone_number">Phone Number:</label>
-                <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>" <%= isSubMember ? 'readonly' : '' %>>
+                <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>" <%= isSubMember ?
+ 'readonly' : '' %>>
             </div>
    
             <div>
@@ -73,9 +89,10 @@
                 <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
             </div>
         </div>
-        <br>
+         <br>
         <button type="submit">Save Changes</button>
-        <a href="/members<%= currentQueryString ? '?' + currentQueryString : '' %>" class="cancel-link">Cancel</a>
+        <a href="/members<%= currentQueryString ? '?'
+ + currentQueryString : '' %>" class="cancel-link">Cancel</a>
     </form>
 </body>
 </html>

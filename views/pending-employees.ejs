@@ -4,23 +4,32 @@
     <meta charset="UTF-8">
     <title>Pending Employee Approvals</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #fd7e14; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #fd7e14; color: white;
+ }
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
         .approve-button {
             background-color: #28a745;
-            color: white;
+ color: white;
             padding: 8px 12px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-        }
-        .approve-button:hover { background-color: #218838; }
+ }
+        .approve-button:hover { background-color: #218838;
+ }
     </style>
 </head>
 <body>
@@ -32,7 +41,8 @@
             <p style="color: green; font-weight: bold;"><%= success %></p>
         <% } %>
         <% if (typeof error !== 'undefined' && error) { %>
-            <p style="color: red; font-weight: bold;"><%= error %></p>
+            <p 
+ style="color: red; font-weight: bold;"><%= error %></p>
         <% } %>
 
         <table>
@@ -40,36 +50,46 @@
                 <tr>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Role to Add</th>
+         
+            <th>Role to Add</th>
                     <th>Hire Date</th>
                     <th>Location</th>
                     <th>Action</th>
                 </tr>
-            </thead>
+          
+    </thead>
             <tbody>
                 <% if (users.length === 0) { %>
                     <tr>
                         <td colspan="6" style="text-align: center;">There are no employees pending approval.</td>
-                    </tr>
+            
+         </tr>
                 <% } %>
                 <% users.forEach(targetUser => { %>
                     <tr>
                         <td><%= targetUser.first_name %> <%= targetUser.last_name %></td>
-                        <td><%= targetUser.email %></td>
+     
+                     <td><%= targetUser.email %></td>
                         <td><%= targetUser.employee_type %></td>
                         <td><%= targetUser.hire_date.toISOString().substring(0, 10) %></td>
-                        <td><%= targetUser.location_name || 'N/A' %></td>
+                        <td><%= targetUser.location_name 
+ || 'N/A' %></td>
                         <td>
                             <% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
-                                <form action="/employees/approve/<%= targetUser.employee_id %>" method="POST" onsubmit="return confirm('Are you sure you want to approve this employee?');">
+                                <%# CHANGED: Action now uses public_employee_id %>
+                                <form action="/employees/approve/<%= 
+ targetUser.public_employee_id %>" method="POST" onsubmit="return confirm('Are you sure you want to approve this employee?');">
                                 <button type="submit" class="approve-button">Approve</button>
                                 </form>
-                            <% } else { %>
+                      
+       <% } else { %>
                                 <span>(Pending Approval)</span>
                             <% } %>
                         </td>
-                    </tr>
-                <% }); %>
+   
+                   </tr>
+                <% });
+ %>
             </tbody>
         </table>
     </div>

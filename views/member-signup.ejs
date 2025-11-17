@@ -139,10 +139,12 @@
 <div class="plan-summary">
             <h2>You are purchasing:</h2>
    
+ 
          <p id="planName"><%= type.type_name %></p>
             <p id="planPrice">$<%= parseFloat(type.base_price).toFixed(2) %></p>
         </div>
 
+        <%# This hidden field securely sends the internal type_id %>
         <input type="hidden" name="type_id" value="<%= type.type_id %>">
 
         <div class="form-grid">
@@ -150,6 +152,7 @@
             <div>
            
     
+ 
   <label for="first_name">First Name:</label>
                 <input type="text" id="first_name" name="first_name" required>
  
@@ -159,7 +162,8 @@
                 <input type="text" id="last_name" name="last_name" required>
            
  </div>
-   
+  
+  
          <div>
                
  <label for="phone_number">Phone Number:</label>
@@ -168,7 +172,8 @@
             <div>
                 <label for="date_of_birth">Date of Birth:</label>
        
-    
+   
+  
       <input type="date" id="date_of_birth" name="date_of_birth" required>
             </div>
 
@@ -178,6 +183,7 @@
                 <label for="email">Email (This will be your username):</label>
                 <input type="email" id="email" name="email" required>
      
+  
     
     </div>
             <div>
@@ -188,6 +194,7 @@
             <div>
                 <label for="confirm_password">Confirm Password:</label>
   
+ 
     
            <input type="password" id="confirm_password" name="confirm_password" required>
           
@@ -197,26 +204,30 @@
                 <h3>Add Family Members</h3>
                 <p id="subMemberIntro"></p>
                 <div id="subMemberContainer">
-      
+  
+     
                </div>
                 <button type="button" id="addMemberBtn" class="add-member-btn">Add Member</button>
             </div>
             <div class="full-width">
                 <h3>Payment</h3>
                 
-         
+    
+      
         <div class="payment-choice">
         
             <label>
                         <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
                         Pay with Card
-                 
+           
+       
     </label>
              
        <label>
                         <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
                         Pay with Bank Account
-                    </label>
+               
+      </label>
   
                </div>
 
@@ -224,40 +235,47 @@
               <div id="cardPaymentGroup" class="payment-details-group">
                     <div class="form-grid">
                         <div>
-                       
+               
+         
      <label for="mock_card_brand">Card Brand:</label>
          
                    <select id="mock_card_brand" name="mock_card_brand">
                                 <option value="Visa">Visa</option>
-                              
+                      
+         
   <option value="Mastercard">Mastercard</option>
              
                    <option value="Amex">American Express</option>
                             </select>
                         </div>
-           
+   
+         
              <div>
    
                          <label for="mock_card_number">Card Number:</label>
                             <input type="text" id="mock_card_number" name="mock_card_number" placeholder="e.g., .... .... .... 4242">
-                     
+             
+         
     </div>
              
            <div>
                             <label for="mock_card_expiry">Expiration:</label>
                             <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
-            
+   
+          
              </div>
     
                     <div>
                             <label for="mock_card_cvv">Security Code:</label>
-                            <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="e.g., 123">
+                        
+     <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="e.g., 123">
  
                  
        </div>
                     </div>
                     <label class="checkbox-label">
-                        <input type="checkbox" name="save_payment_card" value="true">
+                        <input 
+ type="checkbox" name="save_payment_card" value="true">
          
                 Save 
 this card for future purchases or renewals.
@@ -269,17 +287,20 @@ this card for future purchases or renewals.
                         <div>
             
        
+ 
          <label for="mock_routing_number">Routing Number:</label>
                             <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="e.g., 000123456">
                         </div>
                         <div>
  
        
+ 
                      <label for="mock_account_number">Account Number:</label>
                             <input type="text" id="mock_account_number" name="mock_account_number" placeholder="e.g., ....7890">
                         </div>
               
-      </div>
+      
+ </div>
  
                     <label class="checkbox-label">
                         <input type="checkbox" name="save_payment_bank" value="true">
@@ -295,6 +316,7 @@ Clicking "Complete Purchase" will create your account.)</i></p>
         <button type="submit">Complete Purchase</button>
         <a href="/" class="cancel-link">Cancel</a>
   
+ 
  
   </form>
 
@@ -313,6 +335,7 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             
             // Sub-member elements
            
+ 
   const subMemberSection = document.getElementById('subMemberSection');
             const subMemberIntro = document.getElementById('subMemberIntro');
             const subMemberContainer = document.getElementById('subMemberContainer');
@@ -320,7 +343,8 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             let subMemberCount = 0;
 
             // ... (payment choice and validation elements remain the same) ...
-            const cardRadio 
+            const 
+ cardRadio 
  = document.getElementById('payWithCard');
             const bankRadio = document.getElementById('payWithBank');
             const cardGroup = document.getElementById('cardPaymentGroup');
@@ -330,12 +354,12 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             const cvvInput = document.getElementById('mock_card_cvv');
             const routingInput = document.getElementById('mock_routing_number');
             const accountInput = document.getElementById('mock_account_number');
-
-            // --- NEW: Multi-Member Logic ---
+ // --- NEW: Multi-Member Logic ---
             function updatePriceAndText() {
                 const totalMembers = 1 + subMemberCount;
  const additionalMembers = Math.max(0, totalMembers - membershipType.base_members);
-                const totalCost = membershipType.base_price + (additionalMembers * membershipType.additional_member_price);
+                // *** THIS IS THE FIX (parseFloat) ***
+                const totalCost = parseFloat(membershipType.base_price) + (additionalMembers * parseFloat(membershipType.additional_member_price));
  // Update price display
                 planPriceEl.textContent = `$${totalCost.toFixed(2)}`;
  // Update instructional text
@@ -365,20 +389,24 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                         <div>
                             <label for="sub_first_name_${memberIndex}">First Name:</label>
      
+ 
                         <input type="text" id="sub_first_name_${memberIndex}" name="sub_first_name[]" required>
                         </div>
                         <div>
-                         
+                        
+  
      <label for="sub_last_name_${memberIndex}">Last Name:</label>
                             <input type="text" id="sub_last_name_${memberIndex}" name="sub_last_name[]" required>
                         </div>
                         <div class="full-width">
-              
+           
+    
                <label for="sub_dob_${memberIndex}">Date of Birth:</label>
                             <input type="date" id="sub_dob_${memberIndex}" name="sub_dob[]" required>
                         </div>
                     </div>
-       
+   
+     
          `;
  // Add remove listener
                 formDiv.querySelector('.remove-member-btn').addEventListener('click', () => {
@@ -394,11 +422,11 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             if (membershipType.base_members > 1) {
                 // This is a multi-member pass
                 subMemberSection.style.display = 'block';
-                addMemberBtn.addEventListener('click', createSubMemberForm);
+ addMemberBtn.addEventListener('click', createSubMemberForm);
             } else {
                 // This is a single-member pass
                 updatePriceAndText();
-            }
+ }
             // --- *** END OF MODIFICATION *** ---
 
 
@@ -406,7 +434,8 @@ Clicking "Complete Purchase" will create your account.)</i></p>
             cardRadio.addEventListener('change', () => {
                 if (cardRadio.checked) {
                     cardGroup.style.display = 'block';
-                    bankGroup.style.display = 'none';
+         
+             bankGroup.style.display = 'none';
    
              }
             });
@@ -416,8 +445,7 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                     bankGroup.style.display = 'block';
                 }
             });
-
-            // --- Validation Logic (unchanged from before) ---
+ // --- Validation Logic (unchanged from before) ---
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/; // MM/YY
             const cvvRegex = /^\d{3,4}$/;
@@ -444,19 +472,22 @@ Clicking "Complete Purchase" will create your account.)</i></p>
 
                 // --- VALIDATE USER INFO & ACCOUNT ---
         
+ 
          const firstNameInput = document.getElementById('first_name');
                 const lastNameInput = document.getElementById('last_name');
                 const dobInput = document.getElementById('date_of_birth');
                 const emailInput = document.getElementById('email');
                 const passwordInput = document.getElementById('password');
-             
+            
+  
     const confirmPasswordInput = document.getElementById('confirm_password');
 
                 if (firstNameInput.value.trim() === '') {
                     isValid = false;
                     showError(firstNameInput, 'First name is required.');
                     if (!firstErrorField) firstErrorField = firstNameInput;
-    
+  
+   
              }
                 if (lastNameInput.value.trim() === '') {
                     isValid = false;
@@ -492,6 +523,7 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                 document.querySelectorAll('input[name="sub_first_name[]"]').forEach(input => {
                     if (input.value.trim() === '') {
                      
+ 
     isValid = false;
                         showError(input, 'First name is required.');
                         if (!firstErrorField) firstErrorField = input;
@@ -502,6 +534,7 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                         isValid = false;
                         showError(input, 'Last name is required.');
                     
+ 
      if (!firstErrorField) firstErrorField = input;
                     }
                 });
@@ -510,11 +543,11 @@ Clicking "Complete Purchase" will create your account.)</i></p>
                         isValid = false;
                         showError(input, 'Date of birth is required.');
                    
+ 
       if (!firstErrorField) firstErrorField = input;
                     }
                 });
-
-                // --- VALIDATE PAYMENT ---
+ // --- VALIDATE PAYMENT ---
                 if (cardRadio.checked) {
                     const cardDigits = cardInput.value.replace(/\D/g, '');
  if (cardDigits.length < 16) {

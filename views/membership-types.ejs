@@ -5,42 +5,42 @@
     <title>Manage Membership Types</title>
     <style>
         body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
+ margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 900px;
-margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-}
+ }
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-}
+ }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
-}
+ }
         th { background-color: #17a2b8; color: white;
-}
+ }
         tr:nth-child(even) { background-color: #f9f9f9;
-}
+ }
         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
-color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+ color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         .action-link { text-decoration: none;
-color: #007bff; font-weight: bold; }
+ color: #007bff; font-weight: bold; }
         .toggle-form { display: inline-block; margin-left: 10px;
-}
+ }
         .toggle-form button { background: none; border: none; cursor: pointer; font-weight: bold;
-text-decoration: underline; }
+ text-decoration: underline; }
         .status-active { color: #28a745;
-}
+ }
         .status-inactive { color: #dc3545;
-}
+ }
         .toggle-form .status-active { color: #dc3545;
-} /* Deactivate link */
+ } /* Deactivate link */
         .toggle-form .status-inactive { color: #28a745;
-} /* Activate link */
+ } /* Activate link */
         .message { padding: 1em; border-radius: 4px; margin-bottom: 1em;
-font-weight: bold; }
+ font-weight: bold; }
         .error { color: #d9534f; background-color: #f2dede;
-}
+ }
         .success { color: #155724; background-color: #d4edda;
-}
+ }
     </style>
 </head>
 <body>
@@ -60,55 +60,68 @@ font-weight: bold; }
                     <th>Type Name</th>
                     <th>Base Price</th>
                     <th>Base Members</th>
-                    <th>Add-on Price</th>
+          
+           <th>Add-on Price</th>
                     <th>Status</th>
            
          <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <% types.forEach(type => { %>
+         
+        <% types.forEach(type => { %>
                     <tr>
            
              <td><%= type.type_name %></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
-                        
+                 
+        
                         <td><%= type.base_members %></td>
                         <td>
                             <% if (type.additional_member_price) { %>
-                                $<%= parseFloat(type.additional_member_price).toFixed(2) %>
+           
+                     $<%= parseFloat(type.additional_member_price).toFixed(2) %>
                             <% } else { %>
                                 N/A
-                            <% } %>
+             
+                 <% } %>
                         </td>
 
                         <td>
                             <% if (type.is_active) { %>
    
+ 
                              <span class="status-active">Active</span>
                             <% } else { %>
                                 <span class="status-inactive">Inactive</span>
      
+ 
                        <% } %>
                         </td>
                         <td>
                            
- <a href="/memberships/types/edit/<%= type.type_id %>" class="action-link">Edit</a>
+ 
+                            <%# CHANGED: Link now uses public_type_id %>
+                            <a href="/memberships/types/edit/<%= type.public_type_id %>" class="action-link">Edit</a>
                             
-                            <form class="toggle-form" action="/memberships/types/toggle/<%= type.type_id %>" method="POST" onsubmit="return confirm('Are you sure?');">
+                            <%# CHANGED: Action now uses public_type_id %>
+                            <form class="toggle-form" action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST" onsubmit="return confirm('Are you sure?');">
                               
+ 
   <% if (type.is_active) { %>
                                     <button type="submit" class="status-active">Deactivate</button>
                                 <% } else { %>
                     
+ 
                 <button type="submit" class="status-inactive">Activate</button>
                                 <% } %>
                             </form>
                     
+ 
     </td>
                     </tr>
                 <% });
-%>
+ %>
             </tbody>
         </table>
     </div>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     canViewInventory,
@@ -23,10 +24,10 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
 
         const query = `
             SELECT 
-                v.vendor_id, v.vendor_name,
-                it.item_id, it.item_name,
+                v.vendor_id, v.vendor_name, v.public_vendor_id, -- ADDED public_vendor_id
+                it.item_id, it.item_name, it.public_item_id, -- ADDED public_item_id
                 COALESCE(i.count, 0) AS current_count,
-                ir.request_id AS pending_request_id,
+                ir.request_id, ir.public_request_id, -- ADDED public_request_id
                 ir.requested_count AS pending_count,
                 ir.requested_by_id
             FROM vendors v
@@ -45,10 +46,10 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
     }
 });
 
-// GET /inventory/request/edit/:request_id
-// This path is /request/edit/:request_id
-router.get('/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { request_id } = req.params;
+// GET /inventory/request/edit/:public_request_id
+// This path is /request/edit/:public_request_id
+router.get('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { public_request_id } = req.params; // CHANGED
     const { id: actorId } = req.session.user;
 
     try {
@@ -57,8 +58,8 @@ router.get('/request/edit/:request_id', isAuthenticated, canManageInventory, asy
             FROM inventory_requests ir
             JOIN item it ON ir.item_id = it.item_id
             JOIN vendors v ON ir.vendor_id = v.vendor_id
-            WHERE ir.request_id = ?
-        `, [request_id]);
+            WHERE ir.public_request_id = ? -- CHANGED
+        `, [public_request_id]); // CHANGED
 
         if (reqResult.length === 0) {
             return res.status(404).send('Request not found.');
@@ -80,16 +81,16 @@ router.get('/request/edit/:request_id', isAuthenticated, canManageInventory, asy
     }
 });
 
-// POST /inventory/request/edit/:request_id
-// This path is /request/edit/:request_id
-router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { request_id } = req.params;
+// POST /inventory/request/edit/:public_request_id
+// This path is /request/edit/:public_request_id
+router.post('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { public_request_id } = req.params; // CHANGED
     const { requested_count } = req.body;
     const { id: actorId } = req.session.user;
 
     let request; // For catch block
     try {
-        const [reqResult] = await pool.query('SELECT * FROM inventory_requests WHERE request_id = ?', [request_id]);
+        const [reqResult] = await pool.query('SELECT * FROM inventory_requests WHERE public_request_id = ?', [public_request_id]); // CHANGED
         if (reqResult.length === 0) {
             return res.status(404).send('Request not found.');
         }
@@ -105,7 +106,7 @@ router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, as
             throw new Error("Requested amount must be greater than zero.");
         }
 
-        await pool.query('UPDATE inventory_requests SET requested_count = ? WHERE request_id = ?', [requested_count, request_id]);
+        await pool.query('UPDATE inventory_requests SET requested_count = ? WHERE public_request_id = ?', [requested_count, public_request_id]); // CHANGED
         res.redirect('/inventory/requests');
 
     } catch (error) {
@@ -115,8 +116,8 @@ router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, as
             FROM inventory_requests ir
             JOIN item it ON ir.item_id = it.item_id
             JOIN vendors v ON ir.vendor_id = v.vendor_id
-            WHERE ir.request_id = ?
-        `, [request_id]);
+            WHERE ir.public_request_id = ? -- CHANGED
+        `, [public_request_id]); // CHANGED
 
         res.render('inventory-request-edit', {
             request: fullReqResult[0] || request,
@@ -125,23 +126,23 @@ router.post('/request/edit/:request_id', isAuthenticated, canManageInventory, as
     }
 });
 
-// GET /inventory/request/:vendor_id/:item_id
-// This path is /request/:vendor_id/:item_id
-router.get('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { vendor_id, item_id } = req.params;
+// GET /inventory/request/:public_vendor_id/:public_item_id
+// This path is /request/:public_vendor_id/:public_item_id
+router.get('/request/:public_vendor_id/:public_item_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { public_vendor_id, public_item_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
 
     try {
         const [itemResult] = await pool.query(`
             SELECT 
-                v.vendor_id, v.vendor_name, v.location_id,
-                it.item_id, it.item_name,
+                v.vendor_id, v.vendor_name, v.location_id, v.public_vendor_id, -- ADDED public_vendor_id
+                it.item_id, it.item_name, it.public_item_id, -- ADDED public_item_id
                 COALESCE(i.count, 0) AS current_count
             FROM vendors v
-            JOIN item it ON it.item_id = ?
+            JOIN item it ON it.public_item_id = ? -- CHANGED
             LEFT JOIN inventory i ON v.vendor_id = i.vendor_id AND it.item_id = i.item_id
-            WHERE v.vendor_id = ?
-        `, [item_id, vendor_id]);
+            WHERE v.public_vendor_id = ? -- CHANGED
+        `, [public_item_id, public_vendor_id]); // CHANGED
 
         if (itemResult.length === 0) {
             return res.status(404).send('Item or Vendor not found.');
@@ -160,28 +161,29 @@ router.get('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, 
     }
 });
 
-// POST /inventory/request/:vendor_id/:item_id
-// This path is /request/:vendor_id/:item_id
-router.post('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { vendor_id, item_id } = req.params;
+// POST /inventory/request/:public_vendor_id/:public_item_id
+// This path is /request/:public_vendor_id/:public_item_id
+router.post('/request/:public_vendor_id/:public_item_id', isAuthenticated, canManageInventory, async (req, res) => {
+    const { public_vendor_id, public_item_id } = req.params; // CHANGED
     const { requested_count } = req.body;
     const { role, locationId, id: actorId } = req.session.user;
     let item;
 
     try {
         const [itemResult] = await pool.query(`
-            SELECT v.vendor_id, v.vendor_name, v.location_id,
-                   it.item_id, it.item_name, COALESCE(i.count, 0) AS current_count
+            SELECT v.vendor_id, v.vendor_name, v.location_id, v.public_vendor_id,
+                   it.item_id, it.item_name, it.public_item_id, 
+                   COALESCE(i.count, 0) AS current_count
             FROM vendors v
-            JOIN item it ON it.item_id = ?
+            JOIN item it ON it.public_item_id = ? -- CHANGED
             LEFT JOIN inventory i ON v.vendor_id = i.vendor_id AND it.item_id = i.item_id
-            WHERE v.vendor_id = ?
-        `, [item_id, vendor_id]);
+            WHERE v.public_vendor_id = ? -- CHANGED
+        `, [public_item_id, public_vendor_id]); // CHANGED
 
         if (itemResult.length === 0) {
             return res.status(404).send('Item or Vendor not found.');
         }
-        item = itemResult[0];
+        item = itemResult[0]; // This contains the internal vendor_id and item_id
 
         if ((role === 'Location Manager' || role === 'Staff') && item.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only restock items in your location.');
@@ -191,18 +193,22 @@ router.post('/request/:vendor_id/:item_id', isAuthenticated, canManageInventory,
             throw new Error("Requested amount must be greater than zero.");
         }
 
+        const publicRequestId = crypto.randomUUID(); // ADDED
+
+        // ADDED public_request_id
         const sql = `
-            INSERT INTO inventory_requests (vendor_id, item_id, requested_count, requested_by_id, location_id, request_date)
-            VALUES (?, ?, ?, ?, ?, CURDATE())
+            INSERT INTO inventory_requests (public_request_id, vendor_id, item_id, requested_count, requested_by_id, location_id, request_date)
+            VALUES (?, ?, ?, ?, ?, ?, CURDATE())
         `;
-        await pool.query(sql, [vendor_id, item_id, requested_count, actorId, item.location_id]);
+        // Use internal item.vendor_id and item.item_id from our SELECT
+        await pool.query(sql, [publicRequestId, item.vendor_id, item.item_id, requested_count, actorId, item.location_id]);
 
         res.redirect('/inventory');
 
     } catch (error) {
         console.error("Error submitting restock request:", error);
         res.render('inventory-request-form', {
-            item: item || { vendor_id, item_id, item_name: 'Error', vendor_name: 'Error', current_count: 0 },
+            item: item || { public_vendor_id, public_item_id, item_name: 'Error', vendor_name: 'Error', current_count: 0 },
             error: error.message
         });
     }

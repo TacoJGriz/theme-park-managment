@@ -16,14 +16,17 @@ const {
 // GET /visits/new
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
+        // ADDED public_ticket_type_id
         const [ticketTypes] = await pool.query(
-            "SELECT ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
+            "SELECT ticket_type_id, public_ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type, type_name"
         );
 
         // --- MODIFIED: Fetch all member details for JS ---
+        // ADDED public_membership_id
         const [activeMembers] = await pool.query(
             `SELECT 
                 membership_id, 
+                public_membership_id, -- ADDED
                 primary_member_id, 
                 first_name, 
                 last_name, 
@@ -42,8 +45,8 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
         res.render('log-visit', {
             error: req.session.error, // Pass flash error
             success: req.session.success, // Pass flash success
-            ticketTypes: ticketTypes,
-            activeMembers: activeMembers, // Pass full member list
+            ticketTypes: ticketTypes, // Now contains public_ticket_type_id
+            activeMembers: activeMembers, // Pass full member list (now contains public_membership_id)
             currentDiscount: currentDiscount,
             normalizePhone: normalizePhone
         });
@@ -67,8 +70,8 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 
 // POST /visits
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { ticket_type_id } = req.body;
-    const member_ids = [].concat(req.body.member_ids || []);
+    const { ticket_type_id } = req.body; // This is the internal ticket_type_id
+    const member_ids = [].concat(req.body.member_ids || []); // These are internal member_ids
     const visit_date = new Date();
     const { id: actorId } = req.session.user;
     let connection;
@@ -79,7 +82,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         connection = await pool.getConnection();
 
-        // 1. Get Ticket Info
+        // 1. Get Ticket Info (using internal ID)
         const [ticketResult] = await connection.query(
             "SELECT type_name, base_price, is_member_type FROM ticket_types WHERE ticket_type_id = ?",
             [ticket_type_id]
@@ -104,25 +107,24 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 VALUES (?, ?, ?, 0.00, 0.00, ?, ?)
             `;
 
-            const newVisitIds = []; // To store all new visit IDs
-
-            // Loop and insert a visit record for each member
+            // Loop and insert a visit record for each member (using internal IDs)
             for (const memberId of member_ids) {
-                const [insertResult] = await connection.query(sql, [
+                await connection.query(sql, [
                     visit_date,
                     ticket_type_id,
                     memberId,
                     actorId,
                     visitGroupId // Insert the same group ID for all
                 ]);
-                newVisitIds.push(insertResult.insertId);
             }
 
             // --- Get Member Data for Receipt ---
 
             // 1. Get data for all members who were just checked in
+            // ADDED public_membership_id
             const [checkedInMembers] = await connection.query(`
-                SELECT m.membership_id, m.primary_member_id, m.first_name, m.last_name, m.phone_number, mt.type_name
+                SELECT m.membership_id, m.primary_member_id, m.first_name, m.last_name, m.phone_number,
+                       m.public_membership_id, mt.type_name
                 FROM membership m
                 JOIN membership_type mt ON m.type_id = mt.type_id
                 WHERE m.membership_id IN (?)
@@ -137,8 +139,9 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             const primaryId = primaryMemberInList ? primaryMemberInList.membership_id : checkedInMembers[0].primary_member_id;
 
             // 3. Get the Primary Member's full data
+            // ADDED public_membership_id
             const [primaryMemberData] = await connection.query(`
-                SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
+                SELECT m.first_name, m.last_name, m.phone_number, m.public_membership_id, mt.type_name
                 FROM membership m
                 JOIN membership_type mt ON m.type_id = mt.type_id
                 WHERE m.membership_id = ?
@@ -150,8 +153,8 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
             // 5. Build the receipt object
             let receiptData = {
-                visit_ids: newVisitIds,
-                visit_group_id: visitGroupId, // Add the group ID to the receipt
+                // visit_ids: newVisitIds, // REMOVED
+                visit_group_id: visitGroupId, // This is the public receipt ID
                 visit_date: formatReceiptDate(visit_date),
                 ticket_name: ticket.type_name,
                 base_price: 0.00,
@@ -160,11 +163,14 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 promo_applied: 'N/A',
                 is_member: true,
                 staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
-                member_id: primaryId,
+                member_id: primaryMember.public_membership_id, // CHANGED to public ID
                 member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
                 member_type: primaryMember.type_name,
                 member_phone: censorPhone(primaryMember.phone_number),
-                subMembers: subMembersOnReceipt
+                subMembers: subMembersOnReceipt.map(sub => ({ // Pass public ID to receipt
+                    ...sub,
+                    membership_id: sub.public_membership_id
+                }))
             };
 
             await connection.commit();
@@ -199,10 +205,9 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 visitGroupId // Insert the group ID
             ]);
 
-            const newVisitId = insertResult.insertId;
             let receiptData = {
-                visit_ids: [newVisitId],
-                visit_group_id: visitGroupId, // Add the group ID to the receipt
+                // visit_ids: [newVisitId], // REMOVED
+                visit_group_id: visitGroupId, // This is the public receipt ID
                 visit_date: formatReceiptDate(visit_date),
                 ticket_name: ticket.type_name,
                 base_price: finalTicketPrice,
@@ -264,18 +269,22 @@ router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res)
         // 3. Redeem the ticket
         await connection.beginTransaction();
 
+        const visitGroupId = crypto.randomUUID(); // ADDED
+        const visit_date = new Date(); // ADDED
+
         // 3a. Create the visit log
+        // ADDED visit_group_id
         const visitSql = `
-            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id)
-            VALUES (?, ?, NULL, ?, ?, ?)
+            INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+            VALUES (?, ?, NULL, ?, ?, ?, ?)
         `;
-        const visit_date = new Date();
         const [visitInsert] = await connection.query(visitSql, [
             visit_date,
             ticket.ticket_type_id,
             ticket.base_price,    // Log the price from the ticket
             ticket.discount_amount, // Log the discount from the ticket
-            actorId
+            actorId,
+            visitGroupId // ADDED
         ]);
 
         const newVisitId = visitInsert.insertId;
@@ -288,9 +297,29 @@ router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res)
 
         await connection.commit();
 
-        // 4. Success!
-        req.session.success = `Ticket ${ticket.ticket_code} redeemed successfully.`;
-        res.redirect('/visits/new'); // Redirect back to the log visit page
+        // 4. Success! Render a receipt instead of redirecting
+        const [ticketType] = await pool.query("SELECT type_name FROM ticket_types WHERE ticket_type_id = ?", [ticket.ticket_type_id]);
+
+        let receiptData = {
+            // visit_ids: [newVisitId], // REMOVED
+            visit_group_id: visitGroupId, // This is the public receipt ID
+            visit_date: formatReceiptDate(visit_date),
+            ticket_name: ticketType[0].type_name,
+            base_price: parseFloat(ticket.base_price),
+            discount_amount: parseFloat(ticket.discount_amount),
+            total_cost: parseFloat(ticket.base_price) - parseFloat(ticket.discount_amount),
+            promo_applied: 'Prepaid E-Ticket',
+            is_member: false,
+            staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+            member_id: null,
+            member_name: "E-Ticket Guest",
+            member_type: null,
+            member_phone: null,
+            subMembers: []
+        };
+
+        res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true });
+
 
     } catch (error) {
         if (connection) await connection.rollback();
@@ -302,7 +331,7 @@ router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res)
     }
 });
 
-// GET /visits/receipt/:visit_id
+// GET /visits/receipt/:visit_id (This route is now orphaned, but left for potential legacy links)
 router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const { visit_id } = req.params;
     let connection;
@@ -324,7 +353,8 @@ router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async 
         }
         const visit = visitResult[0];
         let receiptData = {
-            visit_id: visit.visit_id,
+            // visit_ids: [visit.visit_id], // REMOVED
+            visit_group_id: visit.visit_group_id, // ADDED
             visit_date: formatReceiptDate(visit.visit_date),
             ticket_name: visit.ticket_name,
             base_price: parseFloat(visit.ticket_price),
@@ -341,14 +371,14 @@ router.get('/receipt/:visit_id', isAuthenticated, canManageMembersVisits, async 
         if (visit.is_member_type && visit.membership_id) {
             const [memberInfo] = await connection.query(`
                 SELECT 
-                    m.first_name, m.last_name, m.phone_number,
+                    m.first_name, m.last_name, m.phone_number, m.public_membership_id,
                     mt.type_name AS membership_type_name
                 FROM membership m
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
                 WHERE m.membership_id = ?
             `, [visit.membership_id]);
             if (memberInfo.length > 0) {
-                receiptData.member_id = visit.membership_id;
+                receiptData.member_id = memberInfo[0].public_membership_id; // CHANGED to public ID
                 receiptData.member_name = `${memberInfo[0].first_name} ${memberInfo[0].last_name}`;
                 receiptData.member_type = memberInfo[0].membership_type_name;
                 receiptData.member_phone = censorPhone(memberInfo[0].phone_number);
@@ -373,12 +403,14 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
         connection = await pool.getConnection();
 
         // 1. Get all visits in this group
+        // ADDED m.public_membership_id
         const [visitsInGroup] = await connection.query(`
             SELECT 
                 v.*, 
                 tt.type_name AS ticket_name,
                 CONCAT(e.first_name, ' ', e.last_name) as staff_name,
-                m.primary_member_id, m.first_name, m.last_name, m.phone_number
+                m.primary_member_id, m.first_name, m.last_name, m.phone_number,
+                m.public_membership_id
             FROM visits v
             JOIN membership m ON v.membership_id = m.membership_id
             JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
@@ -387,7 +419,37 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
         `, [visit_group_id]);
 
         if (visitsInGroup.length === 0) {
-            return res.status(404).send('Visit not found.');
+            // Check if it's a non-member visit group
+            const [nonMemberVisit] = await connection.query(
+                `SELECT v.*, tt.type_name AS ticket_name, CONCAT(e.first_name, ' ', e.last_name) as staff_name
+                 FROM visits v
+                 JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+                 LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+                 WHERE v.visit_group_id = ? AND v.membership_id IS NULL`,
+                [visit_group_id]
+            );
+
+            if (nonMemberVisit.length > 0) {
+                const visit = nonMemberVisit[0];
+                const [promos] = await pool.query("SELECT event_name FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
+                const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
+
+                let receiptData = {
+                    visit_group_id: visit.visit_group_id,
+                    visit_date: formatReceiptDate(visit.visit_date),
+                    ticket_name: visit.ticket_name,
+                    base_price: parseFloat(visit.ticket_price),
+                    discount_amount: parseFloat(visit.discount_amount),
+                    total_cost: parseFloat(visit.ticket_price) - parseFloat(visit.discount_amount),
+                    promo_applied: visit.discount_amount > 0 ? promoName : 'N/A',
+                    is_member: false,
+                    staff_name: visit.staff_name || 'N/A',
+                    member_id: null, member_name: null, member_type: null, member_phone: null, subMembers: []
+                };
+                return res.render('visit-receipt', { receipt: receiptData, fromLogVisit: false });
+            } else {
+                return res.status(404).send('Visit not found.');
+            }
         }
 
         // (No security check needed, as canManageMembersVisits already ran)
@@ -397,8 +459,9 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
         const visitPrimaryId = primaryMemberInList ? primaryMemberInList.membership_id : visitsInGroup[0].primary_member_id;
 
         // 3. Get Primary Member's full data (for the receipt header)
+        // ADDED m.public_membership_id
         const [primaryMemberData] = await connection.query(`
-            SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
+            SELECT m.first_name, m.last_name, m.phone_number, m.public_membership_id, mt.type_name
             FROM membership m
             JOIN membership_type mt ON m.type_id = mt.type_id
             WHERE m.membership_id = ?
@@ -407,7 +470,7 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
 
         // 4. Build the receipt object
         const receiptData = {
-            visit_ids: visitsInGroup.map(v => v.visit_id), // Array of all visit IDs
+            // visit_ids: visitsInGroup.map(v => v.visit_id), // REMOVED
             visit_group_id: visit_group_id,
             visit_date: formatReceiptDate(visitsInGroup[0].visit_date),
             ticket_name: visitsInGroup[0].ticket_name,
@@ -417,7 +480,7 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
             promo_applied: 'N/A',
             is_member: true,
             staff_name: visitsInGroup[0].staff_name || 'N/A',
-            member_id: visitPrimaryId,
+            member_id: primaryMember.public_membership_id, // CHANGED to public ID
             member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
             member_type: primaryMember.type_name,
             member_phone: censorPhone(primaryMember.phone_number),
@@ -426,7 +489,7 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
                 .map(v => ({
                     first_name: v.first_name,
                     last_name: v.last_name,
-                    membership_id: v.membership_id
+                    membership_id: v.public_membership_id // CHANGED to public ID
                 }))
         };
 

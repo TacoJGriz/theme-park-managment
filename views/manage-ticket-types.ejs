@@ -4,37 +4,58 @@
     <meta charset="UTF-8">
     <title>Manage Ticket Types</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #28a745; color: white; } /* Green theme for tickets */
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #28a745; color: white;
+ } /* Green theme for tickets */
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
+ color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
+        .action-link { text-decoration: none;
+ color: #007bff; font-weight: bold; }
         .disabled-link {
             color: #999;
-            text-decoration: none;
+ text-decoration: none;
             cursor: not-allowed;
             pointer-events: none;
         }
 
-        .toggle-form { display: inline-block; margin-left: 10px; }
-        .toggle-form button { background: none; border: none; cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .toggle-form { display: inline-block; margin-left: 10px;
+ }
+        .toggle-form button { background: none; border: none; cursor: pointer; font-weight: bold;
+ text-decoration: underline; }
         
-        .status-active { color: #28a745; }
-        .status-inactive { color: #dc3545; }
-        .toggle-form .status-active { color: #dc3545; } /* Deactivate link */
-        .toggle-form .status-inactive { color: #28a745; } /* Activate link */
+        .status-active { color: #28a745;
+ }
+        .status-inactive { color: #dc3545;
+ }
+        .toggle-form .status-active { color: #dc3545;
+ } /* Deactivate link */
+        .toggle-form .status-inactive { color: #28a745;
+ } /* Activate link */
         
-        .type-system { font-weight: bold; color: #6f42c1; }
-        .type-standard { color: #333; }
+        .type-system { font-weight: bold;
+ color: #6f42c1; }
+        .type-standard { color: #333;
+ }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
-        .error { color: #d9534f; background-color: #f2dede; }
-        .success { color: #155724; background-color: #d4edda; }
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold;
+ }
+        .error { color: #d9534f; background-color: #f2dede;
+ }
+        .success { color: #155724; background-color: #d4edda;
+ }
     </style>
 </head>
 <body>
@@ -47,52 +68,68 @@
 
         <a href="/ticket-types/new" class="add-button">Add New Ticket Type</a>
         
-        <table>
+        
+ <table>
             <thead>
                 <tr>
                     <th>Type Name</th>
                     <th>Base Price</th>
                     <th>Type</th>
-                    <th>Status</th>
+          
+           <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% types.forEach(type => { %>
-                    <tr>
+          
+           <tr>
                         <td><%= type.type_name %></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
                         <td>
-                            <% if (type.is_member_type) { %>
+              
+               <% if (type.is_member_type) { %>
                                 <span class="type-system">Member (System)</span>
                             <% } else { %>
-                                <span class="type-standard">Standard</span>
+                
+                 <span class="type-standard">Standard</span>
                             <% } %>
                         </td>
                         <td>
-                            <% if (type.is_active) { %>
+     
+                        <% if (type.is_active) { %>
                                 <span class="status-active">Active</span>
                             <% } else { %>
-                                <span class="status-inactive">Inactive</span>
+        
+                         <span class="status-inactive">Inactive</span>
                             <% } %>
                         </td>
-                        <td>
-                            <a href="/ticket-types/edit/<%= type.ticket_type_id %>" class="action-link <% if (type.is_member_type) { %>disabled-link<% } %>">Edit</a>
+                     
+     <td>
+                            <%# CHANGED: Link now uses public_ticket_type_id %>
+                            <a href="/ticket-types/edit/<%= type.public_ticket_type_id %>" class="action-link <% if (type.is_member_type) { %>disabled-link<% } %>">Edit</a>
                             
-                            <% if (!type.is_member_type) { %>
-                                <form class="toggle-form" action="/ticket-types/toggle/<%= type.ticket_type_id %>" method="POST" onsubmit="return confirm('Are you sure? This will hide the ticket type from the logging page.');">
+                            <% 
+ if (!type.is_member_type) { %>
+                                <%# CHANGED: Action now uses public_ticket_type_id %>
+                                <form class="toggle-form" action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST" onsubmit="return confirm('Are you sure?
+ This will hide the ticket type from the logging page.');">
                                     <% if (type.is_active) { %>
                                         <button type="submit" class="status-active">Deactivate</button>
-                                    <% } else { %>
+         
+                             <% } else { %>
                                         <button type="submit" class="status-inactive">Activate</button>
-                                    <% } %>
+                           
+          <% } %>
                                 </form>
                             <% } else { %>
-                                <span class="disabled-link" style="margin-left: 10px;">(System)</span>
+                         
+         <span class="disabled-link" style="margin-left: 10px;">(System)</span>
                             <% } %>
                         </td>
                     </tr>
-                <% }); %>
+                
+ <% }); %>
             </tbody>
         </table>
     </div>

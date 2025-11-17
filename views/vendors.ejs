@@ -42,20 +42,25 @@
 
         <table>
             <thead>
-                 <tr>
-                    <th>ID</th>
+          
+        <tr>
+                    <th>Vendor ID</th>
                     <th>Name</th>
                     <th>Location</th>
                 </tr>
             </thead>
-            <tbody>
+     
+        <tbody>
                 <% vendors.forEach(vendor => { %>
                     <tr>
-                         <td><%= vendor.vendor_id %></td>
-                        <td><%= vendor.vendor_name %></td>
+                         <%# Show clean 8-char public ID %>
+                         <td><%= vendor.public_vendor_id.substring(0, 8).toUpperCase() %></td>
+                        <td><%= vendor.vendor_name 
+ %></td>
                         <td><%= vendor.location_name || 'N/A' %></td>
                     </tr>
-                 <% }); %>
+                 <% });
+ %>
             </tbody>
         </table>
     </div>

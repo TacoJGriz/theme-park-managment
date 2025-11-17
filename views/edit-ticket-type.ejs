@@ -4,25 +4,36 @@
     <meta charset="UTF-8">
     <title>Edit Ticket Type</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        input:disabled { background-color: #e9ecef; cursor: not-allowed; }
-        textarea { resize: vertical; min-height: 80px; }
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .error { color: red; font-weight: bold; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+ }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em;
+ border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px;
+ }
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+ }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
+        input:disabled { background-color: #e9ecef; cursor: not-allowed;
+ }
+        textarea { resize: vertical; min-height: 80px;
+ }
+        button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
+ cursor: pointer; border-radius: 4px; font-size: 1em; }
+        .error { color: red; font-weight: bold;
+ }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+ }
         .info-note {
             color: #004085;
-            background-color: #cce5ff;
+ background-color: #cce5ff;
             border: 1px solid #b8daff;
             padding: 1em;
             border-radius: 4px;
             margin-bottom: 15px;
-        }
+ }
     </style>
 </head>
 <body>
@@ -30,35 +41,38 @@
     <h1>Edit: <%= type.type_name %></h1>
     <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
     
-    <% const isMemberType = (typeof type.is_member_type !== 'undefined' && type.is_member_type); %>
+    <% const isMemberType = (typeof type.is_member_type !== 'undefined' && type.is_member_type);
+ %>
     
     <% if (isMemberType) { %>
         <div class="info-note" style="max-width: 450px; margin: 1em auto;">
-            <strong>Note:</strong> The 'Member' ticket type is a system record. Its price cannot be changed and it cannot be edited.
-        </div>
+            <strong>Note:</strong> The 'Member' ticket type is a system record.
+ Its price cannot be changed and it cannot be edited.
+ </div>
     <% } %>
 
-    <form action="/ticket-types/edit/<%= type.ticket_type_id %>" method="POST">
+    <%# CHANGED: Action now uses public_ticket_type_id %>
+    <form action="/ticket-types/edit/<%= type.public_ticket_type_id %>" method="POST">
         <div>
             <label for="type_name">Type Name:</label>
             <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required <% if (isMemberType) { %>disabled<% } %>>
         </div>
         <div>
             <label for="base_price">Base Price ($):</label>
-            <input type="number" id="base_price" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" step="0.01" min="0" required <% if (isMemberType) { %>disabled<% } %>>
+      <input type="number" id="base_price" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" step="0.01" min="0" required <% if (isMemberType) { %>disabled<% } %>>
         </div>
         <div>
             <label for="description">Description:</label>
-            <textarea id="description" name="description" <% if (isMemberType) { %>disabled<% } %>><%= type.description || '' %></textarea>
+            <textarea id="description" name="description" <% if (isMemberType) { %>disabled<% } %>><%= type.description ||
+ '' %></textarea>
         </div>
         
         <% if (isMemberType) { %>
-             <!-- Hidden fields to ensure system values are not lost -->
-            <input type="hidden" name="type_name" value="<%= type.type_name %>" />
+             <input type="hidden" name="type_name" value="<%= type.type_name %>" />
             <input type="hidden" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" />
         <% } %>
 
-        <br>
+       <br>
         <button type="submit" <% if (isMemberType) { %>disabled<% } %>>Update Type</button>
         <a href="/ticket-types" class="cancel-link">Cancel</a>
     </form>

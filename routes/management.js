@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // Adjust path to db.js
+const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     isAdminOrParkManager,
@@ -18,6 +19,7 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
             LEFT JOIN employee_demographics e ON l.manager_id = e.employee_id
             ORDER BY l.location_name
         `;
+        // Query now includes public_location_id from l.*
         const [locations] = await pool.query(query);
         res.render('locations', { locations: locations });
     } catch (error) {
@@ -37,8 +39,10 @@ router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res
     let connection;
     try {
         connection = await pool.getConnection();
-        const sql = "INSERT INTO location (location_name, summary) VALUES (?, ?)";
-        await connection.query(sql, [location_name, summary || null]);
+        const publicLocationId = crypto.randomUUID(); // ADDED
+        // ADDED public_location_id
+        const sql = "INSERT INTO location (public_location_id, location_name, summary) VALUES (?, ?, ?)";
+        await connection.query(sql, [publicLocationId, location_name, summary || null]); // ADDED
         res.redirect('/locations');
     } catch (error) {
         console.error(error);
@@ -58,6 +62,7 @@ router.get('/vendors', isAuthenticated, canManageRetail, async (req, res) => {
             FROM vendors v
             LEFT JOIN location l ON v.location_id = l.location_id
         `;
+        // Query now includes public_vendor_id from v.*
         let params = [];
 
         if (role === 'Location Manager') {
@@ -91,8 +96,10 @@ router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) 
     let connection;
     try {
         connection = await pool.getConnection();
-        const sql = "INSERT INTO vendors (vendor_name, location_id) VALUES (?, ?)";
-        await connection.query(sql, [vendor_name, location_id]);
+        const publicVendorId = crypto.randomUUID(); // ADDED
+        // ADDED public_vendor_id
+        const sql = "INSERT INTO vendors (public_vendor_id, vendor_name, location_id) VALUES (?, ?, ?)";
+        await connection.query(sql, [publicVendorId, vendor_name, location_id]); // ADDED
         res.redirect('/vendors');
     } catch (error) {
         console.error(error);
@@ -107,13 +114,14 @@ router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) 
     }
 });
 
-// Path is '/assign-manager/:type/:id'
-router.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type, id } = req.params;
+// Path is '/assign-manager/:type/:public_id'
+router.get('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { type, public_id } = req.params; // CHANGED
     try {
         let entity = null;
         if (type === 'location') {
-            const [loc] = await pool.query('SELECT location_id as id, location_name as name FROM location WHERE location_id = ?', [id]);
+            // Query by public_location_id, select internal location_id
+            const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]); // CHANGED
             if (loc.length > 0) entity = loc[0];
         } else if (type === 'vendor') {
             return res.status(404).send('Assigning managers to vendors is no longer supported.');
@@ -136,7 +144,7 @@ router.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, a
         const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN (?) AND is_active = TRUE", [managerRolesToQuery]);
 
         res.render('assign-manager', {
-            entity: entity,
+            entity: entity, // entity object now contains public_location_id as 'public_location_id' and internal id as 'id'
             managers: managers,
             type: type,
             error: null
@@ -147,9 +155,9 @@ router.get('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, a
     }
 });
 
-// Path is '/assign-manager/:type/:id'
-router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type, id } = req.params;
+// Path is '/assign-manager/:type/:public_id'
+router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { type, public_id } = req.params; // CHANGED
     const { manager_id } = req.body;
     const manager_start = (type === 'location' && req.body.manager_start) ? req.body.manager_start : null;
 
@@ -164,8 +172,9 @@ router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, 
             if (!manager_start) {
                 throw new Error("Manager Start Date is required for locations.");
             }
-            sql = "UPDATE location SET manager_id = ?, manager_start = ? WHERE location_id = ?";
-            params = [manager_id, manager_start, id];
+            // Update using public_location_id
+            sql = "UPDATE location SET manager_id = ?, manager_start = ? WHERE public_location_id = ?"; // CHANGED
+            params = [manager_id, manager_start, public_id]; // CHANGED
             redirectUrl = '/locations';
         } else if (type === 'vendor') {
             return res.status(404).send('Assigning managers to vendors is no longer supported.');
@@ -181,7 +190,7 @@ router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, 
         try {
             let entity = null;
             if (type === 'location') {
-                const [loc] = await pool.query('SELECT location_id as id, location_name as name FROM location WHERE location_id = ?', [id]);
+                const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]); // CHANGED
                 if (loc.length > 0) entity = loc[0];
             } else {
                 entity = { name: 'Unknown' };
@@ -213,7 +222,7 @@ router.post('/assign-manager/:type/:id', isAuthenticated, isAdminOrParkManager, 
 // Path is '/memberships/types'
 router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        // --- MODIFIED: SELECT * to get new columns ---
+        // --- MODIFIED: SELECT * to get new columns (including public_type_id) ---
         const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
         res.render('membership-types', {
             types: types,
@@ -241,6 +250,7 @@ router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (
     // --- MODIFIED: Handle NULL values ---
     const baseMembersNum = parseInt(base_members, 10) || 1;
     const additionalPriceNum = (baseMembersNum > 1 && additional_member_price) ? parseFloat(additional_member_price) : null;
+    const publicTypeId = crypto.randomUUID(); // ADDED
 
     let connection;
     try {
@@ -248,10 +258,10 @@ router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (
         // --- MODIFIED: Updated SQL query ---
         const sql = `
             INSERT INTO membership_type 
-            (type_name, base_price, base_members, additional_member_price, description, is_active) 
-            VALUES (?, ?, ?, ?, ?, TRUE)
+            (public_type_id, type_name, base_price, base_members, additional_member_price, description, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, TRUE)
         `;
-        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null]);
+        await connection.query(sql, [publicTypeId, type_name, base_price, baseMembersNum, additionalPriceNum, description || null]); // ADDED
         req.session.success = "Membership type added successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
@@ -262,12 +272,12 @@ router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (
     }
 });
 
-// Path is '/memberships/types/edit/:type_id'
-router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/memberships/types/edit/:public_type_id'
+router.get('/memberships/types/edit/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_type_id } = req.params; // CHANGED
     try {
-        // --- MODIFIED: SELECT * to get all data for form ---
-        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        // --- MODIFIED: SELECT * to get all data for form, query by public_type_id ---
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
         if (typeResult.length === 0) {
             return res.status(404).send('Membership type not found');
         }
@@ -278,9 +288,9 @@ router.get('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMan
     }
 });
 
-// Path is '/memberships/types/edit/:type_id'
-router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/memberships/types/edit/:public_type_id'
+router.post('/memberships/types/edit/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_type_id } = req.params; // CHANGED
     // --- MODIFIED: Get new fields from req.body ---
     const { type_name, base_price, description, base_members, additional_member_price } = req.body;
 
@@ -291,18 +301,18 @@ router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMa
     let connection;
     try {
         connection = await pool.getConnection();
-        // --- MODIFIED: Updated SQL query ---
+        // --- MODIFIED: Updated SQL query to use public_type_id ---
         const sql = `
             UPDATE membership_type 
             SET type_name = ?, base_price = ?, base_members = ?, additional_member_price = ?, description = ?
-            WHERE type_id = ?
+            WHERE public_type_id = ? -- CHANGED
         `;
-        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null, type_id]);
+        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null, public_type_id]); // CHANGED
         req.session.success = "Membership type updated successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
         console.error(error);
-        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
         res.render('edit-membership-type', {
             type: typeResult.length > 0 ? typeResult[0] : {},
             error: "Database error updating type. Name might be duplicate."
@@ -312,22 +322,21 @@ router.post('/memberships/types/edit/:type_id', isAuthenticated, isAdminOrParkMa
     }
 });
 
-// Path is '/memberships/types/toggle/:type_id'
-// ... (This route is unchanged) ...
-router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/memberships/types/toggle/:public_type_id'
+router.post('/memberships/types/toggle/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_type_id } = req.params; // CHANGED
     let connection;
     try {
         connection = await pool.getConnection();
 
-        const [current] = await pool.query('SELECT is_active FROM membership_type WHERE type_id = ?', [type_id]);
+        const [current] = await pool.query('SELECT is_active FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
         if (current.length === 0) {
             return res.status(404).send('Membership type not found');
         }
 
         const newStatus = !current[0].is_active;
 
-        await connection.query('UPDATE membership_type SET is_active = ? WHERE type_id = ?', [newStatus, type_id]);
+        await connection.query('UPDATE membership_type SET is_active = ? WHERE public_type_id = ?', [newStatus, public_type_id]); // CHANGED
         req.session.success = `Membership type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
         res.redirect('/memberships/types');
 
@@ -342,11 +351,11 @@ router.post('/memberships/types/toggle/:type_id', isAuthenticated, isAdminOrPark
 
 
 // --- TICKET TYPE MANAGEMENT ---
-// ... (All /ticket-types routes are unchanged) ...
 // Path is '/ticket-types'
 router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const [types] = await pool.query('SELECT * FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
+        // ADDED public_ticket_type_id
+        const [types] = await pool.query('SELECT *, public_ticket_type_id FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
 
         res.render('manage-ticket-types', {
             types: types,
@@ -369,11 +378,13 @@ router.get('/ticket-types/new', isAuthenticated, isAdminOrParkManager, (req, res
 // Path is '/ticket-types'
 router.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { type_name, base_price, description } = req.body;
+    const publicTicketTypeId = crypto.randomUUID(); // ADDED
     let connection;
     try {
         connection = await pool.getConnection();
-        const sql = "INSERT INTO ticket_types (type_name, base_price, description, is_active, is_member_type) VALUES (?, ?, ?, TRUE, FALSE)";
-        await connection.query(sql, [type_name, base_price, description || null]);
+        // ADDED public_ticket_type_id
+        const sql = "INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type) VALUES (?, ?, ?, ?, TRUE, FALSE)";
+        await connection.query(sql, [publicTicketTypeId, type_name, base_price, description || null]); // ADDED
         req.session.success = "Ticket type added successfully!";
         res.redirect('/ticket-types');
     } catch (error) {
@@ -384,11 +395,11 @@ router.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, 
     }
 });
 
-// Path is '/ticket-types/edit/:type_id'
-router.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/ticket-types/edit/:public_ticket_type_id'
+router.get('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ticket_type_id } = req.params; // CHANGED
     try {
-        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
         if (typeResult.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
@@ -399,9 +410,9 @@ router.get('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager,
     }
 });
 
-// Path is '/ticket-types/edit/:type_id'
-router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/ticket-types/edit/:public_ticket_type_id'
+router.post('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ticket_type_id } = req.params; // CHANGED
     const { type_name, base_price, description } = req.body;
     let connection;
     let typeResult = [];
@@ -409,7 +420,7 @@ router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager
     try {
         connection = await pool.getConnection();
 
-        [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
         if (typeResult.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
@@ -423,9 +434,9 @@ router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager
         const sql = `
             UPDATE ticket_types 
             SET type_name = ?, base_price = ?, description = ?
-            WHERE ticket_type_id = ? AND is_member_type = FALSE
+            WHERE public_ticket_type_id = ? AND is_member_type = FALSE -- CHANGED
         `;
-        await connection.query(sql, [type_name, base_price, description || null, type_id]);
+        await connection.query(sql, [type_name, base_price, description || null, public_ticket_type_id]); // CHANGED
 
         req.session.success = "Ticket type updated successfully!";
         res.redirect('/ticket-types');
@@ -433,7 +444,7 @@ router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager
     } catch (error) {
         console.error("Error updating ticket type:", error);
         res.render('edit-ticket-type', {
-            type: typeResult.length > 0 ? typeResult[0] : { ticket_type_id: type_id },
+            type: typeResult.length > 0 ? typeResult[0] : { public_ticket_type_id: public_ticket_type_id }, // CHANGED
             error: "Database error updating type. Name might be duplicate."
         });
     } finally {
@@ -441,14 +452,14 @@ router.post('/ticket-types/edit/:type_id', isAuthenticated, isAdminOrParkManager
     }
 });
 
-// Path is '/ticket-types/toggle/:type_id'
-router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_id } = req.params;
+// Path is '/ticket-types/toggle/:public_ticket_type_id'
+router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ticket_type_id } = req.params; // CHANGED
     let connection;
     try {
         connection = await pool.getConnection();
 
-        const [current] = await pool.query('SELECT is_active, is_member_type FROM ticket_types WHERE ticket_type_id = ?', [type_id]);
+        const [current] = await pool.query('SELECT is_active, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
         if (current.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
@@ -460,7 +471,7 @@ router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManag
 
         const newStatus = !current[0].is_active;
 
-        await connection.query('UPDATE ticket_types SET is_active = ? WHERE ticket_type_id = ?', [newStatus, type_id]);
+        await connection.query('UPDATE ticket_types SET is_active = ? WHERE public_ticket_type_id = ?', [newStatus, public_ticket_type_id]); // CHANGED
         req.session.success = `Ticket type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
         res.redirect('/ticket-types');
 
@@ -474,7 +485,7 @@ router.post('/ticket-types/toggle/:type_id', isAuthenticated, isAdminOrParkManag
 });
 
 // --- PARK OPERATIONS (Weather, Promos) ---
-// ... (All /weather and /promotions routes are unchanged) ...
+// ... (All /weather and /promotions routes are unchanged, no IDs exposed) ...
 // Path is '/weather'
 router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {

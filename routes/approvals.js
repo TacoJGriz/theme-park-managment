@@ -25,6 +25,7 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
             const rateChangeQuery = `
                 SELECT 
                     target.employee_id, 
+                    target.public_employee_id, -- ADDED
                     target.first_name, 
                     target.last_name, 
                     target.hourly_rate, 
@@ -44,6 +45,7 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
             const reassignmentQuery = `
                 SELECT
                     m.maintenance_id,
+                    m.public_maintenance_id, -- ADDED
                     r.ride_name,
                     m.summary,
                     CONCAT(current_emp.first_name, ' ', current_emp.last_name) as current_employee_name,
@@ -65,6 +67,7 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
             let inventoryQuery = `
                 SELECT 
                     ir.request_id, 
+                    ir.public_request_id, -- ADDED
                     ir.requested_count,
                     v.vendor_name,
                     i.item_name,
@@ -95,18 +98,18 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
     }
 });
 
-// POST /approve/rate/:employee_id
-// Path changed to /approve/rate/:employee_id
-router.post('/approve/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+// POST /approve/rate/:public_employee_id
+// Path changed to /approve/rate/:public_employee_id
+router.post('/approve/rate/:public_employee_id', isAuthenticated, canApproveWages, async (req, res) => {
     try {
         const sql = `
             UPDATE employee_demographics 
             SET hourly_rate = pending_hourly_rate, 
                 pending_hourly_rate = NULL, 
                 rate_change_requested_by = NULL 
-            WHERE employee_id = ?
+            WHERE public_employee_id = ? -- CHANGED
         `;
-        await pool.query(sql, [req.params.employee_id]);
+        await pool.query(sql, [req.params.public_employee_id]); // CHANGED
         res.redirect('/approvals');
     } catch (error) {
         console.error("Error approving rate change:", error);
@@ -114,17 +117,17 @@ router.post('/approve/rate/:employee_id', isAuthenticated, canApproveWages, asyn
     }
 });
 
-// POST /reject/rate/:employee_id
-// Path changed to /reject/rate/:employee_id
-router.post('/reject/rate/:employee_id', isAuthenticated, canApproveWages, async (req, res) => {
+// POST /reject/rate/:public_employee_id
+// Path changed to /reject/rate/:public_employee_id
+router.post('/reject/rate/:public_employee_id', isAuthenticated, canApproveWages, async (req, res) => {
     try {
         const sql = `
             UPDATE employee_demographics 
             SET pending_hourly_rate = NULL, 
                 rate_change_requested_by = NULL 
-            WHERE employee_id = ?
+            WHERE public_employee_id = ? -- CHANGED
         `;
-        await pool.query(sql, [req.params.employee_id]);
+        await pool.query(sql, [req.params.public_employee_id]); // CHANGED
         res.redirect('/approvals');
     } catch (error) {
         console.error("Error rejecting rate change:", error);
@@ -132,18 +135,18 @@ router.post('/reject/rate/:employee_id', isAuthenticated, canApproveWages, async
     }
 });
 
-// POST /approve/reassignment/:maintenance_id
-// Path changed to /approve/reassignment/:maintenance_id
-router.post('/approve/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+// POST /approve/reassignment/:public_maintenance_id
+// Path changed to /approve/reassignment/:public_maintenance_id
+router.post('/approve/reassignment/:public_maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
     try {
         const sql = `
             UPDATE maintenance
             SET employee_id = pending_employee_id,
                 pending_employee_id = NULL,
                 assignment_requested_by = NULL
-            WHERE maintenance_id = ?
+            WHERE public_maintenance_id = ? -- CHANGED
         `;
-        await pool.query(sql, [req.params.maintenance_id]);
+        await pool.query(sql, [req.params.public_maintenance_id]); // CHANGED
         res.redirect('/approvals');
     } catch (error) {
         console.error("Error approving reassignment:", error);
@@ -151,17 +154,17 @@ router.post('/approve/reassignment/:maintenance_id', isAuthenticated, canApprove
     }
 });
 
-// POST /reject/reassignment/:maintenance_id
-// Path changed to /reject/reassignment/:maintenance_id
-router.post('/reject/reassignment/:maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
+// POST /reject/reassignment/:public_maintenance_id
+// Path changed to /reject/reassignment/:public_maintenance_id
+router.post('/reject/reassignment/:public_maintenance_id', isAuthenticated, canApproveMaintenance, async (req, res) => {
     try {
         const sql = `
             UPDATE maintenance
             SET pending_employee_id = NULL,
                 assignment_requested_by = NULL
-            WHERE maintenance_id = ?
+            WHERE public_maintenance_id = ? -- CHANGED
         `;
-        await pool.query(sql, [req.params.maintenance_id]);
+        await pool.query(sql, [req.params.public_maintenance_id]); // CHANGED
         res.redirect('/approvals');
     } catch (error) {
         console.error("Error rejecting reassignment:", error);
@@ -169,10 +172,10 @@ router.post('/reject/reassignment/:maintenance_id', isAuthenticated, canApproveM
     }
 });
 
-// POST /approve/inventory/:request_id
-// Path changed to /approve/inventory/:request_id
-router.post('/approve/inventory/:request_id', isAuthenticated, canApproveInventory, async (req, res) => {
-    const { request_id } = req.params;
+// POST /approve/inventory/:public_request_id
+// Path changed to /approve/inventory/:public_request_id
+router.post('/approve/inventory/:public_request_id', isAuthenticated, canApproveInventory, async (req, res) => {
+    const { public_request_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
 
     let connection;
@@ -181,17 +184,18 @@ router.post('/approve/inventory/:request_id', isAuthenticated, canApproveInvento
         await connection.beginTransaction();
 
         const [reqResult] = await connection.query(
-            `SELECT ir.vendor_id, ir.item_id, ir.requested_count, v.location_id
+            `SELECT ir.request_id, ir.vendor_id, ir.item_id, ir.requested_count, v.location_id
              FROM inventory_requests ir
              JOIN vendors v ON ir.vendor_id = v.vendor_id
-             WHERE ir.request_id = ? AND ir.status = 'Pending'`,
-            [request_id]
+             WHERE ir.public_request_id = ? AND ir.status = 'Pending'`, // CHANGED
+            [public_request_id] // CHANGED
         );
 
         if (reqResult.length === 0) {
             throw new Error("Request not found or already processed.");
         }
         const request = reqResult[0];
+        const internal_request_id = request.request_id; // Get internal ID for update
 
         if (role === 'Location Manager' && request.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only approve requests for your location.');
@@ -211,7 +215,7 @@ router.post('/approve/inventory/:request_id', isAuthenticated, canApproveInvento
 
         await connection.query(
             "UPDATE inventory_requests SET status = 'Approved' WHERE request_id = ?",
-            [request_id]
+            [internal_request_id] // Use internal ID
         );
 
         await connection.commit();
@@ -226,10 +230,10 @@ router.post('/approve/inventory/:request_id', isAuthenticated, canApproveInvento
     }
 });
 
-// POST /reject/inventory/:request_id
-// Path changed to /reject/inventory/:request_id
-router.post('/reject/inventory/:request_id', isAuthenticated, canApproveInventory, async (req, res) => {
-    const { request_id } = req.params;
+// POST /reject/inventory/:public_request_id
+// Path changed to /reject/inventory/:public_request_id
+router.post('/reject/inventory/:public_request_id', isAuthenticated, canApproveInventory, async (req, res) => {
+    const { public_request_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
 
     let connection;
@@ -237,21 +241,22 @@ router.post('/reject/inventory/:request_id', isAuthenticated, canApproveInventor
         connection = await pool.getConnection();
 
         const [reqResult] = await connection.query(
-            `SELECT v.location_id
+            `SELECT ir.request_id, v.location_id
              FROM inventory_requests ir
              JOIN vendors v ON ir.vendor_id = v.vendor_id
-             WHERE ir.request_id = ?`,
-            [request_id]
+             WHERE ir.public_request_id = ?`, // CHANGED
+            [public_request_id] // CHANGED
         );
 
         if (reqResult.length > 0) {
+            const internal_request_id = reqResult[0].request_id; // Get internal ID
             if (role === 'Location Manager' && reqResult[0].location_id !== locationId) {
                 return res.status(403).send('Forbidden: You can only reject requests for your location.');
             }
 
             await connection.query(
                 "UPDATE inventory_requests SET status = 'Rejected' WHERE request_id = ?",
-                [request_id]
+                [internal_request_id] // Use internal ID
             );
         }
         res.redirect('/approvals');

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     canViewRides,
@@ -32,7 +33,8 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
         let params = [];
 
         // --- 2. Fetch data for filters ---
-        const [allLocations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+        // ADDED public_location_id
+        const [allLocations] = await pool.query('SELECT location_id, public_location_id, location_name FROM location ORDER BY location_name');
         const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
         const [allStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
 
@@ -61,6 +63,7 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             params.push(filter_status);
         }
         if (filter_location) {
+            // Filter by internal location_id from form value
             whereClauses.push('r.location_id = ?');
             params.push(filter_location);
         }
@@ -108,6 +111,7 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             FROM rides r
             LEFT JOIN location l ON r.location_id = l.location_id
         `;
+        // Query already selects r.* which includes public_ride_id
 
         query += whereQuery + orderBy;
 
@@ -115,17 +119,17 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
 
         // --- 9. Render with all data ---
         res.render('rides', {
-            rides: rides,
+            rides: rides, // Contains public_ride_id
             search: search || "",
             currentSort: sort,
             currentDir: dir,
-            locations: allLocations,
+            locations: allLocations, // Contains public_location_id and internal location_id
             types: allTypes,
             statuses: allStatuses,
             filters: {
                 type: filter_type || "",
                 status: filter_status || "",
-                location: filter_location || ""
+                location: filter_location || "" // This is the internal location_id
             },
             counts: counts
         });
@@ -152,14 +156,17 @@ router.get('/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
 // Path changed from /rides to /
 router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight } = req.body;
+    const publicRideId = crypto.randomUUID(); // ADDED
     let connection;
     try {
         connection = await pool.getConnection();
+        // ADDED public_ride_id
         const sql = `
-            INSERT INTO rides (ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await connection.query(sql, [
+            publicRideId, // ADDED
             ride_name, ride_type, ride_status, location_id,
             capacity || null, min_height || null, max_weight || null
         ]);
@@ -176,10 +183,10 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     }
 });
 
-// POST /rides/status/:id
-// Path changed from /rides/status/:id to /status/:id
-router.post('/status/:id', isAuthenticated, async (req, res) => {
-    const rideId = req.params.id;
+// POST /rides/status/:public_ride_id
+// Path changed to /status/:public_ride_id
+router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
+    const { public_ride_id } = req.params; // CHANGED
     const { ride_status } = req.body;
     const { role, locationId } = req.session.user;
 
@@ -194,7 +201,8 @@ router.post('/status/:id', isAuthenticated, async (req, res) => {
         if (role === 'Admin' || role === 'Park Manager') {
             hasPermission = true;
         } else if (role === 'Location Manager') {
-            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [rideId]);
+            // Query by public_ride_id
+            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
             if (rideLoc.length > 0 && rideLoc[0].location_id === locationId) {
                 hasPermission = true;
             }
@@ -203,8 +211,10 @@ router.post('/status/:id', isAuthenticated, async (req, res) => {
         if (!hasPermission) {
             return res.status(403).send('Forbidden: You do not have permission to update this ride.');
         }
-        const sql = "UPDATE rides SET ride_status = ? WHERE ride_id = ?";
-        await connection.query(sql, [ride_status, rideId]);
+
+        // Update by public_ride_id
+        const sql = "UPDATE rides SET ride_status = ? WHERE public_ride_id = ?"; // CHANGED
+        await connection.query(sql, [ride_status, public_ride_id]); // CHANGED
         res.redirect('/rides');
     } catch (error) {
         console.error(error);
@@ -214,15 +224,15 @@ router.post('/status/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// GET /rides/log/:ride_id
-// Path changed from /rides/log/:ride_id to /log/:ride_id
-router.get('/log/:ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
-    const rideId = req.params.ride_id;
+// GET /rides/log/:public_ride_id
+// Path changed to /log/:public_ride_id
+router.get('/log/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
+    const { public_ride_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
     let ride;
 
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
@@ -239,16 +249,16 @@ router.get('/log/:ride_id', isAuthenticated, canLogRideRun, async (req, res) => 
     } catch (error) {
         console.error("Error loading log ride run page:", error);
         res.render('log-ride-run', {
-            ride: ride || { ride_id: rideId, ride_name: 'Unknown Ride' },
+            ride: ride || { public_ride_id: public_ride_id, ride_name: 'Unknown Ride' }, // CHANGED
             error: 'Error loading page. Please try again.'
         });
     }
 });
 
-// POST /rides/run/:ride_id
-// Path changed from /rides/run/:ride_id to /run/:ride_id
-router.post('/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
-    const rideId = req.params.ride_id;
+// POST /rides/run/:public_ride_id
+// Path changed to /run/:public_ride_id
+router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
+    const { public_ride_id } = req.params; // CHANGED
     const { rider_count } = req.body;
     const { role, locationId } = req.session.user;
     let connection;
@@ -257,11 +267,12 @@ router.post('/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) =>
     try {
         connection = await pool.getConnection();
 
-        const [rideResult] = await pool.query('SELECT capacity, location_id, ride_name, ride_id FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, capacity, location_id, ride_name, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
+        const internalRideId = ride.ride_id; // Get internal ID for logging
 
         if (role === 'Location Manager' || role === 'Staff') {
             if (ride.location_id !== locationId) {
@@ -296,9 +307,10 @@ router.post('/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) =>
             [today]
         );
 
+        // Use internalRideId for the foreign key
         await connection.query(
             'INSERT INTO daily_ride (ride_id, dat_date, run_count, ride_count) VALUES (?, ?, 1, ?) ON DUPLICATE KEY UPDATE run_count = run_count + 1, ride_count = ride_count + ?',
-            [rideId, today, estimatedRiders, estimatedRiders]
+            [internalRideId, today, estimatedRiders, estimatedRiders]
         );
 
         await connection.commit();
@@ -309,7 +321,7 @@ router.post('/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) =>
         console.error("Error logging ride run:", error);
 
         res.render('log-ride-run', {
-            ride: ride || { ride_id: rideId, ride_name: 'Unknown Ride', capacity: 0 },
+            ride: ride || { public_ride_id: public_ride_id, ride_name: 'Unknown Ride', capacity: 0 }, // CHANGED
             error: 'Error saving ride data. Please try again.'
         });
     } finally {
@@ -317,20 +329,21 @@ router.post('/run/:ride_id', isAuthenticated, canLogRideRun, async (req, res) =>
     }
 });
 
-// GET /rides/history/:ride_id
-// Path changed from /rides/history/:ride_id to /history/:ride_id
-router.get('/history/:ride_id', isAuthenticated, canViewRideHistory, async (req, res) => {
-    const rideId = req.params.ride_id;
+// GET /rides/history/:public_ride_id
+// Path changed to /history/:public_ride_id
+router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, async (req, res) => {
+    const { public_ride_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
     const today = new Date().toISOString().substring(0, 10);
     let ride;
 
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
+        const internalRideId = ride.ride_id; // Get internal ID for logging
 
         if ((role === 'Location Manager' || role === 'Staff') && ride.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only view history for rides in your location.');
@@ -338,7 +351,7 @@ router.get('/history/:ride_id', isAuthenticated, canViewRideHistory, async (req,
 
         const [todayStatsResult] = await pool.query(
             'SELECT SUM(run_count) as today_runs, SUM(ride_count) as today_riders FROM daily_ride WHERE ride_id = ? AND dat_date = ?',
-            [rideId, today]
+            [internalRideId, today] // Use internal ID
         );
         const todayStats = {
             today_runs: todayStatsResult[0].today_runs || 0,
@@ -347,7 +360,7 @@ router.get('/history/:ride_id', isAuthenticated, canViewRideHistory, async (req,
 
         const [allTimeStatsResult] = await pool.query(
             'SELECT SUM(run_count) as total_runs, SUM(ride_count) as total_riders FROM daily_ride WHERE ride_id = ?',
-            [rideId]
+            [internalRideId] // Use internal ID
         );
         const allTimeStats = {
             total_runs: allTimeStatsResult[0].total_runs || 0,
@@ -356,7 +369,7 @@ router.get('/history/:ride_id', isAuthenticated, canViewRideHistory, async (req,
 
         const [dailyHistory] = await pool.query(
             'SELECT dat_date, run_count, ride_count FROM daily_ride WHERE ride_id = ? ORDER BY dat_date DESC',
-            [rideId]
+            [internalRideId] // Use internal ID
         );
 
         res.render('ride-run-history', {

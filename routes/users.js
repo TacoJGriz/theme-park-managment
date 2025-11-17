@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const pool = require('../db'); // Adjust path to db.js
+const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     canViewUsers,
@@ -20,7 +21,8 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
 
-        let query = 'SELECT employee_id, first_name, last_name, email, employee_type, location_id, is_pending_approval, is_active FROM employee_demographics';
+        // ADDED public_employee_id
+        let query = 'SELECT employee_id, public_employee_id, first_name, last_name, email, employee_type, location_id, is_pending_approval, is_active FROM employee_demographics';
         let params = [];
 
         if (role === 'Location Manager') {
@@ -32,7 +34,7 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
         const [users] = await pool.query(query, params);
 
         res.render('users', {
-            users: users,
+            users: users, // Now contains public_employee_id
             success: req.session.success,
             error: req.session.error
         });
@@ -115,18 +117,21 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     let connection;
     try {
         const isPending = (actorRole === 'HR Staff');
+        const publicEmployeeId = crypto.randomUUID(); // ADDED
 
         const hash = await bcrypt.hash(password, saltRounds);
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        // ADDED public_employee_id
         const demoSql = `
             INSERT INTO employee_demographics
-            (first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code,
+            (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code,
             birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_pending_approval)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [demoResult] = await connection.query(demoSql, [
+            publicEmployeeId, // ADDED
             first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
             birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate || null, isPending
         ]);
@@ -156,21 +161,22 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// GET /edit/:id (Handled by /users/edit/:id or /employees/edit/:id)
+// GET /edit/:public_employee_id (Handled by /users/edit/:id or /employees/edit/:id)
 // Path is correct
-router.get('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const employeeId = req.params.id;
+router.get('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const { public_employee_id } = req.params; // CHANGED
     const actor = req.session.user;
 
     try {
-        const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+        // Query by public_employee_id
+        const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
         if (employeeResult.length === 0) {
             return res.status(404).send('Employee not found');
         }
         const employee = employeeResult[0];
 
         const targetRole = employee.employee_type;
-        const targetId = employee.employee_id;
+        const targetId = employee.employee_id; // Internal ID
 
         if (actor.role === 'Head of HR' && targetRole === 'Admin') {
             return res.status(403).send('Forbidden: You do not have permission to edit this employee.');
@@ -180,7 +186,8 @@ router.get('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
         }
 
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
+        // Exclude self from supervisor list using internal ID
+        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [targetId]);
 
         res.render('edit-employee', {
             employee: employee,
@@ -194,15 +201,16 @@ router.get('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// POST /edit/:id (Handled by /users/edit/:id or /employees/edit/:id)
+// POST /edit/:public_employee_id (Handled by /users/edit/:id or /employees/edit/:id)
 // Path is correct
-router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const employeeId = req.params.id;
+router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const { public_employee_id } = req.params; // CHANGED
     const actor = req.session.user;
 
     let targetUser;
     try {
-        const [targetUserResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+        // Query by public_employee_id
+        const [targetUserResult] = await pool.query('SELECT * FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
         if (targetUserResult.length === 0) {
             return res.status(404).send('Employee not found');
         }
@@ -224,7 +232,8 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     try {
         connection = await pool.getConnection();
 
-        await connection.query('UPDATE employee_demographics SET pending_hourly_rate = NULL, rate_change_requested_by = NULL WHERE employee_id = ?', [employeeId]);
+        // Update by public_employee_id
+        await connection.query('UPDATE employee_demographics SET pending_hourly_rate = NULL, rate_change_requested_by = NULL WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
 
         if (actor.role === 'Admin' || actor.role === 'Head of HR') {
             const {
@@ -241,13 +250,13 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
                 street_address = ?, city = ?, state = ?, zip_code = ?, birth_date = ?,
                 hire_date = ?, termination_date = ?, employee_type = ?, location_id = ?,
                 supervisor_id = ?, hourly_rate = ?, is_active = ?
-                WHERE employee_id = ?
+                WHERE public_employee_id = ? -- CHANGED
             `;
             await connection.query(sql, [
                 first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
                 birth_date, hire_date, termination_date, employee_type, location_id,
                 supervisor_id, hourly_rate || null, is_active === '1',
-                employeeId
+                public_employee_id // CHANGED
             ]);
 
             req.session.success = 'Employee details updated successfully.';
@@ -268,13 +277,13 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
                 street_address = ?, city = ?, state = ?, zip_code = ?, birth_date = ?,
                 hire_date = ?, termination_date = ?, employee_type = ?, location_id = ?,
                 supervisor_id = ?, is_active = ?
-                WHERE employee_id = ?
+                WHERE public_employee_id = ? -- CHANGED
             `;
             await connection.query(personalInfoSql, [
                 first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
                 birth_date, hire_date, termination_date, employee_type, location_id,
                 supervisor_id, is_active === '1',
-                employeeId
+                public_employee_id // CHANGED
             ]);
 
             const newRate = parseFloat(hourly_rate);
@@ -284,9 +293,9 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
                 const rateChangeSql = `
                     UPDATE employee_demographics 
                     SET pending_hourly_rate = ?, rate_change_requested_by = ? 
-                    WHERE employee_id = ?
+                    WHERE public_employee_id = ? -- CHANGED
                 `;
-                await connection.query(rateChangeSql, [newRate, actor.id, employeeId]);
+                await connection.query(rateChangeSql, [newRate, actor.id, public_employee_id]); // CHANGED
                 req.session.success = 'Wage update request sent for approval.';
             } else {
                 req.session.success = 'Employee details updated successfully.';
@@ -298,10 +307,10 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     } catch (error) {
         console.error("Error updating employee:", error);
         try {
-            const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+            const [employeeResult] = await pool.query('SELECT * FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
             const employee = employeeResult.length > 0 ? employeeResult[0] : {};
             const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-            const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [employeeId]);
+            const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND public_employee_id != ?', [public_employee_id]); // CHANGED
 
             res.render('edit-employee', {
                 employee: employee,
@@ -318,14 +327,15 @@ router.post('/edit/:id', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// GET /reset-password/:id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
+// GET /reset-password/:public_employee_id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
 // Path is correct
-router.get('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const employeeId = req.params.id;
+router.get('/reset-password/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const { public_employee_id } = req.params; // CHANGED
     const actor = req.session.user;
 
     try {
-        const [employeeResult] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+        // Query by public_employee_id
+        const [employeeResult] = await pool.query('SELECT employee_id, public_employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
         if (employeeResult.length === 0) {
             return res.status(404).send('Employee not found');
         }
@@ -339,20 +349,22 @@ router.get('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, 
     }
 });
 
-// POST /reset-password/:id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
+// POST /reset-password/:public_employee_id (Handled by /users/reset-password/:id or /employees/reset-password/:id)
 // Path is correct
-router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const employeeId = req.params.id;
+router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const { public_employee_id } = req.params; // CHANGED
     const actor = req.session.user;
     const { password, confirm_password } = req.body;
 
     let employee;
     try {
-        const [employeeResult] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+        // Query by public_employee_id
+        const [employeeResult] = await pool.query('SELECT employee_id, public_employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]); // CHANGED
         if (employeeResult.length === 0) {
             return res.status(404).send('Employee not found');
         }
         employee = employeeResult[0];
+        const internal_employee_id = employee.employee_id; // Get internal ID
 
         if (password !== confirm_password) {
             return res.render('reset-password', {
@@ -363,15 +375,16 @@ router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req,
 
         const hash = await bcrypt.hash(password, saltRounds);
 
+        // Update employee_auth using the internal employee_id
         const sql = "UPDATE employee_auth SET password_hash = ? WHERE employee_id = ?";
-        await pool.query(sql, [hash, employeeId]);
+        await pool.query(sql, [hash, internal_employee_id]);
 
         res.redirect(req.baseUrl); // <-- FIXED
 
     } catch (error) {
         console.error("Error resetting password:", error);
         res.render('reset-password', {
-            employee: employee || { employee_id: employeeId, first_name: 'Unknown', last_name: '' },
+            employee: employee || { public_employee_id: public_employee_id, first_name: 'Unknown', last_name: '' }, // CHANGED
             error: "A database error occurred while resetting the password."
         });
     }
@@ -383,8 +396,9 @@ router.post('/reset-password/:id', isAuthenticated, canAddEmployees, async (req,
 // Path is correct
 router.get('/pending', isAuthenticated, canViewPendingEmployees, async (req, res) => {
     try {
+        // ADDED public_employee_id
         const [pendingUsers] = await pool.query(`
-            SELECT e.employee_id, e.first_name, e.last_name, e.email, e.employee_type, e.hire_date, l.location_name
+            SELECT e.employee_id, e.public_employee_id, e.first_name, e.last_name, e.email, e.employee_type, e.hire_date, l.location_name
             FROM employee_demographics e
             LEFT JOIN location l ON e.location_id = l.location_id
             WHERE e.is_pending_approval = TRUE
@@ -401,14 +415,15 @@ router.get('/pending', isAuthenticated, canViewPendingEmployees, async (req, res
     }
 });
 
-// POST /approve/:id (Handled by /users/approve/:id or /employees/approve/:id)
+// POST /approve/:public_employee_id (Handled by /users/approve/:id or /employees/approve/:id)
 // Path is correct
-router.post('/approve/:id', isAuthenticated, canApproveEmployees, async (req, res) => {
-    const employeeId = req.params.id;
+router.post('/approve/:public_employee_id', isAuthenticated, canApproveEmployees, async (req, res) => {
+    const { public_employee_id } = req.params; // CHANGED
 
     try {
-        const sql = "UPDATE employee_demographics SET is_pending_approval = FALSE WHERE employee_id = ?";
-        await pool.query(sql, [employeeId]);
+        // Update by public_employee_id
+        const sql = "UPDATE employee_demographics SET is_pending_approval = FALSE WHERE public_employee_id = ?"; // CHANGED
+        await pool.query(sql, [public_employee_id]); // CHANGED
         req.session.success = "Employee approved successfully.";
 
         // This redirect needs to be to the '/pending' route, but relative

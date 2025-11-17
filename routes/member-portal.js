@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto'); // ADDED
 const {
     isMemberAuthenticated,
     isGuest,
@@ -37,25 +38,30 @@ router.post('/register', isGuest, async (req, res) => {
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
+
+        // MODIFIED: Find member by public_membership_id
         const [memberResult] = await connection.query(
-            'SELECT * FROM membership WHERE membership_id = ? AND email = ?',
-            [membership_id, email]
+            'SELECT * FROM membership WHERE public_membership_id = ? AND email = ?',
+            [membership_id, email] // The form field is now sending the public_id
         );
         if (memberResult.length === 0) {
             throw new Error('Invalid Membership ID or Email. Please check your member card.');
         }
+
+        const internal_member_id = memberResult[0].membership_id; // Get internal ID
+
         const [authResult] = await connection.query(
             'SELECT * FROM member_auth WHERE membership_id = ?',
-            [membership_id]
+            [internal_member_id] // Check auth using internal ID
         );
         if (authResult.length > 0) {
             throw new Error('An account has already been created for this membership.');
         }
-        // const saltRounds = 10; // Moved to top of file
+
         const hash = await bcrypt.hash(password, saltRounds);
         await connection.query(
             'INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)',
-            [membership_id, hash]
+            [internal_member_id, hash] // Create auth using internal ID
         );
         await connection.commit();
         res.redirect('/login');
@@ -82,10 +88,11 @@ router.get('/logout', (req, res) => {
 // GET /member/dashboard
 router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
     try {
-        const memberId = req.session.member.id;
+        const memberId = req.session.member.id; // Internal ID is secure in session
         const [result] = await pool.query(`
             SELECT 
                 m.first_name, m.last_name, m.email, m.phone_number, m.date_of_birth, m.end_date,
+                m.public_membership_id, -- ADDED
                 mt.type_name,
                 CASE 
                     WHEN m.end_date >= CURDATE() THEN 'Active' 
@@ -119,7 +126,7 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
 
         res.render('member-dashboard', {
             member: {
-                id: memberId,
+                id: memberData.public_membership_id, // CHANGED to public ID
                 firstName: memberData.first_name,
                 lastName: memberData.last_name,
                 email: memberData.email,
@@ -140,13 +147,17 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
 
 // GET /member/history
 router.get('/history', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     let connection;
     try {
         connection = await pool.getConnection();
 
         // 1. Get the logged-in member's info
-        const member = req.session.member;
+        const [memberInfo] = await pool.query('SELECT first_name, last_name FROM membership WHERE membership_id = ?', [memberId]);
+        const member = {
+            firstName: memberInfo[0].first_name,
+            lastName: memberInfo[0].last_name
+        };
 
         // 2. Find all membership IDs associated with this member's group
         const [memberGroup] = await connection.query(
@@ -207,7 +218,7 @@ router.get('/promotions', isMemberAuthenticated, async (req, res) => {
 // GET /member/history/receipt-group/:visit_group_id
 router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, async (req, res) => {
     const { visit_group_id } = req.params;
-    const memberId = req.session.member.id; // Logged-in user
+    const memberId = req.session.member.id; // Logged-in user (internal ID)
     let connection;
 
     try {
@@ -219,7 +230,8 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
                 v.*, 
                 tt.type_name AS ticket_name,
                 CONCAT(e.first_name, ' ', e.last_name) as staff_name,
-                m.primary_member_id, m.first_name, m.last_name, m.phone_number
+                m.primary_member_id, m.first_name, m.last_name, m.phone_number,
+                m.public_membership_id -- ADDED
             FROM visits v
             JOIN membership m ON v.membership_id = m.membership_id
             JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
@@ -245,7 +257,7 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
 
         // 3. Get Primary Member's full data (for the receipt header)
         const [primaryMemberData] = await connection.query(`
-            SELECT m.first_name, m.last_name, m.phone_number, mt.type_name
+            SELECT m.first_name, m.last_name, m.phone_number, m.public_membership_id, mt.type_name
             FROM membership m
             JOIN membership_type mt ON m.type_id = mt.type_id
             WHERE m.membership_id = ?
@@ -254,8 +266,8 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
 
         // 4. Build the receipt object
         const receiptData = {
-            visit_ids: visitsInGroup.map(v => v.visit_id), // Array of all visit IDs
-            visit_group_id: visit_group_id,
+            visit_ids: [], // We don't show internal visit IDs anymore
+            visit_group_id: visit_group_id, // This is the main receipt ID
             visit_date: formatReceiptDate(visitsInGroup[0].visit_date),
             ticket_name: visitsInGroup[0].ticket_name,
             base_price: 0.00,
@@ -264,7 +276,7 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
             promo_applied: 'N/A',
             is_member: true,
             staff_name: visitsInGroup[0].staff_name || 'N/A',
-            member_id: visitPrimaryId,
+            member_id: primaryMember.public_membership_id, // CHANGED to public ID
             member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
             member_type: primaryMember.type_name,
             member_phone: censorPhone(primaryMember.phone_number),
@@ -274,7 +286,7 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
                 .map(v => ({
                     first_name: v.first_name,
                     last_name: v.last_name,
-                    membership_id: v.membership_id
+                    membership_id: v.public_membership_id // CHANGED to public ID
                 }))
         };
 
@@ -292,11 +304,12 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
 
 // GET /member/manage
 router.get('/manage', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     try {
         const [memberResult] = await pool.query(`
             SELECT 
                 m.membership_id, m.first_name, m.last_name, m.end_date, m.primary_member_id,
+                m.public_membership_id, -- ADDED
                 mt.type_name,
                 CASE 
                     WHEN m.end_date >= CURDATE() THEN 'Active' 
@@ -342,7 +355,7 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
 
             // 3. Fetch sub-members
             [familyMembers] = await pool.query(
-                "SELECT * FROM membership WHERE primary_member_id = ?",
+                "SELECT *, public_membership_id FROM membership WHERE primary_member_id = ?", // ADDED public_membership_id
                 [memberId]
             );
 
@@ -350,22 +363,25 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
             // --- Logged in as SUB-MEMBER ---
             // 1. Fetch primary member
             const [primaryMember] = await pool.query(
-                "SELECT * FROM membership WHERE membership_id = ?",
+                "SELECT *, public_membership_id FROM membership WHERE membership_id = ?", // ADDED
                 [member.primary_member_id]
             );
             // 2. Fetch "sibling" members (other subs, excluding self)
             const [siblingMembers] = await pool.query(
-                "SELECT * FROM membership WHERE primary_member_id = ? AND membership_id != ?",
+                "SELECT *, public_membership_id FROM membership WHERE primary_member_id = ? AND membership_id != ?", // ADDED
                 [member.primary_member_id, memberId]
             );
             familyMembers = primaryMember.concat(siblingMembers);
         }
 
+        // Pass public_membership_id to the view
+        member.public_id = member.public_membership_id; // Standardize
+
         res.render('member-manage-account', {
-            member: member,
+            member: member, // Contains public_id
             isPrimaryMember: isPrimaryMember, // Pass flag to view
-            familyMembers: familyMembers, // Pass group list to view
-            paymentMethods: paymentMethods, // Will be [] for sub-members
+            familyMembers: familyMembers, // Pass group list to view (contains public_id)
+            paymentMethods: paymentMethods, // Will be [] for sub-members (contains public_payment_id)
             canRenew: canRenew, // Will be false for sub-members
             success: req.session.success,
             error: req.session.error
@@ -379,13 +395,13 @@ router.get('/manage', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/purchases
-// ... (This route is unchanged) ...
 router.get('/purchases', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     try {
         const [purchases] = await pool.query(`
             SELECT 
                 h.purchase_id,
+                h.public_purchase_id, -- ADDED
                 h.purchase_date,
                 h.price_paid,
                 h.purchased_start_date,
@@ -403,7 +419,7 @@ router.get('/purchases', isMemberAuthenticated, async (req, res) => {
         }));
 
         res.render('member-purchase-history', {
-            purchases: mappedPurchases
+            purchases: mappedPurchases // Now contains public_purchase_id
         });
 
     } catch (error) {
@@ -412,25 +428,24 @@ router.get('/purchases', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// GET /member/purchases/receipt/:purchase_id
-// ... (This route is unchanged) ...
-router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
-    const { purchase_id } = req.params;
+// GET /member/purchases/receipt/:public_purchase_id
+router.get('/purchases/receipt/:public_purchase_id', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id; // Internal ID
+    const { public_purchase_id } = req.params; // CHANGED
 
     try {
         const [purchaseResult] = await pool.query(`
             SELECT 
-                h.purchase_id, h.purchase_date, h.price_paid, 
+                h.purchase_id, h.public_purchase_id, h.purchase_date, h.price_paid, 
                 h.purchased_start_date, h.purchased_end_date,
                 h.type_name_snapshot,
-                m.membership_id, m.first_name, m.last_name,
+                m.membership_id, m.public_membership_id, m.first_name, m.last_name, -- ADDED public_membership_id
                 pm.mock_identifier AS payment_method_name
             FROM membership_purchase_history h
             JOIN membership m ON h.membership_id = m.membership_id
             LEFT JOIN member_payment_methods pm ON h.payment_method_id = pm.payment_method_id
-            WHERE h.purchase_id = ? AND h.membership_id = ?
-        `, [purchase_id, memberId]);
+            WHERE h.public_purchase_id = ? AND h.membership_id = ? -- CHANGED
+        `, [public_purchase_id, memberId]);
 
         if (purchaseResult.length === 0) {
             // Not found or doesn't belong to this member
@@ -444,13 +459,16 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
         };
 
         const [subMembers] = await pool.query(
-            `SELECT membership_id, first_name, last_name
+            `SELECT membership_id, public_membership_id, first_name, last_name
              FROM membership 
-             WHERE primary_member_id = ?`,
-            [purchaseData.membership_id] // This is the primary member's ID from the query above
+             WHERE primary_member_id = ?`, // ADDED public_membership_id
+            [purchaseData.membership_id] // This is the internal primary member's ID
         );
 
         purchaseData.subMembers = subMembers;
+
+        // Use public_membership_id for display
+        purchaseData.membership_id_display = purchaseData.public_membership_id;
 
         // Render a new receipt detail view
         res.render('member-purchase-receipt-detail', {
@@ -465,9 +483,8 @@ router.get('/purchases/receipt/:purchase_id', isMemberAuthenticated, async (req,
 
 
 // GET /member/renew
-// ... (This route is unchanged) ...
 router.get('/renew', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     try {
         // 1. Get all payment methods
         const [paymentMethods] = await pool.query(
@@ -483,7 +500,8 @@ router.get('/renew', isMemberAuthenticated, async (req, res) => {
 
         // 3. Get member's current info to show renewal details
         const [memberResult] = await pool.query(
-            `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name
+            `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name,
+             (SELECT COUNT(*) FROM membership WHERE primary_member_id = m.membership_id) as sub_member_count
              FROM membership m
              JOIN membership_type mt ON m.type_id = mt.type_id
              WHERE m.membership_id = ?`,
@@ -501,14 +519,21 @@ router.get('/renew', isMemberAuthenticated, async (req, res) => {
         const newEndDate = new Date(newStartDate);
         newEndDate.setFullYear(newEndDate.getFullYear() + 1);
 
-        // 5. Render the new renewal page
+        // 5. *** ADDED: Calculate correct renewal price ***
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [member.type_id]);
+        const type = typeResult[0];
+        const totalMembers = 1 + member.sub_member_count;
+        const additionalMembers = Math.max(0, totalMembers - type.base_members);
+        const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
+
+        // 6. Render the new renewal page
         res.render('member-renew', {
             renewal: {
                 type_name: member.type_name,
-                base_price: member.base_price,
+                base_price: finalPrice, // CHANGED to finalPrice
                 new_end_date: newEndDate.toLocaleDateString()
             },
-            paymentMethods: paymentMethods,
+            paymentMethods: paymentMethods, // Contains public_payment_id
             error: null
         });
 
@@ -521,15 +546,12 @@ router.get('/renew', isMemberAuthenticated, async (req, res) => {
 
 
 // POST /member/renew
-// ... (This route is unchanged) ...
 router.post('/renew', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
-    // --- NEW: Get payment method from form ---
-    const { payment_method_id } = req.body;
+    const memberId = req.session.member.id; // Internal ID
+    const { payment_method_id } = req.body; // This is the *internal* payment_method_id
     let connection;
 
     try {
-        // --- NEW: Check if a payment method was selected ---
         if (!payment_method_id) {
             throw new Error("You must select a payment method.");
         }
@@ -537,9 +559,10 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // 1. Get member's current info
+        // 1. Get member's current info and sub-member count
         const [memberResult] = await connection.query(
-            `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name
+            `SELECT m.type_id, m.end_date, mt.*,
+             (SELECT COUNT(*) FROM membership WHERE primary_member_id = m.membership_id) as sub_member_count
              FROM membership m
              JOIN membership_type mt ON m.type_id = mt.type_id
              WHERE m.membership_id = ?`,
@@ -548,8 +571,9 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
 
         if (memberResult.length === 0) { throw new Error("Member not found."); }
         const member = memberResult[0];
+        const type = member; // The query result is the full membership_type object
 
-        // --- NEW: Verify the selected payment method belongs to this member ---
+        // 2. Verify the selected payment method belongs to this member
         const [paymentResult] = await connection.query(
             "SELECT * FROM member_payment_methods WHERE payment_method_id = ? AND membership_id = ?",
             [payment_method_id, memberId]
@@ -557,7 +581,6 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
         if (paymentResult.length === 0) {
             throw new Error("Invalid payment method selected.");
         }
-        // --- End verification ---
 
         const currentEndDate = new Date(member.end_date);
         const today = new Date();
@@ -571,32 +594,39 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
             return res.redirect('/member/manage');
         }
 
-        // 2. Determine new start/end dates
+        // 3. Determine new start/end dates
         const newStartDate = isExpired ? today : currentEndDate;
         const newEndDate = new Date(newStartDate);
         newEndDate.setFullYear(newEndDate.getFullYear() + 1);
 
-        // 3. Update the main membership table
+        // 4. *** ADDED: Calculate correct final price ***
+        const totalMembers = 1 + member.sub_member_count;
+        const additionalMembers = Math.max(0, totalMembers - type.base_members);
+        const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
+
+        // 5. Update the main membership table AND ALL SUB-MEMBERS
         await connection.query(
-            "UPDATE membership SET end_date = ?, type_id = ? WHERE membership_id = ?",
-            [newEndDate, member.type_id, memberId]
+            "UPDATE membership SET end_date = ? WHERE membership_id = ? OR primary_member_id = ?",
+            [newEndDate, memberId, memberId]
         );
 
-        // 4. Log this renewal in the history table
+        // 6. Log this renewal in the history table
+        const publicPurchaseId = crypto.randomUUID(); // ADDED
         const historySql = `
             INSERT INTO membership_purchase_history 
-                (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (public_purchase_id, membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await connection.query(historySql, [
+            publicPurchaseId, // ADDED
             memberId,
             member.type_id,
             today, // Purchase date is today
-            member.base_price, // Use the price from the *current* type
+            finalPrice, // *** CHANGED to use calculated finalPrice ***
             newStartDate, // The start of this new term
             newEndDate,    // The end of this new term
-            member.type_name, // <-- NEW: Save snapshot of type name
-            payment_method_id // <-- NEW: Save the selected payment ID
+            member.type_name,
+            payment_method_id
         ]);
 
         await connection.commit();
@@ -609,11 +639,19 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
         console.error("Error renewing membership:", error);
 
         // --- NEW: Error handling for this page ---
-        // If it fails, we need to re-render the renewal page with the error
         try {
             const [paymentMethods] = await pool.query("SELECT * FROM member_payment_methods WHERE membership_id = ? ORDER BY is_default DESC", [memberId]);
-            const [memberResult] = await pool.query("SELECT mt.type_name, mt.base_price, m.end_date FROM membership m JOIN membership_type mt ON m.type_id = mt.type_id WHERE m.membership_id = ?", [memberId]);
+            const [memberResult] = await pool.query(
+                `SELECT m.type_id, m.end_date, mt.base_price, mt.type_name,
+                 (SELECT COUNT(*) FROM membership WHERE primary_member_id = m.membership_id) as sub_member_count
+                 FROM membership m
+                 JOIN membership_type mt ON m.type_id = mt.type_id
+                 WHERE m.membership_id = ?`,
+                [memberId]
+            );
             const member = memberResult[0];
+            const type = memberResult[0];
+
             const currentEndDate = new Date(member.end_date);
             const today = new Date();
             const isExpired = currentEndDate < today;
@@ -621,10 +659,14 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
             const newEndDate = new Date(newStartDate);
             newEndDate.setFullYear(newEndDate.getFullYear() + 1);
 
+            const totalMembers = 1 + member.sub_member_count;
+            const additionalMembers = Math.max(0, totalMembers - type.base_members);
+            const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
+
             res.render('member-renew', {
                 renewal: {
                     type_name: member.type_name,
-                    base_price: member.base_price,
+                    base_price: finalPrice,
                     new_end_date: newEndDate.toLocaleDateString()
                 },
                 paymentMethods: paymentMethods,
@@ -642,9 +684,8 @@ router.post('/renew', isMemberAuthenticated, async (req, res) => {
 
 
 // GET /member/edit
-// ... (This route is unchanged) ...
 router.get('/edit', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     try {
         const [memberResult] = await pool.query(
             "SELECT first_name, last_name, email, phone_number, date_of_birth FROM membership WHERE membership_id = ?",
@@ -664,9 +705,8 @@ router.get('/edit', isMemberAuthenticated, async (req, res) => {
 });
 
 // POST /member/edit
-// ... (This route is unchanged) ...
 router.post('/edit', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
     const { first_name, last_name, date_of_birth } = req.body;
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
@@ -714,16 +754,14 @@ router.post('/edit', isMemberAuthenticated, async (req, res) => {
 });
 
 // GET /member/change-password
-// ... (This route is unchanged) ...
 router.get('/change-password', isMemberAuthenticated, (req, res) => {
     res.render('member-change-password', { error: null, success: null });
 });
 
 // POST /member/change-password
-// ... (This route is unchanged) ...
 router.post('/change-password', isMemberAuthenticated, async (req, res) => {
     const { old_password, new_password, confirm_password } = req.body;
-    const memberId = req.session.member.id;
+    const memberId = req.session.member.id; // Internal ID
 
     if (new_password !== confirm_password) {
         return res.render('member-change-password', {
@@ -780,9 +818,8 @@ router.post('/change-password', isMemberAuthenticated, async (req, res) => {
 
 
 // --- Payment Method Routes ---
-// ... (These routes are unchanged) ...
 router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
-    const { id: memberId } = req.session.member;
+    const { id: memberId } = req.session.member; // Internal ID
     const {
         payment_method_choice, // 'card' or 'bank'
         set_as_default_card,   // 'true' or undefined
@@ -801,6 +838,7 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
 
         const isDefault = set_as_default_card === 'true' || set_as_default_bank === 'true';
         let finalIsDefault = isDefault;
+        const publicPaymentId = crypto.randomUUID(); // ADDED
 
         if (isDefault) {
             // If this new one is default, unset all others first.
@@ -822,9 +860,9 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
 
         const insertSql = `
             INSERT INTO member_payment_methods 
-            (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-            VALUES (?, ?, ?, ?, ?)
-        `;
+            (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `; // ADDED public_payment_id
 
         if (payment_method_choice === 'card') {
             const cardDigits = (mock_card_number || '').replace(/\D/g, '');
@@ -832,8 +870,8 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
             const identifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
 
             await connection.query(insertSql, [
-                memberId, 'Card', finalIsDefault, identifier, mock_card_expiry || null
-            ]);
+                publicPaymentId, memberId, 'Card', finalIsDefault, identifier, mock_card_expiry || null
+            ]); // ADDED
 
         } else if (payment_method_choice === 'bank') {
             const accountDigits = (mock_account_number || '').replace(/\D/g, '');
@@ -841,8 +879,8 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
             const identifier = `Bank Account ending in ${lastFour}`;
 
             await connection.query(insertSql, [
-                memberId, 'Bank', finalIsDefault, identifier, null
-            ]);
+                publicPaymentId, memberId, 'Bank', finalIsDefault, identifier, null
+            ]); // ADDED
         }
 
         await connection.commit();
@@ -859,14 +897,14 @@ router.post('/payment/add', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// POST /member/payment/delete/:method_id
-router.post('/payment/delete/:method_id', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
-    const { method_id } = req.params;
+// POST /member/payment/delete/:public_payment_id
+router.post('/payment/delete/:public_payment_id', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id; // Internal ID
+    const { public_payment_id } = req.params; // CHANGED
     try {
         await pool.query(
-            "DELETE FROM member_payment_methods WHERE payment_method_id = ? AND membership_id = ?",
-            [method_id, memberId]
+            "DELETE FROM member_payment_methods WHERE public_payment_id = ? AND membership_id = ?", // CHANGED
+            [public_payment_id, memberId] // CHANGED
         );
         req.session.success = "Payment method deleted.";
         res.redirect('/member/manage');
@@ -876,10 +914,10 @@ router.post('/payment/delete/:method_id', isMemberAuthenticated, async (req, res
     }
 });
 
-// POST /member/payment/default/:method_id
-router.post('/payment/default/:method_id', isMemberAuthenticated, async (req, res) => {
-    const memberId = req.session.member.id;
-    const { method_id } = req.params;
+// POST /member/payment/default/:public_payment_id
+router.post('/payment/default/:public_payment_id', isMemberAuthenticated, async (req, res) => {
+    const memberId = req.session.member.id; // Internal ID
+    const { public_payment_id } = req.params; // CHANGED
     let connection;
     try {
         connection = await pool.getConnection();
@@ -889,8 +927,8 @@ router.post('/payment/default/:method_id', isMemberAuthenticated, async (req, re
             [memberId]
         );
         await connection.query(
-            "UPDATE member_payment_methods SET is_default = TRUE WHERE payment_method_id = ? AND membership_id = ?",
-            [method_id, memberId]
+            "UPDATE member_payment_methods SET is_default = TRUE WHERE public_payment_id = ? AND membership_id = ?", // CHANGED
+            [public_payment_id, memberId] // CHANGED
         );
         await connection.commit();
         req.session.success = "Default payment method updated.";
@@ -904,17 +942,17 @@ router.post('/payment/default/:method_id', isMemberAuthenticated, async (req, re
     }
 });
 
-// GET /member/edit-sub/:id
+// GET /member/edit-sub/:public_membership_id
 // Renders the edit form for a sub-member
-router.get('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
-    const primaryMemberId = req.session.member.id;
-    const subMemberId = req.params.id;
+router.get('/edit-sub/:public_membership_id', isMemberAuthenticated, async (req, res) => {
+    const primaryMemberId = req.session.member.id; // Internal ID
+    const { public_membership_id } = req.params; // CHANGED
 
     try {
         // Security Check: Fetch the sub-member AND verify they belong to the logged-in primary member
         const [subResult] = await pool.query(
-            "SELECT * FROM membership WHERE membership_id = ? AND primary_member_id = ?",
-            [subMemberId, primaryMemberId]
+            "SELECT * FROM membership WHERE public_membership_id = ? AND primary_member_id = ?", // CHANGED
+            [public_membership_id, primaryMemberId] // CHANGED
         );
 
         if (subResult.length === 0) {
@@ -924,7 +962,7 @@ router.get('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
 
         // Render a new view, passing in the sub-member's data
         res.render('member-edit-sub-profile', {
-            subMember: subResult[0],
+            subMember: subResult[0], // Contains public_membership_id
             error: null
         });
 
@@ -935,19 +973,19 @@ router.get('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
     }
 });
 
-// POST /member/edit-sub/:id
+// POST /member/edit-sub/:public_membership_id
 // Handles the update for a sub-member
-router.post('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
-    const primaryMemberId = req.session.member.id;
-    const subMemberId = req.params.id;
+router.post('/edit-sub/:public_membership_id', isMemberAuthenticated, async (req, res) => {
+    const primaryMemberId = req.session.member.id; // Internal ID
+    const { public_membership_id } = req.params; // CHANGED
     const { first_name, last_name, date_of_birth } = req.body;
 
     let subMember; // To pass back to form on error
     try {
         // Security Check: Fetch the sub-member again to be 100% sure
         const [subResult] = await pool.query(
-            "SELECT * FROM membership WHERE membership_id = ? AND primary_member_id = ?",
-            [subMemberId, primaryMemberId]
+            "SELECT * FROM membership WHERE public_membership_id = ? AND primary_member_id = ?", // CHANGED
+            [public_membership_id, primaryMemberId] // CHANGED
         );
 
         if (subResult.length === 0) {
@@ -958,8 +996,8 @@ router.post('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
 
         // Update the sub-member's details
         await pool.query(
-            "UPDATE membership SET first_name = ?, last_name = ?, date_of_birth = ? WHERE membership_id = ?",
-            [first_name, last_name, date_of_birth, subMemberId]
+            "UPDATE membership SET first_name = ?, last_name = ?, date_of_birth = ? WHERE public_membership_id = ?", // CHANGED
+            [first_name, last_name, date_of_birth, public_membership_id] // CHANGED
         );
 
         req.session.success = `Profile for ${first_name} ${last_name} updated.`;
@@ -969,7 +1007,7 @@ router.post('/edit-sub/:id', isMemberAuthenticated, async (req, res) => {
         console.error("Error updating sub-member:", error);
         // On error, re-render the edit form with the error message
         res.render('member-edit-sub-profile', {
-            subMember: subMember || { ...req.body, membership_id: subMemberId },
+            subMember: subMember || { ...req.body, public_membership_id: public_membership_id },
             error: "An error occurred while updating the profile."
         });
     }

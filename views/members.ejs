@@ -5,130 +5,137 @@
     <title>Park Members</title>
     <style>
         body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
+ margin: 0; background-color: #f4f4f9; color: #333; }
         
         .container { max-width: 1400px;
-margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-}
+ }
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-}
+ }
         
         th, td { 
-            padding: 12px; 
+            padding: 12px;
             text-align: left; 
             border-bottom: 1px solid #ddd;
-            white-space: nowrap;
+            /* white-space: nowrap;  <-- REMOVED to allow text wrapping */
+            word-wrap: break-word;   /* ADDED to ensure long words break if needed */
 }
-        th { background-color: #17a2b8; color: white;
+        th { background-color: #17a2b8;
+ color: white;
 }
         tr:nth-child(even) { background-color: #f9f9f9;
-}
+ }
         tr:hover { background-color: #f1f1f1;
-}
+ }
         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
-color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+ color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         .add-button:hover { background-color: #218838;
-}
+ }
 
         /* --- Sortable Header Styles --- */
         th.sortable a { text-decoration: none;
-color: white; display: flex; justify-content: space-between; align-items: center; }
+ color: white; display: flex; justify-content: space-between; align-items: center; }
         th.sortable a:hover { text-decoration: underline;
-}
+ }
         .sort-indicator { font-size: 1.2em; margin-left: 5px;
-}
+ }
 
         /* --- Stats Bar Styles --- */
         .stats-bar {
             display: grid;
-grid-template-columns: repeat(3, 1fr);
+ grid-template-columns: repeat(3, 1fr);
             gap: 1em;
             margin-bottom: 1.5em;
         }
         .stat-card {
             background-color: #f8f9fa;
-border: 1px solid #dee2e6;
+ border: 1px solid #dee2e6;
             padding: 1.5em;
             border-radius: 8px;
             text-align: center;
-}
+ }
         .stat-card h3 {
             margin: 0 0 0.25em 0;
-font-size: 2.5em;
+ font-size: 2.5em;
             color: #007bff; /* Default 'total' color */
         }
         .stat-card h3.active { color: #28a745;
-}
+ }
         .stat-card h3.expired { color: #dc3545;
-}
+ }
         .stat-card p {
             margin: 0;
-font-weight: bold;
+ font-weight: bold;
             color: #6c757d;
         }
 
         /* --- Filter Bar Styles --- */
         .filter-bar { background-color: #f8f9fa;
-border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
-}
+ border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
+ }
         .filter-controls {
             display: grid;
-grid-template-columns: 2fr 1fr 1fr 1fr;
+ grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: 1em;
             align-items: flex-end;
         }
         .filter-controls label { font-weight: bold;
-display: block; margin-bottom: 5px; font-size: 0.9em; }
+ display: block; margin-bottom: 5px; font-size: 0.9em; }
         .filter-controls input[type="search"],
         .filter-controls select { width: 100%;
-padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
-}
+ padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+ }
         .filter-buttons { display: flex; gap: 10px;
-}
+ }
         .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none;
-border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box;
-}
+ border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box;
+ }
         .btn-filter { background-color: #007bff;
-}
+ }
         .btn-clear { background-color: #6c757d;
-}
+ }
 
         /* --- Status Styles --- */
         .status-Active { color: #28a745;
-font-weight: bold; }
+ font-weight: bold; }
         .status-Expired { color: #dc3545; font-weight: bold;
-}
+ }
         
         /* --- NEW: Action Link Styles --- */
         .action-link {
             text-decoration: none;
             font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
+            display: block;       /* Makes them stack vertically */
+            margin-bottom: 5px;   /* Adds space between them */
+            white-space: nowrap;  /* <--- ADD THIS: Prevents text inside the button from breaking */
         }
-        .action-link:hover { text-decoration: underline; }
-        .link-history { color: #17a2b8; }
-        .link-edit { color: #007bff; }
-        .link-reset { color: #dc3545; }
+        .action-link:hover { text-decoration: underline;
+ }
+        .link-history { color: #17a2b8;
+ }
+        .link-edit { color: #007bff;
+ }
+        .link-reset { color: #dc3545;
+ }
 
         /* --- NEW: Flash Message Styles --- */
         .message {
             padding: 1em;
-            border-radius: 4px;
+ border-radius: 4px;
             margin-bottom: 1.5em;
             font-weight: bold;
             border: 1px solid transparent;
-        }
+ }
         .success {
-            color: #155724; 
-            background-color: #d4edda; 
+            color: #155724;
+ background-color: #d4edda; 
             border-color: #c3e6cb;
         }
         .error {
-            color: #721c24; 
-            background-color: #f8d7da;
+            color: #721c24;
+ background-color: #f8d7da;
             border-color: #f5c6cb;
         }
 
@@ -143,22 +150,23 @@ font-weight: bold; }
             <div class="message success"><%= success %></div>
         <% } %>
         <% if (typeof error !== 'undefined' && error) { %>
-            <div class="message error"><%= error %></div>
+            
+ <div class="message error"><%= error %></div>
         <% } %>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3 class="total"><%= counts.totalMembers ||
-0 %></h3>
+ 0 %></h3>
                 <p>Total Members (Current View)</p>
             </div>
             <div class="stat-card">
                 <h3 class="active"><%= counts.activeMembers ||
-0 %></h3>
+ 0 %></h3>
                 <p>Active Members</p>
             </div>
             <div class="stat-card">
                 <h3 class="expired"><%= counts.expiredMembers ||
-0 %></h3>
+ 0 %></h3>
                 <p>Expired Members</p>
             </div>
         </div>
@@ -169,31 +177,37 @@ font-weight: bold; }
                 <div class="filter-controls">
                     
   
+ 
 
                   <div>
                         <label for="search">Search Member (Member ID, Name, Email, Phone)</label>
                         <input type="search" id="search" name="search" 
-                         
+                       
+   
 
       placeholder="Search..." 
                                value="<%= search %>">
                     </div>
                     
-                    
+                  
+   
 
 <div>
                         <label for="filter_type">Membership Type</label>
                         <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
-                  
+                
+   
 
           <% types.forEach(type => { %>
+                                <%# Value is the internal type_id, which is secure in a form POST %>
                                 <option value="<%= type.type_id %>" 
                                         <%= String(filters.type) === String(type.type_id) ?
-'selected' : '' %>>
+ 'selected' : '' %>>
                                     <%= type.type_name %>
                                 </option>
                            
+ 
 
  <% }); %>
                         </select>
@@ -202,19 +216,21 @@ font-weight: bold; }
                     <div>
                         <label for="filter_status">Status</label>
         
+ 
 
                 <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <option value="active" <%= filters.status === 'active' ?
-'selected' : '' %>>Active</option>
+ 'selected' : '' %>>Active</option>
                             <option value="expired" <%= filters.status === 'expired' ?
-'selected' : '' %>>Expired</option>
+ 'selected' : '' %>>Expired</option>
                         </select>
                     </div>
 
                     <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
      
+ 
 
                    <a href="/members" class="filter-btn btn-clear">Clear</a>
                     </div>
@@ -222,6 +238,7 @@ font-weight: bold; }
                 
                 <% if (currentSort && currentDir) { %>
     
+ 
 
                 <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
@@ -233,108 +250,118 @@ font-weight: bold; }
         <a href="/members/new" class="add-button">Add New Member</a>
 
     
+ 
 
     <% 
             const getSortState = (column) => {
                 let nextDir = 'asc';
-let indicator = '';
+ let indicator = '';
 
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
-indicator = '▲'; 
+ indicator = '▲'; 
                     } else if (currentDir === 'desc') {
                         nextDir = 'none';
-indicator = '▼';
+ indicator = '▼';
                     }
                 }
                 
                 let href = `/members?search=${encodeURIComponent(search)}`;
-if (filters.type) {
+ if (filters.type) {
                     href += `&filter_type=${encodeURIComponent(filters.type)}`;
-}
+ }
                 if (filters.status) {
                     href += `&filter_status=${encodeURIComponent(filters.status)}`;
-}
+ }
                 
                 if (nextDir !== 'none') {
                     href += `&sort=${column}&dir=${nextDir}`;
-}
+ }
 
                 return {
                     href: href,
                     indicator: indicator
                 };
-};
+ };
             
             const idSort = getSortState('id');
             const nameSort = getSortState('name');
             const emailSort = getSortState('email');
             const phoneSort = getSortState('phone');
-            const typeSort = getSortState('type');
+ const typeSort = getSortState('type');
 const startDateSort = getSortState('start_date'); 
             const endDateSort = getSortState('end_date');
             const statusSort = getSortState('status');
-%>
+ %>
 
         <table>
             <thead>
                 <tr>
                     <th class="sortable">
                         <a href="<%= idSort.href %>">
-                            <span>Member ID</span>
+                
+             <span>Member ID</span>
                             <span class="sort-indicator"><%= idSort.indicator %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+            
+         <th class="sortable">
                         <a href="<%= nameSort.href %>">
                 
 
 
             <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
-                        </a>
+     
+                     </a>
                     </th>
              
 
 
        <th class="sortable">
                         <a href="<%= emailSort.href %>">
-                            <span>Email</span>
+             
+               <span>Email</span>
                             <span class="sort-indicator"><%= emailSort.indicator %></span>
       
 
 
                   </a>
                     </th>
-                    <th class="sortable">
+          
+           <th class="sortable">
                         <a href="<%= phoneSort.href %>">
               
 
 
               <span>Phone</span>
                             <span class="sort-indicator"><%= phoneSort.indicator %></span>
-                        </a>
+   
+                     </a>
                     </th>
            
 
 
          <th class="sortable">
                         <a href="<%= typeSort.href %>">
-                            <span>Member Type</span>
+           
+                  <span>Member Type</span>
                             <span class="sort-indicator"><%= typeSort.indicator %></span>
    
 
 
                      </a>
                     </th>
-                    <th class="sortable">
+       
+              <th class="sortable">
                         <a href="<%= startDateSort.href %>">
            
 
 
                  <span>Start Date</span>
-                            <span class="sort-indicator"><%= startDateSort.indicator %></span>
+                            <span class="sort-indicator"><%= 
+ startDateSort.indicator %></span>
                         </a>
                     </th>
        
@@ -342,57 +369,71 @@ const startDateSort = getSortState('start_date');
 
              <th class="sortable">
                         <a href="<%= endDateSort.href %>">
-                            <span>End Date</span>
+       
+                     <span>End Date</span>
                             <span class="sort-indicator"><%=endDateSort.indicator 
 
 %></span>
                         </a>
                     </th>
-                    <th class="sortable">
+    
+                 <th class="sortable">
                         <a href="<%= statusSort.href %>">
        
  
 
                     <span>Status</span>
-                            <span class="sort-indicator"><%= statusSort.indicator %></span>
+                            
+ <span class="sort-indicator"><%= statusSort.indicator %></span>
                         </a>
                     </th>
      
 
                <th>Actions</th>              </tr>
            </thead>
-           <tbody>
+        
+    <tbody>
                <% if (members.length === 0) { %>
                     <tr>
                         <td colspan="9" style="text-align: center;">No members found matching criteria.</td>
                     </tr>
 
-                <% } %>
+     
+             <% } %>
 
                 <%# --- NEW: Create the query string prefix --- %>
-                <% const queryStringWithPrefix = currentQueryString ? '?' + currentQueryString : '' %>
+                <% const queryStringWithPrefix = currentQueryString ?
+ '?' + currentQueryString : '' %>
 
                 <% members.forEach(member => { %>
                     <tr>
-                        <td><%= member.membership_id %></td>
-                        <td><%= member.first_name %> <%= member.last_name %></td>
+                        <%# Show clean 8-char public ID %>
+                        <td><%= member.public_membership_id.substring(0, 8).toUpperCase() %></td>
+                        <td><%= member.first_name %> <%= member.last_name 
+ %></td>
                         <td><%= member.email %></td>
                         <td><%= member.phone_number %></td>
                         <td><%= member.type_name ||'N/A' %></td>
-                        <td><%= member.start_date_formatted %></td>
+                     
+     <td><%= member.start_date_formatted %></td>
                         <td><%= member.end_date_formatted %></td>
                         <td class="status-<%= member.member_status %>"><%= member.member_status %></td>
                         <td>
-                            <%# --- MODIFIED: Appended queryStringWithPrefix to all links --- %>
-                            <a href="/members/history/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-history">View History</a>
-                            <a href="/members/edit/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-edit">Edit Member</a>
                 
+             <%# --- MODIFIED: Appended queryStringWithPrefix to all links --- %>
+                            <%# CHANGED: All links now use public_membership_id %>
+                            <a href="/members/history/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="action-link link-history">View History</a>
+                            <a href="/members/edit/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="action-link link-edit">Edit Member</a>
+       
+          
                             <% if (!member.primary_member_id) { %>
-                                <a href="/members/reset-password/<%= member.membership_id %><%= queryStringWithPrefix %>" class="action-link link-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset Password</a>
-                            <% } %>
+                                <a href="/members/reset-password/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="action-link link-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset Password</a>
+        
+                     <% } %>
                         </td>
                     </tr>
-                <% }); %>
+                <% });
+ %>
         </tbody>
         </table>
     </div>

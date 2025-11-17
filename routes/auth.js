@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const pool = require('../db'); // Adjust path to db.js
+const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     isGuest,
@@ -19,8 +20,9 @@ router.get('/signup', isGuest, async (req, res) => {
             return res.redirect('/'); // If no type is selected, go back to homepage
         }
 
+        // MODIFIED: Query by public_type_id
         const [typeResult] = await pool.query(
-            'SELECT * FROM membership_type WHERE type_id = ? AND is_active = TRUE',
+            'SELECT * FROM membership_type WHERE public_type_id = ? AND is_active = TRUE',
             [type_id]
         );
 
@@ -44,7 +46,7 @@ router.get('/signup', isGuest, async (req, res) => {
 // Processes the new member purchase and creates their account
 router.post('/signup', isGuest, async (req, res) => {
     const {
-        type_id,
+        type_id, // This is the *internal* type_id, passed from the form's hidden input
         first_name,
         last_name,
         date_of_birth,
@@ -72,7 +74,7 @@ router.post('/signup', isGuest, async (req, res) => {
     const connection = await pool.getConnection(); // Get connection early
 
     try {
-        // Get Membership Type details
+        // Get Membership Type details (using internal ID from form)
         const [typeResult] = await connection.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) {
             throw new Error("Invalid membership type submitted.");
@@ -92,9 +94,10 @@ router.post('/signup', isGuest, async (req, res) => {
         }
 
         // --- Dynamic Price Calculation ---
+        // *** FIXED THE STRING CONCATENATION BUG ***
         const totalMembers = 1 + subFirstNames.length;
         const additionalMembers = Math.max(0, totalMembers - type.base_members);
-        const finalPrice = type.base_price + (additionalMembers * (type.additional_member_price || 0));
+        const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
 
         // --- Database Transaction ---
         await connection.beginTransaction();
@@ -103,16 +106,21 @@ router.post('/signup', isGuest, async (req, res) => {
         const purchaseDate = new Date();
         const endDate = new Date(new Date().setFullYear(purchaseDate.getFullYear() + 1));
 
+        // --- ADDED UUID GENERATION ---
+        const publicMemberId = crypto.randomUUID();
+        const publicPurchaseId = crypto.randomUUID();
         let newPaymentMethodId = null;
         let paymentIdentifier = 'N/A';
 
         try {
             // 1. Create the PRIMARY membership record
+            // ADDED public_membership_id
             const memSql = `
-                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
+                INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
             `;
             const [memResult] = await connection.query(memSql, [
+                publicMemberId, // ADDED
                 first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, purchaseDate, endDate
             ]);
 
@@ -139,29 +147,36 @@ router.post('/signup', isGuest, async (req, res) => {
 
 
             if (shouldSaveCard) {
+                const publicPaymentId = crypto.randomUUID(); // ADDED
                 const [paymentResult] = await connection.query(
-                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-                     VALUES (?, 'Card', TRUE, ?, ?)`,
-                    [newPrimaryMemberId, paymentIdentifier, mock_card_expiry || null]
+                    // ADDED public_payment_id
+                    `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                     VALUES (?, ?, 'Card', TRUE, ?, ?)`,
+                    [publicPaymentId, newPrimaryMemberId, paymentIdentifier, mock_card_expiry || null] // ADDED
                 );
                 newPaymentMethodId = paymentResult.insertId;
 
             } else if (shouldSaveBank) {
+                const publicPaymentId = crypto.randomUUID(); // ADDED
                 const [paymentResult] = await connection.query(
-                    `INSERT INTO member_payment_methods (membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-                     VALUES (?, 'Bank', TRUE, ?, NULL)`,
-                    [newPrimaryMemberId, paymentIdentifier]
+                    // ADDED public_payment_id
+                    `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                     VALUES (?, ?, 'Bank', TRUE, ?, NULL)`,
+                    [publicPaymentId, newPrimaryMemberId, paymentIdentifier] // ADDED
                 );
                 newPaymentMethodId = paymentResult.insertId;
             }
 
             // 4. --- *** ADDED THIS BLOCK *** ---
+            // ADDED public_membership_id
             const subMemberSql = `
-                INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
-                VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?)
+                INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+                VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?)
             `;
             for (let i = 0; i < subFirstNames.length; i++) {
+                const publicSubMemberId = crypto.randomUUID(); // ADDED
                 await connection.query(subMemberSql, [
+                    publicSubMemberId, // ADDED
                     subFirstNames[i],
                     subLastNames[i],
                     subDobs[i],
@@ -172,12 +187,14 @@ router.post('/signup', isGuest, async (req, res) => {
                 ]);
             }
             // 5. Log this initial purchase in the history table
+            // ADDED public_purchase_id
             const historySql = `
                 INSERT INTO membership_purchase_history 
-                    (membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    (public_purchase_id, membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             await connection.query(historySql, [
+                publicPurchaseId, // ADDED
                 newPrimaryMemberId, // The purchase is tied to the primary member
                 type.type_id,
                 purchaseDate,
@@ -199,17 +216,17 @@ router.post('/signup', isGuest, async (req, res) => {
                 }
 
                 req.session.member = {
-                    id: newPrimaryMemberId,
+                    id: newPrimaryMemberId, // Use internal ID for session
                     firstName: first_name,
                     lastName: last_name,
                     email: email
                 };
 
                 // 8. Render the success page with a receipt object
-                // --- *** MODIFIED THIS OBJECT *** ---
                 const receiptData = {
+                    purchaseId: publicPurchaseId,
                     memberName: `${first_name} ${last_name}`,
-                    membershipId: newPrimaryMemberId,
+                    membershipId: publicMemberId, // CHANGED to public ID
                     typeName: type.type_name,
                     endDate: endDate.toLocaleDateString(),
                     pricePaid: parseFloat(finalPrice),
@@ -218,7 +235,6 @@ router.post('/signup', isGuest, async (req, res) => {
                         return { firstName: firstName, lastName: subLastNames[index] };
                     })
                 };
-                // --- *** END OF MODIFICATION *** ---
 
                 res.render('member-signup-success', { receipt: receiptData });
             });
@@ -233,9 +249,19 @@ router.post('/signup', isGuest, async (req, res) => {
     } catch (error) {
         if (connection) connection.release(); // Ensure release on general error
         console.error("Error processing signup:", error);
+
+        // Re-fetch type info using the internal ID from the form
+        let fallbackType = { type_id: type_id, ...req.body };
+        if (type_id) {
+            const [refetchType] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+            if (refetchType.length > 0) {
+                fallbackType = refetchType[0];
+            }
+        }
+
         // On error, re-render the signup page with the error message
         res.render('member-signup', {
-            type: type || { type_id: type_id, ...req.body }, // Fallback type
+            type: fallbackType,
             error: error.message || "An unexpected error occurred."
         });
     }

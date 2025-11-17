@@ -6,69 +6,69 @@
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
-margin: 0;
+ margin: 0;
             background-color: #f4f4f9;
             color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
-}
+ }
         h1 {
             font-weight: bold;
-margin: 0;
+ margin: 0;
         }
         .receipt-container {
             width: 400px;
-background: #ffffff;
+ background: #ffffff;
             border: 1px solid #ccc;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             padding: 2em;
             box-sizing: border-box;
-}
+ }
         .receipt-header {
             text-align: center;
-border-bottom: 2px dashed #333;
+ border-bottom: 2px dashed #333;
             padding-bottom: 1em;
             margin-bottom: 1em;
         }
         .receipt-header p {
             margin: 4px 0;
-font-size: 0.9em;
+ font-size: 0.9em;
         }
         .receipt-item {
             display: flex;
-justify-content: space-between;
+ justify-content: space-between;
             margin-bottom: 0.75em;
             font-size: 0.95em;
         }
         .receipt-item .label {
             font-weight: bold;
-}
+ }
         .receipt-item .value {
             text-align: right;
-}
+ }
         .receipt-total {
             border-top: 2px solid #333;
-margin-top: 1.5em;
+ margin-top: 1.5em;
             padding-top: 1em;
         }
         .receipt-total .receipt-item .label,
         .receipt-total .receipt-item .value {
             font-size: 1.2em;
-font-weight: bold;
+ font-weight: bold;
             color: #000;
         }
         .receipt-footer {
             text-align: center;
-font-size: 0.85em;
+ font-size: 0.85em;
             margin-top: 2em;
             border-top: 2px dashed #333;
             padding-top: 1em;
-}
+ }
         .close-button {
             display: block;
-width: 400px;
+ width: 400px;
             box-sizing: border-box;
             padding: 12px 20px;
             background-color: #17a2b8;
@@ -77,15 +77,15 @@ width: 400px;
             cursor: pointer;
             border-radius: 4px;
             font-size: 1em;
-font-weight: bold;
+ font-weight: bold;
             text-decoration: none;
             text-align: center;
             margin-top: 1.5em;
             font-family: sans-serif;
-}
+ }
         .close-button:hover {
             background-color: #138496;
-}
+ }
     </style>
 </head>
 <body>
@@ -99,31 +99,35 @@ font-weight: bold;
 
         <div class="receipt-body">
             <div class="receipt-item">
-        
-        <span class="label">Purchase ID:</span>
-                <span class="value"><%= purchase.purchase_id %></span>
-            </div>
+
+    <span class="label">Purchase ID:</span>
+            <span class="value"><%= purchase.public_purchase_id.substring(0, 8).toUpperCase() %></span>
+        </div>
 
 
             <div class="receipt-item">
                 <span class="label">Member ID:</span>
-                <span class="value"><%= purchase.membership_id %></span>     
-            </div>
+                <span class="value"><%= purchase.membership_id_display.substring(0, 8).toUpperCase() %></span>     
+    
+         </div>
             <div class="receipt-item">
                 <span class="label">Member Name:</span>
                 <span class="value"><%= purchase.first_name %> <%= purchase.last_name %></span>
             </div>
             <% if (purchase.subMembers && purchase.subMembers.length > 0) { %>
-                <div class="receipt-item">
+       
+         <div class="receipt-item">
                     <span class="label">Group Members:</span>
                     <span class="value"><%= purchase.subMembers.length %> Added</span>
                 </div>
                 <% purchase.subMembers.forEach(sub => { %>
-                <div class="receipt-item" style="padding-left: 2em;">
-                    <span class="label">- <%= sub.first_name %> <%= sub.last_name %></span>
-                    <span class="value">ID: <%= sub.membership_id %></span>
-                </div>
-                <% }); %>
+        
+         <div class="receipt-item" style="padding-left: 2em;">
+                <span class="label">- <%= sub.first_name %> <%= sub.last_name %></span>
+                <span class="value">ID: <%= sub.public_membership_id.substring(0, 8).toUpperCase() %></span>
+            </div>
+                <% });
+ %>
             <% } %>
             <div class="receipt-item">
                 <span class="label">Purchase Date:</span> 
@@ -132,22 +136,26 @@ font-weight: bold;
 
 
             <div class="receipt-item">
-                <span class="label">Item:</span>
+          
+       <span class="label">Item:</span>
                 <span class="value"><%= purchase.type_name %></span>
             </div>
         
     <div class="receipt-item">
                 <span class="label">Term Valid:</span>
                 <span class="value">
-                    <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
+              
+       <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
                     <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
             
     </span>
             </div>
             
             <div class="receipt-item">
-                <span class="label">Payment Method:</span>
-                <span class="value"><%= purchase.payment_method_name || 'N/A' %></span>
+             
+     <span class="label">Payment Method:</span>
+                <span class="value"><%= purchase.payment_method_name ||
+ 'N/A' %></span>
             </div>
 
             <div class="receipt-total">
@@ -155,7 +163,8 @@ font-weight: bold;
                     <span class="label">TOTAL:</span>
                     <span 
 class="value">$<%= parseFloat(purchase.price_paid).toFixed(2) %></span>
-                </div>
+             
+     </div>
             </div>
         </div>
 
@@ -167,7 +176,8 @@ class="value">$<%= parseFloat(purchase.price_paid).toFixed(2) %></span>
     <% if (typeof fromEmployee !== 'undefined' && fromEmployee) { %>
         <a href="/members" class="close-button" style="background-color: #28a745;">&laquo Back to Members List</a>
     <% } else { %>
-        <a href="/member/purchases" class="close-button">&laquo Back to Purchase History</a>
+  
+       <a href="/member/purchases" class="close-button">&laquo Back to Purchase History</a>
     <% } %>
 
 </body>

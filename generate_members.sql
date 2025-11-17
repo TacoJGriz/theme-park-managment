@@ -98,8 +98,10 @@ BEGIN
         SELECT type_id INTO random_type_id FROM temp_member_types WHERE id = random_id;
 
         -- Insert the new member
-        INSERT INTO membership (first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
+        -- ADDED public_membership_id
+        INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
         VALUES (
+            UUID(), -- ADDED
             random_first_name,
             random_last_name,
             random_email,

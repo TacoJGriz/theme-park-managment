@@ -1,33 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // Adjust path to db.js
-const { 
+const crypto = require('crypto'); // ADDED
+const {
     isAuthenticated,
     isMaintenanceOrHigher
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 // --- MAINTENANCE ROUTES ---
 
-// GET /maintenance/ride/:ride_id
-// Path changed to /ride/:ride_id
-router.get('/ride/:ride_id', isAuthenticated, (req, res, next) => {
+// GET /maintenance/ride/:public_ride_id
+// Path changed to /ride/:public_ride_id
+router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance' || role === 'Location Manager') {
         return next();
     }
     res.status(403).send('Forbidden: Access denied.');
 }, async (req, res) => {
-    const rideId = req.params.ride_id;
+    const { public_ride_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
     let ride;
 
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id FROM rides WHERE ride_id = ?', [rideId]);
+        // Query by public_ride_id
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
-        
+        const internalRideId = ride.ride_id; // Get internal ID for log query
+
         if (role === 'Location Manager') {
             if (ride.location_id !== locationId) {
                 return res.status(403).send('Forbidden: You can only view maintenance for rides in your location.');
@@ -40,13 +43,11 @@ router.get('/ride/:ride_id', isAuthenticated, (req, res, next) => {
             FROM maintenance m
             LEFT JOIN employee_demographics e ON m.employee_id = e.employee_id
             LEFT JOIN employee_demographics pending_emp ON m.pending_employee_id = pending_emp.employee_id
-            WHERE m.ride_id = ?
+            WHERE m.ride_id = ? -- Query logs by internal ride_id
             ORDER BY m.report_date DESC, m.maintenance_id DESC
         `;
-        const [maintenance_logs] = await pool.query(query, [rideId]);
-        
-        // This is a guess, but let's assume you've updated maintenance-history.ejs
-        // If not, the pending_employee_name field might not be used, but it's good to have.
+        const [maintenance_logs] = await pool.query(query, [internalRideId]); // Use internal ID
+
         res.render('maintenance-history', { ride: ride, maintenance_logs: maintenance_logs });
     } catch (error) {
         console.error(error);
@@ -54,14 +55,14 @@ router.get('/ride/:ride_id', isAuthenticated, (req, res, next) => {
     }
 });
 
-// GET /maintenance/new/:ride_id
-// Path changed to /new/:ride_id
-router.get('/new/:ride_id', isAuthenticated, async (req, res) => {
-    const rideId = req.params.ride_id;
+// GET /maintenance/new/:public_ride_id
+// Path changed to /new/:public_ride_id
+router.get('/new/:public_ride_id', isAuthenticated, async (req, res) => {
+    const { public_ride_id } = req.params; // CHANGED
     const { role, locationId } = req.session.user;
 
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id FROM rides WHERE ride_id = ?', [rideId]);
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
@@ -70,7 +71,7 @@ router.get('/new/:ride_id', isAuthenticated, async (req, res) => {
                 return res.status(403).send('Forbidden: You can only report issues for rides in your location.');
             }
         }
-        const ride = rideResult[0];
+        const ride = rideResult[0]; // This now contains the internal ride_id
 
         const [employees] = await pool.query(`
             SELECT employee_id, first_name, last_name, employee_type
@@ -78,6 +79,7 @@ router.get('/new/:ride_id', isAuthenticated, async (req, res) => {
             WHERE employee_type IN ('Maintenance', 'Manager', 'Admin') AND is_active = TRUE
         `);
 
+        // Pass ride object (with internal ride_id) to the view for the hidden form field
         res.render('add-maintenance', { ride: ride, employees: employees, error: null });
     } catch (error) {
         console.error(error);
@@ -88,35 +90,44 @@ router.get('/new/:ride_id', isAuthenticated, async (req, res) => {
 // POST /maintenance
 // Path changed to /
 router.post('/', isAuthenticated, async (req, res) => {
+    // Note: ride_id is the INTERNAL ID from the hidden form field
     const { ride_id, summary } = req.body;
     const employee_id = req.body.employee_id ? req.body.employee_id : null;
 
     const { role, locationId } = req.session.user;
 
     let connection;
+    let publicRideId; // To store for the redirect
     try {
+        // Fetch ride info (including public_ride_id) based on internal ride_id
+        const [rideResult] = await pool.query('SELECT location_id, public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
+        if (rideResult.length === 0) {
+            return res.status(404).send('Ride not found.');
+        }
+        const ride = rideResult[0];
+        publicRideId = ride.public_ride_id; // Save for redirect
+
         if (role === 'Location Manager' || role === 'Staff') {
-            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [ride_id]);
-            if (rideLoc.length === 0) {
-                return res.status(404).send('Ride not found.');
-            }
-            if (rideLoc[0].location_id !== locationId) {
+            if (ride.location_id !== locationId) {
                 return res.status(403).send('Forbidden: You can only report issues for rides in your location.');
             }
         }
-        
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const maintSql = "INSERT INTO maintenance (ride_id, summary, employee_id, report_date) VALUES (?, ?, ?, CURDATE())";
-        await connection.query(maintSql, [ride_id, summary, employee_id]);
+        const publicMaintenanceId = crypto.randomUUID(); // ADDED
+
+        // ADDED public_maintenance_id
+        const maintSql = "INSERT INTO maintenance (public_maintenance_id, ride_id, summary, employee_id, report_date) VALUES (?, ?, ?, ?, CURDATE())";
+        await connection.query(maintSql, [publicMaintenanceId, ride_id, summary, employee_id]);
 
         const rideSql = "UPDATE rides SET ride_status = 'BROKEN' WHERE ride_id = ?";
-        await connection.query(rideSql, [ride_id]);
+        await connection.query(rideSql, [ride_id]); // Use internal ID
 
         await connection.commit();
         if (['Admin', 'Park Manager', 'Location Manager', 'Maintenance'].includes(req.session.user.role)) {
-            res.redirect(`/maintenance/ride/${ride_id}`);
+            res.redirect(`/maintenance/ride/${publicRideId}`); // CHANGED to public ID
         } else {
             res.redirect('/rides');
         }
@@ -125,8 +136,8 @@ router.post('/', isAuthenticated, async (req, res) => {
         if (connection) await connection.rollback();
         console.error("Error submitting maintenance report:", error);
         try {
-            const [rideResult] = await pool.query('SELECT ride_id, ride_name FROM rides WHERE ride_id = ?', [ride_id]);
-            const ride = rideResult.length > 0 ? rideResult[0] : { ride_name: 'Unknown' };
+            const [rideResult] = await pool.query('SELECT ride_id, ride_name, public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
+            const ride = rideResult.length > 0 ? rideResult[0] : { ride_name: 'Unknown', ride_id: ride_id, public_ride_id: publicRideId };
             const [employees] = await pool.query(`
                 SELECT employee_id, first_name, last_name, employee_type
                 FROM employee_demographics
@@ -146,25 +157,25 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// GET /maintenance/complete/:maintenance_id
-// Path changed to /complete/:maintenance_id
-router.get('/complete/:maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
-    const maintenanceId = req.params.maintenance_id;
+// GET /maintenance/complete/:public_maintenance_id
+// Path changed to /complete/:public_maintenance_id
+router.get('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params; // CHANGED
     try {
         const query = `
-            SELECT m.*, r.ride_name
+            SELECT m.*, r.ride_name, r.public_ride_id
             FROM maintenance m
             JOIN rides r ON m.ride_id = r.ride_id
-            WHERE m.maintenance_id = ?
+            WHERE m.public_maintenance_id = ? -- CHANGED
         `;
-        const [logResult] = await pool.query(query, [maintenanceId]);
+        const [logResult] = await pool.query(query, [public_maintenance_id]); // CHANGED
         if (logResult.length === 0) {
             return res.status(404).send('Maintenance log not found');
         }
         const log = logResult[0];
 
         if (log.end_date) {
-            return res.redirect(`/maintenance/ride/${log.ride_id}`);
+            return res.redirect(`/maintenance/ride/${log.public_ride_id}`); // CHANGED
         }
 
         res.render('complete-maintenance', { log: log, error: null });
@@ -174,10 +185,11 @@ router.get('/complete/:maintenance_id', isAuthenticated, isMaintenanceOrHigher, 
     }
 });
 
-// POST /maintenance/complete/:maintenance_id
-// Path changed to /complete/:maintenance_id
-router.post('/complete/:maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
-    const maintenanceId = req.params.maintenance_id;
+// POST /maintenance/complete/:public_maintenance_id
+// Path changed to /complete/:public_maintenance_id
+router.post('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params; // CHANGED
+    // ride_id is the INTERNAL ID from the hidden form field
     const { ride_id, start_date, end_date, cost, ride_status, summary } = req.body;
 
     if (!['OPEN', 'CLOSED'].includes(ride_status)) {
@@ -186,34 +198,41 @@ router.post('/complete/:maintenance_id', isAuthenticated, isMaintenanceOrHigher,
 
     let connection;
     try {
+        // Fetch the public_ride_id for the redirect
+        const [rideResult] = await pool.query('SELECT public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
+        if (rideResult.length === 0) {
+            return res.status(404).send('Associated ride not found.');
+        }
+        const publicRideId = rideResult[0].public_ride_id;
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
         const maintSql = `
             UPDATE maintenance
             SET start_date = ?, end_date = ?, cost = ?, summary = ?
-            WHERE maintenance_id = ?
+            WHERE public_maintenance_id = ? -- CHANGED
         `;
         const costValue = cost === '' ? null : cost;
-        await connection.query(maintSql, [start_date, end_date, costValue, summary, maintenanceId]);
+        await connection.query(maintSql, [start_date, end_date, costValue, summary, public_maintenance_id]); // CHANGED
 
         const rideSql = "UPDATE rides SET ride_status = ? WHERE ride_id = ?";
-        await connection.query(rideSql, [ride_status, ride_id]);
+        await connection.query(rideSql, [ride_status, ride_id]); // Use internal ID
 
         await connection.commit();
-        res.redirect(`/maintenance/ride/${ride_id}`);
+        res.redirect(`/maintenance/ride/${publicRideId}`); // CHANGED
 
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error completing maintenance:", error);
         try {
             const query = `
-                SELECT m.*, r.ride_name
+                SELECT m.*, r.ride_name, r.public_ride_id
                 FROM maintenance m
                 JOIN rides r ON m.ride_id = r.ride_id
-                WHERE m.maintenance_id = ?
+                WHERE m.public_maintenance_id = ? -- CHANGED
             `;
-            const [logResult] = await pool.query(query, [maintenanceId]);
+            const [logResult] = await pool.query(query, [public_maintenance_id]); // CHANGED
             const log = logResult.length > 0 ? logResult[0] : {};
             res.render('complete-maintenance', {
                 log: log,
@@ -228,9 +247,9 @@ router.post('/complete/:maintenance_id', isAuthenticated, isMaintenanceOrHigher,
     }
 });
 
-// GET /maintenance/reassign/:maintenance_id
-// Path changed to /reassign/:maintenance_id
-router.get('/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
+// GET /maintenance/reassign/:public_maintenance_id
+// Path changed to /reassign/:public_maintenance_id
+router.get('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
         return next();
@@ -238,15 +257,15 @@ router.get('/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
     res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
 }, async (req, res) => {
     try {
-        const { maintenance_id } = req.params;
+        const { public_maintenance_id } = req.params; // CHANGED
         const { role, locationId } = req.session.user;
 
         const [logResult] = await pool.query(
-            `SELECT m.*, r.ride_name, r.location_id 
+            `SELECT m.*, r.ride_name, r.location_id, r.public_ride_id
              FROM maintenance m 
              JOIN rides r ON m.ride_id = r.ride_id 
-             WHERE m.maintenance_id = ?`,
-            [maintenance_id]
+             WHERE m.public_maintenance_id = ?`, // CHANGED
+            [public_maintenance_id] // CHANGED
         );
 
         if (logResult.length === 0) {
@@ -276,50 +295,59 @@ router.get('/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
     }
 });
 
-// POST /maintenance/reassign/:maintenance_id
-// Path changed to /reassign/:maintenance_id
-router.post('/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
+// POST /maintenance/reassign/:public_maintenance_id
+// Path changed to /reassign/:public_maintenance_id
+router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
         return next();
     }
     res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
 }, async (req, res) => {
-    const { maintenance_id } = req.params;
+    const { public_maintenance_id } = req.params; // CHANGED
+    // ride_id is the INTERNAL ID from the hidden form field
     const { new_employee_id, ride_id } = req.body;
     const { role, id: actorId, locationId } = req.session.user;
 
+    let publicRideId; // For redirect
     try {
+        // Fetch ride info for permission check and redirect
+        const [rideResult] = await pool.query('SELECT location_id, public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
+        if (rideResult.length === 0) {
+            return res.status(404).send('Ride not found.');
+        }
+        const ride = rideResult[0];
+        publicRideId = ride.public_ride_id; // Save for redirect
+
         if (role === 'Location Manager') {
-            const [rideLoc] = await pool.query('SELECT location_id FROM rides WHERE ride_id = ?', [ride_id]);
-            if (rideLoc.length === 0 || rideLoc[0].location_id !== locationId) {
+            if (ride.location_id !== locationId) {
                 return res.status(403).send('Forbidden: You can only reassign work for rides in your location.');
             }
         }
 
         if (role === 'Maintenance') {
             await pool.query(
-                'UPDATE maintenance SET pending_employee_id = ?, assignment_requested_by = ? WHERE maintenance_id = ?',
-                [new_employee_id, actorId, maintenance_id]
+                'UPDATE maintenance SET pending_employee_id = ?, assignment_requested_by = ? WHERE public_maintenance_id = ?', // CHANGED
+                [new_employee_id, actorId, public_maintenance_id] // CHANGED
             );
         } else {
             await pool.query(
-                'UPDATE maintenance SET employee_id = ?, pending_employee_id = NULL, assignment_requested_by = NULL WHERE maintenance_id = ?',
-                [new_employee_id, maintenance_id]
+                'UPDATE maintenance SET employee_id = ?, pending_employee_id = NULL, assignment_requested_by = NULL WHERE public_maintenance_id = ?', // CHANGED
+                [new_employee_id, public_maintenance_id] // CHANGED
             );
         }
 
-        res.redirect(`/maintenance/ride/${ride_id}`);
+        res.redirect(`/maintenance/ride/${publicRideId}`); // CHANGED
 
     } catch (error) {
         console.error("Error reassigning maintenance:", error);
         try {
             const [logResult] = await pool.query(
-                `SELECT m.*, r.ride_name 
+                `SELECT m.*, r.ride_name, r.public_ride_id 
                  FROM maintenance m 
                  JOIN rides r ON m.ride_id = r.ride_id 
-                 WHERE m.maintenance_id = ?`,
-                [maintenance_id]
+                 WHERE m.public_maintenance_id = ?`, // CHANGED
+                [public_maintenance_id] // CHANGED
             );
             const [employees] = await pool.query(
                 `SELECT employee_id, first_name, last_name 
@@ -327,7 +355,7 @@ router.post('/reassign/:maintenance_id', isAuthenticated, (req, res, next) => {
                  WHERE employee_type = 'Maintenance' AND is_active = TRUE`
             );
             res.render('reassign-maintenance', {
-                log: logResult[0] || { ride_id: ride_id, ride_name: 'Unknown', summary: 'Error' },
+                log: logResult[0] || { ride_id: ride_id, ride_name: 'Unknown', summary: 'Error', public_ride_id: publicRideId },
                 employees: employees,
                 error: "Error submitting reassignment."
             });

@@ -39,33 +39,36 @@
         <% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
             <h2>Hourly Rate Changes</h2>
             <% if (rateChanges.length > 0) { %>
-                <table>
+               <table>
                     <thead>
                         <tr>
                             <th>Employee</th>
-                            <th>Current Rate</th>
+               <th>Current Rate</th>
                             <th>Requested Rate</th>
                             <th>Requested By</th>
-                            <th>Actions</th>
+  <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% rateChanges.forEach(req => { %>
-                            <tr>
+                      <tr>
                                 <td><%= req.first_name %> <%= req.last_name %></td>
                                 <td>$<%= parseFloat(req.hourly_rate).toFixed(2) %></td>
-                                <td>$<%= parseFloat(req.pending_hourly_rate).toFixed(2) %></td>
+                         <td>$<%= parseFloat(req.pending_hourly_rate).toFixed(2) %></td>
                                 <td><%= req.requester_first_name %> <%= req.requester_last_name %></td>
                                 <td>
-                                    <form action="/approve/rate/<%= req.employee_id %>" method="POST" style="display: inline;">
+                                    <%# CHANGED to use public_employee_id %>
+                                <form action="/approve/rate/<%= req.public_employee_id %>" method="POST" style="display: inline;">
                                         <button type="submit" class="approve-button">Approve</button>
-                                    </form>
-                                    <form action="/reject/rate/<%= req.employee_id %>" method="POST" style="display: inline;">
+                </form>
+                                    <%# CHANGED to use public_employee_id %>
+                                    <form action="/reject/rate/<%= req.public_employee_id %>" method="POST" style="display: inline;">
                                         <button type="submit" class="reject-button">Reject</button>
                                     </form>
                                 </td>
                             </tr>
-                        <% }); %>
+                    <% });
+ %>
                     </tbody>
                 </table>
             <% } else { %>
@@ -73,37 +76,41 @@
             <% } %>
         <% } %>
 
-        <%# Only show this section if the user *can* see it (Admin/Park Manager) %>
+      <%# Only show this section if the user *can* see it (Admin/Park Manager) %>
         <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <h2>Maintenance Reassignments</h2>
             <% if (reassignments.length > 0) { %>
                 <table>
-                    <thead>
+     <thead>
                         <tr>
                             <th>Ride</th>
                             <th>Currently Assigned</th>
-                            <th>Requested Assignee</th>
+              <th>Requested Assignee</th>
                             <th>Requested By</th>
                             <th>Actions</th>
                         </tr>
-                    </thead>
+                </thead>
                     <tbody>
                         <% reassignments.forEach(req => { %>
                             <tr>
-                                <td><%= req.ride_name %></td>
-                                <td><%= req.current_employee_name || 'Unassigned' %></td>
+                        <td><%= req.ride_name %></td>
+                                <td><%= req.current_employee_name ||
+ 'Unassigned' %></td>
                                 <td><%= req.pending_employee_name %></td>
                                 <td><%= req.requester_name %></td>
-                                <td>
-                                    <form action="/approve/reassignment/<%= req.maintenance_id %>" method="POST" style="display: inline;">
+  <td>
+                                    <%# CHANGED to use public_maintenance_id %>
+                                    <form action="/approve/reassignment/<%= req.public_maintenance_id %>" method="POST" style="display: inline;">
                                         <button type="submit" class="approve-button">Approve</button>
-                                    </form>
-                                    <form action="/reject/reassignment/<%= req.maintenance_id %>" method="POST" style="display: inline;">
-                                        <button type="submit" class="reject-button">Reject</button>
+                      </form>
+                                    <%# CHANGED to use public_maintenance_id %>
+                                    <form action="/reject/reassignment/<%= req.public_maintenance_id %>" method="POST" style="display: inline;">
+    <button type="submit" class="reject-button">Reject</button>
                                     </form>
                                 </td>
-                            </tr>
-                        <% }); %>
+  </tr>
+                        <% });
+ %>
                     </tbody>
                 </table>
             <% } else { %>
@@ -111,40 +118,44 @@
             <% } %>
         <% } %>
 
-        <%# --- NEW SECTION: Inventory Requests --- %>
+     <%# --- NEW SECTION: Inventory Requests --- %>
         <%# Show if Admin, Park Manager, or Location Manager %>
         <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
             <h2>Inventory Restock Requests</h2>
             <% if (inventoryRequests.length > 0) { %>
-                <table>
+ <table>
                     <thead>
                         <tr>
                             <th>Vendor</th>
-                            <th>Item</th>
+ <th>Item</th>
                             <th>Current Count</th>
                             <th>Requested New Count</th>
                             <th>Requested By</th>
-                            <th>Actions</th>
+                 <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% inventoryRequests.forEach(req => { %>
+     <% inventoryRequests.forEach(req => { %>
                             <tr>
                                 <td><%= req.vendor_name %></td>
-                                <td><%= req.item_name %></td>
+   <td><%= req.item_name %></td>
                                 <td><%= req.current_count %></td>
                                 <td><%= req.requested_count %></td>
-                                <td><%= req.requester_name %></td>
+     <td><%= req.requester_name %></td>
                                 <td>
-                                    <form action="/approve/inventory/<%= req.request_id %>" method="POST" style="display: inline;">
-                                        <button type="submit" class="approve-button">Approve</button>
+                                    <%# CHANGED to use public_request_id %>
+                                    <form action="/approve/inventory/<%= req.public_request_id %>" method="POST" style="display: inline;">
+                     <button type="submit" class="approve-button">Approve</button>
                                     </form>
-                                    <form action="/reject/inventory/<%= req.request_id %>" method="POST" style="display: inline;">
+                                    <%# CHANGED to use public_request_id %>
+                                    <form action="/reject/inventory/<%= req.public_request_id %>" method="POST" style="display: 
+ inline;">
                                         <button type="submit" class="reject-button">Reject</button>
                                     </form>
-                                </td>
+           </td>
                             </tr>
-                        <% }); %>
+                        <% });
+ %>
                     </tbody>
                 </table>
             <% } else { %>
@@ -152,6 +163,6 @@
             <% } %>
         <% } %>
 
-    </div>
+  </div>
 </body>
 </html>

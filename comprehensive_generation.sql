@@ -274,10 +274,10 @@ BEGIN
 
         -- E. GENERATE CORRELATED RIDE LOGS
         OPEN ride_cursor;
+        SET done = FALSE;
         ride_loop: LOOP
             FETCH ride_cursor INTO v_ride_id, v_ride_type, v_capacity, v_ride_status;
             IF done THEN
-                SET done = FALSE;
                 LEAVE ride_loop;
             END IF;
 
@@ -298,8 +298,8 @@ BEGIN
 
             IF v_ride_status != 'BROKEN' AND v_ride_status != 'CLOSED' THEN
                 -- This ride's popularity (e.g., 10% to 50% of visitors will ride it)
-                SET v_ride_participation_rate = 0.1 + (RAND() * 0.4);
-                SET v_total_riders = FLOOR(v_total_visitors_today * v_ride_participation_rate * v_ride_weather_mult);
+                SET v_ride_participation_rate = 1.6 + (RAND() * 2.4);
+                SET v_total_riders = CEIL(v_total_visitors_today * v_ride_participation_rate * v_ride_weather_mult);
                 
                 IF v_capacity > 0 THEN
                     -- Assume rides run 60-90% full on average
@@ -314,16 +314,22 @@ BEGIN
         END LOOP ride_loop;
         CLOSE ride_cursor;
 
+        -- --- START OF FIX ---
+        -- Insert the ride data for the current day (v_date)
+        INSERT INTO daily_ride (ride_id, dat_date, run_count, ride_count)
+        SELECT ride_id, dat_date, run_count, ride_count
+        FROM temp_ride_batch
+        WHERE dat_date = v_date; -- Ensure we only insert today's data
+
+        -- Truncate the batch table to prepare for the next day
+        TRUNCATE TABLE temp_ride_batch;
+        -- --- END OF FIX ---
+
         SET v_date = DATE_ADD(v_date, INTERVAL 1 DAY);
     END LOOP day_loop;
 
 
-    -- 5. PERFORM FINAL BATCH INSERT AND CLEANUP
-    
-    -- Insert all ride logs at once (this is a small table, so it's fast)
-    INSERT INTO daily_ride (ride_id, dat_date, run_count, ride_count)
-    SELECT ride_id, dat_date, run_count, ride_count
-    FROM temp_ride_batch;
+    -- 5. CLEANUP
 
     -- Cleanup all temp tables
     DROP TEMPORARY TABLE IF EXISTS temp_holidays;

@@ -4,17 +4,29 @@
     <meta charset="UTF-8">
     <title>Membership Purchase History</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #17a2b8; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
-        .action-link:hover { text-decoration: underline; }
-        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; }
-        .back-link:hover { text-decoration: underline; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #17a2b8; color: white;
+ }
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold;
+ }
+        .action-link:hover { text-decoration: underline;
+ }
+        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold;
+ }
+        .back-link:hover { text-decoration: underline;
+ }
     </style>
 </head>
 <body>
@@ -23,38 +35,47 @@
     <div class="container">
         <h1>Membership Purchase History</h1>
         
-        <a href="/member/manage" class="back-link">&laquo; Back to Manage Account</a>
+        <a href="/member/manage" class="back-link">&laquo;
+ Back to Manage Account</a>
 
         <table>
             <thead>
                 <tr>
                     <th>Purchase Date</th>
                     <th>Membership Type</th>
-                    <th>Term</th>
+                   
+  <th>Term</th>
                     <th>Amount Paid</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                <% if (purchases.length === 0) { %>
+                <% if 
+ (purchases.length === 0) { %>
                     <tr>
                         <td colspan="5" style="text-align: center;">No purchase records found.</td>
                     </tr>
                 <% } %>
-                <% purchases.forEach(purchase => { %>
+        
+         <% purchases.forEach(purchase => { %>
                     <tr>
                         <td><%= new Date(purchase.purchase_date).toLocaleString() %></td>
                         <td><%= purchase.type_name %></td>
-                        <td>
+               
+          <td>
                             <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
                             <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
                         </td>
-                        <td>$<%= parseFloat(purchase.price_paid).toFixed(2) %></td>
+   
+                     <td>$<%= parseFloat(purchase.price_paid).toFixed(2) %></td>
                         <td>
-                            <a href="/member/purchases/receipt/<%= purchase.purchase_id %>" class="action-link">View Receipt</a>
-                        </td>
+                            <%# CHANGED: Link now uses public_purchase_id %>
+                            <a href="/member/purchases/receipt/<%= purchase.public_purchase_id %>" class="action-link">View Receipt</a>
+                    
+     </td>
                     </tr>
-                <% }); %>
+                <% });
+ %>
             </tbody>
         </table>
     </div>

@@ -4,42 +4,60 @@
     <meta charset="UTF-8">
     <title>Reassign Work Order</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        h1 small { color: #007bff; font-weight: bold; }
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .report-info { background-color: #fefde8; border-left: 5px solid #f0ad4e; padding: 1em; margin-bottom: 1.5em; border-radius: 4px; }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        h1 { color: #444; text-align: center;
+ margin-top: 1em; }
+        h1 small { color: #007bff; font-weight: bold;
+ }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em;
+ border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .report-info { background-color: #fefde8;
+ border-left: 5px solid #f0ad4e; padding: 1em; margin-bottom: 1.5em; border-radius: 4px;
+ }
+        div { margin-bottom: 15px;
+ }
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+ }
+        select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+ border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #007bff;
+ color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+ }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+ }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <h1>Reassign Work Order for: <small><%= log.ride_name %></small></h1>
     
-    <form action="/maintenance/reassign/<%= log.maintenance_id %>" method="POST">
+    <%# CHANGED: Action now uses public_maintenance_id %>
+    <form action="/maintenance/reassign/<%= log.public_maintenance_id %>" method="POST">
+        <%# This hidden field uses the internal ride_id, which is secure %>
         <input type="hidden" name="ride_id" value="<%= log.ride_id %>">
         
         <div class="report-info">
             <strong>Initial Report on <%= log.report_date.toISOString().substring(0, 10) %>:</strong>
             <p><em><%= log.summary %></em></p>
-        </div>
+      
+   </div>
 
         <div>
             <label for="new_employee_id">Assign To New Employee:</label>
             <select id="new_employee_id" name="new_employee_id" required>
                 <option value="">-- Select Employee --</option>
                 <% employees.forEach(employee => { %>
-                    <option value="<%= employee.employee_id %>"><%= employee.first_name %> <%= employee.last_name %></option>
-                <% }); %>
+                   
+   <option value="<%= employee.employee_id %>"><%= employee.first_name %> <%= employee.last_name %></option>
+                <% });
+ %>
             </select>
         </div>
         <br>
         <button type="submit">Submit Request</button>
-        <a href="/maintenance/ride/<%= log.ride_id %>" class="cancel-link">Cancel</a>
+        <%# CHANGED: Cancel link now uses public_ride_id %>
+        <a href="/maintenance/ride/<%= log.public_ride_id %>" class="cancel-link">Cancel</a>
     </form>
 </body>
 </html>

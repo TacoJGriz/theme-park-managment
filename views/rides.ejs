@@ -4,104 +4,145 @@
     <meta charset="UTF-8">
     <title>Rides</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #007bff; color: white;
+ }
         
-        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center; }
-        th.sortable a:hover { text-decoration: underline; }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+        th.sortable a { text-decoration: none;
+ color: white; display: flex; justify-content: space-between; align-items: center; }
+        th.sortable a:hover { text-decoration: underline;
+ }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px;
+ }
         
         /* --- UPDATED: Stats Bar Styles --- */
         .stats-bar {
-            display: grid; /* Allow more cards per row */
+            display: grid;
+ /* Allow more cards per row */
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 0.75em; /* Reduced gap between cards */
-            margin-bottom: 1em; /* Reduced bottom margin */
+ gap: 0.75em; /* Reduced gap between cards */
+            margin-bottom: 1em;
+ /* Reduced bottom margin */
         }
         .stat-card {
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+ border: 1px solid #dee2e6;
             padding: 1em; /* Reduced padding */
             border-radius: 8px;
-            text-align: center;
+ text-align: center;
         }
         .stat-card h3 {
             margin: 0 0 0.25em 0;
-            font-size: 1.75em; /* Reduced font size */
+ font-size: 1.75em; /* Reduced font size */
         }
         .stat-card p { 
             margin: 0;
-            font-weight: bold; 
+ font-weight: bold; 
             color: #6c757d;
             font-size: 0.9em; /* Reduced font size */
         }
         /* --- End of Updated Styles --- */
 
         /* Colors for stats */
-        .stat-total { color: #007bff; }
-        .stat-open { color: #28a745; }
-        .stat-closed { color: #fd7e14; }
-        .stat-broken { color: #dc3545; }
-        .stat-type { color: #6f42c1; } /* Purple for types */
+        .stat-total { color: #007bff;
+ }
+        .stat-open { color: #28a745;
+ }
+        .stat-closed { color: #fd7e14;
+ }
+        .stat-broken { color: #dc3545;
+ }
+        .stat-type { color: #6f42c1;
+ } /* Purple for types */
 
 
         /* --- Filter Bar Styles --- */
-        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        .filter-bar { background-color: #f8f9fa;
+ border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
+ }
         .filter-controls {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
+ grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls label { font-weight: bold;
+ display: block; margin-bottom: 5px; font-size: 0.9em; }
         .filter-controls input[type="search"],
-        .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
-        .filter-buttons { display: flex; gap: 10px; }
-        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box; }
-        .btn-filter { background-color: #007bff; }
-        .btn-clear { background-color: #6c757d; }
+        .filter-controls select { width: 100%;
+ padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+ }
+        .filter-buttons { display: flex; gap: 10px;
+ }
+        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none;
+ border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box;
+ }
+        .btn-filter { background-color: #007bff;
+ }
+        .btn-clear { background-color: #6c757d;
+ }
 
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:hover { background-color: #f1f1f1; }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
-        .action-link:hover { text-decoration: underline; }
-        .report-link { color: #dc3545; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838; }
-        .status-form select { padding: 5px; border-radius: 4px; }
-        .status-form button { padding: 5px 10px; margin-left: 5px; cursor: pointer; }
-        .status-OPEN { color: green; font-weight: bold; }
-        .status-CLOSED { color: orange; font-weight: bold; }
-        .status-BROKEN { color: red; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
+        tr:hover { background-color: #f1f1f1;
+ }
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px;
+ }
+        .action-link:hover { text-decoration: underline;
+ }
+        .report-link { color: #dc3545;
+ }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
+ color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838;
+ }
+        .status-form select { padding: 5px; border-radius: 4px;
+ }
+        .status-form button { padding: 5px 10px; margin-left: 5px; cursor: pointer;
+ }
+        .status-OPEN { color: green; font-weight: bold;
+ }
+        .status-CLOSED { color: orange; font-weight: bold;
+ }
+        .status-BROKEN { color: red; font-weight: bold;
+ }
 
         /* --- Style for the Log Run link --- */
         .log-run-link {
-            color: #28a745; /* Green color */
+            color: #28a745;
+ /* Green color */
             font-weight: bold;
             display: inline-block;
-            padding: 5px 10px;
+ padding: 5px 10px;
             border: 1px solid #28a745;
             border-radius: 4px;
             text-decoration: none;
             margin-top: 5px;
             text-align: center;
-        }
+ }
         .log-run-link:hover {
             background-color: #28a745;
-            color: white;
+ color: white;
             text-decoration: none;
         }
         
         /* --- NEW: Style for DISABLED Log Run link --- */
         .log-run-link-disabled {
-            color: #6c757d; /* Grey color */
+            color: #6c757d;
+ /* Grey color */
             font-weight: bold;
             display: inline-block;
-            padding: 5px 10px;
+ padding: 5px 10px;
             border: 1px solid #6c757d;
             border-radius: 4px;
             text-decoration: none;
@@ -109,8 +150,9 @@
             text-align: center;
             background-color: #f8f9fa;
             cursor: not-allowed;
-            .run-history-link {
-            color: #007bff; /* Blue to match other history link */
+ .run-history-link {
+            color: #007bff;
+ /* Blue to match other history link */
         }
         }
     </style>
@@ -122,42 +164,51 @@
         
         <div class="stats-bar">
             <div class="stat-card">
-                <h3 class="stat-total"><%= counts.totalRides || 0 %></h3>
+                <h3 class="stat-total"><%= counts.totalRides ||
+ 0 %></h3>
                 <p>Total Rides (View)</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-open"><%= counts.countOpen || 0 %></h3>
+                <h3 class="stat-open"><%= counts.countOpen ||
+ 0 %></h3>
                 <p>Open</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-closed"><%= counts.countClosed || 0 %></h3>
+                <h3 class="stat-closed"><%= counts.countClosed ||
+ 0 %></h3>
                 <p>Closed</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-broken"><%= counts.countBroken || 0 %></h3>
+                <h3 class="stat-broken"><%= counts.countBroken ||
+ 0 %></h3>
                 <p>Broken</p>
             </div>
         </div>
         
         <div class="stats-bar" style="margin-top: -0.25em;">
             <div class="stat-card">
-                 <h3 class="stat-type"><%= counts.countRollercoaster || 0 %></h3>
+                 <h3 class="stat-type"><%= counts.countRollercoaster ||
+ 0 %></h3>
                 <p>Rollercoasters</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countWaterRide || 0 %></h3>
+                <h3 class="stat-type"><%= counts.countWaterRide ||
+ 0 %></h3>
                 <p>Water Rides</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countFlatRide || 0 %></h3>
+                <h3 class="stat-type"><%= counts.countFlatRide ||
+ 0 %></h3>
                 <p>Flat Rides</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countShow || 0 %></h3>
+                <h3 class="stat-type"><%= counts.countShow ||
+ 0 %></h3>
                 <p>Shows</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countOther || 0 %></h3>
+                <h3 class="stat-type"><%= counts.countOther ||
+ 0 %></h3>
                 <p>Other</p>
             </div>
         </div>
@@ -167,55 +218,72 @@
             <form action="/rides" method="GET">
                 <div class="filter-controls">
                     <div>
-                         <label for="search">General Search</label>
+   
+                      <label for="search">General Search</label>
                         <input type="search" id="search" name="search" placeholder="Name, Location, Status, Type..." value="<%= search %>">
                     </div>
                     <div>
-                         <label for="filter_location">Location</label>
+  
+                       <label for="filter_location">Location</label>
                         <select id="filter_location" name="filter_location">
                             <option value="">All Locations</option>
-                             <% locations.forEach(loc => { %>
+                    
+          <% locations.forEach(loc => { %>
+                                <%# Value is the internal location_id, which is secure in a form POST %>
                                 <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
                                     <%= loc.location_name %>
-                                </option>
-                            <% }); %>
+     
+                             </option>
+                            <% });
+ %>
                         </select>
                     </div>
                     <div>
                         <label for="filter_type">Type</label>
-                         <select id="filter_type" name="filter_type">
+           
+              <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                             <% types.forEach(type => { %>
-                                 <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
+                      
+            <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
                                     <%= type.ride_type %>
                                 </option>
-                             <% }); %>
+       
+                      <% });
+ %>
                         </select>
                     </div>
                     <div>
                         <label for="filter_status">Status</label>
-                         <select id="filter_status" name="filter_status">
+           
+              <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <% statuses.forEach(status => { %>
-                                 <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
+                      
+            <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
                                     <%= status.ride_status %>
                                 </option>
-                             <% }); %>
+       
+                      <% });
+ %>
                         </select>
                     </div>
                 </div>
                 <div class="filter-controls" style="margin-top: 1em;">
-                    <div style="grid-column: 1 / 4;"></div> <div class="filter-buttons">
+                    <div 
+ style="grid-column: 1 / 4;"></div> <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
                         <a href="/rides" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-                 <% if (currentSort && currentDir) { %>
+     
+             <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
                 <% } %>
             </form>
-         </div>
+  
+       </div>
 
         <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/rides/new" class="add-button">Add New Ride</a>
@@ -223,107 +291,142 @@
         
         <% 
             const getSortState = (column) => {
-                let nextDir = 'asc';
+              
+   let nextDir = 'asc';
                 let indicator = '';
-                if (currentSort === column) {
+ if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
-                        indicator = '▲'; 
+ indicator = '▲'; 
                     } else if (currentDir === 'desc') {
                         nextDir = 'none';
-                        indicator = '▼';
+ indicator = '▼';
                     }
                 }
                 let href = `/rides?search=${encodeURIComponent(search)}`;
-                if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
-                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`; }
-                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`; }
-                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`; }
+ if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
+                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`;
+ }
+                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`;
+ }
+                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`;
+ }
                 return { href: href, indicator: indicator };
-            };
+ };
             const nameSort = getSortState('name');
             const typeSort = getSortState('type');
             const locationSort = getSortState('location');
             const statusSort = getSortState('status');
-        %>
+ %>
 
         <table>
             <thead>
                 <tr>
                     <th class="sortable">
                         <a href="<%= nameSort.href %>">
-                             <span>Name</span>
+                
+              <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
                         </a>
                     </th>
-                     <th class="sortable">
+            
+          <th class="sortable">
                         <a href="<%= typeSort.href %>">
                             <span>Type</span>
                             <span class="sort-indicator"><%= typeSort.indicator %></span>
-                         </a>
+    
+                      </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= locationSort.href %>">
-                             <span>Location</span>
+           
+                   <span>Location</span>
                             <span class="sort-indicator"><%= locationSort.indicator %></span>
                         </a>
                     </th>
-                     <th class="sortable">
+       
+              <th class="sortable">
                         <a href="<%= statusSort.href %>">
                             <span>Status</span>
-                            <span class="sort-indicator"><%= statusSort.indicator %></span>
+                            <span class="sort-indicator"><%= 
+ statusSort.indicator %></span>
                          </a>
                     </th>
                     <th>Update Status</th>
                     <th>Actions</th>
-                </tr>
+             
+    </tr>
              </thead>
             <tbody>
                 <% rides.forEach(ride => { %>
                     <tr>
                         <td><%= ride.ride_name %></td>
-                         <td><%= ride.ride_type %></td>
+      
+                   <td><%= ride.ride_type %></td>
                         <td><%= ride.location_name %></td>
                         <td>
-                            <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
+                            <span 
+ class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
                          </td>
                         <td>
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                                <form class="status-form" action="/rides/status/<%= ride.ride_id %>" method="POST">
+                            <% if (user.role === 'Admin' ||
+ user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <%# CHANGED: Action now uses public_ride_id %>
+                                <form class="status-form" action="/rides/status/<%= ride.public_ride_id %>" method="POST">
                                     <select name="ride_status">
-                                         <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
+                
+                          <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
                                         <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
-                                         <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
+                 
+                          <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
                                     </select>
-                                     <button type="submit">Set</button>
+                               
+       <button type="submit">Set</button>
                                 </form>
                             <% } else { %>
-                                <span>No Access</span>
+                             
+     <span>No Access</span>
                             <% } %>
                         </td>
                         <td>
-                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
-                                <a href="/maintenance/ride/<%= ride.ride_id %>" class="action-link">View Maintenance</a>
+                  
+            <% if (user.role === 'Admin' ||
+ user.role === 'Park Manager' || user.role === 'Location Manager' ||
+ user.role === 'Maintenance') { %>
+                                <%# CHANGED: Link now uses public_ride_id %>
+                                <a href="/maintenance/ride/<%= ride.public_ride_id %>" class="action-link">View Maintenance</a>
                             <% } %>
 
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <a href="/rides/history/<%= ride.ride_id %>" class="action-link run-history-link">View Run History</a>
+                            <% 
+ if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                <%# CHANGED: Link now uses public_ride_id %>
+                                <a href="/rides/history/<%= ride.public_ride_id %>" class="action-link run-history-link">View Run History</a>
                             <% } %>
-                        
-                             <a href="/maintenance/new/<%= ride.ride_id %>" class="action-link report-link">Report Issue</a>
+            
+             
+                             <%# CHANGED: Link now uses public_ride_id %>
+                             <a href="/maintenance/new/<%= ride.public_ride_id %>" class="action-link report-link">Report Issue</a>
                             
-                            <%# --- Log Ride Run Link with disabled state --- %>
+                         
+     <%# --- Log Ride Run Link with disabled state --- %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <%# MODIFIED: Button is disabled if ride is BROKEN or CLOSED %>
-                                <% if (ride.ride_status === 'BROKEN' || ride.ride_status === 'CLOSED') { %>
+                                <%# MODIFIED: Button is disabled if ride 
+ is BROKEN or CLOSED %>
+                                <% if (ride.ride_status === 'BROKEN' ||
+ ride.ride_status === 'CLOSED') { %>
  
                                    <span class="log-run-link-disabled">Log Run</span>
-                                <% } else { %> <a href="/rides/log/<%= ride.ride_id %>" class="action-link log-run-link">Log Run</a>
-                                <% } %>
+                                <% } else { %> 
+                                    <%# CHANGED: Link now uses public_ride_id %>
+                                    <a href="/rides/log/<%= ride.public_ride_id %>" class="action-link log-run-link">Log Run</a>
+               
+                  <% } %>
                             <% } %>
                          </td>
                     </tr>
-                <% }); %>
+      
+           <% });
+ %>
             </tbody>
         </table>
     </div>

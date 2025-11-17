@@ -4,6 +4,7 @@ USE park_database;
 
 CREATE TABLE employee_demographics (
     employee_id INT NOT NULL AUTO_INCREMENT,
+    public_employee_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for employees',
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     gender ENUM('Male', 'Female', 'Other') NOT NULL,
@@ -28,6 +29,7 @@ CREATE TABLE employee_demographics (
     
     -- Keys
     PRIMARY KEY (employee_id),
+    INDEX idx_public_employee_id (public_employee_id),
     FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
     
     -- NEW FOREIGN KEY
@@ -52,12 +54,14 @@ CREATE TABLE employee_auth (
 
 CREATE TABLE location (
     location_id INT NOT NULL AUTO_INCREMENT,
+    public_location_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for locations',
     location_name VARCHAR(50) NOT NULL UNIQUE,
     summary VARCHAR(250),
     manager_id INT,
     manager_start DATE,
     -- keys
     PRIMARY KEY (location_id),
+    INDEX idx_public_location_id (public_location_id),
     FOREIGN KEY (manager_id)
         REFERENCES employee_demographics (employee_id)
         ON DELETE SET NULL -- if a manager is deleted, the manager id for the location is Null
@@ -68,6 +72,7 @@ ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
 CREATE TABLE rides (
     ride_id INT NOT NULL AUTO_INCREMENT,
+    public_ride_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for rides',
     ride_name VARCHAR(50) NOT NULL,
     ride_type ENUM('Rollercoaster', 'Water Ride', 'Flat Ride', 'Show', 'Other') NOT NULL,
     ride_status ENUM('OPEN', 'CLOSED', 'BROKEN'),
@@ -76,6 +81,7 @@ CREATE TABLE rides (
     capacity INT,
     location_id INT,
     PRIMARY KEY (ride_id),
+    INDEX idx_public_ride_id (public_ride_id),
     FOREIGN KEY (location_id)
         REFERENCES location (location_id),
     CONSTRAINT chk_weight CHECK (max_weight >= 0),
@@ -85,6 +91,7 @@ CREATE TABLE rides (
     
 CREATE TABLE maintenance (
     maintenance_id INT NOT NULL AUTO_INCREMENT,
+    public_maintenance_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for maintenance tickets',
     ride_id INT NOT NULL,
     report_date DATE NOT NULL DEFAULT (CURDATE()),
     start_date DATE,
@@ -98,6 +105,7 @@ CREATE TABLE maintenance (
 
     -- Keys
     PRIMARY KEY (maintenance_id),
+    INDEX idx_public_maintenance_id (public_maintenance_id),
     FOREIGN KEY (ride_id)
         REFERENCES rides (ride_id)
         ON DELETE CASCADE,
@@ -117,6 +125,7 @@ CREATE TABLE maintenance (
 
 CREATE TABLE membership_type (
     type_id INT NOT NULL AUTO_INCREMENT,
+    public_type_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for membership types',
     type_name VARCHAR(50) NOT NULL UNIQUE,
     base_price DECIMAL(10, 2) NOT NULL,
     base_members INT NOT NULL DEFAULT 1 COMMENT 'Members included in base price',
@@ -126,11 +135,13 @@ CREATE TABLE membership_type (
     is_active BOOL NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (type_id),
+    INDEX idx_public_type_id (public_type_id),
     CONSTRAINT chk_base_price_positive CHECK (base_price >= 0)
 );
 
 CREATE TABLE membership (
     membership_id INT NOT NULL AUTO_INCREMENT,
+    public_membership_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for members',
 	primary_member_id INT NULL DEFAULT NULL COMMENT 'Links sub-members to a primary account',
     first_name VARCHAR(25) NOT NULL,
     last_name VARCHAR(25) NOT NULL,
@@ -142,6 +153,7 @@ CREATE TABLE membership (
     end_date DATE NOT NULL,
     
     PRIMARY KEY (membership_id),
+    INDEX idx_public_membership_id (public_membership_id),
     FOREIGN KEY (type_id) 
         REFERENCES membership_type (type_id)
         ON DELETE RESTRICT,
@@ -155,6 +167,7 @@ CREATE TABLE membership (
 
 CREATE TABLE ticket_types (
     ticket_type_id INT NOT NULL AUTO_INCREMENT,
+    public_ticket_type_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for ticket types',
     type_name VARCHAR(50) NOT NULL UNIQUE,
     base_price DECIMAL(10, 2) NOT NULL,
     description VARCHAR(250) NULL,
@@ -162,6 +175,7 @@ CREATE TABLE ticket_types (
     is_member_type BOOL NOT NULL DEFAULT FALSE,
     
     PRIMARY KEY (ticket_type_id),
+    INDEX idx_public_ticket_type_id (public_ticket_type_id),
     CONSTRAINT chk_ticket_price_positive CHECK (base_price >= 0)
 );
 
@@ -174,7 +188,7 @@ CREATE TABLE visits (
     ticket_price DECIMAL(10,2) NULL,
     discount_amount DECIMAL(10,2) NULL,
     logged_by_employee_id INT,
-	visit_group_id VARCHAR(36) NULL, 
+	visit_group_id VARCHAR(36) NULL COMMENT 'Public-facing UUID for a single transaction/group check-in', 
     
     -- Keys
     PRIMARY KEY (visit_id),
@@ -233,10 +247,12 @@ CREATE TABLE daily_stats (
 
 CREATE TABLE vendors (
     vendor_id INT NOT NULL AUTO_INCREMENT,
+    public_vendor_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for vendors',
     vendor_name VARCHAR(100) NOT NULL UNIQUE,
     location_id INT,
     -- keys
     PRIMARY KEY (vendor_id),
+    INDEX idx_public_vendor_id (public_vendor_id),
     FOREIGN KEY (location_id)
         REFERENCES location (location_id)
         ON DELETE SET NULL
@@ -246,11 +262,13 @@ CREATE TABLE vendors (
 
 CREATE TABLE item (
     item_id INT NOT NULL AUTO_INCREMENT,
+    public_item_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for items',
     item_type ENUM('Food', 'Souvenir', 'Apparel', 'Other') NOT NULL,
     item_name VARCHAR(50),
     price DECIMAL(10,2),
     summary VARCHAR(250),
     PRIMARY KEY (item_id),
+    INDEX idx_public_item_id (public_item_id),
     CONSTRAINT chk_item_price_positive CHECK (price >= 0)
 );
 
@@ -268,6 +286,7 @@ CREATE TABLE inventory (
 
 CREATE TABLE inventory_requests (
     request_id INT NOT NULL AUTO_INCREMENT,
+    public_request_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for inventory requests',
     vendor_id INT NOT NULL,
     item_id INT NOT NULL,
     requested_count INT NOT NULL,
@@ -277,6 +296,7 @@ CREATE TABLE inventory_requests (
     status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
     
     PRIMARY KEY (request_id),
+    INDEX idx_public_request_id (public_request_id),
     FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES item(item_id) ON DELETE CASCADE,
     FOREIGN KEY (requested_by_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
@@ -309,6 +329,7 @@ CREATE TABLE member_auth (
 
 CREATE TABLE member_payment_methods (
     payment_method_id INT NOT NULL AUTO_INCREMENT,
+    public_payment_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for payment methods',
     membership_id INT NOT NULL,
     payment_type ENUM('Card', 'Bank') NOT NULL,
     is_default BOOL NOT NULL DEFAULT FALSE,
@@ -316,6 +337,7 @@ CREATE TABLE member_payment_methods (
     mock_expiration VARCHAR(5) COMMENT 'Stores mock MM/YY for cards, NULL for bank',
     
     PRIMARY KEY (payment_method_id),
+    INDEX idx_public_payment_id (public_payment_id),
     FOREIGN KEY (membership_id)
         REFERENCES membership (membership_id)
         ON DELETE CASCADE -- If a member is deleted, their saved payment methods are also deleted
@@ -323,6 +345,7 @@ CREATE TABLE member_payment_methods (
 
 CREATE TABLE membership_purchase_history (
     purchase_id INT NOT NULL AUTO_INCREMENT,
+    public_purchase_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for purchase history',
     membership_id INT NOT NULL,
     purchase_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     type_id INT NOT NULL,
@@ -333,6 +356,7 @@ CREATE TABLE membership_purchase_history (
     payment_method_id INT NULL COMMENT 'Which saved payment method was used, if any',
     
     PRIMARY KEY (purchase_id),
+    INDEX idx_public_purchase_id (public_purchase_id),
     
     FOREIGN KEY (membership_id) 
         REFERENCES membership(membership_id) 

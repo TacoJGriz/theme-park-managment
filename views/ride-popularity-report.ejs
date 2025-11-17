@@ -38,6 +38,13 @@
         .data-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
+        summary-row {
+            background-color: #e9ecef !important;
+            font-weight: bold;
+            border-top: 2px solid #dee2e6;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +105,13 @@
                         </tr>
                     <% }); %>
                 </tbody>
+                <tfoot>
+                    <tr class="summary-row">
+                        <td colspan="3" style="text-align: right;"><strong>GRAND TOTAL:</strong></td>
+                        <td><strong><%= grandTotal.toLocaleString() %></strong></td>
+                        <td><strong>100.0%</strong></td>
+                    </tr>
+                </tfoot>
             </table>
 
             <script>

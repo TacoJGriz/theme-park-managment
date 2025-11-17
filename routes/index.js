@@ -33,13 +33,15 @@ router.get('/', async (req, res) => {
         );
 
         // Query 4: Get ticket & membership types
+        // ADDED public_ticket_type_id
         const [tickets] = await pool.query(
-            "SELECT ticket_type_id, type_name, base_price, description FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
+            "SELECT ticket_type_id, public_ticket_type_id, type_name, base_price, description FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
 
         // Query 5: Get membership types
+        // ADDED public_type_id
         const [memberships] = await pool.query(
-            "SELECT type_id, type_name, base_price, description, base_members FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
+            "SELECT type_id, public_type_id, type_name, base_price, description, base_members FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
         );
 
         // Render the new homepage view with all this data
@@ -63,8 +65,9 @@ router.get('/', async (req, res) => {
 router.get('/purchase-tickets', isGuest, async (req, res) => {
     try {
         // Fetch active, non-member ticket types
+        // ADDED public_ticket_type_id
         const [ticketTypes] = await pool.query(
-            "SELECT * FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price",
+            "SELECT *, public_ticket_type_id FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price",
         );
 
         res.render('purchase-tickets', {
@@ -96,7 +99,6 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
         const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
 
         // 2. Fetch the ticket types IN THE SAME ORDER as the form
-        // This makes ticketTypes[0] = Senior, [1] = Child, [2] = Adult
         const [ticketTypes] = await connection.query(
             "SELECT ticket_type_id, type_name, base_price FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
@@ -182,7 +184,7 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
 
         // On error, re-render the purchase page
         const [ticketTypes] = await pool.query(
-            "SELECT * FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price",
+            "SELECT *, public_ticket_type_id FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price", // ADDED
         );
         res.render('purchase-tickets', {
             ticketTypes: ticketTypes,
@@ -198,5 +200,4 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
     res.render('dashboard');
 });
 
-// THIS IS THE CRITICAL LINE THAT WAS LIKELY MISSING
 module.exports = router;

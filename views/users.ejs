@@ -4,42 +4,59 @@
     <meta charset="UTF-8">
     <title>Employee Report</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        body { font-family: sans-serif;
+ margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+ }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+ }
+        th { background-color: #007bff; color: white;
+ }
+        tr:nth-child(even) { background-color: #f9f9f9;
+ }
         tr:hover { background-color: #f1f1f1;}
         .action-link {
             text-decoration: none;
-            color: #007bff;
+ color: #007bff;
             font-weight: bold;
             display: block;
             margin-bottom: 5px;
         }
         .action-link:hover { text-decoration: underline;}
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838; }
+        .add-button { display: inline-block;
+ margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;
+ }
+        .add-button:hover { background-color: #218838;
+ }
 
         /* --- NEW STYLES FOR FLASH MESSAGES --- */
         .message {
             padding: 1em;
-            border-radius: 4px;
+ border-radius: 4px;
             margin-bottom: 1.5em;
             font-weight: bold;
             border: 1px solid transparent;
-        }
+ }
         .success {
-            color: #155724; /* Dark green text */
-            background-color: #d4edda; /* Light green background */
-            border-color: #c3e6cb; /* Green border */
+            color: #155724;
+ /* Dark green text */
+            background-color: #d4edda;
+ /* Light green background */
+            border-color: #c3e6cb;
+ /* Green border */
         }
         .error {
-            color: #721c24; /* Dark red text */
-            background-color: #f8d7da; /* Light red background */
-            border-color: #f5c6cb; /* Red border */
+            color: #721c24;
+ /* Dark red text */
+            background-color: #f8d7da;
+ /* Light red background */
+            border-color: #f5c6cb;
+ /* Red border */
         }
     </style>
 </head>
@@ -51,7 +68,8 @@
         <% if (typeof success !== 'undefined' && success) { %>
             <div class="message success"><%= success %></div>
         <% } %>
-        <% if (typeof error !== 'undefined' && error) { %>
+        <% if (typeof error !== 
+ 'undefined' && error) { %>
             <div class="message error"><%= error %></div>
         <% } %>
         <%# --- END OF NEW BLOCK --- %>
@@ -61,72 +79,91 @@
         <a href="/employees/new" class="add-button">Add New Employee</a>
         <table>
             <thead>
-                <tr>
+              
+   <tr>
                     <th>Employee ID</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th>Status</th>
+                 
+     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
            <tbody>
                 <% users.forEach(targetUser => { %>
-                    <tr>
-                        <td><%= targetUser.employee_id %></td>
+                  
+   <tr>
+                        <%# Show clean 8-char public ID %>
+                        <td><%= targetUser.public_employee_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= targetUser.first_name %> <%= targetUser.last_name %></td>
                         <td><%= targetUser.email %></td>
-                        <td><%= targetUser.employee_type %></td>
+                 
+        <td><%= targetUser.employee_type %></td>
                         <td>
                             <% if (targetUser.is_pending_approval) { %>
-                                <span style="color: #fd7e14; font-weight: bold;">Pending Approval</span>
+                                <span style="color: #fd7e14;
+ font-weight: bold;">Pending Approval</span>
                             <% } else if (targetUser.is_active) { %>
                                 <span style="color: green;">Active</span>
-                            <% } else { %>
+                            <% } 
+ else { %>
                                 <span style="color: #dc3545;">Inactive</span>
                             <% } %>
                         </td>
-                        <td>
+          
+               <td>
                             <%# --- PERMISSION CHECK --- %>
                             <%# 'user' is the Actor (logged in) %>
-                            <%# 'targetUser' is the Target (person in row) %>
+                  
+           <%# 'targetUser' is the Target (person in row) %>
                             <% 
                                 const actorRole = user.role;
-                                const actorId = user.id;
+                  
+               const actorId = user.id;
                                 const targetRole = targetUser.employee_type;
                                 const targetId = targetUser.employee_id;
 
-                                // --- Edit Permissions ---
+             
+                    // --- Edit Permissions ---
                                 let canEdit = false;
-                                if (actorRole === 'Admin') { canEdit = true; }
-                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true; }
+ if (actorRole === 'Admin') { canEdit = true; }
+                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true;
+ }
                                 else if (actorRole === 'HR Staff' && targetRole !== 'Admin') {
                                     canEdit = true;
-                                }
+ }
 
                                 // --- Reset Password Permissions ---
                                 let canResetPassword = false;
-                                // *** THIS IS THE CORRECTED LINE ***
+ // *** THIS IS THE CORRECTED LINE ***
                                 if (actorRole === 'Admin' || actorRole === 'Head of HR' || actorRole === 'HR Staff') { 
-                                    canResetPassword = true; 
-                                }
+                                    canResetPassword = true;
+ }
                             %>
     
                             <% if (canEdit) { %>
-                                <a href="/employees/edit/<%= targetUser.employee_id %>" class="action-link">Edit</a>
+                                <%# CHANGED: Link now uses public_employee_id %>
+                                <a href="/employees/edit/<%= targetUser.public_employee_id %>" 
+ class="action-link">Edit</a>
                             <% } %>
 
                             <% if (canResetPassword) { %>
-                                <a href="/employees/reset-password/<%= targetUser.employee_id %>" class="action-link" style="color: #dc3545;">Reset Password</a>
+                                <%# CHANGED: Link now uses public_employee_id %>
+                                <a href="/employees/reset-password/<%= targetUser.public_employee_id %>" class="action-link" style="color: 
+ #dc3545;">Reset Password</a>
                                 <% } else { %>
                                 <% if (!canEdit) { %> 
-                                    <span>No Access</span> <%# Only show No Access if they cant do anything %>
+                          
+           <span>No Access</span> <%# Only show No Access if they cant do anything %>
                                 <% } %>
                             <% } %>
-                            <%# --- END PERMISSION CHECK --- %>
+              
+               <%# --- END PERMISSION CHECK --- %>
                         </td>
                     </tr>
-                <% }); %>
+                <% });
+ %>
             </tbody>
         </table>
     </div>

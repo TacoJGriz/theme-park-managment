@@ -5,64 +5,64 @@
     <title>Park Inventory</title>
     <style>
         body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
+ margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 900px;
-margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+ margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-}
+ }
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-}
+ }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
-}
+ }
         th { background-color: #343a40; color: white;
-}
+ }
         tr:nth-child(even) { background-color: #f9f9f9;
-}
+ }
         
         .button-bar { display: flex;
-justify-content: flex-end; margin-bottom: 1.5em; }
+ justify-content: flex-end; margin-bottom: 1.5em; }
         .action-button { 
             padding: 12px 20px;
-background-color: #007bff; 
+ background-color: #007bff; 
             color: white; 
             text-decoration: none; 
             border-radius: 4px; 
             font-weight: bold;
-}
+ }
         .action-button:hover { background-color: #0056b3;
-}
+ }
 
         .restock-link {
             display: inline-block;
-padding: 5px 10px;
+ padding: 5px 10px;
             background-color: #28a745;
             color: white;
             text-decoration: none;
             border-radius: 4px;
             font-weight: bold;
             font-size: 0.9em;
-}
+ }
         .restock-link:hover { background-color: #218838;
-}
+ }
         
         /* --- NEW: Style for disabled button --- */
         .restock-link-disabled {
             display: inline-block;
-            padding: 5px 10px;
+ padding: 5px 10px;
             background-color: #6c757d; /* Grey */
             color: white;
-            text-decoration: none;
+ text-decoration: none;
             border-radius: 4px;
             font-weight: bold;
             font-size: 0.9em;
             cursor: not-allowed;
             pointer-events: none;
-        }
+ }
 
         .pending-note {
             display: block;
-font-size: 0.85em;
+ font-size: 0.85em;
             font-style: italic;
             color: #5a5a5a;
         }
@@ -79,45 +79,39 @@ font-size: 0.85em;
 
         <table>
             <thead>
-          
       <tr>
                     <th>Vendor</th>
                     <th>Item</th>
                     <th>Current Count</th>
                     <th>Action</th>
-             
    </tr>
             </thead>
             <tbody>
                 <% inventory.forEach(item => { %>
                     <tr>
                         <td><%= item.vendor_name %></td>
-       
                  <td><%= item.item_name %></td>
                         <td>
                             <%= item.current_count %>
-                           
  <% if (item.pending_request_id) { %>
                                 <span class="pending-note">
                                     (Request for <%= item.pending_count %> pending)
-                     
            </span>
                             <% } %>
                         </td>
                         <td>
-                            <%# --- UPDATED LOGIC --- %>
+                         <%# --- UPDATED LOGIC --- %>
                             <% if (item.pending_request_id) { %>
                                 <%# Request is pending: Show a disabled, greyed-out button %>
                                 <a href="#" class="restock-link-disabled" aria-disabled="true">Restock</a>
                             <% } else { %>
-                                <%# No request pending: Show the normal restock link %>
-                                <a href="/inventory/request/<%= item.vendor_id %>/<%= item.item_id %>" class="restock-link">Restock</a>
+                                <%# CHANGED: Link now uses public_vendor_id and public_item_id %>
+                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="restock-link">Restock</a>
                             <% } %>
                         </td>
-                
     </tr>
                 <% });
-%>
+ %>
             </tbody>
         </table>
     </div>

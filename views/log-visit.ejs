@@ -6,222 +6,227 @@
     <style>
         body {
             font-family: sans-serif;
-margin: 0;
+ margin: 0;
             background-color: #f4f4f9;
         }
         h1 {
             color: #444;
-text-align: center;
+ text-align: center;
             margin-top: 1em;
         }
         form {
             max-width: 500px;
-margin: 2em auto;
+ margin: 2em auto;
             background: white;
             padding: 2.5em;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+ }
 
         form > div {
             margin-bottom: 1.5em;
-}
+ }
 
         label {
             display: block;
-margin-bottom: 5px;
+ margin-bottom: 5px;
             font-weight: bold;
         }
         input, select {
             width: 100%;
-padding: 10px;
+ padding: 10px;
             box-sizing: border-box;
             border-radius: 4px;
             border: 1px solid #ccc;
-}
+ }
 
         /* MODIFIED: Styling for the new search grid */
         #memberSearchGrid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+ grid-template-columns: 1fr 1fr;
             gap: 1em;
             margin-bottom: 1em;
         }
         #memberSearchGrid > div {
-             margin-bottom: 0; /* Remove default div margin */
+             margin-bottom: 0;
+ /* Remove default div margin */
         }
         #memberSearchEmailField {
             grid-column: 1 / -1;
-        }
+ }
         /* END MODIFICATION */
 
         .price-display {
             background-color: #f9f9f9;
-border: 1px solid #eee;
+ border: 1px solid #eee;
             border-radius: 8px;
             padding: 1em;
             margin-top: 1.5em;
-}
+ }
         .price-display h3 {
             margin-top: 0;
-border-bottom: 1px solid #ddd;
+ border-bottom: 1px solid #ddd;
             padding-bottom: 0.5em;
         }
         .price-display p {
             display: flex;
-justify-content: space-between;
+ justify-content: space-between;
             margin: 0.5em 0;
             font-size: 1.1em;
         }
         .price-display .final-price {
             font-weight: bold;
-font-size: 1.3em;
+ font-size: 1.3em;
             color: #28a745;
             border-top: 2px solid #28a745;
             padding-top: 0.5em;
             margin-top: 0.5em;
-}
+ }
 
         button {
             padding: 12px 20px;
-background-color: #28a745;
+ background-color: #28a745;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 4px;
             font-size: 1em;
             width: 100%;
-}
+ }
         .error {
             color: #d9534f;
-font-weight: bold;
+ font-weight: bold;
             background-color: #f2dede;
             padding: 1em;
             border-radius: 4px;
             margin-bottom: 15px;
-}
+ }
 
         /* --- NEW: Success Message Style --- */
         .success {
             color: #155724;
-background-color: #d4edda;
+ background-color: #d4edda;
             border-color: #c3e6cb;
             padding: 1em;
             border-radius: 4px;
             margin-bottom: 15px;
             font-weight: bold;
-}
+ }
 
         .cancel-link {
             display: block;
-margin-top: 1em;
+ margin-top: 1em;
             text-align: center;
             text-decoration: none;
             color: #6c757d;
             font-weight: bold;
-}
+ }
         .cancel-link:hover {
             text-decoration: underline;
-}
+ }
 
         /* --- MODIFIED: Member Checklist Styles --- */
         #memberSelectionArea {
             background: #f8f9fa;
-border: 1px solid #dee2e6;
+ border: 1px solid #dee2e6;
             padding: 1em;
             border-radius: 4px;
             margin-top: 1em;
-}
+ }
         
         /* MODIFIED: Use flexbox for alignment */
         .member-checklist-label {
-            display: flex; /* <-- Use flexbox */
-            align-items: flex-start; /* <-- Align checkbox to the top */
+            display: flex;
+ /* <-- Use flexbox */
+            align-items: flex-start;
+ /* <-- Align checkbox to the top */
             padding: 10px;
-            border-bottom: 1px solid #eee;
+ border-bottom: 1px solid #eee;
             cursor: pointer;
         }
         .member-checklist-label:last-child {
             border-bottom: none;
-        }
+ }
         .member-checklist-label:hover {
             background-color: #e9ecef;
-        }
+ }
         .member-checklist-label input {
             width: auto;
-            margin-right: 10px;
+ margin-right: 10px;
             margin-top: 5px; /* <-- Add margin to align with text */
         }
         
         /* --- NEW CSS FOR MEMBER DETAILS --- */
         .member-details {
             display: flex;
-            flex-direction: column; /* Stack info vertically */
-            flex-grow: 1; /* Take remaining space */
-            word-break: break-all; /* Break long emails */
+ flex-direction: column; /* Stack info vertically */
+            flex-grow: 1;
+ /* Take remaining space */
+            word-break: break-all;
+ /* Break long emails */
         }
         .member-name {
             font-weight: bold;
-            font-size: 1.1em;
+ font-size: 1.1em;
             color: #333;
             margin-bottom: 4px;
         }
         .member-info {
             font-size: 0.9em;
-            color: #555;
+ color: #555;
             line-height: 1.4;
         }
         /* --- END NEW CSS --- */
 
         .checklist-controls {
             padding-top: 10px;
-margin-top: 10px;
+ margin-top: 10px;
             border-top: 2px solid #ccc;
         }
         .checklist-controls button {
             background: none;
-border: none;
+ border: none;
             color: #007bff;
             cursor: pointer;
             font-weight: bold;
             padding: 5px;
             width: auto;
-}
+ }
 
         /* --- START: ADDED TAB STYLES --- */
         .tab-container {
             display: flex;
-border-bottom: 2px solid #ccc;
+ border-bottom: 2px solid #ccc;
             margin-bottom: 1.5em;
         }
         .tab-btn {
             padding: 1em 1.5em;
-cursor: pointer;
+ cursor: pointer;
             background: #f1f1f1;
             border: 1px solid #ccc;
             border-bottom: none;
             margin-right: 5px;
             border-radius: 4px 4px 0 0;
             font-weight: bold;
-font-size: 1em;
+ font-size: 1em;
         }
         .tab-btn.active {
             background: #fff;
-border-bottom: 2px solid #fff;
+ border-bottom: 2px solid #fff;
             position: relative;
             top: 2px;
         }
         .tab-content {
             display: none;
-/* Hide all tabs by default */
+ /* Hide all tabs by default */
         }
         .tab-content.active {
             display: block;
-/* Show active tab */
+ /* Show active tab */
         }
         .redeem-form-grid {
             display: grid;
-grid-template-columns: 3fr 1fr;
+ grid-template-columns: 3fr 1fr;
             gap: 1em;
             align-items: flex-end;
         }
@@ -254,7 +259,7 @@ grid-template-columns: 3fr 1fr;
 
         <div id="tab-standard" class="tab-content active" style="margin-top: -3.5em;">
             <form action="/visits" method="POST" id="logVisitForm" style="margin: 0;
-box-shadow: none; padding-top: 0;">
+ box-shadow: none; padding-top: 0;">
                 <div>
                     <label for="ticket_type_id">Ticket Type:</label>
                     <select id="ticket_type_id" name="ticket_type_id" required>
@@ -264,6 +269,7 @@ box-shadow: none; padding-top: 0;">
                         ticketTypes.forEach(type => { %>
                             <option
                          
+       <%# The value is the internal ticket_type_id, which is secure in a form POST %>
        value="<%= type.ticket_type_id %>"
                                 data-price="<%= type.base_price %>"
                                 data-is-member="<%= type.is_member_type %>"
@@ -279,29 +285,37 @@ box-shadow: none; padding-top: 0;">
 
                 <div id="memberSelectBlock" style="display: none;">
                     
-                    <div id="memberSearchGrid">
+             
+                   <div id="memberSearchGrid">
                         <div>
+                            <%# CHANGED: Label now references public ID %>
                             <label for="memberSearchID">Search by Member ID:</label>
                             <input type="text" id="memberSearchID" placeholder="Type Member ID...">
-                        </div>
+   
+                     </div>
                         <div>
                             <label for="memberSearchPhone">Search by Phone:</label>
-                            <input type="tel" id="memberSearchPhone" placeholder="Type phone number...">
+                        
+     <input type="tel" id="memberSearchPhone" placeholder="Type phone number...">
                         </div>
                         <div id="memberSearchEmailField">
                             <label for="memberSearchEmail">Search by Email:</label>
-                            <input type="email" id="memberSearchEmail" placeholder="Type email...">
+           
+                     <input type="email" id="memberSearchEmail" placeholder="Type email...">
                         </div>
                     </div>
                     
-                    <div id="memberSelectionArea">
-                        <p style="text-align: center; color: #6c757d;"><i>Enter search criteria to find members.</i></p>
+               
+     <div id="memberSelectionArea">
+                        <p style="text-align: center;
+ color: #6c757d;"><i>Enter search criteria to find members.</i></p>
                     </div>
                 </div>
                 <div class="price-display">
                     <h3>Calculated Price</h3>
                   
-  <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
+  
+ <p><span>Base Price:</span> <span id="priceBase">$ --.--</span></p>
                     <p><span>Promotion:</span> <span id="priceDiscount">$ --.--</span></p>
 
                     <p class="final-price"><span>Final Price:</span> <span id="priceFinal">$ --.--</span></p>
@@ -310,22 +324,24 @@ box-shadow: none; padding-top: 0;">
 
                 <br>
               
-  <button type="submit">Log Visit</button>
+  
+ <button type="submit">Log Visit</button>
                 <a href="/dashboard" class="cancel-link">Cancel</a>
             </form>
         </div>
 
         <div id="tab-redeem" class="tab-content" style="margin-top: -3.5em;">
             <form action="/visits/redeem" method="POST" style="margin: 0;
-box-shadow: none; padding-top: 0;">
+ box-shadow: none; padding-top: 0;">
                 <div class="redeem-form-grid">
                     <div>
                         <label for="ticket_code">E-Ticket Code:</label>
                         <input type="text" id="ticket_code" name="ticket_code" required>
       
+ 
               </div>
                     <button type="submit" style="padding: 10px;
-background-color: #28a745;">Redeem Ticket</button>
+ background-color: #28a745;">Redeem Ticket</button>
                 </div>
                 <a href="/dashboard" class="cancel-link" style="margin-top: 2em;">Cancel</a>
             </form>
@@ -336,6 +352,7 @@ background-color: #28a745;">Redeem Ticket</button>
         // --- Pass data from EJS to JavaScript ---
         const ticketTypeData = new Map();
       
+ 
   <% ticketTypes.forEach(type => { %>
             ticketTypeData.set('<%= type.ticket_type_id %>', {
                 price: parseFloat('<%= type.base_price %>'),
@@ -352,9 +369,9 @@ currentDiscount %>') || 0;
 
         // --- NEW: Build member lookup maps (REMOVED phone search map) ---
         const memberDataMap = new Map();
-// memberId -> memberObject
+ // memberId -> memberObject
         const memberGroupMap = new Map();
-// primaryId -> [member Objects]
+ // primaryId -> [member Objects]
 
         allActiveMembers.forEach(member => {
             // Add to data map
@@ -364,24 +381,25 @@ currentDiscount %>') || 0;
             const primaryId = member.primary_member_id || member.membership_id;
        
      if (!memberGroupMap.has(primaryId)) {
-                memberGroupMap.set(primaryId, []);
+          
+       memberGroupMap.set(primaryId, []);
             }
             memberGroupMap.get(primaryId).push(member);
         });
-// --- Get DOM Elements ---
+ // --- Get DOM Elements ---
         const ticketSelect = document.getElementById('ticket_type_id');
-const memberSelectBlock = document.getElementById('memberSelectBlock');
+ const memberSelectBlock = document.getElementById('memberSelectBlock');
 
         // --- MODIFIED: Get all three new search inputs ---
         const memberSearchIDInput = document.getElementById('memberSearchID');
-        const memberSearchPhoneInput = document.getElementById('memberSearchPhone');
+ const memberSearchPhoneInput = document.getElementById('memberSearchPhone');
         const memberSearchEmailInput = document.getElementById('memberSearchEmail');
         
         const memberSelectionArea = document.getElementById('memberSelectionArea');
 
         const priceBaseEl = document.getElementById('priceBase');
         const priceDiscountEl = document.getElementById('priceDiscount');
-const priceFinalEl = document.getElementById('priceFinal');
+ const priceFinalEl = document.getElementById('priceFinal');
 
         // --- Event Listener for Ticket Type ---
         ticketSelect.addEventListener('change', function() {
@@ -392,6 +410,7 @@ const priceFinalEl = document.getElementById('priceFinal');
             }
 
       
+ 
       const ticket = ticketTypeData.get(selectedTypeId);
             if (!ticket) {
                 resetPriceDisplay();
@@ -402,79 +421,83 @@ const priceFinalEl = document.getElementById('priceFinal');
                 memberSelectBlock.style.display = 'block';
 
  
-               // memberSelect.required = true; // No longer a single select
+                // memberSelect.required = true; // No longer a single select
                 updatePriceDisplay(0, 0, 0);
             } else {
                 memberSelectBlock.style.display = 'none';
                 // memberSelect.required = false;
 
-                // --- MODIFIED: Clear all three search inputs ---
+       
+         // --- MODIFIED: Clear all three search inputs ---
                 memberSearchIDInput.value = '';
                 memberSearchPhoneInput.value = '';
                 memberSearchEmailInput.value = '';
                 
-                clearMemberChecklist();
+             
+     clearMemberChecklist();
 
                 const basePrice = ticket.price;
                 const
                 discountAmount = basePrice * (currentDiscountPercent / 100);
-const finalPrice = basePrice - discountAmount;
+ const finalPrice = basePrice - discountAmount;
                 updatePriceDisplay(basePrice, discountAmount, finalPrice);
             }
         });
-
-        // --- NEW: Multi-field search function ---
+ // --- NEW: Multi-field search function ---
         function performSearch() {
             // 1. Get and normalize all search terms
             const idTerm = memberSearchIDInput.value.trim();
-            const phoneTerm = normalizePhone(memberSearchPhoneInput.value);
+ const phoneTerm = normalizePhone(memberSearchPhoneInput.value);
             const emailTerm = memberSearchEmailInput.value.trim().toLowerCase();
 
             // 2. If all fields are empty, clear the list and exit
             if (!idTerm && !phoneTerm && !emailTerm) {
                 clearMemberChecklist();
-                return;
+ return;
             }
 
             const matchedGroupIds = new Set();
-            const combinedGroup = [];
+ const combinedGroup = [];
 
             // 3. Loop through the full member list to find matches
             allActiveMembers.forEach(member => {
                 // Get member's data for comparison
-                const memberID = String(member.membership_id);
+                // CHANGED: Search public_membership_id
+                const memberID = (member.public_membership_id || '').toLowerCase();
                 const memberPhone = normalizePhone(member.phone_number);
-                const memberEmail = (member.email || '').toLowerCase();
+             
+     const memberEmail = (member.email || '').toLowerCase();
 
                 // Check for matches (only if a search term is present)
-                const idMatch = idTerm && memberID.startsWith(idTerm);
+                const idMatch = idTerm && memberID.startsWith(idTerm.toLowerCase()); // CHANGED
                 const phoneMatch = phoneTerm && memberPhone.startsWith(phoneTerm);
                 const emailMatch = emailTerm && memberEmail.startsWith(emailTerm);
 
-                if (idMatch || phoneMatch || emailMatch) {
+   
+             if (idMatch || phoneMatch || emailMatch) {
                     // 4. A match! Find their primary group ID
                     const primaryId = member.primary_member_id || member.membership_id;
                     matchedGroupIds.add(primaryId);
-                }
+        
+         }
             });
-
-            // 5. Build a single combined list of all members from all matched groups
+ // 5. Build a single combined list of all members from all matched groups
             matchedGroupIds.forEach(primaryId => {
                 const group = memberGroupMap.get(primaryId);
                 if (group) {
                     combinedGroup.push(...group);
-                }
+                
+ }
             });
 
             combinedGroup.sort((a, b) => a.membership_id - b.membership_id);
-
-            // 6. Build the checklist with the (now sorted) combined group
+ // 6. Build the checklist with the (now sorted) combined group
             buildMemberChecklist(combinedGroup);
-        }
+ }
 
         // --- NEW: Add event listeners to all three inputs ---
         memberSearchIDInput.addEventListener('input', performSearch);
-        memberSearchPhoneInput.addEventListener('input', performSearch);
+ memberSearchPhoneInput.addEventListener('input', performSearch);
         memberSearchEmailInput.addEventListener('input', performSearch);
         
         // --- MODIFIED: Function to build the checklist ---
@@ -482,73 +505,78 @@ const finalPrice = basePrice - discountAmount;
             if (!group || group.length === 0) {
                 // MODIFIED: Show "No results" message if group is empty
                 memberSelectionArea.innerHTML = '<p style="text-align: center; color: #dc3545;"><i>No members found.</i></p>';
-                return;
+ return;
             }
 
-            memberSelectionArea.innerHTML = ''; // Clear
+            memberSelectionArea.innerHTML = '';
+ // Clear
 
             group.forEach(member => {
                 const label = document.createElement('label');
                 label.className = 'member-checklist-label';
 
                 // Format the data for display
-                const memberID = member.membership_id;
-                const memberName = `${member.first_name} ${member.last_name}`;
+                const memberID = member.membership_id; // This is the internal ID for the form value
+                const publicMemberID = member.public_membership_id; // This is for display
+        
+         const memberName = `${member.first_name} ${member.last_name}`;
                 const memberPhone = member.phone_number || 'N/A'; // Use 'N/A' for null/empty
                 const memberEmail = member.email || 'N/A'; // Use 'N/A' for null/empty
 
                 // Use innerHTML to create the new, structured layout
-                label.innerHTML = `
+            
+     label.innerHTML = `
                     <input type="checkbox" name="member_ids[]" value="${memberID}">
                     <div class="member-details">
                         <span class="member-name">${memberName}</span>
-                        <span class="member-info">ID: ${memberID}</span>
+                        <%# Show clean 8-char public ID %>
+                        <span 
+ class="member-info">ID: ${publicMemberID.substring(0, 8).toUpperCase()}</span>
                         <span class="member-info">Phone: ${memberPhone}</span>
                         <span class="member-info">Email: ${memberEmail}</span>
                     </div>
                 `;
-                
-                memberSelectionArea.appendChild(label);
+ memberSelectionArea.appendChild(label);
             });
 
             // Add "Select All" / "Select None"
             const controls = document.createElement('div');
-controls.className = 'checklist-controls';
+ controls.className = 'checklist-controls';
             controls.innerHTML = `
                 <button type="button" id="selectAllBtn">Select All</button>
                 <button type="button" id="selectNoneBtn">Select None</button>
             `;
-memberSelectionArea.appendChild(controls);
+ memberSelectionArea.appendChild(controls);
 
             document.getElementById('selectAllBtn').addEventListener('click', () => {
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
             });
-document.getElementById('selectNoneBtn').addEventListener('click', () => {
+ document.getElementById('selectNoneBtn').addEventListener('click', () => {
                 memberSelectionArea.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             });
-}
+ }
 
         // --- Function to clear the checklist ---
         function clearMemberChecklist() {
             // MODIFIED: Updated text
             memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d;"><i>Enter search criteria to find members.</i></p>';
-}
+ }
 
         function updatePriceDisplay(base, discount, final) {
             priceBaseEl.textContent = formatAsCurrency(base);
-priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
+ priceDiscountEl.textContent = `- ${formatAsCurrency(discount)}`;
             priceFinalEl.textContent = formatAsCurrency(final);
         }
 
         function resetPriceDisplay() {
             priceBaseEl.textContent = '$ --.--';
-priceDiscountEl.textContent = '$ --.--';
+ priceDiscountEl.textContent = '$ --.--';
             priceFinalEl.textContent = '$ --.--';
 
             memberSelectBlock.style.display = 'none';
-            // --- MODIFIED: Clear all three search inputs ---
+ // --- MODIFIED: Clear all three search inputs ---
             memberSearchIDInput.value = '';
-            memberSearchPhoneInput.value = '';
+ memberSearchPhoneInput.value = '';
             memberSearchEmailInput.value = '';
             
             clearMemberChecklist();
@@ -556,7 +584,7 @@ priceDiscountEl.textContent = '$ --.--';
 
         function formatAsCurrency(amount) {
             return `$${amount.toFixed(2)}`;
-}
+ }
 
         // --- START: ADD TAB-SWITCHING SCRIPT ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -566,6 +594,7 @@ priceDiscountEl.textContent = '$ --.--';
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
             
+ 
         // Deactivate all
                     tabs.forEach(t => t.classList.remove('active'));
                     contents.forEach(c => c.classList.remove('active'));
@@ -573,11 +602,12 @@ priceDiscountEl.textContent = '$ --.--';
                     // Activate clicked
                     tab.classList.add('active');
     
+ 
                 document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
                 });
             });
         });
-// --- END: ADD TAB-SWITCHING SCRIPT ---
+ // --- END: ADD TAB-SWITCHING SCRIPT ---
     </script>
 </body>
 </html>

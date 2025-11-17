@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const crypto = require('crypto'); // ADDED
 const { isAuthenticated, canManageRetail } = require('../middleware/auth');
 
 // GET /items
 // This is the root (/) because app.js adds the /items prefix
 router.get('/', isAuthenticated, canManageRetail, async (req, res) => {
     try {
-        const [items] = await pool.query('SELECT * FROM item ORDER BY item_name');
+        // ADDED public_item_id
+        const [items] = await pool.query('SELECT *, public_item_id FROM item ORDER BY item_name');
         res.render('items', { items: items });
     } catch (error) {
         console.error(error);
@@ -28,8 +30,12 @@ router.post('/', isAuthenticated, canManageRetail, async (req, res) => {
     let connection;
     try {
         connection = await pool.getConnection();
-        const sql = "INSERT INTO item (item_name, item_type, price, summary) VALUES (?, ?, ?, ?)";
-        await connection.query(sql, [item_name, item_type, price, summary || null]);
+        const publicItemId = crypto.randomUUID(); // ADDED
+
+        // ADDED public_item_id
+        const sql = "INSERT INTO item (public_item_id, item_name, item_type, price, summary) VALUES (?, ?, ?, ?, ?)";
+        await connection.query(sql, [publicItemId, item_name, item_type, price, summary || null]); // ADDED
+
         res.redirect('/items');
     } catch (error) {
         console.error(error);
