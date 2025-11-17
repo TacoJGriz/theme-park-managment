@@ -1,13 +1,13 @@
 <style>
 	.navbar {
 	background-color: #343a40;
-	padding: 0 20px; /* Remove vertical padding */
+	padding: 0 20px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	color: white;
 	margin-bottom: 1em;
-	min-height: 50px; /* Set a fixed height */
+	min-height: 50px;
 	}
 	.nav-links {
 	display: flex;
@@ -16,15 +16,13 @@
 	.nav-links a, .dropdown .dropbtn {
 	color: #f8f9fa;
 	text-decoration: none;
-	padding: 15px 12px; /* Standard padding for all links */
+	padding: 15px 12px;
 	transition: background-color 0.2s;
-	margin-right: 5px; /* Spacing between links */
-	display: flex; /* Use flex to align text */
+	margin-right: 5px;
+	display: flex;
 	align-items: center;
-	/* Center text vertically */
-	height: 100%; /* Make link fill the nav height */
+	height: 100%;
 	box-sizing: border-box;
-	/* Include padding in height */
 	background-color: transparent;
 	border: none;
 	font-family: inherit;
@@ -55,7 +53,6 @@
 	}
 	.dropdown .dropbtn {
 	font-weight: normal;
-	/* Match normal link weight */
 	}
 	.dropdown-content {
 	display: none;
@@ -72,75 +69,66 @@
 	text-decoration: none;
 	display: block;
 	height: auto;
-	/* Override nav-link height */
-	line-height: 1.5; /* Normal line height */
+	line-height: 1.5;
 	}
 	.dropdown-content a:hover {
 	background-color: #f1f1f1;
 	}
+
 	.dropdown:hover .dropdown-content {
 	display: block;
 	}
-	/* Style for special links */
+
 	.special-link {
 	color: #dc3545 !important;
 	font-weight: bold;
 	}
 </style>
 
-<%# The user object is passed to every view from app.js via res.locals %>
 <% if (user) { %>
 <nav class="navbar">
 	<div class="nav-links">
 		<a href="/dashboard">Dashboard</a>
 
-		<%# --- Rides Link --- %>
 		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
 		<a href="/rides">Rides</a>
 		<% } %>
 
-		<%# --- HR Dropdown --- %>
-		<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-		<div class="dropdown">
-			<button class="dropbtn">HR ▼</button>
-			<div class="dropdown-content">
-				<a href="/users">Employees</a>
-				<% if (user.role === 'Admin' || user.role === 'Head of HR' 
-|| user.role === 'HR Staff') { %>
-				<a href="/employees/pending" class="special-link">Pending Hires</a>
-				<% } %>
-				<%# MODIFIED: Added Location Manager for inventory approvals %>
-				<% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-				<a href="/approvals" class="special-link">Pending Requests</a>
-				<% } %>
-			</div>
-		</div>
-		<% } %>
+		<%# --- MODIFIED: HR Dropdown Removed. Items moved to Management below. --- %>
 
-		<%# --- Management Dropdown --- %>
-		<% if (user.role === 'Admin' ||
-user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+		<%# --- MODIFIED: Management Dropdown now includes HR items --- %>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Management ▼</button>
 			<div class="dropdown-content">
-				<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-				<a href="/locations">Locations</a>
+				<%# --- Former HR Links --- %>
+				<a href="/users">Employees</a>
+
+				<% if (user.role === 'Admin') { %>
+				<a href="/employees/pending" class="special-link">Pending Hires</a>
 				<% } %>
-				<a href="/vendors">Vendors</a>
-				<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-				<a href="/promotions">Promotions</a>
-				<a href="/weather">Weather</a>
-				<% } %>
+
+				<a href="/approvals" class="special-link">Pending Requests</a>
+
+				<hr style="margin: 5px 0; border: 0; border-top: 1px solid #ddd;">
+
+					<%# --- Original Management Links --- %>
+					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+					<a href="/locations">Locations</a>
+					<% } %>
+					<a href="/vendors">Vendors</a>
+					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+					<a href="/promotions">Promotions</a>
+					<a href="/weather">Weather</a>
+					<% } %>
 			</div>
 		</div>
 		<% } %>
 
-		<%# --- MODIFIED: Retail Dropdown (Removed Vendor Manager, Added Staff) --- %>
 		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Retail ▼</button>
 			<div class="dropdown-content">
-				<%# MODIFIED: Staff cannot see master item list %>
 				<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 				<a href="/items">Items</a>
 				<% } %>
@@ -149,16 +137,13 @@ user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 		</div>
 		<% } %>
 
-		<%# --- Guests Dropdown --- %>
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { 
-%>
+		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Guests ▼</button>
 			<div class="dropdown-content">
 				<a href="/visits/new">Log Park Entry</a>
 				<a href="/members">Manage Members</a>
-				<% if (user.role === 'Admin' ||
-user.role === 'Park Manager') { %>
+				<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 				<a href="/memberships/types">Membership Types</a>
 				<a href="/ticket-types">Ticket Types</a>
 				<% } %>
@@ -166,7 +151,6 @@ user.role === 'Park Manager') { %>
 		</div>
 		<% } %>
 
-		<%# --- Reports Dropdown --- %>
 		<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Reports ▼</button>
@@ -179,7 +163,6 @@ user.role === 'Park Manager') { %>
 		<% } %>
 	</div>
 
-	<%# --- User Info (Right Side) --- %>
 	<div class="user-info">
 		<span>
 			Welcome, <%= user.firstName %> (<%= user.role %>)

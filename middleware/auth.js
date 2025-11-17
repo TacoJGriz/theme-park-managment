@@ -4,55 +4,67 @@ const isAuthenticated = (req, res, next) => {
     }
     res.redirect('/');
 };
+
 const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Admin') { return next(); }
     res.status(403).send('Forbidden: Admins only');
 };
-const isHR = (req, res, next) => {
-    if (req.session.user && req.session.user.role === 'HR') { return next(); }
-    res.status(403).send('Forbidden: HR only');
-};
+
+// REMOVED: isHR function
+
 const isParkManager = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Park Managers only');
 };
+
+// UPDATED: Only Admin can add employees now
 const canAddEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff') { return next(); }
-    res.status(403).send('Forbidden: Admin or HR access required');
+    if (role === 'Admin') { return next(); }
+    res.status(403).send('Forbidden: Admin access required');
 };
+
+// UPDATED: Only Admin can approve employees now
 const canApproveEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR') { return next(); }
-    res.status(403).send('Forbidden: Admin or Head of HR access required.');
+    if (role === 'Admin') { return next(); }
+    res.status(403).send('Forbidden: Admin access required.');
 };
+
+// UPDATED: Only Admin can view pending employees now
 const canViewPendingEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff') { return next(); }
-    res.status(403).send('Forbidden: Admin or HR access required.');
+    if (role === 'Admin') { return next(); }
+    res.status(403).send('Forbidden: Admin access required.');
 };
+
 const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
+
+// UPDATED: Removed HR roles
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR' || role === 'HR Staff' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
     res.status(403).send('Forbidden: Access denied.');
 };
+
 const isMaintenanceOrHigher = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') { return next(); }
     res.status(403).send('Forbidden: Maintenance or higher access required');
 };
+
 const canManageMembersVisits = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Staff') {
         return next();
     }
-    res.status(403).send('Forbidden: Staff access or higher (excluding HR) required');
+    res.status(403).send('Forbidden: Staff access or higher required');
 };
+
 const canViewRides = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance' || role === 'Staff') {
@@ -60,6 +72,7 @@ const canViewRides = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied for your role.');
 };
+
 const canManageRetail = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
@@ -67,6 +80,7 @@ const canManageRetail = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Admin, Park Manager, or Location Manager access required.');
 };
+
 const canViewInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -74,6 +88,7 @@ const canViewInventory = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 };
+
 const canManageInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -81,6 +96,7 @@ const canManageInventory = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 };
+
 const canViewReports = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') {
@@ -88,6 +104,7 @@ const canViewReports = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Admin or Park Manager access required for reports.');
 };
+
 const getReportSettings = (selectedDate, grouping) => {
     const d = new Date(selectedDate + 'T00:00:00');
     if (isNaN(d.getTime())) {
@@ -135,13 +152,16 @@ const getReportSettings = (selectedDate, grouping) => {
 
     return { startDate, endDate, sqlDateFormat, labelFormat };
 };
+
+// UPDATED: Only Admin can approve wages now
 const canApproveWages = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR') {
+    if (role === 'Admin') {
         return next();
     }
-    res.status(403).send('Forbidden: Admin or Head of HR access required.');
+    res.status(403).send('Forbidden: Admin access required.');
 };
+
 const canApproveMaintenance = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') {
@@ -149,6 +169,7 @@ const canApproveMaintenance = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Admin or Park Manager access required.');
 };
+
 const canLogRideRun = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -156,6 +177,7 @@ const canLogRideRun = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 };
+
 const canViewRideHistory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -163,6 +185,7 @@ const canViewRideHistory = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 };
+
 const canApproveInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
@@ -170,13 +193,16 @@ const canApproveInventory = (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 };
+
+// UPDATED: Removed HR roles
 const canViewApprovals = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Head of HR' || role === 'Park Manager' || role === 'Location Manager') {
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
         return next();
     }
     res.status(403).send('Forbidden: You do not have permission to view this page.');
 };
+
 const formatPhoneNumber = (phoneString) => {
     if (!phoneString) {
         return null;
@@ -226,7 +252,7 @@ const isMemberAuthenticated = (req, res, next) => {
     if (req.session && req.session.member) {
         return next();
     }
-    res.redirect('/login'); // <-- FIXED (was /member/login)
+    res.redirect('/login');
 };
 
 const isGuest = (req, res, next) => {
@@ -242,7 +268,7 @@ const isGuest = (req, res, next) => {
 module.exports = {
     isAuthenticated,
     isAdmin,
-    isHR,
+    // isHR is removed
     isParkManager,
     canAddEmployees,
     canApproveEmployees,

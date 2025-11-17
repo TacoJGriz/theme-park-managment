@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Destock Item</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #dc3545; text-align: center; margin-top: 0; }
+        h1 small { color: #666; font-weight: normal; display: block; font-size: 0.6em; margin-top: 5px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px; }
+        button { padding: 12px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; width: 100%; }
+        button:hover { background-color: #c82333; }
+        .current-info { background-color: #e9ecef; padding: 1em; border-radius: 4px; margin-bottom: 1.5em; text-align: center; font-weight: bold; }
+        .error { color: #721c24; background-color: #f8d7da; padding: 1em; border-radius: 4px; margin-bottom: 15px; font-weight: bold; }
+        .cancel-link { display: block; text-align: center; margin-top: 1em; color: #6c757d; text-decoration: none; font-weight: bold; }
+        .cancel-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Destock Item <small><%= item.item_name %> at <%= item.vendor_name %></small></h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error"><%= error %></p>
+        <% } %>
+
+        <div class="current-info">
+            Current Stock: <%= item.current_count %>
+        </div>
+
+        <form action="<%= formAction %>" method="POST">
+            <label for="remove_count">Quantity to Remove:</label>
+            <input type="number" id="remove_count" name="remove_count" min="1" max="<%= item.current_count %>" required placeholder="Enter amount to remove...">
+            
+            <button type="submit">Confirm Removal</button>
+            
+            <a href="<%= typeof cancelLink !== 'undefined' ? cancelLink : '/inventory' %>" class="cancel-link">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

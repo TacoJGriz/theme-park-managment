@@ -196,8 +196,41 @@ router.post('/purchase-tickets', isGuest, async (req, res) => {
 });
 
 // GET /dashboard
-router.get('/dashboard', isAuthenticated, (req, res) => {
-    res.render('dashboard');
+router.get('/dashboard', isAuthenticated, async (req, res) => {
+    const user = req.session.user;
+    let assignedRides = [];
+    let assignedVendors = [];
+
+    try {
+        // Only fetch details if the user has a location assignment (Staff or Location Manager)
+        if ((user.role === 'Staff' || user.role === 'Location Manager') && user.locationId) {
+            const [rides] = await pool.query(
+                'SELECT ride_name FROM rides WHERE location_id = ? ORDER BY ride_name',
+                [user.locationId]
+            );
+            const [vendors] = await pool.query(
+                'SELECT vendor_name FROM vendors WHERE location_id = ? ORDER BY vendor_name',
+                [user.locationId]
+            );
+
+            assignedRides = rides;
+            assignedVendors = vendors;
+        }
+
+        // Pass these new arrays to the view
+        res.render('dashboard', {
+            assignedRides,
+            assignedVendors
+        });
+
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        // If error, just render dashboard without the extra info rather than crashing
+        res.render('dashboard', {
+            assignedRides: [],
+            assignedVendors: []
+        });
+    }
 });
 
 module.exports = router;

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= vendor.vendor_name %> - Inventory</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        h1 small { display: block; font-size: 0.6em; color: #007bff; margin-top: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #343a40; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        .button-bar { display: flex; justify-content: space-between; margin-bottom: 1.5em; }
+        .add-btn { padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .back-btn { padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        
+        .restock-link { display: inline-block; padding: 5px 10px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .destock-link { display: inline-block; padding: 5px 10px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-left: 5px; }
+        .deshelf-btn { background: none; border: none; color: #6c757d; font-weight: bold; cursor: pointer; text-decoration: underline; font-size: 0.9em; margin-left: 10px; }
+
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
+        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
+
+        <h1>Inventory Management <small><%= vendor.vendor_name %></small></h1>
+        
+        <div class="button-bar">
+            <a href="<%= backLink %>" class="back-btn">&laquo; <%= backText %></a>
+            
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                <a href="/inventory/add?preselected_vendor=<%= vendor.public_vendor_id %>" class="add-btn">Add Item to Shelf</a>
+            <% } %>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Current Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (inventory.length === 0) { %>
+                    <tr><td colspan="4" style="text-align: center; padding: 2em;">This vendor has no items on the shelf.</td></tr>
+                <% } %>
+                <% inventory.forEach(item => { %>
+                    <tr>
+                        <td><%= item.item_name %></td>
+                        <td><%= item.current_count %></td>
+                        <td>
+                            <% if (item.pending_count) { %>
+                                <span style="color: #d39e00; font-weight: bold;">Restock Pending (<%= item.pending_count %>)</span>
+                            <% } else if (item.current_count < 10) { %>
+                                <span style="color: #dc3545; font-weight: bold;">Low Stock</span>
+                            <% } else { %>
+                                <span style="color: #28a745;">OK</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <%# Restock %>
+                            <% if (item.pending_count) { %>
+                                <span style="color: #999; font-size: 0.9em;">Request Sent</span>
+                            <% } else { %>
+                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="restock-link">Restock</a>
+                            <% } %>
+
+                            <%# Destock/Deshelf (Managers Only) %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="destock-link">Destock</a>
+                                
+                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>" method="POST" style="display: inline-block;" onsubmit="return confirm('Remove <%= item.item_name %> from this vendor?');">
+                                    <button type="submit" class="deshelf-btn">Deshelf</button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

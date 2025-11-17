@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add New Vendor</title>
+    <title>Edit Vendor</title>
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         h1 { color: #444; text-align: center; margin-top: 1em; }
@@ -15,42 +15,52 @@
         button:hover { background-color: #0056b3; }
         .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
         .cancel-link:hover { text-decoration: underline; }
+        
+        /* Delete Button */
+        .delete-btn { background-color: #dc3545; float: right; }
+        .delete-btn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>Add New Vendor</h1>
+    <h1>Edit Vendor</h1>
 
     <% if (typeof error !== 'undefined' && error) { %>
         <p class="error"><%= error %></p>
     <% } %>
 
-    <form action="/vendors" method="POST">
+    <form action="/vendors/edit/<%= vendor.public_vendor_id %>" method="POST">
         <div>
             <label for="vendor_name">Vendor Name:</label>
-            <input type="text" id="vendor_name" name="vendor_name" required>
+            <input type="text" id="vendor_name" name="vendor_name" value="<%= vendor.vendor_name %>" required>
         </div>
   
          <div>
             <label for="location_id">Location:</label>
             <select id="location_id" name="location_id" required>
                 <% locations.forEach(location => { %>
-                    <option value="<%= location.location_id %>"><%= location.location_name %></option>
+                    <option value="<%= location.location_id %>" <%= vendor.location_id === location.location_id ? 'selected' : '' %>>
+                        <%= location.location_name %>
+                    </option>
                 <% }); %>
             </select>
         </div>
 
         <div>
-            <label for="vendor_status">Initial Status:</label>
+            <label for="vendor_status">Status:</label>
             <select id="vendor_status" name="vendor_status" required>
-                <option value="OPEN">Open</option>
-                <option value="CLOSED">Closed</option>
+                <option value="OPEN" <%= vendor.vendor_status === 'OPEN' ? 'selected' : '' %>>Open</option>
+                <option value="CLOSED" <%= vendor.vendor_status === 'CLOSED' ? 'selected' : '' %>>Closed</option>
             </select>
         </div>
         
         <br>
-        <button type="submit">Add Vendor</button>
+        <button type="submit">Save Changes</button>
         <a href="/vendors" class="cancel-link">Cancel</a>
+
+        <button type="submit" formaction="/vendors/delete/<%= vendor.public_vendor_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to remove this vendor? This action cannot be undone and may affect inventory.');">
+            Remove Vendor
+        </button>
     </form>
 </body>
 </html>

@@ -5,7 +5,7 @@
     <title>Dashboard</title>
     <style>
         .assignment-info {
-            background-color: #cce5ff; /* A light blue */
+            background-color: #cce5ff;
             color: #004085;
             border: 1px solid #b8daff;
             padding: 1em;
@@ -21,15 +21,19 @@
             margin-bottom: 0;
             padding-left: 20px;
         }
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .dashboard-container { padding: 2em; }
-        h1 { color: #444; }
-        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em; border-bottom: 1px solid #ddd;}
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9;
+            color: #333; }
+        .dashboard-container { padding: 2em;
+        }
+        h1 { color: #444;
+        }
+        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em;
+            border-bottom: 1px solid #ddd;}
         .card-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
-            margin-top: 1em; /* Reduced top margin */
+            margin-top: 1em;
         }
         .card {
             background: white;
@@ -48,15 +52,15 @@
             display: block;
             text-decoration: none;
             color: #007bff;
-            padding: 8px 5px; /* Added slight horizontal padding */
+            padding: 8px 5px;
             border-radius: 4px;
-            margin-bottom: 5px; /* Space between links */
+            margin-bottom: 5px;
         }
         .card a:hover {
-            background-color: #e9ecef; /* Lighter hover */
+            background-color: #e9ecef;
             color: #0056b3;
         }
-        .card a::before { /* Add a small icon/bullet */
+        .card a::before {
             content: '» ';
             color: #6c757d;
         }
@@ -78,21 +82,42 @@
             <% if ((user.role === 'Staff' || user.role === 'Location Manager') && user.locationName) { %>
                 <div class="assignment-info">
                     <strong>You are assigned to: <%= user.locationName %></strong>
+                    
+                    <div style="margin-top: 10px; font-size: 0.95em;">
+                        <% if (typeof assignedRides !== 'undefined' && assignedRides.length > 0) { %>
+                            <div>
+                                <span style="font-weight: bold; color: #555;">Attractions:</span> 
+                                <%= assignedRides.map(r => r.ride_name).join(', ') %>
+                            </div>
+                        <% } %>
+            
+                        <% if (typeof assignedVendors !== 'undefined' && assignedVendors.length > 0) { %>
+                            <div style="margin-top: 4px;">
+                                <span style="font-weight: bold; color: #555;">Retail & Food:</span> 
+                                <%= assignedVendors.map(v => v.vendor_name).join(', ') %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (assignedRides.length === 0 && assignedVendors.length === 0) { %>
+                            <div style="margin-top: 4px; font-style: italic; color: #777;">
+                                No rides or vendors currently assigned to this location.
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
             <% } %>
 
             <div class="card-container">
 
-            <%# Card for Staff, Maintenance, Manager, Admin (NOT HR) %>
+            <%# Card for Staff, Maintenance, Manager, Admin %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
                 <div class="card">
                     <h3>Rides & Maintenance</h3>
                     <a href="/rides">View Rides</a>
-                    <%# Report Issue link accessible via Rides page for these roles %>
                 </div>
             <% } %>
 
-            <%# Card for Staff, Manager, Admin (NOT HR or Maintenance) %>
+            <%# Card for Staff, Manager, Admin %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
                  <div class="card">
                     <h3>Guest Services</h3>
@@ -117,11 +142,10 @@
                 </div>
             <% } %>
 
-            <%# MODIFIED: Show for Staff, but hide one link %>
+            <%# Card for Retail/Inventory %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                  <div class="card">
                     <h3>Retail & Inventory</h3>
-                    <%# Staff cannot see the master item list %>
                     <% if (user.role !== 'Staff') { %>
                         <a href="/items">Manage Master Item List</a>
                     <% } %>
@@ -129,12 +153,11 @@
                 </div>
             <% } %>
 
-             <%# Card for Admin and HR %>
-            <% if (user.role === 'Admin' || user.role === 'Head of HR' || user.role === 'HR Staff' || user.role === 'Location Manager') { %>
+             <%# UPDATED: Card for Human Resources (Admin, Park Manager, Location Manager) %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                 <div class="card">
                     <h3>Human Resources</h3>
                     <a href="/users">Manage Employees</a>
-                     <%# Add Employee link is on the /users page %>
                 </div>
             <% } %>
         </div>

@@ -1,78 +1,186 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Locations</title>
+    <title>Park Locations</title>
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #007bff; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        tr:hover { background-color: #f1f1f1;
- }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold;
- }
-        .action-link:hover { text-decoration: underline;
- }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
- color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838;
- }
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
+        /* Stats & Filter Bar Styles */
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
+        .stat-card { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center; }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff; }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+
+        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; margin-bottom: 1.5em; }
+        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1em; align-items: flex-end; }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls input, .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
+        .filter-buttons { display: flex; gap: 10px; }
+        .filter-btn { flex-grow: 1; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; }
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #5a6268; }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        /* Sortable Headers */
+        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center; }
+        th.sortable a:hover { text-decoration: underline; }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+
+        /* UPDATED: Action Link Styles for Vertical Stacking */
+        .action-link { 
+            text-decoration: none; 
+            color: #007bff; 
+            font-weight: bold; 
+            display: block; /* Stacks links vertically */
+            margin-bottom: 5px; /* Adds spacing between links */
+        }
+        .action-link:hover { text-decoration: underline; }
+        
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838; }
+
+        /* Flash Messages */
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
+        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Park Locations</h1>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3><%= counts.total || 0 %></h3>
+                <p>Total Locations</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #28a745;"><%= counts.assigned || 0 %></h3>
+                <p>Manager Assigned</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #dc3545;"><%= counts.unassigned || 0 %></h3>
+                <p>Unassigned</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <form action="" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" placeholder="Name, Summary, Manager..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_assigned">Manager Status</label>
+                        <select id="filter_assigned" name="filter_assigned">
+                            <option value="">All</option>
+                            <option value="assigned" <%= filters.assigned === 'assigned' ? 'selected' : '' %>>Assigned</option>
+                            <option value="unassigned" <%= filters.assigned === 'unassigned' ? 'selected' : '' %>>Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="?" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
         <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/locations/new" class="add-button">Add New Location</a>
         <% } %>
+
+        <% 
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲'; 
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none';
+                        indicator = '▼';
+                    }
+                }
+                let href = `?search=${encodeURIComponent(search)}`;
+                if (filters.assigned) href += `&filter_assigned=${encodeURIComponent(filters.assigned)}`;
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+                return { href, indicator };
+            };
+        %>
+
         <table>
             <thead>
-           
-      <tr>
-                    <%# REMOVED internal ID column %>
-                    <th>Name</th>
+                <tr>
+                    <th class="sortable">
+                        <a href="<%= getSortState('id').href %>">
+                            <span>ID</span> <span class="sort-indicator"><%= getSortState('id').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('name').href %>">
+                            <span>Name</span> <span class="sort-indicator"><%= getSortState('name').indicator %></span>
+                        </a>
+                    </th>
                     <th>Summary</th>
-                    <th>Manager</th>
-               
-     <th>Action</th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('manager').href %>">
+                            <span>Manager</span> <span class="sort-indicator"><%= getSortState('manager').indicator %></span>
+                        </a>
+                    </th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
+                <% if (locations.length === 0) { %>
+                    <tr><td colspan="5" style="text-align: center; padding: 2em;">No locations found.</td></tr>
+                <% } %>
                 <% locations.forEach(location => { %>
                     <tr>
-               
-         <%# Show clean 8-char public ID %>
-         <td><%= location.public_location_id.substring(0, 8).toUpperCase() %></td>
+                        <td><%= location.public_location_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= location.location_name %></td>
                         <td><%= location.summary %></td>
                         <td><%= location.manager_name || 'Unassigned' %></td>
-         
-               <td>
-                            <% if (user.role === 'Admin' ||
- user.role === 'Park Manager') { %>
-                                <%# CHANGED: Link now uses public_location_id %>
+                        <td>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                                 <a href="/assign-manager/location/<%= location.public_location_id %>" class="action-link">Assign Manager</a>
+                                
+                                <%# UPDATED: Renamed to "Edit Location" %>
+                                <a href="/locations/edit/<%= location.public_location_id %>" class="action-link">Edit Location</a>
+
                             <% } else { %>
-                          
-       <span>No Access</span>
+                                <span>No Access</span>
                             <% } %>
                         </td>
                     </tr>
-                <% });
- %>
+                <% }); %>
             </tbody>
         </table>
     </div>

@@ -1,169 +1,279 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Employee Report</title>
+    <title>Park Employees</title>
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #007bff; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        tr:hover { background-color: #f1f1f1;}
-        .action-link {
-            text-decoration: none;
- color: #007bff;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .action-link:hover { text-decoration: underline;}
-        .add-button { display: inline-block;
- margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;
- }
-        .add-button:hover { background-color: #218838;
- }
-
-        /* --- NEW STYLES FOR FLASH MESSAGES --- */
-        .message {
-            padding: 1em;
- border-radius: 4px;
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
+        /* --- Stats Bar Styles --- */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1em;
             margin-bottom: 1.5em;
-            font-weight: bold;
-            border: 1px solid transparent;
- }
-        .success {
-            color: #155724;
- /* Dark green text */
-            background-color: #d4edda;
- /* Light green background */
-            border-color: #c3e6cb;
- /* Green border */
         }
-        .error {
-            color: #721c24;
- /* Dark red text */
-            background-color: #f8d7da;
- /* Light red background */
-            border-color: #f5c6cb;
- /* Red border */
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 8px;
+            text-align: center;
         }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff; }
+        .stat-card h3.active { color: #28a745; }
+        .stat-card h3.inactive { color: #dc3545; }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+
+        /* --- Filter Bar Styles --- */
+        .filter-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+            gap: 1em;
+            align-items: flex-end;
+        }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls input, .filter-controls select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+        }
+        .filter-buttons { display: flex; gap: 10px; }
+        .filter-btn {
+            flex-grow: 1; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
+        }
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #5a6268; }
+
+        /* --- Table Styles --- */
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        
+        /* Sortable Header Links */
+        th.sortable a {
+            text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center;
+        }
+        th.sortable a:hover { text-decoration: underline; }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1;}
+        
+        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
+        .action-link:hover { text-decoration: underline;}
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838; }
+
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
+        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
 
-        <%# --- NEW: ADDED THIS BLOCK TO DISPLAY MESSAGES --- %>
         <% if (typeof success !== 'undefined' && success) { %>
             <div class="message success"><%= success %></div>
         <% } %>
-        <% if (typeof error !== 
- 'undefined' && error) { %>
+        <% if (typeof error !== 'undefined' && error) { %>
             <div class="message error"><%= error %></div>
         <% } %>
-        <%# --- END OF NEW BLOCK --- %>
 
+        <h1>Park Employees</h1>
 
-        <h1>Employee Report</h1>
-        <a href="/employees/new" class="add-button">Add New Employee</a>
+        <%# --- STATS BAR --- %>
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3><%= counts.total || 0 %></h3>
+                <p>Total Employees</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="active"><%= counts.active || 0 %></h3>
+                <p>Active</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="inactive"><%= counts.inactive || 0 %></h3>
+                <p>Inactive</p>
+            </div>
+             <div class="stat-card">
+                <h3 style="color: #fd7e14;"><%= counts.pending || 0 %></h3>
+                <p>Pending</p>
+            </div>
+        </div>
+
+        <%# --- FILTER BAR --- %>
+        <div class="filter-bar">
+            <form action="" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" placeholder="Name, ID, Email..." value="<%= search %>">
+                    </div>
+                    
+                    <div>
+                        <label for="filter_role">Role</label>
+                        <select id="filter_role" name="filter_role">
+                            <option value="">All Roles</option>
+                            <% roles.forEach(roleObj => { %>
+                                <option value="<%= roleObj.employee_type %>" <%= filters.role === roleObj.employee_type ? 'selected' : '' %>>
+                                    <%= roleObj.employee_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filter_location">Location</label>
+                        <select id="filter_location" name="filter_location">
+                            <option value="">All Locations</option>
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
+                                    <%= loc.location_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filter_status">Status</label>
+                        <select id="filter_status" name="filter_status">
+                            <option value="">All Statuses</option>
+                            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                            <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="?" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                
+                <%# Maintain sort state when filtering %>
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+        <% if (user.role === 'Admin') { %>
+            <a href="/employees/new" class="add-button">Add New Employee</a>
+        <% } %>
+
+        <%# --- SORT LOGIC HELPER --- %>
+        <% 
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲'; 
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none';
+                        indicator = '▼';
+                    }
+                }
+                // Construct URL with all current filters + new sort
+                let href = `?search=${encodeURIComponent(search)}`;
+                if (filters.role) href += `&filter_role=${encodeURIComponent(filters.role)}`;
+                if (filters.location) href += `&filter_location=${encodeURIComponent(filters.location)}`;
+                if (filters.status) href += `&filter_status=${encodeURIComponent(filters.status)}`;
+                
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+                return { href, indicator };
+            };
+        %>
+
         <table>
             <thead>
-              
-   <tr>
-                    <th>Employee ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                 
-     <th>Status</th>
+                <tr>
+                    <th class="sortable">
+                        <a href="<%= getSortState('id').href %>">
+                            <span>ID</span> <span class="sort-indicator"><%= getSortState('id').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('name').href %>">
+                            <span>Name</span> <span class="sort-indicator"><%= getSortState('name').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('email').href %>">
+                            <span>Email</span> <span class="sort-indicator"><%= getSortState('email').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('role').href %>">
+                            <span>Role</span> <span class="sort-indicator"><%= getSortState('role').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('location').href %>">
+                            <span>Location</span> <span class="sort-indicator"><%= getSortState('location').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('status').href %>">
+                            <span>Status</span> <span class="sort-indicator"><%= getSortState('status').indicator %></span>
+                        </a>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
            <tbody>
+                <% if (users.length === 0) { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2em;">No employees found matching criteria.</td>
+                    </tr>
+                <% } %>
                 <% users.forEach(targetUser => { %>
-                  
-   <tr>
-                        <%# Show clean 8-char public ID %>
+                   <tr>
                         <td><%= targetUser.public_employee_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= targetUser.first_name %> <%= targetUser.last_name %></td>
                         <td><%= targetUser.email %></td>
-                 
-        <td><%= targetUser.employee_type %></td>
+                        <td><%= targetUser.employee_type %></td>
+                        <td>
+                            <% if (['Admin', 'Park Manager', 'Maintenance'].includes(targetUser.employee_type)) { %>
+                                <span style="font-style: italic; color: #555;">Park-wide</span>
+                            <% } else { %>
+                                <%= targetUser.location_name || 'Unassigned' %>
+                            <% } %>
+                        </td>
                         <td>
                             <% if (targetUser.is_pending_approval) { %>
-                                <span style="color: #fd7e14;
- font-weight: bold;">Pending Approval</span>
+                                <span style="color: #fd7e14; font-weight: bold;">Pending</span>
                             <% } else if (targetUser.is_active) { %>
                                 <span style="color: green;">Active</span>
-                            <% } 
- else { %>
+                            <% } else { %>
                                 <span style="color: #dc3545;">Inactive</span>
                             <% } %>
                         </td>
-          
-               <td>
-                            <%# --- PERMISSION CHECK --- %>
-                            <%# 'user' is the Actor (logged in) %>
-                  
-           <%# 'targetUser' is the Target (person in row) %>
-                            <% 
-                                const actorRole = user.role;
-                  
-               const actorId = user.id;
-                                const targetRole = targetUser.employee_type;
-                                const targetId = targetUser.employee_id;
-
-             
-                    // --- Edit Permissions ---
-                                let canEdit = false;
- if (actorRole === 'Admin') { canEdit = true; }
-                                else if (actorRole === 'Head of HR' && targetRole !== 'Admin') { canEdit = true;
- }
-                                else if (actorRole === 'HR Staff' && targetRole !== 'Admin') {
-                                    canEdit = true;
- }
-
-                                // --- Reset Password Permissions ---
-                                let canResetPassword = false;
- // *** THIS IS THE CORRECTED LINE ***
-                                if (actorRole === 'Admin' || actorRole === 'Head of HR' || actorRole === 'HR Staff') { 
-                                    canResetPassword = true;
- }
-                            %>
-    
-                            <% if (canEdit) { %>
-                                <%# CHANGED: Link now uses public_employee_id %>
-                                <a href="/employees/edit/<%= targetUser.public_employee_id %>" 
- class="action-link">Edit</a>
+                        <td>
+                            <% if (user.role === 'Admin') { %>
+                                <a href="/employees/edit/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="action-link">Edit</a>
+                                <a href="/employees/reset-password/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="action-link" style="color: #dc3545;">Reset Password</a>
+                            <% } else { %>
+                                <span style="color: #6c757d;">No Access</span>
                             <% } %>
-
-                            <% if (canResetPassword) { %>
-                                <%# CHANGED: Link now uses public_employee_id %>
-                                <a href="/employees/reset-password/<%= targetUser.public_employee_id %>" class="action-link" style="color: 
- #dc3545;">Reset Password</a>
-                                <% } else { %>
-                                <% if (!canEdit) { %> 
-                          
-           <span>No Access</span> <%# Only show No Access if they cant do anything %>
-                                <% } %>
-                            <% } %>
-              
-               <%# --- END PERMISSION CHECK --- %>
                         </td>
                     </tr>
-                <% });
- %>
+                <% }); %>
             </tbody>
         </table>
     </div>

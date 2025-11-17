@@ -5,23 +5,96 @@ const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     isAdminOrParkManager,
-    canManageRetail
+    canManageRetail,
+    canViewInventory
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 // --- LOCATION & VENDOR MANAGEMENT --- 
 // ... (routes /locations, /vendors, /assign-manager are all unchanged) ...
 // Path is '/locations'
+// GET /locations
 router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
+        // 1. Capture Query Params
+        const { search, sort, dir, filter_assigned } = req.query;
+
+        // 2. Build Filtering Logic
+        let whereClauses = [];
+        let params = [];
+
+        if (search) {
+            const likeTerm = `%${search}%`;
+            // Search against ID, Name, Summary, or Manager Name
+            whereClauses.push(`(
+                l.public_location_id LIKE ? OR
+                l.location_name LIKE ? OR
+                l.summary LIKE ? OR
+                e.first_name LIKE ? OR
+                e.last_name LIKE ?
+            )`);
+            params.push(likeTerm, likeTerm, likeTerm, likeTerm, likeTerm);
+        }
+
+        if (filter_assigned) {
+            if (filter_assigned === 'assigned') {
+                whereClauses.push('l.manager_id IS NOT NULL');
+            } else if (filter_assigned === 'unassigned') {
+                whereClauses.push('l.manager_id IS NULL');
+            }
+        }
+
+        let whereQuery = "";
+        if (whereClauses.length > 0) {
+            whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        // 3. Get Counts for Stats Bar
+        const countQuery = `
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN l.manager_id IS NOT NULL THEN 1 ELSE 0 END) as assigned,
+                SUM(CASE WHEN l.manager_id IS NULL THEN 1 ELSE 0 END) as unassigned
+            FROM location l
+            LEFT JOIN employee_demographics e ON l.manager_id = e.employee_id
+            ${whereQuery}
+        `;
+        const [countResult] = await pool.query(countQuery, params);
+        const counts = countResult[0];
+
+        // 4. Sorting Logic
+        let orderBy = ' ORDER BY l.location_name ASC'; // Default sort
+        if (sort && dir) {
+            const direction = (dir === 'desc') ? 'DESC' : 'ASC';
+            switch (sort) {
+                // Sort by internal ID is implicitly chronological
+                case 'id': orderBy = ` ORDER BY l.location_id ${direction}`; break;
+                case 'name': orderBy = ` ORDER BY l.location_name ${direction}`; break;
+                case 'manager': orderBy = ` ORDER BY e.last_name ${direction}, e.first_name ${direction}`; break;
+            }
+        }
+
+        // 5. Main Data Query
         const query = `
             SELECT l.*, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
             FROM location l
             LEFT JOIN employee_demographics e ON l.manager_id = e.employee_id
-            ORDER BY l.location_name
+            ${whereQuery}
+            ${orderBy}
         `;
-        // Query now includes public_location_id from l.*
-        const [locations] = await pool.query(query);
-        res.render('locations', { locations: locations });
+
+        const [locations] = await pool.query(query, params);
+
+        // 6. Render View
+        res.render('locations', {
+            locations: locations,
+            counts: counts,
+            // Pass back state to maintain UI
+            search: search || "",
+            currentSort: sort || "",
+            currentDir: dir || "",
+            filters: { assigned: filter_assigned || "" }
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching locations');
@@ -53,26 +126,103 @@ router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res
 });
 
 // Path is '/vendors'
-router.get('/vendors', isAuthenticated, canManageRetail, async (req, res) => {
+router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
+        const { search, sort, dir, filter_location, filter_status } = req.query; // Added filter_status
 
-        let query = `
-            SELECT v.*, l.location_name
-            FROM vendors v
-            LEFT JOIN location l ON v.location_id = l.location_id
-        `;
-        // Query now includes public_vendor_id from v.*
+        const queryParams = new URLSearchParams(req.query);
+        const currentQueryString = queryParams.toString();
+
+        const [allLocations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+
+        let whereClauses = [];
         let params = [];
 
         if (role === 'Location Manager') {
-            query += ' WHERE v.location_id = ?';
+            whereClauses.push('v.location_id = ?');
             params.push(locationId);
         }
 
-        query += ' ORDER BY v.vendor_name';
+        if (search) {
+            const likeTerm = `%${search}%`;
+            whereClauses.push(`(
+                v.public_vendor_id LIKE ? OR
+                v.vendor_name LIKE ? OR
+                l.location_name LIKE ?
+            )`);
+            params.push(likeTerm, likeTerm, likeTerm);
+        }
+
+        if (filter_location) {
+            whereClauses.push('v.location_id = ?');
+            params.push(filter_location);
+        }
+
+        // NEW: Filter by Status
+        if (filter_status) {
+            whereClauses.push('v.vendor_status = ?');
+            params.push(filter_status);
+        }
+
+        let whereQuery = "";
+        if (whereClauses.length > 0) {
+            whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        // UPDATED: Count Query for Statuses
+        const countQuery = `
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN v.vendor_status = 'OPEN' THEN 1 ELSE 0 END) as open_count,
+                SUM(CASE WHEN v.vendor_status = 'CLOSED' THEN 1 ELSE 0 END) as closed_count
+            FROM vendors v
+            LEFT JOIN location l ON v.location_id = l.location_id
+            ${whereQuery}
+        `;
+        const [countResult] = await pool.query(countQuery, params);
+        const counts = countResult[0];
+
+        let orderBy = ' ORDER BY v.vendor_name ASC';
+        if (sort && dir) {
+            const direction = (dir === 'desc') ? 'DESC' : 'ASC';
+            switch (sort) {
+                case 'id': orderBy = ` ORDER BY v.vendor_id ${direction}`; break;
+                case 'name': orderBy = ` ORDER BY v.vendor_name ${direction}`; break;
+                case 'location': orderBy = ` ORDER BY l.location_name ${direction}`; break;
+                case 'status': orderBy = ` ORDER BY v.vendor_status ${direction}`; break; // New Sort
+            }
+        }
+
+        // UPDATED: Main Query includes status
+        const query = `
+            SELECT v.*, l.location_name
+            FROM vendors v
+            LEFT JOIN location l ON v.location_id = l.location_id
+            ${whereQuery}
+            ${orderBy}
+        `;
+
         const [vendors] = await pool.query(query, params);
-        res.render('vendors', { vendors: vendors });
+
+        res.render('vendors', {
+            vendors: vendors,
+            counts: counts,
+            locations: allLocations,
+            search: search || "",
+            currentSort: sort || "",
+            currentDir: dir || "",
+            filters: {
+                location: filter_location || "",
+                status: filter_status || "" // New Filter
+            },
+            currentQueryString: currentQueryString,
+            success: req.session.success,
+            error: req.session.error
+        });
+        req.session.success = null;
+        req.session.error = null;
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching vendors');
@@ -92,25 +242,122 @@ router.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, re
 
 // Path is '/vendors'
 router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { vendor_name, location_id } = req.body;
+    const { vendor_name, location_id, vendor_status } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
-        const publicVendorId = crypto.randomUUID(); // ADDED
-        // ADDED public_vendor_id
-        const sql = "INSERT INTO vendors (public_vendor_id, vendor_name, location_id) VALUES (?, ?, ?)";
-        await connection.query(sql, [publicVendorId, vendor_name, location_id]); // ADDED
+        const publicVendorId = crypto.randomUUID();
+        const sql = "INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) VALUES (?, ?, ?, ?)";
+        await connection.query(sql, [publicVendorId, vendor_name, location_id, vendor_status || 'OPEN']);
         res.redirect('/vendors');
     } catch (error) {
         console.error(error);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
         res.render('add-vendor', {
             locations: locations,
-            managers: [],
             error: "Database error adding vendor. Name might be duplicate."
         });
     } finally {
         if (connection) connection.release();
+    }
+});
+
+router.get('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_vendor_id } = req.params;
+    const { role, locationId } = req.session.user;
+
+    try {
+        const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        if (vendorRes.length === 0) {
+            return res.status(404).send('Vendor not found');
+        }
+        const vendor = vendorRes[0];
+
+        // Check Location Manager permissions
+        if (role === 'Location Manager' && vendor.location_id !== locationId) {
+            return res.status(403).send('Forbidden: You can only edit vendors in your location.');
+        }
+
+        const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+
+        res.render('edit-vendor', {
+            vendor: vendor,
+            locations: locations,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading edit vendor page:", error);
+        res.status(500).send('Error loading page');
+    }
+});
+
+// POST /vendors/edit/:public_vendor_id (NEW)
+router.post('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_vendor_id } = req.params;
+    const { vendor_name, location_id, vendor_status } = req.body;
+    const { role, locationId } = req.session.user;
+
+    try {
+        // Permission check logic...
+        if (role === 'Location Manager') {
+            // Ensure they aren't moving it to a location they don't own, 
+            // and ensure the vendor they are editing is currently in their location.
+            const [current] = await pool.query('SELECT location_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+            if (current.length > 0 && current[0].location_id !== locationId) {
+                return res.status(403).send('Forbidden');
+            }
+            if (parseInt(location_id) !== locationId) {
+                return res.status(403).send('Forbidden: You cannot move a vendor to a location you do not manage.');
+            }
+        }
+
+        const sql = "UPDATE vendors SET vendor_name = ?, location_id = ?, vendor_status = ? WHERE public_vendor_id = ?";
+        await pool.query(sql, [vendor_name, location_id, vendor_status, public_vendor_id]);
+
+        req.session.success = "Vendor updated successfully.";
+        res.redirect('/vendors');
+
+    } catch (error) {
+        console.error("Error updating vendor:", error);
+        // Fetch data to re-render form
+        const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+
+        res.render('edit-vendor', {
+            vendor: vendorRes[0] || req.body,
+            locations: locations,
+            error: "Database error updating vendor."
+        });
+    }
+});
+
+// POST /vendors/delete/:public_vendor_id (NEW)
+router.post('/vendors/delete/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_vendor_id } = req.params;
+    const { role, locationId } = req.session.user;
+
+    try {
+        // Check existence and permission
+        const [vendorRes] = await pool.query('SELECT location_id, vendor_name FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        if (vendorRes.length === 0) return res.redirect('/vendors');
+
+        if (role === 'Location Manager' && vendorRes[0].location_id !== locationId) {
+            return res.status(403).send('Forbidden');
+        }
+
+        await pool.query('DELETE FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        req.session.success = `Vendor "${vendorRes[0].vendor_name}" deleted successfully.`;
+        res.redirect('/vendors');
+
+    } catch (error) {
+        console.error("Error deleting vendor:", error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            req.session.error = "Cannot delete this vendor because it has inventory items or history associated with it.";
+        } else {
+            req.session.error = "Database error deleting vendor.";
+        }
+        res.redirect('/vendors');
     }
 });
 
@@ -556,6 +803,80 @@ router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, re
     } catch (error) {
         console.error(error);
         res.render('add-promotion', { error: "Database error adding promotion. Name might be duplicate." });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// GET /locations/edit/:public_location_id
+router.get('/locations/edit/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_location_id } = req.params;
+    try {
+        const [locResult] = await pool.query('SELECT * FROM location WHERE public_location_id = ?', [public_location_id]);
+        if (locResult.length === 0) {
+            return res.status(404).send('Location not found');
+        }
+        res.render('edit-location', { location: locResult[0], error: null });
+    } catch (error) {
+        console.error("Error loading edit location page:", error);
+        res.status(500).send('Error loading page');
+    }
+});
+
+// POST /locations/edit/:public_location_id
+router.post('/locations/edit/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_location_id } = req.params;
+    const { location_name, summary } = req.body;
+
+    try {
+        const sql = "UPDATE location SET location_name = ?, summary = ? WHERE public_location_id = ?";
+        await pool.query(sql, [location_name, summary || null, public_location_id]);
+
+        req.session.success = "Location updated successfully.";
+        res.redirect('/locations');
+
+    } catch (error) {
+        console.error("Error updating location:", error);
+        const [locResult] = await pool.query('SELECT * FROM location WHERE public_location_id = ?', [public_location_id]);
+        res.render('edit-location', {
+            location: locResult[0] || req.body,
+            error: "Database error updating location. Name might be duplicate."
+        });
+    }
+});
+
+// POST /locations/delete/:public_location_id
+router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_location_id } = req.params;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Check if location exists
+        const [loc] = await connection.query('SELECT location_id, location_name FROM location WHERE public_location_id = ?', [public_location_id]);
+        if (loc.length === 0) {
+            req.session.error = "Location not found.";
+            return res.redirect('/locations');
+        }
+
+        // 2. Attempt Delete
+        // Note: This will fail if Rides or Employees are still assigned (Foreign Key Constraints)
+        await connection.query('DELETE FROM location WHERE public_location_id = ?', [public_location_id]);
+
+        req.session.success = `Location "${loc[0].location_name}" removed successfully.`;
+        res.redirect('/locations');
+
+    } catch (error) {
+        console.error("Error deleting location:", error);
+
+        // Handle Foreign Key Constraint Violation (Error 1451)
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            req.session.error = "Cannot remove this location because it still has Rides or Employees assigned to it. Please reassign or remove them first.";
+        } else {
+            req.session.error = "An error occurred while trying to remove the location.";
+        }
+        res.redirect('/locations');
     } finally {
         if (connection) connection.release();
     }

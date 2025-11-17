@@ -17,7 +17,8 @@ CREATE TABLE employee_demographics (
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Head of HR', 'HR Staff', 'Admin') NOT NULL,
+    -- MODIFIED: Removed 'Head of HR' and 'HR Staff'
+    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Admin') NOT NULL,
     location_id INT,
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
@@ -32,7 +33,7 @@ CREATE TABLE employee_demographics (
     INDEX idx_public_employee_id (public_employee_id),
     FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
     
-    -- NEW FOREIGN KEY
+    -- FOREIGN KEY
     FOREIGN KEY (rate_change_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
 
     -- Constraints
@@ -250,6 +251,7 @@ CREATE TABLE vendors (
     public_vendor_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for vendors',
     vendor_name VARCHAR(100) NOT NULL UNIQUE,
     location_id INT,
+    vendor_status ENUM('OPEN', 'CLOSED') NOT NULL DEFAULT 'OPEN',
     -- keys
     PRIMARY KEY (vendor_id),
     INDEX idx_public_vendor_id (public_vendor_id),
@@ -257,7 +259,6 @@ CREATE TABLE vendors (
         REFERENCES location (location_id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
-    -- REMOVED: Foreign key for manager_id
 );
 
 CREATE TABLE item (

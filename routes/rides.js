@@ -385,4 +385,97 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
     }
 });
 
+router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ride_id } = req.params;
+    try {
+        // 1. Fetch Ride Details
+        const [rideResult] = await pool.query('SELECT * FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+        if (rideResult.length === 0) {
+            return res.status(404).send('Ride not found');
+        }
+        const ride = rideResult[0];
+
+        // 2. Fetch Locations for Dropdown
+        const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+
+        res.render('edit-ride', {
+            ride: ride,
+            locations: locations,
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading edit ride page:", error);
+        res.status(500).send('Error loading page');
+    }
+});
+
+// POST /rides/edit/:public_ride_id
+router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ride_id } = req.params;
+    const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight } = req.body;
+
+    try {
+        const sql = `
+            UPDATE rides 
+            SET ride_name = ?, ride_type = ?, ride_status = ?, location_id = ?, 
+                capacity = ?, min_height = ?, max_weight = ?
+            WHERE public_ride_id = ?
+        `;
+        await pool.query(sql, [
+            ride_name, ride_type, ride_status, location_id,
+            capacity || null, min_height || null, max_weight || null,
+            public_ride_id
+        ]);
+
+        // No flash message implemented globally yet, so just redirect
+        res.redirect('/rides');
+
+    } catch (error) {
+        console.error("Error updating ride:", error);
+        // Re-render on error
+        const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+        const [rideResult] = await pool.query('SELECT * FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+
+        res.render('edit-ride', {
+            ride: rideResult[0] || req.body, // Fallback to form data
+            locations: locations,
+            error: "Database error updating ride. Name might be duplicate."
+        });
+    }
+});
+
+// POST /rides/delete/:public_ride_id
+router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ride_id } = req.params;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // Check if ride exists
+        const [ride] = await connection.query('SELECT ride_name FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+        if (ride.length === 0) {
+            return res.redirect('/rides');
+        }
+
+        // Attempt Delete
+        await connection.query('DELETE FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+
+        res.redirect('/rides');
+
+    } catch (error) {
+        console.error("Error deleting ride:", error);
+        // Handle Foreign Key Constraint (if ride has history logs that aren't set to CASCADE)
+        // Note: maintenance table has ON DELETE CASCADE, but daily_ride logs might not.
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            // In a real app, you'd pass this error via session flash message
+            console.error("Cannot delete ride due to existing history logs.");
+        }
+        res.redirect('/rides');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;
