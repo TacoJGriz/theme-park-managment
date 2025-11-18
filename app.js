@@ -38,7 +38,10 @@ const {
 } = require('./middleware/auth');
 
 app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
+
+// --- MIDDLEWARE SETUP ---
+app.use(express.urlencoded({ extended: true })); // Handles HTML forms
+app.use(express.json());                         // HANDLES JSON (Fixes the Map Editor Error)
 app.use(express.static('public'));
 
 // --- SESSION CONFIGURATION ---

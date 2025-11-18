@@ -247,4 +247,32 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /map (Interactive Park Map)
+router.get('/map', async (req, res) => {
+    try {
+        // 1. Fetch Locations
+        const [locations] = await pool.query("SELECT location_id, location_name, summary, pin_x, pin_y FROM location ORDER BY location_name");
+
+        // 2. Fetch All Rides
+        const [rides] = await pool.query(
+            "SELECT ride_name, ride_type, ride_status, location_id, min_height, max_weight FROM rides ORDER BY ride_name"
+        );
+
+        // 3. Fetch Vendors (SIMPLE SELECT - No Group By!)
+        const [vendors] = await pool.query(
+            "SELECT vendor_name, vendor_status, location_id FROM vendors ORDER BY vendor_name"
+        );
+
+        res.render('public-map', {
+            locations: locations,
+            rides: rides,
+            vendors: vendors
+        });
+
+    } catch (error) {
+        console.error("Error loading map:", error);
+        res.status(500).send("Error loading map.");
+    }
+});
+
 module.exports = router;

@@ -3,30 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <title>Membership Purchase History</title>
+    <%# --- Import Fonts --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #17a2b8; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold;
- }
-        .action-link:hover { text-decoration: underline;
- }
-        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold;
- }
-        .back-link:hover { text-decoration: underline;
- }
+        :root {
+            --accent: #17a2b8;
+            --dark: #343a40;
+        }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
+        
+        .container { max-width: 1000px; margin: 2em auto; padding: 0 1em; }
+        
+        h1 { 
+            font-family: 'Lobster', cursive;
+            color: var(--dark);
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.5em;
+        }
+
+        .back-link { 
+            display: inline-block; margin-bottom: 2em; 
+            text-decoration: none; color: var(--accent); font-weight: 600;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .history-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            overflow: hidden; /* For table corners */
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        th { 
+            background-color: var(--dark); 
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+        
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+        
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f9f9f9; }
+
+        .price-tag { font-weight: 700; color: var(--dark); }
+        
+        .action-btn { 
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: var(--accent);
+            color: white; 
+            text-decoration: none; 
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .action-btn:hover { background-color: #138496; }
+
+        .empty-state { text-align: center; padding: 3em; color: #888; font-style: italic; }
     </style>
 </head>
 <body>
@@ -34,50 +84,46 @@
 
     <div class="container">
         <h1>Membership Purchase History</h1>
-        
-        <a href="/member/manage" class="back-link">&laquo;
- Back to Manage Account</a>
+        <a href="/member/manage" class="back-link">&laquo; Back to Account</a>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Purchase Date</th>
-                    <th>Membership Type</th>
-                   
-  <th>Term</th>
-                    <th>Amount Paid</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if 
- (purchases.length === 0) { %>
+        <div class="history-card">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="5" style="text-align: center;">No purchase records found.</td>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Term</th>
+                        <th>Total</th>
+                        <th>Receipt</th>
                     </tr>
-                <% } %>
-        
-         <% purchases.forEach(purchase => { %>
-                    <tr>
-                        <td><%= new Date(purchase.purchase_date).toLocaleString() %></td>
-                        <td><%= purchase.type_name %></td>
-               
-          <td>
-                            <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
-                            <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
-                        </td>
-   
-                     <td>$<%= parseFloat(purchase.price_paid).toFixed(2) %></td>
-                        <td>
-                            <%# CHANGED: Link now uses public_purchase_id %>
-                            <a href="/member/purchases/receipt/<%= purchase.public_purchase_id %>" class="action-link">View Receipt</a>
+                </thead>
+                <tbody>
+                    <% if (purchases.length === 0) { %>
+                        <tr>
+                            <td colspan="5" class="empty-state">No purchase records found.</td>
+                        </tr>
+                    <% } %>
                     
-     </td>
-                    </tr>
-                <% });
- %>
-            </tbody>
-        </table>
+                    <% purchases.forEach(purchase => { %>
+                        <tr>
+                            <td>
+                                <strong><%= new Date(purchase.purchase_date).toLocaleDateString() %></strong><br>
+                                <span style="font-size: 0.85em; color: #888;"><%= new Date(purchase.purchase_date).toLocaleTimeString() %></span>
+                            </td>
+                            <td><%= purchase.type_name %></td>
+                            <td>
+                                <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
+                                <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
+                            </td>
+                            <td class="price-tag">$<%= parseFloat(purchase.price_paid).toFixed(2) %></td>
+                            <td>
+                                <a href="/member/purchases/receipt/<%= purchase.public_purchase_id %>" class="action-btn">View</a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

@@ -94,14 +94,10 @@
 		<a href="/rides">Rides</a>
 		<% } %>
 
-		<%# --- MODIFIED: HR Dropdown Removed. Items moved to Management below. --- %>
-
-		<%# --- MODIFIED: Management Dropdown now includes HR items --- %>
 		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 		<div class="dropdown">
 			<button class="dropbtn">Management ▼</button>
 			<div class="dropdown-content">
-				<%# --- Former HR Links --- %>
 				<a href="/users">Employees</a>
 
 				<% if (user.role === 'Admin') { %>
@@ -112,11 +108,13 @@
 
 				<hr style="margin: 5px 0; border: 0; border-top: 1px solid #ddd;">
 
-					<%# --- Original Management Links --- %>
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 					<a href="/locations">Locations</a>
 					<% } %>
 					<a href="/vendors">Vendors</a>
+					<a href="/map">Interactive Map</a>
+					<%# --- NEW LINK ADDED HERE --- %>
+
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 					<a href="/promotions">Promotions</a>
 					<a href="/weather">Weather</a>
@@ -165,7 +163,8 @@
 
 	<div class="user-info">
 		<span>
-			Welcome, <%= user.firstName %> (<%= user.role %>)
+			Welcome,
+			<%= user.firstName %> (<%= user.role %>)
 		</span>
 		<a href="/change-password" style="color: #ffc107;">Change Password</a>
 		<a href="/employee/logout">Logout</a>

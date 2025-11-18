@@ -3,9 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
+    <%# --- Import Google Fonts for Personality --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* --- Shared Variables & Fonts from index.ejs --- */
+        :root {
+            --primary: #6f42c1; /* Magical Purple */
+            --primary-dark: #5a32a3;
+            --secondary: #ffc107; /* Gold/Yellow */
+            --accent: #17a2b8; /* Cyan/Blue */
+            --dark: #343a40;
+            --hero-overlay: rgba(0, 0, 0, 0.4); 
+            --error: #d9534f;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
             background-color: #f4f4f9;
             color: #333;
@@ -13,61 +29,70 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            /* --- Hero Background Effect --- */
+            background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('/images/hero-bg.png');
+            background-size: cover;
+            background-position: center 30%;
+            background-attachment: fixed;
         }
+
+        /* --- Form Styling --- */
         form {
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
-            background: white;
-            padding: 2.5em;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95); /* Semi-transparent white card */
+            padding: 3em; /* Increased padding */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-top: 5px solid #007bff; /* Employee/Admin Blue accent */
         }
+
         h1 {
-            color: #444;
+            font-family: 'Lobster', cursive;
+            color: var(--dark);
             text-align: center;
             margin-top: 0;
             margin-bottom: 1.5em;
             border-bottom: 2px solid #eee;
             padding-bottom: 0.5em;
         }
-        div {
-            margin-bottom: 1.5em;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="password"] {
+
+        div { margin-bottom: 1.5em; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; }
+
+        input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 12px;
             box-sizing: border-box;
-            border-radius: 4px;
+            border-radius: 8px; /* Slightly more rounded */
             border: 1px solid #ccc;
+            transition: border-color 0.2s;
         }
+        input:focus { border-color: var(--accent); outline: none; }
+
         .error {
-            color: #d9534f;
-            font-weight: bold;
-            background-color: #f2dede;
+            color: white;
+            font-weight: 700;
+            background-color: var(--error);
             padding: 1em;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 1.5em;
             text-align: center;
         }
+
         button {
             width: 100%;
             padding: 12px 20px;
-            background-color: #007bff;
+            background-color: #007bff; /* Employee button color */
             color: white;
             border: none;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 1.1em;
-            font-weight: bold;
+            font-weight: 700;
+            transition: background-color 0.2s;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
+        button:hover { background-color: #0056b3; }
         
         .info-note {
             text-align: center;
@@ -89,6 +114,7 @@
 
         <div>
             <label for="username">Email (Username):</label>
+    
             <input type="text" id="username" name="username" required>
         </div>
         
@@ -100,6 +126,7 @@
         <button type="submit">Login</button>
 
         <p class="info-note">
+ 
             Please contact HR or an Admin to reset password
         </p>
 

@@ -4,70 +4,111 @@
     <meta charset="UTF-8">
     <title>Edit My Profile</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
-            border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid;
-            grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
-            border: 1px solid #ccc; }
-        input[readonly] {
-            background-color: #e9ecef;
-            cursor: not-allowed;
+        /* --- Shared Theme --- */
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;
+            --dark: #343a40;
         }
-        button { padding: 12px 20px; background-color: #17a2b8;
-            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
+        
+        .container { max-width: 700px; margin: 2em auto; padding: 0 1em; }
+        
+        .card {
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
         }
-        .error { color: red; font-weight: bold; }
-        .full-width { grid-column: 1 / -1;}
-        .cancel-link {
+
+        h1 { 
+            font-family: 'Lobster', cursive;
+            color: var(--dark);
+            text-align: center; 
+            margin-top: 0;
+            margin-bottom: 1em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5em;
+        }
+
+        form { width: 100%; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; }
+        .full-width { grid-column: 1 / -1; }
+        
+        div.input-group { margin-bottom: 0.5em; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
+        
+        input, select { 
+            width: 100%; padding: 12px; box-sizing: border-box; 
+            border-radius: 8px; border: 1px solid #ccc; 
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--accent); }
+        input[readonly] { background-color: #f8f9fa; cursor: not-allowed; color: #6c757d; }
+        
+        button { 
+            padding: 12px 30px; 
+            background-color: var(--accent);
+            color: white; border: none; 
+            cursor: pointer; border-radius: 8px; 
+            font-size: 1em; font-weight: 700;
             display: inline-block;
-            margin-left: 15px;
-            text-decoration: none;
-            color: #6c757d;
-            font-weight: bold;
+            transition: background-color 0.2s;
         }
+        button:hover { background-color: #138496; }
+        
+        .error { color: white; font-weight: bold; background-color: #dc3545; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        
+        .button-group { margin-top: 2em; display: flex; justify-content: space-between; align-items: center; }
+        .cancel-link { color: #6c757d; text-decoration: none; font-weight: 600; }
         .cancel-link:hover { text-decoration: underline; }
+        
+        small { display: block; margin-top: 5px; color: #888; }
     </style>
 </head>
 <body>
     <%- include('partials/member-header') %>
-    <h1>Edit My Profile</h1>
-    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
     
-    <form action="/member/edit" method="POST">
-        <div class="form-grid">
-            <div>
-                <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
-            </div>
-            <div>
-                <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
-            </div>
+    <div class="container">
+        <div class="card">
+            <h1>Edit My Profile</h1>
+            <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
             
-            <div class="full-width">
-                 <label for="email">Email (Username):</label>
-                <input type="email" id="email" name="email" value="<%= member.email %>" readonly>
-                <small><i>Your email is your username and cannot be changed here.</i></small>
-            </div>
-            
-            <div>
-                <label for="phone_number">Phone Number:</label>
-                <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>">
-            </div>
-   
-            <div>
-                <label for="date_of_birth">Date of Birth:</label>
-                <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
-            </div>
+            <form action="/member/edit" method="POST">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
+                    </div>
+                    
+                    <div class="full-width input-group">
+                        <label for="email">Email (Username)</label>
+                        <input type="email" id="email" name="email" value="<%= member.email %>" readonly>
+                        <small>Your email is your username and cannot be changed here.</small>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="phone_number">Phone Number</label>
+                        <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>">
+                    </div>
+        
+                    <div class="input-group">
+                        <label for="date_of_birth">Date of Birth</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <a href="/member/manage" class="cancel-link">Cancel</a>
+                    <button type="submit">Save Changes</button>
+                </div>
+            </form>
         </div>
-        <br>
-        <button type="submit">Save Changes</button>
-        <a href="/member/manage" class="cancel-link">Cancel</a>
-    </form>
+    </div>
 </body>
 </html>

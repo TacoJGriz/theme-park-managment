@@ -2,37 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Member Visit History</title>
-     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        h1 small { color: #17a2b8;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #17a2b8; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold;
- }
-        .action-link:hover { text-decoration: underline;
- }
-        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold;
- }
-        .back-link:hover { text-decoration: underline;
- }
+    <title>Visit History</title>
+    <%# --- Import Fonts --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;
+            --dark: #343a40;
+        }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
+        
+        .container { max-width: 1000px; margin: 2em auto; padding: 0 1em; }
+        
+        h1 { 
+            font-family: 'Lobster', cursive;
+            color: var(--dark);
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.5em;
+        }
+        /* Sub-header for context if needed */
+        h1 small { 
+            font-family: 'Poppins', sans-serif; 
+            color: #666; 
+            font-size: 0.5em; 
+            font-weight: 400; 
+            display: block; 
+            margin-top: 5px;
+        }
+
+        .back-link { 
+            display: inline-block; margin-bottom: 2em; 
+            text-decoration: none; color: var(--accent); font-weight: 600;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        /* Card & Table Styling */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        
+        th { 
+            background-color: var(--dark); 
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        
+        td { padding: 15px; border-bottom: 1px solid #f0f0f0; color: #555; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        /* Badge for Group Size */
+        .badge-group {
+            background: #e2e6ea;
+            color: var(--dark);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .action-link { 
+            color: var(--accent); 
+            font-weight: 600; 
+            text-decoration: none;
+        }
+        .action-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <%# This logic is correct: Show employee header or member header %>
     <% if (user) { %>
         <%- include('partials/header') %>
     <% } else { %>
@@ -40,64 +90,53 @@
     <% } %>
 
     <div class="container">
-        <h1>Visit History for <br><small><%= member.first_name %> <%= member.last_name %></small></h1>
+        <%# UPDATED: Removed specific name from title %>
+        <h1>Visit History</h1>
         
-        <% 
- if (user) { %>
-            <a href="/members<%= currentQueryString ? '?'
- + currentQueryString : '' %>" class="back-link">&laquo; Back to Members List</a>
+        <% if (user) { %>
+            <a href="/members<%= typeof currentQueryString !== 'undefined' && currentQueryString ? '?' + currentQueryString : '' %>" class="back-link" style="color: #007bff;">&laquo; Back to Members List</a>
         <% } else { %>
-            <a href="/member/dashboard" class="back-link">&laquo;
- Back to My Dashboard</a>
+            <a href="/member/dashboard" class="back-link">&laquo; Back to Dashboard</a>
         <% } %>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Visit Date & Time</th>
-                    <th>Ticket Type</th>
-       
-             <th>Group Size</th>
-                    <th>Price Paid</th>
-                    <th>Cashier</th>
-                    <th>Action</th>
-                </tr>
-         
-     </thead>
-            <tbody>
-                <% if (visits.length === 0) { %>
+        <div class="table-card">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="6" style="text-align: center;">No visit records found for this member.</td>
-          
-           </tr>
-                <% } %>
-                <% visits.forEach(visit => { %>
-                    <tr>
-                        <td><%= visit.visit_date.toLocaleString() %></td>
-      
-                   <td><%= visit.type_name %></td>
-                        <td><%= visit.group_size %> <%= visit.group_size > 1 ? 'Members' : 'Member' %></td>
-                        
-                     
-     <td>$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
-                        
-                        <td><%= visit.staff_name ||
- 'N/A' %></td>
-                        <td>
-                            <%# CHANGED: Links now use the visit_group_id (the public receipt ID) %>
-                            <% if (user) { %>
-                                <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
-      
-                       <% } else { %>
-                                <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
-                            <% } %>
-       
-                   </td>
+                        <th>Date & Time</th>
+                        <th>Ticket Type</th>
+                        <th>Party Size</th>
+                        <th>Total</th>
+                        <th>Receipt</th>
                     </tr>
-                <% });
- %>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <% if (visits.length === 0) { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 3em; font-style: italic;">No visit records found for this member.</td>
+                        </tr>
+                    <% } %>
+                    <% visits.forEach(visit => { %>
+                        <tr>
+                            <td>
+                                <strong><%= new Date(visit.visit_date).toLocaleDateString() %></strong><br>
+                                <span style="font-size: 0.85em; color: #888;"><%= new Date(visit.visit_date).toLocaleTimeString() %></span>
+                            </td>
+                            <td><%= visit.type_name %></td>
+                            <td><span class="badge-group"><%= visit.group_size %> Guest<%= visit.group_size > 1 ? 's' : '' %></span></td>
+                            <td style="font-weight: bold; color: #333;">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
+                            <td>
+                                <% if (user) { %>
+                                    <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link" style="color: #007bff;">View Receipt</a>
+                                <% } else { %>
+                                    <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

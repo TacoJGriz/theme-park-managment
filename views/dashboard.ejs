@@ -131,6 +131,7 @@
                 <div class="card">
                     <h3>Park Administration</h3>
                     <a href="/locations">Manage Locations</a>
+                    <a href="/map">Manage Map Pins</a> <%# --- NEW LINK ADDED HERE --- %>
                     <a href="/vendors">Manage Vendors</a>
                     <a href="/memberships/types">Manage Membership Types</a>
                     <a href="/ticket-types">Manage Ticket Types</a>
@@ -153,7 +154,7 @@
                 </div>
             <% } %>
 
-             <%# UPDATED: Card for Human Resources (Admin, Park Manager, Location Manager) %>
+            <%# Card for Human Resources (Admin, Park Manager, Location Manager) %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                 <div class="card">
                     <h3>Human Resources</h3>

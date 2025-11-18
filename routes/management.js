@@ -1106,4 +1106,35 @@ router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrP
     }
 });
 
+// POST /locations/update-coords (Save Map Pins)
+router.post('/locations/update-coords', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { pins } = req.body; // Array of { id, x, y }
+
+    if (!pins || !Array.isArray(pins)) {
+        return res.status(400).json({ success: false, message: 'Invalid data' });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        for (const pin of pins) {
+            await connection.query(
+                "UPDATE location SET pin_x = ?, pin_y = ? WHERE location_id = ?",
+                [pin.x, pin.y, pin.id]
+            );
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: 'Map updated successfully' });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error updating map pins:", error);
+        res.status(500).json({ success: false, message: 'Database error' });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;
