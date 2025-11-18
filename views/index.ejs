@@ -3,117 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <title>Welcome to Primus Theme Park</title>
+    <%# --- Import Google Fonts for Personality --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        :root {
+            --primary: #6f42c1;     /* Magical Purple */
+            --secondary: #ffc107;   /* Gold/Yellow */
+            --accent: #17a2b8;      /* Cyan/Blue */
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --hero-overlay: rgba(0, 0, 0, 0.4); /* Slightly lighter to see fireworks */
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background-color: #f0f2f5; 
+            color: #333; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh;
+        }
+
+        /* --- Typography --- */
+        h1, h2, h3 { font-weight: 700; color: var(--dark); }
+        h1 { font-family: 'Lobster', cursive; letter-spacing: 1px; } 
+        h2 { 
+            font-size: 2.5em; 
+            text-align: center; 
+            margin-top: 2em; 
+            margin-bottom: 1em;
+            position: relative;
+        }
+        h2::after {
+            content: ''; display: block; width: 60px; height: 4px; 
+            background: var(--accent); margin: 10px auto 0; border-radius: 2px;
+        }
+
+        /* --- Navbar --- */
         .navbar {
-            background-color: #343a40; padding: 0 2em;
+            background-color: rgba(52, 58, 64, 0.95); 
+            padding: 0.5em 2em;
             display: flex; justify-content: space-between; align-items: center; color: white;
+            position: sticky; top: 0; z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .nav-brand { font-size: 1.5em; font-weight: bold; padding: 0.5em 0; }
+        .nav-brand { font-family: 'Lobster', cursive; font-size: 1.8em; color: var(--secondary); }
         .nav-links a {
-            color: white; text-decoration: none; padding: 1em 1.5em;
-            display: inline-block; transition: background-color 0.2s;
+            color: white; text-decoration: none; padding: 0.5em 1em;
+            display: inline-block; transition: all 0.2s; font-weight: 600; font-size: 0.95em;
         }
-        .nav-links a:hover { background-color: #495057; }
+        .nav-links a:hover { color: var(--secondary); transform: translateY(-2px); }
         
-        .nav-links a.login-btn {
-            border-radius: 4px; margin-left: 1em; font-weight: bold;
-        }
-        .nav-links a.login-btn:hover { color: white; }
+        .nav-links a.login-btn { border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; margin-left: 1em; }
+        .nav-links a.login-btn:hover { background: white; color: var(--dark); }
 
-        .nav-links a.global-login-btn {
-            background-color: transparent; color: #17a2b8;
-        }
-        .nav-links a.global-login-btn:hover {
-            background-color: #495057; color: white;
-        }
-        
         .nav-links a.activate-btn {
-            color: #ffc107; font-weight: bold; margin-left: 1em; border-radius: 4px;
+            background-color: var(--secondary); color: var(--dark);
+            border-radius: 20px; margin-left: 10px; box-shadow: 0 4px 6px rgba(255, 193, 7, 0.3);
         }
-        .nav-links a.activate-btn:hover {
-            background-color: #495057; color: #ffc107;
-        }
+        .nav-links a.activate-btn:hover { background-color: #e0a800; color: var(--dark); }
 
+        /* --- Hero Section (Animated) --- */
         .hero {
-            background-color: #007bff; color: white; padding: 4em 2em; text-align: center;
+            /* Local Fireworks Background */
+            background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), 
+                        url('/images/hero-bg.png');
+            background-size: cover;
+            background-position: center 30%; /* Adjust center point */
+            background-attachment: fixed; /* Parallax effect */
+            color: white;
+            /* Increased padding for a "full screen" feel */
+            padding: 10em 2em 12em 2em; 
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
         }
-        .hero h1 { font-size: 3em; margin: 0 0 0.25em 0; }
-        .hero p { font-size: 1.2em; margin: 0; }
+        
+        /* Text Entrance Animations */
+        .hero h1 { 
+            color: white; font-size: 5em; margin: 0; 
+            text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            opacity: 0; /* Start hidden */
+            animation: slideDownFade 1s ease-out forwards;
+            animation-delay: 0.2s;
+        }
+        .hero p { 
+            font-size: 1.8em; margin-top: 0.5em; font-weight: 300; 
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            opacity: 0; /* Start hidden */
+            animation: slideUpFade 1s ease-out forwards;
+            animation-delay: 0.5s;
+        }
+        .hero-buttons {
+            margin-top: 2.5em;
+            opacity: 0; /* Start hidden */
+            animation: slideUpFade 1s ease-out forwards;
+            animation-delay: 0.8s;
+        }
 
-        .container {
-            max-width: 1200px; margin: 2em auto; padding: 0 2em;
+        @keyframes slideDownFade {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .container .card-container + h3 {
-            margin-top: 2em;
-        }
-        h2 {
-            font-size: 2.2em; color: #444;
-            border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-top: 1.5em;
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Card Grid System */
+        /* Scroll Indicator Arrow */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.7);
+            font-size: 2em;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
+            40% {transform: translateX(-50%) translateY(-10px);}
+            60% {transform: translateX(-50%) translateY(-5px);}
+        }
+
+        /* --- Stats Section --- */
+        .stats-section {
+            background-color: var(--dark);
+            color: white;
+            padding: 3em 2em;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
+        }
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2em;
+        }
+        .stat-item { padding: 1em; }
+        .stat-number {
+            font-family: 'Lobster', cursive;
+            font-size: 3.5em;
+            color: var(--secondary);
+            line-height: 1;
+            display: block;
+            margin-bottom: 0.2em;
+        }
+        .stat-label {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2em 4em 2em; flex-grow: 1; }
+
+        /* --- Weather Alert --- */
+        .alert-banner {
+            padding: 1em; margin-top: 2em; margin-bottom: 2em; 
+            border-radius: 8px; font-weight: bold; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            position: relative; z-index: 10;
+        }
+        .alert-banner.closure { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+        .alert-banner.warning { background: linear-gradient(135deg, #ffc107, #e0a800); color: #333; }
+
+        /* --- Card Grid System --- */
         .card-container {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px;
         }
-        .card {
-            background: white; padding: 20px; border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-left: 5px solid #007bff;
+        
+        /* --- Promotion Cards (Thematic) --- */
+        .card.promo {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+            transition: transform 0.3s ease;
+            padding: 0; /* Reset padding for internal layout */
+            display: flex; flex-direction: column;
+        }
+        .card.promo:hover { transform: translateY(-5px); }
+        
+        .promo-header {
+            background: linear-gradient(135deg, #6f42c1, #8e44ad);
+            color: white; padding: 1.5em; text-align: center;
+        }
+        .promo-header h3 { color: white; margin: 0; font-size: 1.4em; }
+        .promo-body { padding: 1.5em; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .promo-discount { font-size: 2.5em; font-weight: 800; color: var(--primary); line-height: 1; }
+        .promo-discount span { font-size: 0.4em; font-weight: 600; color: #666; text-transform: uppercase; display: block; margin-top: 5px; }
+        .promo-dates { font-size: 0.85em; color: #888; margin-top: 1em; font-weight: 600; }
+
+        /* --- Location Image Cards --- */
+        .location-card {
+            background-color: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%; display: flex; flex-direction: column;
+        }
+        .location-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        
+        .location-image {
+            height: 300px; background-size: cover; background-position: center;
+            position: relative;
+        }
+        .location-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 4em 1.5em 1em 1.5em;
+        }
+        .location-overlay h3 { color: white; margin: 0; font-size: 2em; text-shadow: 0 2px 10px rgba(0,0,0,0.8); letter-spacing: 1px; }
+        
+        .location-content { padding: 1.5em; flex-grow: 1; }
+        .location-desc { font-size: 0.9em; color: #666; margin-bottom: 1em; font-style: italic; }
+        
+        /* Pills for Lists */
+        .attraction-group h4 { 
+            font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; color: #999; margin: 1em 0 0.5em 0; 
+        }
+        .pill-container { display: flex; flex-wrap: wrap; gap: 5px; }
+        .pill {
+            background: #f1f3f5; color: #495057; padding: 4px 10px; border-radius: 15px;
+            font-size: 0.85em; font-weight: 600;
+        }
+        .pill.ride { background: #e7f5ff; color: #007bff; }
+        .pill.vendor { background: #fff3cd; color: #856404; }
+
+        /* --- Ticket & Pass Cards --- */
+        .card.price {
+            background: white; border-radius: 12px; padding: 2em;
+            text-align: center; border: 1px solid #eee;
+            transition: all 0.3s;
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        .card.promo { border-left-color: #28a745; }
-        .card.price { border-left-color: #17a2b8; }
+        .card.price:hover { border-color: var(--accent); box-shadow: 0 5px 15px rgba(23, 162, 184, 0.15); }
         
-        .card h3 {
-            margin-top: 0; font-size: 1.4em; color: #333;
+        /* Highlight Platinum/Premium */
+        .card.price.premium {
+            border: 2px solid var(--secondary);
+            background: linear-gradient(to bottom right, #fff, #fffbf0);
+            position: relative;
+            transform: scale(1.05); /* Make it pop */
+            z-index: 1;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.2);
         }
-        .card .price {
-            font-size: 2em; font-weight: bold; color: #0056b3; margin: 0.5em 0;
-        }
-        .card .price-sub {
-            font-size: 1em; font-weight: normal; color: #666;
+        .best-value-badge {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: var(--secondary); color: #000; padding: 4px 12px;
+            border-radius: 12px; font-weight: 800; font-size: 0.8em;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
-        /* Location Section */
-        .location-section {
-            background: white; padding: 2em; border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2em;
-        }
-        .location-section h3 {
-            font-size: 1.8em; color: #6f42c1; margin-top: 0;
-        }
-        .location-section .rides-list {
-            list-style: none; padding-left: 0;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 1em;
-        }
-        .location-section .rides-list li {
-            background: #f8f9fa; padding: 1em; border-radius: 4px; border: 1px solid #eee;
-        }
-        .location-section .rides-list strong {
-            font-size: 1.1em; color: #343a40;
-        }
+        .price-tag { font-size: 2.5em; font-weight: 700; color: var(--dark); margin: 0.5em 0; }
+        .price-tag small { font-size: 0.4em; color: #888; font-weight: normal; }
+        
         .purchase-button {
-            display: block; text-align: center; padding: 12px 20px;
-            background-color: #17a2b8; color: white; text-decoration: none;
-            border-radius: 4px; font-weight: bold; margin-top: 1em;
-            transition: background-color 0.2s;
+            display: block; padding: 12px; background-color: var(--dark); color: white;
+            text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 1.5em;
+            transition: background 0.2s;
         }
-        .purchase-button:hover {
-            background-color: #138496;
+        .purchase-button:hover { background-color: black; }
+        .premium .purchase-button { background-color: var(--secondary); color: black; }
+        .premium .purchase-button:hover { background-color: #e0a800; }
+
+        /* --- Featured Ride Spotlight (UPDATED) --- */
+        .featured-ride {
+            position: relative;
+            min-height: 450px; /* Changed from height to min-height for flexibility */
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.2)), url('/images/space-mountain.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Parallax */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align text to left */
+            margin: 4em 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 4em; /* Increased inner padding */
+            box-sizing: border-box; /* Ensure padding is included in width/height */
+        }
+        .featured-content {
+            max-width: 500px;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+        .featured-tag {
+            background-color: var(--accent); color: white;
+            padding: 5px 12px; border-radius: 20px; 
+            font-weight: bold; font-size: 0.9em; text-transform: uppercase;
+            margin-bottom: 10px; display: inline-block;
+        }
+        .featured-content h2 {
+            color: white; text-align: left; margin: 0 0 0.5em 0;
+            font-size: 3em;
+        }
+        .featured-content p { font-size: 1.2em; line-height: 1.5; margin-bottom: 1.5em; }
+        .btn-feature {
+            background-color: transparent; color: white;
+            border: 2px solid white; padding: 12px 30px;
+            text-decoration: none; font-weight: bold; border-radius: 30px;
+            transition: all 0.3s;
+        }
+        .btn-feature:hover { background-color: white; color: var(--dark); }
+
+        /* --- Map Teaser Section --- */
+        .map-teaser {
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/images/park-map.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 8em 2em;
+            text-align: center;
+            color: white;
+            margin: 4em 0; 
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+        .map-content {
+            background: rgba(255, 255, 255, 0.9);
+            display: inline-block;
+            padding: 2em 3em;
+            border-radius: 15px;
+            color: var(--dark);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 600px;
+        }
+        .map-content h2 { margin-top: 0; color: var(--primary); }
+        .btn-map {
+            background-color: var(--primary); color: white; text-decoration: none;
+            padding: 12px 30px; border-radius: 30px; font-weight: bold;
+            display: inline-block; margin-top: 1em; transition: all 0.2s;
+        }
+        .btn-map:hover { background-color: #5a32a3; transform: translateY(-2px); }
+
+        /* --- Testimonials Section --- */
+        .testimonial-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+            margin-top: 2em;
+        }
+        .testimonial-card {
+            background: white; padding: 2em; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative; text-align: center;
+            border-bottom: 4px solid var(--accent);
+        }
+        .testimonial-card::before {
+            content: '“'; font-family: serif; font-size: 5em; color: rgba(23, 162, 184, 0.1);
+            position: absolute; top: 0px; left: 20px; line-height: 1;
+        }
+        .stars { color: var(--secondary); font-size: 1.2em; margin-bottom: 10px; letter-spacing: 2px; }
+        .quote { font-style: italic; color: #555; font-size: 1.1em; margin-bottom: 1.5em; position: relative; z-index: 1; }
+        .author { font-weight: 700; color: var(--dark); }
+        .author span { display: block; font-weight: 400; font-size: 0.8em; color: #888; margin-top: 2px; }
+
+        /* --- Newsletter Section --- */
+        .newsletter-section {
+            background-color: var(--secondary);
+            color: var(--dark);
+            padding: 4em 2em;
+            text-align: center;
+            margin-top: 4em; 
+        }
+        .newsletter-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .newsletter-section h2 {
+            color: var(--dark);
+            margin-top: 0;
+        }
+        .newsletter-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 2em;
+            justify-content: center;
+            flex-wrap: wrap; 
+        }
+        .newsletter-input {
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            width: 60%;
+            font-size: 1em;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 250px;
+        }
+        .btn-subscribe {
+            background-color: var(--dark);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn-subscribe:hover {
+            transform: scale(1.05);
+            background-color: black;
         }
 
-        /* --- Weather Alert Styles --- */
-        .alert-banner {
-            padding: 1em; margin-bottom: 1.5em; border-radius: 8px; font-weight: bold; text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .alert-banner.closure {
-            background-color: #dc3545; color: white; border: 2px solid #bd2130;
-        }
-        .alert-banner.warning {
-            background-color: #ffc107; color: #333; border: 2px solid #e0a800;
-        }
     </style>
 </head>
 <body>
@@ -130,13 +435,44 @@
     </nav>
 
     <div class="hero">
-        <h1>Welcome to Primus Theme Park!</h1>
-        <p>Your magical adventure awaits!</p>
+        
+        <h1>Welcome to Primus Theme Park</h1>
+        <p>Where your magical adventure awaits!</p>
+        
+        <div class="hero-buttons">
+            <a href="#tickets" style="background: var(--secondary); color: black; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; margin-right: 10px;">Buy Tickets</a>
+            <a href="#attractions" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; border: 1px solid white;">Explore</a>
+        </div>
+
+        <div class="scroll-indicator" onclick="document.getElementById('statsSection').scrollIntoView({behavior: 'smooth'})">
+            ▼
+        </div>
+    </div>
+
+    <div class="stats-section" id="statsSection">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number" data-target="40">0</span>
+                <span class="stat-label">Attractions</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="8">0</span>
+                <span class="stat-label">Themed Lands</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="16">0</span>
+                <span class="stat-label">Dining Spots</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="100">0</span>
+                <span class="stat-label">% Magical</span>
+            </div>
+        </div>
     </div>
 
     <div class="container">
 
-        <%# --- WEATHER ALERT SECTION (UPDATED) --- %>
+        <%# --- WEATHER ALERT SECTION --- %>
         <% if (typeof weatherAlerts !== 'undefined' && weatherAlerts.length > 0) { %>
             <% weatherAlerts.forEach(alert => { %>
                 <div class="alert-banner <%= alert.park_closure ? 'closure' : 'warning' %>">
@@ -147,8 +483,7 @@
                         in progress.
                     <% } %>
                     
-                    <%# REMOVED specific end time display %>
-                    <span style="margin-left: 10px; font-weight: normal;">Please check back for updates.</span>
+                    <span style="margin-left: 10px; font-weight: normal; font-size: 0.9em;">Please check back for updates.</span>
                 </div>
             <% }); %>
         <% } %>
@@ -159,103 +494,240 @@
                 <% if (promotions.length > 0) { %>
                     <% promotions.forEach(promo => { %>
                         <div class="card promo">
-                            <div>
+                            <div class="promo-header">
                                 <h3><%= promo.event_name %></h3>
-                                <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
-                                <p><%= promo.summary %></p>
-                                <p><strong>Type:</strong> <%= promo.event_type %></p>
-                                <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
+                            </div>
+                            <div class="promo-body">
+                                <div class="promo-discount">
+                                    <%= parseFloat(promo.discount_percent).toFixed(0) %>%
+                                    <span>OFF TICKETS</span>
+                                </div>
+                                <p style="color: #555; font-size: 0.95em; margin-top: 1em;"><%= promo.summary %></p>
+                                <div class="promo-dates">
+                                    <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %>
+                                </div>
                             </div>
                         </div>
                     <% }); %>
                 <% } else { %>
-                    <p>No special promotions are running today. Check back soon!</p>
+                    <p style="text-align: center; color: #666; grid-column: 1/-1;">No special promotions are running today. Check back soon!</p>
                 <% } %>
             </div>
         </section>
 
+        <% 
+            // Map Location Names to Local Image Paths
+            const locImages = {
+                'Frontierland': '/images/frontierland.png',    
+                'Tomorrowland': '/images/tomorrowland.png',    
+                'Fantasyland': '/images/fantasyland.png',     
+                'Main Entrance': '/images/main-entrance.png',   
+                'Adventureland': '/images/adventureland.png',   
+                'Liberty Square': '/images/liberty-square.png',  
+                'Mickeys Toontown': '/images/toontown.png',   
+                'Galaxys Edge': '/images/galaxys-edge.png'     
+            };
+        %>
+
         <section id="attractions">
             <h2>Explore Our Lands</h2>
-            <% locations.forEach(location => { %>
-                <div class="location-section">
-                    <h3><%= location.location_name %></h3>
-                    <p><em><%= location.summary %></em></p>
-                    
-                    <h4>Attractions:</h4>
-                    <ul class="rides-list">
-                        <% const ridesInLocation = allRides.filter(ride => ride.location_id === location.location_id); %>
-                        <% if (ridesInLocation.length > 0) { %>
-                            <% ridesInLocation.forEach(ride => { %>
-                                <li>
-                                    <strong><%= ride.ride_name %></strong>
-                                    <br><span style="font-size: 0.9em; color: #666;">(<%= ride.ride_type %>)</span>
-                                </li>
-                            <% }); %>
-                        <% } else { %>
-                            <p style="color: #666; font-style: italic;">No rides currently open in this location.</p>
-                        <% } %>
-                    </ul>
-
-                    <h4 style="margin-top: 1.5em;">Dining & Shopping:</h4>
-                    <ul class="rides-list">
-                        <% const vendorsInLocation = allVendors.filter(v => v.location_id === location.location_id); %>
-                        <% if (vendorsInLocation.length > 0) { %>
-                            <% vendorsInLocation.forEach(vendor => { %>
-                                <li>
-                                    <strong><%= vendor.vendor_name %></strong>
-                                </li>
-                            <% }); %>
-                        <% } else { %>
-                            <p style="color: #666; font-style: italic;">No dining or retail locations open.</p>
-                        <% } %>
-                    </ul>
-                </div>
-            <% }); %>
-        </section>
-
-        <section id="tickets">
-            <h2>Tickets & Passes</h2>
-            <h3>Day Tickets</h3>
             <div class="card-container">
-                <% tickets.forEach(ticket => { %>
-                    <div class="card price" style="justify-content: space-between;">
-                        <div>
-                            <h3><%= ticket.type_name %></h3>
-                            <div class="price">$<%= parseFloat(ticket.base_price).toFixed(2) %></div>
-                            <p><%= ticket.description || 'Standard park admission.' %></p>
-                        </div>
-                        <a href="/purchase-tickets" class="purchase-button" style="background-color: #28a745;">Purchase Tickets</a>
-                    </div>
-                <% }); %>
-            </div>
-
-            <h3 style="margin-top: 2em;">Memberships</h3>
-            
-            <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
-                Already bought your pass in the park? <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
-            </p>
-            
-            <div class="card-container">
-                <% memberships.forEach(pass => { %>
-                    <div class="card price">
-                        <div>
-                            <h3><%= pass.type_name %> Pass</h3>
-                            <div class="price">
-                                <% if (pass.base_members > 1) { %>
-                                    Starts at $<%= parseFloat(pass.base_price).toFixed(2) %>
-                                    <span class="price-sub">/ year (for <%= pass.base_members %> members)</span>
-                                <% } else { %>
-                                    $<%= parseFloat(pass.base_price).toFixed(2) %>
-                                    <span class="price-sub">/ year</span>
-                                <% } %>
+                <% locations.forEach(location => { %>
+                    <% 
+                        const bgUrl = locImages[location.location_name] || '/images/frontierland.png'; 
+                    %>
+                    <div class="location-card">
+                        <div class="location-image" style="background-image: url('<%= bgUrl %>');">
+                            <div class="location-overlay">
+                                <h3><%= location.location_name %></h3>
                             </div>
-                            <p><%= pass.description %></p>
                         </div>
-                        <a href="/signup?type=<%= pass.public_type_id %>" class="purchase-button">Purchase Now</a>
+                        <div class="location-content">
+                            <div class="location-desc"><%= location.summary %></div>
+                            
+                            <div class="attraction-group">
+                                <h4>Attractions</h4>
+                                <div class="pill-container">
+                                    <% const ridesInLocation = allRides.filter(ride => ride.location_id === location.location_id); %>
+                                    <% if (ridesInLocation.length > 0) { %>
+                                        <% ridesInLocation.forEach(ride => { %>
+                                            <span class="pill ride"><%= ride.ride_name %></span>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <span style="font-size: 0.8em; color: #999;">None open</span>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <div class="attraction-group">
+                                <h4>Dining & Shopping</h4>
+                                <div class="pill-container">
+                                    <% const vendorsInLocation = allVendors.filter(v => v.location_id === location.location_id); %>
+                                    <% if (vendorsInLocation.length > 0) { %>
+                                        <% vendorsInLocation.forEach(vendor => { %>
+                                            <span class="pill vendor"><%= vendor.vendor_name %></span>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <span style="font-size: 0.8em; color: #999;">None open</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 <% }); %>
             </div>
         </section>
     </div>
+
+    <section class="featured-ride">
+        <div class="featured-content">
+            <span class="featured-tag">Thrill Ride</span>
+            <h2>Space Mountain</h2>
+            <p>Blast off on a high-speed journey through the cosmos! Experience the G-forces as you navigate hairpin turns and sudden drops in complete darkness.</p>
+            <a href="#attractions" class="btn-feature">Find in Tomorrowland</a>
+        </div>
+    </section>
+
+    <section class="map-teaser">
+        <div class="map-content">
+            <h2>Plan Your Adventure</h2>
+            <p>Don't get lost in the excitement! Explore our interactive map to find your favorite rides, dining spots, and shows.</p>
+            <a href="#" class="btn-map" onclick="alert('Interactive map coming soon!'); return false;">View Full Park Map</a>
+        </div>
+    </section>
+
+    <div class="container">
+        <section id="tickets">
+            <h2>Tickets & Passes</h2>
+            
+            <h3>Day Tickets</h3>
+            <div class="card-container">
+                <% tickets.forEach(ticket => { %>
+                    <div class="card price">
+                        <div>
+                            <h3><%= ticket.type_name %></h3>
+                            <p style="color: #666; height: 40px;"><%= ticket.description || 'Standard park admission.' %></p>
+                            <div class="price-tag">$<%= parseFloat(ticket.base_price).toFixed(0) %></div>
+                        </div>
+                        <a href="/purchase-tickets" class="purchase-button">Buy Ticket</a>
+                    </div>
+                <% }); %>
+            </div>
+
+            <h3 style="margin-top: 2em;">Annual Memberships</h3>
+            <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
+                Unlock a full year of magic! Already a member? <a href="/member/register" style="font-weight: bold; color: var(--primary);">Activate account</a>
+            </p>
+            
+            <div class="card-container">
+                <% memberships.forEach(pass => { 
+                    const isPlatinum = pass.type_name.includes('Platinum');
+                %>
+                    <div class="card price <%= isPlatinum ? 'premium' : '' %>">
+                        <% if (isPlatinum) { %>
+                            <div class="best-value-badge">Best Value</div>
+                        <% } %>
+                        <div>
+                            <h3 style="<%= isPlatinum ? 'color: var(--primary);' : '' %>"><%= pass.type_name %> Pass</h3>
+                            <p style="color: #666; height: 40px;"><%= pass.description %></p>
+                            <div class="price-tag">
+                                $<%= parseFloat(pass.base_price).toFixed(0) %>
+                                <small>/ year</small>
+                            </div>
+                            <% if (pass.base_members > 1) { %>
+                                <div style="font-size: 0.9em; color: #666; font-weight: bold;">Includes <%= pass.base_members %> Guests</div>
+                            <% } %>
+                        </div>
+                        <a href="/signup?type=<%= pass.public_type_id %>" class="purchase-button">Select Pass</a>
+                    </div>
+                <% }); %>
+            </div>
+        </section>
+
+        <section id="testimonials">
+            <h2>What Our Guests Say</h2>
+            
+            <% 
+                // Static testimonial data
+                const testimonials = [
+                    {
+                        quote: "The fireworks at the castle were pure magic! My kids haven't stopped talking about it since we got home.",
+                        author: "Sarah J.",
+                        type: "Family Pass Member"
+                    },
+                    {
+                        quote: "Galaxy's Edge is incredible. The attention to detail is out of this world. The Blue Milk is a must-try!",
+                        author: "Mike T.",
+                        type: "Annual Passholder"
+                    },
+                    {
+                        quote: "Primus Park is the cleanest, friendliest park I've ever visited. We made memories that will last a lifetime.",
+                        author: "Emily R.",
+                        type: "Day Guest"
+                    }
+                ];
+            %>
+
+            <div class="testimonial-grid">
+                <% testimonials.forEach(review => { %>
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="quote"><%= review.quote %></p>
+                        <div class="author">
+                            <%= review.author %>
+                            <span><%= review.type %></span>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </section>
+
+    </div>
+    
+    <div class="newsletter-section">
+        <div class="newsletter-content">
+            <h2>Join the Club!</h2>
+            <p>Get the latest park news, exclusive offers, and magical updates delivered straight to your inbox.</p>
+            <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thanks for subscribing!');">
+                <input type="email" class="newsletter-input" placeholder="Enter your email address" required>
+                <button type="submit" class="btn-subscribe">Subscribe</button>
+            </form>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        const statsSection = document.getElementById('statsSection');
+        const counters = document.querySelectorAll('.stat-number');
+        let started = false; // Function should run only once
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !started) {
+                started = true;
+                counters.forEach(counter => {
+                    const target = +counter.getAttribute('data-target');
+                    const speed = 50; // Higher is slower
+                    const increment = target / speed;
+
+                    const updateCount = () => {
+                        const count = +counter.innerText;
+                        if (count < target) {
+                            counter.innerText = Math.ceil(count + increment);
+                            setTimeout(updateCount, 20);
+                        } else {
+                            counter.innerText = target;
+                            // Append "+" for specific labels if needed (optional logic)
+                            if(target > 10) counter.innerText += '+';
+                            if(target === 100) counter.innerText = '100'; // Reset for %
+                        }
+                    };
+                    updateCount();
+                });
+            }
+        }, { threshold: 0.5 });
+
+        observer.observe(statsSection);
+    </script>
 </body>
 </html>

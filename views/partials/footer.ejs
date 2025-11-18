@@ -1,0 +1,110 @@
+﻿<style>
+    .site-footer {
+        background-color: var(--dark, #343a40);
+        color: #f8f9fa;
+        padding: 4em 2em 2em 2em;
+        margin-top: auto;
+        font-family: 'Poppins', sans-serif;
+    }
+    .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 3em;
+    }
+    .footer-section h4 {
+        color: var(--secondary, #ffc107);
+        font-family: 'Lobster', cursive;
+        font-size: 1.5em;
+        margin-top: 0;
+        margin-bottom: 1em;
+        letter-spacing: 1px;
+    }
+    .footer-section p, .footer-section li {
+        font-size: 0.95em;
+        line-height: 1.6;
+        color: #adb5bd;
+    }
+    .footer-section ul {
+        list-style: none;
+        padding: 0;
+    }
+    .footer-section li {
+        margin-bottom: 0.5em;
+    }
+    .footer-section a {
+        color: #adb5bd;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .footer-section a:hover {
+        color: white;
+        text-decoration: underline;
+    }
+    .social-links {
+        display: flex;
+        gap: 15px;
+        margin-top: 1em;
+    }
+    .social-icon {
+        font-size: 1.5em;
+        color: white;
+        text-decoration: none;
+        transition: transform 0.2s;
+    }
+    .social-icon:hover {
+        transform: scale(1.2);
+    }
+    .footer-bottom {
+        text-align: center;
+        margin-top: 3em;
+        padding-top: 2em;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+    .footer-bottom a {
+        color: #adb5bd; /* Light grey to match other text */
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .footer-bottom a:hover {
+        color: #ffc107; /* Gold on hover */
+        text-decoration: underline;
+    }
+</style>
+
+<footer class="site-footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>Primus Park</h4>
+            <p>Experience the magic, the thrill, and the adventure. Your journey begins here.</p>
+            <p>
+                <strong>📍 Address:</strong><br>
+                123 Adventure Way<br>
+                Orlando, FL 32830
+            </p>
+        </div>
+        <div class="footer-section">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/#attractions">Attractions & Rides</a></li>
+                <li><a href="/#tickets">Tickets & Passes</a></li>
+                <li><a href="/#promotions">Special Offers</a></li>
+                <li><a href="/member/register">Member Registration</a></li>
+                <li><a href="/login">Employee Portal</a></li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h4>Connect With Us</h4>
+            <p>Follow us for the latest news and magical moments!</p>
+            <div class="social-links">
+                <a href="#" class="social-icon">📷</a> <a href="#" class="social-icon">📘</a> <a href="#" class="social-icon">🐦</a> <a href="#" class="social-icon">🎥</a> </div>
+            <p style="margin-top: 1em;"><strong>🕒 Park Hours:</strong><br>Daily: 9:00 AM - 9:00 PM</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; <%= new Date().getFullYear() %> Primus Theme Park. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+    </div>
+</footer>
