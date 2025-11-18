@@ -102,4 +102,93 @@ router.post('/', isAuthenticated, canManageRetail, async (req, res) => {
     }
 });
 
+// GET /items/edit/:public_item_id
+router.get('/edit/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_item_id } = req.params;
+    try {
+        const [itemResult] = await pool.query('SELECT * FROM item WHERE public_item_id = ?', [public_item_id]);
+        if (itemResult.length === 0) {
+            return res.status(404).send('Item not found');
+        }
+        const item = itemResult[0];
+
+        // Fetch all distinct types for the dropdown
+        const [types] = await pool.query('SELECT DISTINCT item_type FROM item');
+
+        res.render('edit-item', { item, types, error: null });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading edit item page.');
+    }
+});
+
+// POST /items/edit/:public_item_id
+router.post('/edit/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_item_id } = req.params;
+    const { item_name, item_type, price, summary } = req.body;
+    try {
+        // Find existing item data to ensure we can reload the page if needed
+        const [itemResult] = await pool.query('SELECT * FROM item WHERE public_item_id = ?', [public_item_id]);
+        if (itemResult.length === 0) {
+            return res.status(404).send('Item not found for update.');
+        }
+        const item = itemResult[0];
+
+        // Update SQL: Uses item_name, item_type, price, and summary
+        const sql = `
+            UPDATE item 
+            SET item_name = ?, item_type = ?, price = ?, summary = ? 
+            WHERE public_item_id = ?
+        `;
+        await pool.query(sql, [item_name, item_type, price, summary || null, public_item_id]);
+
+        // Redirect back to the item master list
+        res.redirect('/items');
+    } catch (error) {
+        console.error(error);
+
+        // Fetch all distinct types for reloading the page
+        const [types] = await pool.query('SELECT DISTINCT item_type FROM item');
+
+        res.render('edit-item', {
+            item: { ...req.body, public_item_id }, // Pass submitted data back to form
+            types,
+            error: 'Database error updating item. Please ensure the price is valid.'
+        });
+    }
+});
+
+// POST /items/delete/:public_item_id
+router.post('/delete/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
+    const { public_item_id } = req.params;
+    try {
+        const sql = 'DELETE FROM item WHERE public_item_id = ?';
+        const [result] = await pool.query(sql, [public_item_id]);
+
+        if (result.affectedRows === 0) {
+            // Redirect with error if item wasn't found (though unlikely if accessed from edit page)
+            req.session.error = "Error: Item not found for deletion.";
+        } else {
+            req.session.success = "Item successfully deleted.";
+        }
+
+        // Redirect back to the master list
+        res.redirect('/items');
+
+    } catch (error) {
+        console.error("Error deleting item:", error);
+        let errorMessage = "An unexpected error occurred during deletion.";
+
+        // MySQL error code for Foreign Key Constraint (ER_ROW_IS_REFERENCED)
+        if (error.code === 'ER_ROW_IS_REFERENCED') {
+            errorMessage = "Deletion failed: This item is still active in one or more vendor inventories. Please deshelf the item from all vendors first.";
+        }
+
+        // Store error in session and redirect back to the edit page (or item list)
+        req.session.error = errorMessage;
+        res.redirect(`/items/edit/${public_item_id}`);
+    }
+});
+
 module.exports = router;

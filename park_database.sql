@@ -53,6 +53,7 @@ CREATE TABLE employee_auth (
         ON DELETE CASCADE -- If an employee is deleted, their login is automatically deleted.
 );
 
+/* --- FIX FOR MAP ERROR: Added pin_x and pin_y columns --- */
 CREATE TABLE location (
     location_id INT NOT NULL AUTO_INCREMENT,
     public_location_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for locations',
@@ -60,6 +61,8 @@ CREATE TABLE location (
     summary VARCHAR(250),
     manager_id INT,
     manager_start DATE,
+    pin_x DECIMAL(5, 2) NULL COMMENT 'X-coordinate for map pin (0-100)',
+    pin_y DECIMAL(5, 2) NULL COMMENT 'Y-coordinate for map pin (0-100)',
     -- keys
     PRIMARY KEY (location_id),
     INDEX idx_public_location_id (public_location_id),
@@ -274,6 +277,7 @@ CREATE TABLE item (
     CONSTRAINT chk_item_price_positive CHECK (price >= 0)
 );
 
+/* --- UPDATED: Added min_count and def_count for Trigger --- */
 CREATE TABLE inventory (
     item_id INT NOT NULL,
     vendor_id INT NOT NULL,
@@ -411,15 +415,17 @@ DELIMITER //
 
 CREATE EVENT AutoRenewAnnualPromotions
 ON SCHEDULE EVERY 1 DAY
-STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY)
+STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY) -- Runs daily at midnight
 DO
 BEGIN
+    -- Update recurring promotions that have ended
     UPDATE event_promotions
     SET 
         start_date = DATE_ADD(start_date, INTERVAL 1 YEAR),
         end_date = DATE_ADD(end_date, INTERVAL 1 YEAR)
     WHERE 
-        end_date < CURDATE() AND is_recurring = TRUE;
+        end_date < CURDATE()      -- Promotion has expired
+        AND is_recurring = TRUE;  -- Flagged to renew
 END //
 
 DELIMITER ;

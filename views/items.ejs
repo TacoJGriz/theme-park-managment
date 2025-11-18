@@ -88,6 +88,29 @@
             color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         .add-button:hover { background-color: #218838;
         }
+        
+        /* --- ACTION BUTTON STYLES (Copied from previous steps) --- */
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
@@ -197,12 +220,13 @@
                         </a>
                     </th>
                     <th>Summary</th>
+                    <th style="min-width: 100px;">Actions</th> <%# --- NEW: Action Column Header --- %>
                 </tr>
             </thead>
             <tbody>
                 <% if (items.length === 0) { %>
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2em;">No items found matching criteria.</td>
+                        <td colspan="6" style="text-align: center; padding: 2em;">No items found matching criteria.</td>
                     </tr>
                 <% } %>
                 <% items.forEach(item => { %>
@@ -212,6 +236,12 @@
                         <td><%= item.item_type %></td>
                         <td>$<%= parseFloat(item.price).toFixed(2) %></td>
                         <td><%= item.summary %></td>
+                        <td>
+                            <%# --- NEW: Edit Button (Restricted to Location Manager and above) --- %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <a href="/items/edit/<%= item.public_item_id %>" class="btn-action btn-edit">Edit</a>
+                            <% } %>
+                        </td>
                     </tr>
                 <% }); %>
             </tbody>
