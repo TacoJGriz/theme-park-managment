@@ -4,51 +4,118 @@
     <meta charset="UTF-8">
     <title>Park Vendors</title>
      <style>
-         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-         .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+         body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+         .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+         }
+         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+         }
          
          /* Stats Bar */
-         .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
-         .stat-card { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center; }
-         .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff; }
-         .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+         .stats-bar { display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
+         .stat-card { background-color: #f8f9fa;
+            border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center;
+         }
+         .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em;
+            color: #007bff; }
+         .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+         }
 
          /* Filter Bar */
-         .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; margin-bottom: 1.5em; }
-         .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em; align-items: flex-end; }
-         .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
-         .filter-controls input, .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
-         .filter-buttons { display: flex; gap: 10px; }
-         .filter-btn { flex-grow: 1; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; }
-         .btn-filter { background-color: #007bff; }
-         .btn-filter:hover { background-color: #0056b3; }
-         .btn-clear { background-color: #6c757d; }
-         .btn-clear:hover { background-color: #5a6268; }
+         .filter-bar { background-color: #f8f9fa;
+            border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; margin-bottom: 1.5em;
+         }
+         .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em;
+            align-items: flex-end; }
+         .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
+            font-size: 0.9em; }
+         .filter-controls input, .filter-controls select { width: 100%; padding: 10px;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+         }
+         .filter-buttons { display: flex; gap: 10px;
+         }
+         .filter-btn { flex-grow: 1; padding: 10px; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
+         }
+         .btn-filter { background-color: #007bff;
+         }
+         .btn-filter:hover { background-color: #0056b3;
+         }
+         .btn-clear { background-color: #6c757d;
+         }
+         .btn-clear:hover { background-color: #5a6268;
+         }
 
          /* Table */
-         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-         th { background-color: #007bff; color: white; }
-         tr:nth-child(even) { background-color: #f9f9f9; }
-         tr:hover { background-color: #f1f1f1; }
+         table { width: 100%;
+            border-collapse: collapse; margin-top: 1.5em; }
+         th, td { padding: 12px; text-align: left;
+            border-bottom: 1px solid #ddd; }
+         th { background-color: #007bff; color: white;
+         }
+         tr:nth-child(even) { background-color: #f9f9f9;
+         }
+         tr:hover { background-color: #f1f1f1;
+         }
 
-         th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center; }
-         th.sortable a:hover { text-decoration: underline; }
-         .sort-indicator { font-size: 1.2em; margin-left: 5px; }
-
-         .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
-         .action-link:hover { text-decoration: underline; }
+         th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between;
+            align-items: center; }
+         th.sortable a:hover { text-decoration: underline;
+         }
+         .sort-indicator { font-size: 1.2em; margin-left: 5px;
+         }
          
-         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-         .add-button:hover { background-color: #218838; }
+         .add-button { display: inline-block;
+            margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;
+         }
+         .add-button:hover { background-color: #218838;
+         }
 
-         .status-OPEN { color: #28a745; font-weight: bold; }
-         .status-CLOSED { color: #dc3545; font-weight: bold; }
+         .status-OPEN { color: #28a745; font-weight: bold;
+         }
+         .status-CLOSED { color: #dc3545; font-weight: bold;
+         }
 
-         .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
-         .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-         .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+         .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold;
+            border: 1px solid transparent; }
+         .success { color: #155724; background-color: #d4edda;
+            border-color: #c3e6cb; }
+         .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
+         }
+
+        /* --- NEW ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        .btn-inventory {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-inventory:hover { background-color: #17a2b8; color: white; }
+
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
      </style>
 </head>
 <body>
@@ -167,7 +234,7 @@
                             <span>Status</span> <span class="sort-indicator"><%= getSortState('status').indicator %></span>
                         </a>
                     </th>
-                    <th>Action</th>
+                    <th style="min-width: 160px;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -182,13 +249,13 @@
                         <td><%= vendor.location_name || 'N/A' %></td>
                         <td><span class="status-<%= vendor.vendor_status %>"><%= vendor.vendor_status %></span></td>
                         <td>
-                             <%# --- UPDATED: View Inventory Link --- %>
+                             <%# --- UPDATED: View Inventory Button --- %>
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="action-link" style="color: #28a745;">View Inventory</a>
+                                <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action btn-inventory">View Inventory</a>
                              <% } %>
 
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                                <a href="/vendors/edit/<%= vendor.public_vendor_id %>" class="action-link">Edit Vendor</a>
+                                <a href="/vendors/edit/<%= vendor.public_vendor_id %>" class="btn-action btn-edit">Edit Vendor</a>
                              <% } %>
                         </td>
                     </tr>

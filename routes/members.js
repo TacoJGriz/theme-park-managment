@@ -30,11 +30,30 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         let summaryQuery;
 
         if (search) {
-            // --- NEW SEARCH LOGIC: Find matching groups ---
-            // ADDED m_search.public_membership_id to search
+            // --- Find matching groups ---
             const searchTerm = `%${search}%`;
-            const searchWhere = `(m_search.first_name LIKE ? OR m_search.last_name LIKE ? OR m_search.email LIKE ? OR m_search.phone_number LIKE ? OR m_search.membership_id LIKE ? OR m_search.public_membership_id LIKE ?)`;
-            const searchParams = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+
+            // UPDATED: Added OR CONCAT(m_search.first_name, ' ', m_search.last_name) LIKE ?
+            const searchWhere = `(
+                m_search.first_name LIKE ? OR 
+                m_search.last_name LIKE ? OR 
+                CONCAT(m_search.first_name, ' ', m_search.last_name) LIKE ? OR 
+                m_search.email LIKE ? OR 
+                m_search.phone_number LIKE ? OR 
+                m_search.membership_id LIKE ? OR 
+                m_search.public_membership_id LIKE ?
+            )`;
+
+            // UPDATED: Added searchTerm one more time to the array for the new parameter
+            const searchParams = [
+                searchTerm,
+                searchTerm,
+                searchTerm, // This matches the CONCAT(first, ' ', last)
+                searchTerm,
+                searchTerm,
+                searchTerm,
+                searchTerm
+            ];
 
             // 1. Main Query: Select all members belonging to a matched group
             query = `

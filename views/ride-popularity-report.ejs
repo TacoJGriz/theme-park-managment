@@ -6,18 +6,42 @@
     <%# Link to Chart.js library %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-grid input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        .chart-container { margin-top: 2em; border: 1px solid #ddd; padding: 1.5em; background: #fff; border-radius: 8px; min-height: 500px; position: relative; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px;
+            background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em;
+            align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold;
+        }
+        .form-grid input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #007bff;
+            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
+        }
+        button:hover { background-color: #0056b3;
+        }
+        
+        /* UPDATED: Removed fixed min-height, added transition */
+        .chart-container { 
+            margin-top: 2em; 
+            border: 1px solid #ddd; 
+            padding: 1.5em; 
+            background: #fff;
+            border-radius: 8px; 
+            position: relative;
+            /* Height will be set dynamically by JS */
+        }
+        
+        .error { color: #d9534f; font-weight: bold;
+            background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
 
+        /* Table Styles */
         .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -39,11 +63,31 @@
             background-color: #f9f9f9;
         }
 
-        summary-row {
+        .summary-row {
             background-color: #e9ecef !important;
             font-weight: bold;
             border-top: 2px solid #dee2e6;
             font-size: 1.1em;
+        }
+
+        /* Top Performer Highlighting */
+        .top-performer-row {
+            background-color: #fff5f5 !important; /* Light Red Tint */
+            border-left: 5px solid #dc3545;      /* Bold Red Border */
+        }
+        .top-performer-row td {
+            font-weight: 600;
+            color: #333;
+        }
+        .rank-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -60,7 +104,6 @@
             <div class="form-grid">
                 <div>
                     <label for="selected_date">Select Month:</label>
-                    <%# Use type="month" and ensure value is YYYY-MM %>
                     <input type="month" id="selected_date" name="selected_date" value="<%= selected_date.substring(0, 7) %>" required>
                 </div>
                 <div style="align-self: end;">
@@ -70,20 +113,19 @@
         </form>
 
         <% if (report_data && report_data.length > 0) { %>
-            <div class="chart-container">
+            <div class="chart-container" id="chartContainer">
                 <canvas id="ridePopularityChart"></canvas>
             </div>
 
-            <%# --- Calculate Grand Total for Percentages --- %>
             <% 
                 let grandTotal = 0;
                 report_data.forEach(row => grandTotal += parseInt(row.total_riders));
             %>
 
-            <%# --- Data Table with Ride Type --- %>
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Ride Name</th>
                         <th>Type</th>
                         <th>Location</th>
@@ -92,10 +134,18 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% report_data.forEach(row => { %>
-                        <tr>
-                            <td><%= row.ride_name %></td>
-                            <td><%= row.ride_type %></td> <%# --- NEW COLUMN --- %>
+                    <% report_data.forEach((row, index) => { %>
+                        <tr class="<%= index < 5 ? 'top-performer-row' : '' %>">
+                            <td>
+                                <%= row.public_ride_id.substring(0, 8).toUpperCase() %>
+                            </td>
+                            <td>
+                                <% if (index < 5) { %>
+                                    <span class="rank-badge">#<%= index + 1 %></span>
+                                <% } %>
+                                <%= row.ride_name %>
+                            </td>
+                            <td><%= row.ride_type %></td>
                             <td><%= row.location_name %></td>
                             <td><%= row.total_riders.toLocaleString() %></td>
                             <td>
@@ -107,7 +157,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="summary-row">
-                        <td colspan="3" style="text-align: right;"><strong>GRAND TOTAL:</strong></td>
+                        <td colspan="4" style="text-align: right;"><strong>GRAND TOTAL:</strong></td>
                         <td><strong><%= grandTotal.toLocaleString() %></strong></td>
                         <td><strong>100.0%</strong></td>
                     </tr>
@@ -119,17 +169,23 @@
                 const reportData = <%- JSON.stringify(report_data) %>;
                 const labels = reportData.map(item => `${item.ride_name} (${item.location_name})`);
                 const counts = reportData.map(item => item.total_riders);
-                
-                // Create a color palette for the bar chart
-                const colors = [
-                    'rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)',
-                    'rgba(220, 53, 69, 0.7)', 'rgba(111, 66, 193, 0.7)', 'rgba(23, 162, 184, 0.7)',
-                    'rgba(253, 126, 20, 0.7)'
-                ];
-                
-                const backgroundColors = counts.map((_, index) => colors[index % colors.length]);
+
+                // --- NEW: Dynamic Height Adjustment ---
+                const container = document.getElementById('chartContainer');
+                // Calculate height: Base padding (100px) + (40px per bar)
+                const calculatedHeight = 100 + (reportData.length * 40); 
+                container.style.height = `${calculatedHeight}px`;
+
+
+                // Color Logic: Red for Top 5, Grey for the rest
+                const backgroundColors = reportData.map((_, index) => 
+                    index < 5 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(108, 117, 125, 0.5)'
+                );
+                const borderColors = reportData.map((_, index) => 
+                    index < 5 ? 'rgba(220, 53, 69, 1)' : 'rgba(108, 117, 125, 1)'
+                );
+
                 const ctx = document.getElementById('ridePopularityChart').getContext('2d');
-                
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -138,21 +194,36 @@
                             label: 'Total Estimated Riders',
                             data: counts,
                             backgroundColor: backgroundColors,
-                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderColor: borderColors,
                             borderWidth: 1
                         }]
                     },
                     options: {
+                        indexAxis: 'y', // Horizontal Bar Chart
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: false, // Important for custom height
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Total Estimated Riders' } },
-                            x: { title: { display: true, text: 'Ride Name (Location)' } }
+                            x: { 
+                                beginAtZero: true, 
+                                title: { display: true, text: 'Total Estimated Riders' } 
+                            },
+                            y: { 
+                                title: { display: true, text: 'Ride Name (Location)' },
+                                ticks: {
+                                    autoSkip: false // --- NEW: Force all labels to show ---
+                                }
+                            }
                         },
                         plugins: {
                             title: { display: true, text: '<%= chartTitle %>', font: { size: 18 } },
                             legend: { display: false },
-                            tooltip: { callbacks: { label: function(context) { return `Riders: ${context.parsed.y}`; } } }
+                            tooltip: { 
+                                callbacks: { 
+                                    label: function(context) { 
+                                        return `Riders: ${context.parsed.x}`;
+                                    } 
+                                } 
+                            }
                         }
                     }
                 });

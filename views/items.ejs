@@ -1,50 +1,219 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Retail & Food Items</title>
     <style>
         body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
+        }
+
+        /* --- Stats Bar Styles --- */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1em;
+            margin-bottom: 1.5em;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1em;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #007bff;
+        }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+        }
+
+        /* --- Filter Bar Styles --- */
+        .filter-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 3fr 2fr 1fr;
+            gap: 1em;
+            align-items: flex-end;
+        }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
+            font-size: 0.9em; }
+        .filter-controls input, .filter-controls select {
+            width: 100%;
+            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+        }
+        .filter-buttons { display: flex; gap: 10px;
+        }
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
+        }
+        .btn-filter { background-color: #007bff;
+        }
+        .btn-filter:hover { background-color: #0056b3;
+        }
+        .btn-clear { background-color: #6c757d;
+        }
+        .btn-clear:hover { background-color: #5a6268;
+        }
+
+        /* --- Table Styles --- */
+        table { width: 100%;
+            border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left;
+            border-bottom: 1px solid #ddd; }
         th { background-color: #fd7e14; color: white;
- }
+        } /* Orange theme for retail */
+        
+        /* Sortable Header Links */
+        th.sortable a {
+            text-decoration: none;
+            color: white; display: flex; justify-content: space-between; align-items: center;
+        }
+        th.sortable a:hover { text-decoration: underline;
+        }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px;
+        }
+
         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
- color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+            color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Retail & Food Items</h1>
+
+        <%# --- STATS BAR --- %>
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3><%= counts.total || 0 %></h3>
+                <p>Total Items</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #28a745;"><%= counts.countFood || 0 %></h3>
+                <p>Food</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #17a2b8;"><%= counts.countSouvenir || 0 %></h3>
+                <p>Souvenirs</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #6f42c1;"><%= counts.countApparel || 0 %></h3>
+                <p>Apparel</p>
+            </div>
+        </div>
+
+        <%# --- FILTER BAR --- %>
+        <div class="filter-bar">
+            <form action="" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search Items</label>
+                        <input type="text" id="search" name="search" placeholder="Item Name, Summary, ID..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_type">Item Type</label>
+                        <select id="filter_type" name="filter_type">
+                            <option value="">All Types</option>
+                            <% types.forEach(t => { %>
+                                <option value="<%= t.item_type %>" <%= filters.type === t.item_type ? 'selected' : '' %>>
+                                    <%= t.item_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="?" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                
+                <%# Maintain sort state %>
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
         <a href="/items/new" class="add-button">Add New Item</a>
+
+        <%# --- SORT HELPER --- %>
+        <% 
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲'; 
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none';
+                        indicator = '▼';
+                    }
+                }
+                let href = `?search=${encodeURIComponent(search)}`;
+                if (filters.type) href += `&filter_type=${encodeURIComponent(filters.type)}`;
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+                return { href, indicator };
+            };
+        %>
+
         <table>
             <thead>
                 <tr>
-                   <th>Item Name</th>
-                    <th>Type</th>
-                    <th>Price</th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('id').href %>">
+                            <span>ID</span> <span class="sort-indicator"><%= getSortState('id').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('name').href %>">
+                            <span>Item Name</span> <span class="sort-indicator"><%= getSortState('name').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('type').href %>">
+                            <span>Type</span> <span class="sort-indicator"><%= getSortState('type').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('price').href %>">
+                            <span>Price</span> <span class="sort-indicator"><%= getSortState('price').indicator %></span>
+                        </a>
+                    </th>
                     <th>Summary</th>
                 </tr>
             </thead>
-     <tbody>
+            <tbody>
+                <% if (items.length === 0) { %>
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2em;">No items found matching criteria.</td>
+                    </tr>
+                <% } %>
                 <% items.forEach(item => { %>
                     <tr>
+                        <td><%= item.public_item_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= item.item_name %></td>
                         <td><%= item.item_type %></td>
-     <td>$<%= parseFloat(item.price).toFixed(2) %></td>
+                        <td>$<%= parseFloat(item.price).toFixed(2) %></td>
                         <td><%= item.summary %></td>
                     </tr>
-                <% });
- %>
+                <% }); %>
             </tbody>
         </table>
     </div>

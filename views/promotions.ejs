@@ -4,39 +4,96 @@
     <meta charset="UTF-8">
     <title>Event Promotions</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
         
         /* Stats Bar */
-        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
-        .stat-card { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center; }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #6f42c1; } /* Purple for promos */
-        .stat-card h3.active { color: #28a745; }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+        .stats-bar { display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
+        .stat-card { background-color: #f8f9fa;
+            border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center;
+        }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #6f42c1;
+        } /* Purple for promos */
+        .stat-card h3.active { color: #28a745;
+        }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+        }
 
         /* Filter Bar */
-        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
-        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em; align-items: flex-end; }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
-        .filter-controls input, .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .filter-btn { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; display: inline-block; }
-        .btn-filter { background-color: #007bff; }
-        .btn-clear { background-color: #6c757d; }
+        .filter-bar { background-color: #f8f9fa;
+            border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
+        }
+        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em;
+            align-items: flex-end; }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
+            font-size: 0.9em; }
+        .filter-controls input, .filter-controls select { width: 100%; padding: 10px;
+            border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .filter-btn { width: 100%;
+            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; display: inline-block;
+        }
+        .btn-filter { background-color: #007bff;
+        }
+        .btn-clear { background-color: #6c757d;
+        }
 
         /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #6f42c1; color: white; }
-        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; }
-        .action-btn { padding: 6px 12px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
-        .action-btn:hover { background-color: #0056b3; }
+        table { width: 100%;
+            border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left;
+            border-bottom: 1px solid #ddd; }
+        th { background-color: #6f42c1; color: white;
+        }
+        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between;
+        }
         
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        /* --- NEW ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
+        /* Top "Create" Button Style */
+        .action-btn { padding: 6px 12px; background-color: #007bff; color: white; text-decoration: none;
+            border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .action-btn:hover { background-color: #0056b3;
+        }
         
-        .active-badge { color: #28a745; font-weight: bold; font-size: 0.9em; border: 1px solid #28a745; padding: 2px 6px; border-radius: 4px; }
+        .message { padding: 1em;
+            border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724;
+        }
+        .error { background-color: #f8d7da; color: #721c24;
+        }
+        
+        .active-badge { color: #28a745;
+            font-weight: bold; font-size: 0.9em; border: 1px solid #28a745; padding: 2px 6px; border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +109,6 @@
                 <h3><%= counts.total || 0 %></h3>
                 <p>Total Promotions</p>
             </div>
-            <%# UPDATED: Changed to "Remaining" count %>
             <div class="stat-card">
                 <h3 class="active"><%= counts.remaining_count || 0 %></h3>
                 <p>Remaining in <%= currentYear %></p>
@@ -117,18 +173,11 @@
             <thead>
                 <tr>
                     <th class="sortable"><a href="/promotions<%= getSortLink('name').href %>"><span>Event Name</span><span><%= getSortLink('name').icon %></span></a></th>
-                    
                     <th class="sortable"><a href="/promotions<%= getSortLink('type').href %>"><span>Type</span><span><%= getSortLink('type').icon %></span></a></th>
-                    
                     <th class="sortable"><a href="/promotions<%= getSortLink('start_date').href %>"><span>Start Date</span><span><%= getSortLink('start_date').icon %></span></a></th>
-                    
                     <th class="sortable"><a href="/promotions<%= getSortLink('end_date').href %>"><span>End Date</span><span><%= getSortLink('end_date').icon %></span></a></th>
-                    
                     <th class="sortable"><a href="/promotions<%= getSortLink('discount').href %>"><span>Discount</span><span><%= getSortLink('discount').icon %></span></a></th>
-                    
-                    <%# REMOVED: Summary Column %>
-                    
-                    <th>Action</th>
+                    <th style="min-width: 100px;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -147,11 +196,9 @@
                         <td><%= promo.start_date.toISOString().substring(0, 10) %></td>
                         <td><%= promo.end_date.toISOString().substring(0, 10) %></td>
                         <td><%= parseFloat(promo.discount_percent).toFixed(2) %>%</td>
-                        
-                        <%# REMOVED: Summary Data Cell %>
-                        
                         <td>
-                            <a href="/promotions/edit/<%= promo.event_id %>?returnQuery=<%= encodeURIComponent(currentQueryString) %>" class="action-btn">Edit</a>
+                            <%# CHANGED: New button style %>
+                            <a href="/promotions/edit/<%= promo.event_id %>?returnQuery=<%= encodeURIComponent(currentQueryString) %>" class="btn-action btn-edit">Edit</a>
                         </td>
                     </tr>
                 <% }); %>

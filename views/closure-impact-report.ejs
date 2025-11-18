@@ -3,27 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <title>Closure Impact Report</title>
+    <%# Link to Chart.js library %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-grid input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #dc3545; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px;
+            background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em;
+            align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold;
+        }
+        .form-grid input[type="number"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #007bff;
+            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
+        }
+        button:hover { background-color: #0056b3;
+        }
+        
+        /* --- Charts Layout --- */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2em;
+            margin-bottom: 3em;
+            margin-top: 1em;
+        }
+        .chart-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            /* Removed min-height to rely on inner wrapper */
+        }
+        .chart-card h3 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.1em;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* --- NEW: Wrapper to constrain Chart.js height --- */
+        .chart-wrapper {
+            position: relative;
+            height: 300px; /* Fixed height prevents infinite loop */
+            width: 100%;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+        }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #dc3545; color: white;
+        }
+        tr:nth-child(even) { background-color: #f9f9f9;
+        }
+        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
+            margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Closure Impact Report</h1>
-        <p>This report shows all park closures in a given year and the impact on visitor attendance and total riders.</p>
+        <p>This report analyzes park closures, estimating lost attendance based on historical averages for the same day of the week.</p>
 
         <% if (typeof error !== 'undefined' && error) { %>
             <p class="error"><%= error %></p>
@@ -46,7 +99,24 @@
         </form>
 
         <% if (report_data && report_data.length > 0) { %>
-            <h2>Report for <%= chartTitle %></h2>
+            <h2>Analysis for <%= chartTitle %></h2>
+            
+            <%# --- VISUALIZATIONS --- %>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Total Visitors Lost by Weather Type</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="lossByTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Impact Magnitude per Closure (Lost Visitors)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="lossTimelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <%# --- Helper function to format numbers --- %>
             <%
                 const formatImpact = (num) => {
@@ -67,11 +137,11 @@
                         <th>Closure Date</th>
                         <th>Weather Type</th>
                         <th>Actual Visitors</th>
-                        <th>Typical Visitors on the Same Day of Week</th>
-                        <th>Visitor Impact (Loss/Gain)</th>
-                        <th>Actual Total Riders</th>
-                        <th>Typical Total Riders on the Same Day of Week</th>
-                        <th>Ride Impact (Loss/Gain)</th>
+                        <th>Typical Visitors</th>
+                        <th>Impact (Loss/Gain)</th>
+                        <th>Actual Rides</th>
+                        <th>Typical Rides</th>
+                        <th>Impact (Loss/Gain)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,6 +163,99 @@
                     <% }); %>
                 </tbody>
             </table>
+
+            <script>
+                // --- DATA PREPARATION ---
+                const rawData = <%- JSON.stringify(report_data) %>;
+                
+                // 1. Prepare Data for "Loss by Weather Type" (Doughnut)
+                const lossByType = {};
+                const timelineLabels = [];
+                const timelineData = [];
+                
+                rawData.forEach(event => {
+                    // Calculate Visitor Loss (Benchmark - Actual)
+                    // Note: If actual > benchmark (rare gain), we treat loss as 0 for the chart to avoid confusion
+                    const loss = Math.max(0, Math.round(event.benchmark_visitors - event.actual_visitors));
+                    
+                    // Aggregate for Pie Chart
+                    if (!lossByType[event.weather_type]) {
+                        lossByType[event.weather_type] = 0;
+                    }
+                    lossByType[event.weather_type] += loss;
+                    
+                    // Prepare for Timeline Chart
+                    timelineLabels.push(`${new Date(event.event_date).toLocaleDateString()} (${event.weather_type})`);
+                    timelineData.push(loss);
+                });
+
+                // --- CHART 1: DOUGHNUT CHART ---
+                const ctxType = document.getElementById('lossByTypeChart').getContext('2d');
+                new Chart(ctxType, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(lossByType),
+                        datasets: [{
+                            data: Object.values(lossByType),
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Lost Visitors: ${context.parsed.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // --- CHART 2: BAR CHART (TIMELINE) ---
+                const ctxTime = document.getElementById('lossTimelineChart').getContext('2d');
+                new Chart(ctxTime, {
+                    type: 'bar',
+                    data: {
+                        labels: timelineLabels,
+                        datasets: [{
+                            label: 'Estimated Lost Visitors',
+                            data: timelineData,
+                            backgroundColor: 'rgba(220, 53, 69, 0.6)', // Bootstrap Danger Red
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Visitors Lost (Count)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Impact: -${context.parsed.y.toLocaleString()} visitors`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            </script>
+
         <% } else if (report_data && report_data.length === 0) { %>
             <p style="text-align: center; font-weight: bold; margin-top: 2em;">No park closure data found for the selected year.</p>
         <% } %>

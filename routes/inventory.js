@@ -15,14 +15,70 @@ const {
 router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
-        let queryParams = [];
-        let locationFilter = "";
+        const { search, sort, dir, filter_vendor, filter_status } = req.query;
 
+        let whereClauses = [];
+        let params = [];
+
+        // 1. Base Security Filter (Location Scope)
         if (role === 'Location Manager' || role === 'Staff') {
-            locationFilter = 'WHERE v.location_id = ?';
-            queryParams.push(locationId);
+            whereClauses.push('v.location_id = ?');
+            params.push(locationId);
         }
 
+        // 2. Search Filter
+        if (search) {
+            const term = `%${search}%`;
+            whereClauses.push('(v.vendor_name LIKE ? OR it.item_name LIKE ?)');
+            params.push(term, term);
+        }
+
+        // 3. Dropdown Filters
+        if (filter_vendor) {
+            whereClauses.push('v.public_vendor_id = ?');
+            params.push(filter_vendor);
+        }
+
+        // 4. Status Filter Logic
+        // We handle this by adding specific conditions to the WHERE clause
+        // Note: 'ir' is the joined inventory_requests table
+        if (filter_status === 'low_stock') {
+            whereClauses.push('i.count < 10');
+        } else if (filter_status === 'pending') {
+            whereClauses.push('ir.request_id IS NOT NULL');
+        } else if (filter_status === 'ok') {
+            whereClauses.push('i.count >= 10 AND ir.request_id IS NULL');
+        }
+
+        let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        // 5. Stats Query
+        const statsQuery = `
+            SELECT
+                COUNT(*) as total_records,
+                SUM(CASE WHEN i.count < 10 THEN 1 ELSE 0 END) as low_stock_count,
+                SUM(CASE WHEN ir.request_id IS NOT NULL THEN 1 ELSE 0 END) as pending_count
+            FROM inventory i
+            JOIN vendors v ON i.vendor_id = v.vendor_id
+            JOIN item it ON i.item_id = it.item_id
+            LEFT JOIN inventory_requests ir ON v.vendor_id = ir.vendor_id AND it.item_id = ir.item_id AND ir.status = 'Pending'
+            ${whereQuery}
+        `;
+        const [statsResult] = await pool.query(statsQuery, params);
+        const counts = statsResult[0];
+
+        // 6. Sorting Logic
+        let orderBy = 'ORDER BY v.vendor_name ASC, it.item_name ASC'; // Default
+        if (sort && dir) {
+            const d = dir === 'desc' ? 'DESC' : 'ASC';
+            switch (sort) {
+                case 'vendor': orderBy = `ORDER BY v.vendor_name ${d}`; break;
+                case 'item': orderBy = `ORDER BY it.item_name ${d}`; break;
+                case 'count': orderBy = `ORDER BY i.count ${d}`; break;
+            }
+        }
+
+        // 7. Main Data Query
         const query = `
             SELECT 
                 v.vendor_id, v.vendor_name, v.public_vendor_id,
@@ -35,12 +91,36 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
             JOIN vendors v ON i.vendor_id = v.vendor_id
             JOIN item it ON i.item_id = it.item_id
             LEFT JOIN inventory_requests ir ON v.vendor_id = ir.vendor_id AND it.item_id = ir.item_id AND ir.status = 'Pending'
-            ${locationFilter}
-            ORDER BY v.vendor_name, it.item_name;
+            ${whereQuery}
+            ${orderBy}
         `;
 
-        const [inventory] = await pool.query(query, queryParams);
-        res.render('inventory', { inventory: inventory });
+        const [inventory] = await pool.query(query, params);
+
+        // 8. Fetch Vendors for Dropdown
+        let vendorQuery = 'SELECT public_vendor_id, vendor_name FROM vendors';
+        let vendorParams = [];
+        if (role === 'Location Manager' || role === 'Staff') {
+            vendorQuery += ' WHERE location_id = ?';
+            vendorParams.push(locationId);
+        }
+        vendorQuery += ' ORDER BY vendor_name';
+        const [vendors] = await pool.query(vendorQuery, vendorParams);
+
+        res.render('inventory', {
+            inventory: inventory,
+            counts: counts,
+            vendors: vendors,
+            search: search || "",
+            filters: {
+                vendor: filter_vendor || "",
+                status: filter_status || ""
+            },
+            currentSort: sort || "",
+            currentDir: dir || "",
+            role: role // Pass role to view explicitly if needed
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching inventory');
@@ -144,7 +224,7 @@ router.get('/add', isAuthenticated, canManageRetail, async (req, res) => {
 
 // POST /inventory/add
 router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id, public_item_id, count } = req.body;
+    const { public_vendor_id, public_item_id, count, min_count, def_count } = req.body; // CHANGED: Added min/def
     const { role, locationId } = req.session.user;
 
     try {
@@ -157,8 +237,21 @@ router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
 
         if (role === 'Location Manager' && vendor.location_id !== locationId) return res.status(403).send("Forbidden");
 
-        const sql = `INSERT INTO inventory (vendor_id, item_id, count) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE count = VALUES(count)`;
-        await pool.query(sql, [vendor.vendor_id, item.item_id, count]);
+        // CHANGED: Insert min_count and def_count, and update them on duplicate
+        const sql = `
+            INSERT INTO inventory (vendor_id, item_id, count, min_count, def_count) 
+            VALUES (?, ?, ?, ?, ?) 
+            ON DUPLICATE KEY UPDATE 
+                count = VALUES(count),
+                min_count = VALUES(min_count),
+                def_count = VALUES(def_count)
+        `;
+
+        // Use defaults if not provided (though HTML required attribute handles this mostly)
+        const minVal = parseInt(min_count) || 10;
+        const defVal = parseInt(def_count) || 50;
+
+        await pool.query(sql, [vendor.vendor_id, item.item_id, count, minVal, defVal]);
 
         res.redirect(`/inventory/vendor/${vendor.public_vendor_id}`);
 

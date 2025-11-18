@@ -4,16 +4,34 @@
     <meta charset="UTF-8">
     <title>Add Item to Shelf</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .error { color: red; font-weight: bold; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
-        .cancel-link:hover { text-decoration: underline; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; }
+        h1 { color: #444; text-align: center; margin-top: 1em;
+        }
+        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em;
+            border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        div { margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-weight: bold;
+        }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc; }
+        button { padding: 12px 20px; background-color: #28a745;
+            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
+        }
+        .error { color: red; font-weight: bold;
+        }
+        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+        }
+        .cancel-link:hover { text-decoration: underline;
+        }
+
+        /* --- NEW: Small help text --- */
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +62,20 @@
         <div>
             <label for="count">Initial Shelf Count:</label>
             <input type="number" id="count" name="count" min="0" value="0" required>
+        </div>
+
+        <%# --- NEW FIELDS FOR AUTOMATION --- %>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label for="min_count">Low Stock Alert:</label>
+                <input type="number" id="min_count" name="min_count" min="1" value="10" required>
+                <div class="help-text">Trigger restock when below this.</div>
+            </div>
+            <div>
+                <label for="def_count">Auto-Restock To:</label>
+                <input type="number" id="def_count" name="def_count" min="1" value="50" required>
+                <div class="help-text">Target stock level.</div>
+            </div>
         </div>
         <br>
         <button type="submit">Add to Shelf</button>

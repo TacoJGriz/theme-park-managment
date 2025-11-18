@@ -5,57 +5,68 @@
     <title>Manage Ticket Types</title>
     <style>
         body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
+            margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #28a745; color: white;
- } /* Green theme for tickets */
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
- color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        
-        .action-link { text-decoration: none;
- color: #007bff; font-weight: bold; }
-        .disabled-link {
-            color: #999;
- text-decoration: none;
-            cursor: not-allowed;
-            pointer-events: none;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-
-        .toggle-form { display: inline-block; margin-left: 10px;
- }
-        .toggle-form button { background: none; border: none; cursor: pointer; font-weight: bold;
- text-decoration: underline; }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+        }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #28a745; color: white;
+        } /* Green theme for tickets */
+        tr:nth-child(even) { background-color: #f9f9f9;
+        }
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
+            color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         
-        .status-active { color: #28a745;
- }
-        .status-inactive { color: #dc3545;
- }
-        .toggle-form .status-active { color: #dc3545;
- } /* Deactivate link */
-        .toggle-form .status-inactive { color: #28a745;
- } /* Activate link */
+        .disabled-link { color: #999; text-decoration: none; cursor: not-allowed; pointer-events: none;
+        }
+        .toggle-form { display: inline-block; width: 100%; margin: 0; }
         
-        .type-system { font-weight: bold;
- color: #6f42c1; }
-        .type-standard { color: #333;
- }
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-inactive { color: #dc3545; font-weight: bold; }
+        
+        .type-system { font-weight: bold; color: #6f42c1; }
+        .type-standard { color: #333; }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold;
- }
-        .error { color: #d9534f; background-color: #f2dede;
- }
-        .success { color: #155724; background-color: #d4edda;
- }
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
+        .error { color: #d9534f; background-color: #f2dede; }
+        .success { color: #155724; background-color: #d4edda; }
+
+        /* --- ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
+        .btn-deactivate { color: #dc3545; border-color: #dc3545; }
+        .btn-deactivate:hover { background-color: #dc3545; color: white; }
+
+        .btn-activate { color: #28a745; border-color: #28a745; }
+        .btn-activate:hover { background-color: #28a745; color: white; }
+        
+        .btn-disabled { color: #999; border-color: #ccc; background-color: #e9ecef; cursor: not-allowed; pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -68,68 +79,55 @@
 
         <a href="/ticket-types/new" class="add-button">Add New Ticket Type</a>
         
-        
- <table>
+        <table>
             <thead>
                 <tr>
+                    <th>ID</th> <%# --- ADDED COLUMN --- %>
                     <th>Type Name</th>
                     <th>Base Price</th>
                     <th>Type</th>
-          
-           <th>Status</th>
-                    <th>Actions</th>
+                    <th>Status</th>
+                    <th style="min-width: 120px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% types.forEach(type => { %>
-          
-           <tr>
+                    <tr>
+                        <%# --- ADDED DATA CELL --- %>
+                        <td><%= type.public_ticket_type_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= type.type_name %></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
                         <td>
-              
-               <% if (type.is_member_type) { %>
+                           <% if (type.is_member_type) { %>
                                 <span class="type-system">Member (System)</span>
                             <% } else { %>
-                
-                 <span class="type-standard">Standard</span>
+                                 <span class="type-standard">Standard</span>
                             <% } %>
                         </td>
                         <td>
-     
-                        <% if (type.is_active) { %>
+                            <% if (type.is_active) { %>
                                 <span class="status-active">Active</span>
                             <% } else { %>
-        
-                         <span class="status-inactive">Inactive</span>
+                                 <span class="status-inactive">Inactive</span>
                             <% } %>
                         </td>
-                     
-     <td>
-                            <%# CHANGED: Link now uses public_ticket_type_id %>
-                            <a href="/ticket-types/edit/<%= type.public_ticket_type_id %>" class="action-link <% if (type.is_member_type) { %>disabled-link<% } %>">Edit</a>
+                        <td>
+                            <a href="/ticket-types/edit/<%= type.public_ticket_type_id %>" class="btn-action btn-edit <% if (type.is_member_type) { %>btn-disabled<% } %>">Edit</a>
                             
-                            <% 
- if (!type.is_member_type) { %>
-                                <%# CHANGED: Action now uses public_ticket_type_id %>
-                                <form class="toggle-form" action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST" onsubmit="return confirm('Are you sure?
- This will hide the ticket type from the logging page.');">
+                            <% if (!type.is_member_type) { %>
+                                <form class="toggle-form" action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST" onsubmit="return confirm('Are you sure? This will hide the ticket type from the logging page.');">
                                     <% if (type.is_active) { %>
-                                        <button type="submit" class="status-active">Deactivate</button>
-         
-                             <% } else { %>
-                                        <button type="submit" class="status-inactive">Activate</button>
-                           
-          <% } %>
+                                        <button type="submit" class="btn-action btn-deactivate">Deactivate</button>
+                                     <% } else { %>
+                                        <button type="submit" class="btn-action btn-activate">Activate</button>
+                                    <% } %>
                                 </form>
                             <% } else { %>
-                         
-         <span class="disabled-link" style="margin-left: 10px;">(System)</span>
+                                 <span class="btn-action btn-disabled">(System)</span>
                             <% } %>
                         </td>
                     </tr>
-                
- <% }); %>
+                 <% }); %>
             </tbody>
         </table>
     </div>

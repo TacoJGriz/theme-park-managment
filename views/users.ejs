@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <title>Park Employees</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
         
         /* --- Stats Bar Styles --- */
         .stats-bar {
@@ -22,10 +26,14 @@
             border-radius: 8px;
             text-align: center;
         }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff; }
-        .stat-card h3.active { color: #28a745; }
-        .stat-card h3.inactive { color: #dc3545; }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff;
+        }
+        .stat-card h3.active { color: #28a745;
+        }
+        .stat-card h3.inactive { color: #dc3545;
+        }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+        }
 
         /* --- Filter Bar Styles --- */
         .filter-bar {
@@ -41,42 +49,93 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
+            font-size: 0.9em; }
         .filter-controls input, .filter-controls select {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+            width: 100%;
+            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
         }
-        .filter-buttons { display: flex; gap: 10px; }
+        .filter-buttons { display: flex; gap: 10px;
+        }
         .filter-btn {
-            flex-grow: 1; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
+            flex-grow: 1;
+            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
         }
-        .btn-filter { background-color: #007bff; }
-        .btn-filter:hover { background-color: #0056b3; }
-        .btn-clear { background-color: #6c757d; }
-        .btn-clear:hover { background-color: #5a6268; }
+        .btn-filter { background-color: #007bff;
+        }
+        .btn-filter:hover { background-color: #0056b3;
+        }
+        .btn-clear { background-color: #6c757d;
+        }
+        .btn-clear:hover { background-color: #5a6268;
+        }
 
         /* --- Table Styles --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white; }
+        table { width: 100%;
+            border-collapse: collapse; margin-top: 1.5em; }
+        th, td { padding: 12px; text-align: left;
+            border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white;
+        }
         
         /* Sortable Header Links */
         th.sortable a {
-            text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center;
+            text-decoration: none;
+            color: white; display: flex; justify-content: space-between; align-items: center;
         }
-        th.sortable a:hover { text-decoration: underline; }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+        th.sortable a:hover { text-decoration: underline;
+        }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px;
+        }
 
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:nth-child(even) { background-color: #f9f9f9;
+        }
         tr:hover { background-color: #f1f1f1;}
         
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
-        .action-link:hover { text-decoration: underline;}
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838; }
+        .add-button { display: inline-block;
+            margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;
+        }
+        .add-button:hover { background-color: #218838;
+        }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
-        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold;
+            border: 1px solid transparent; }
+        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb;
+        }
+        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
+        }
+
+        /* --- NEW ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: block; /* Stack buttons vertically */
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
+        .btn-reset {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-reset:hover { background-color: #dc3545; color: white; }
+
     </style>
 </head>
 <body>
@@ -116,6 +175,7 @@
         <div class="filter-bar">
             <form action="" method="GET">
                 <div class="filter-controls">
+                    
                     <div>
                         <label for="search">Search</label>
                         <input type="text" id="search" name="search" placeholder="Name, ID, Email..." value="<%= search %>">
@@ -192,7 +252,6 @@
                 if (filters.role) href += `&filter_role=${encodeURIComponent(filters.role)}`;
                 if (filters.location) href += `&filter_location=${encodeURIComponent(filters.location)}`;
                 if (filters.status) href += `&filter_status=${encodeURIComponent(filters.status)}`;
-                
                 if (nextDir !== 'none') {
                     href += `&sort=${column}&dir=${nextDir}`;
                 }
@@ -233,7 +292,7 @@
                             <span>Status</span> <span class="sort-indicator"><%= getSortState('status').indicator %></span>
                         </a>
                     </th>
-                    <th>Actions</th>
+                    <th style="min-width: 160px;">Actions</th>
                 </tr>
             </thead>
            <tbody>
@@ -266,10 +325,10 @@
                         </td>
                         <td>
                             <% if (user.role === 'Admin') { %>
-                                <a href="/employees/edit/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="action-link">Edit</a>
-                                <a href="/employees/reset-password/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="action-link" style="color: #dc3545;">Reset Password</a>
+                                <a href="/employees/edit/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="btn-action btn-edit">Edit</a>
+                                <a href="/employees/reset-password/<%= targetUser.public_employee_id %><%= currentQueryString ? '?' + currentQueryString : '' %>" class="btn-action btn-reset">Reset Password</a>
                             <% } else { %>
-                                <span style="color: #6c757d;">No Access</span>
+                                <span style="color: #6c757d; font-style: italic;">No Access</span>
                             <% } %>
                         </td>
                     </tr>

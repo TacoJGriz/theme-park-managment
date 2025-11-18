@@ -278,6 +278,8 @@ CREATE TABLE inventory (
     item_id INT NOT NULL,
     vendor_id INT NOT NULL,
     count INT,
+    min_count INT DEFAULT 10, -- Threshold for trigger
+    def_count INT DEFAULT 50, -- Default restock amount
     PRIMARY KEY (item_id , vendor_id),
     FOREIGN KEY (item_id)
         REFERENCES item (item_id),
@@ -401,7 +403,7 @@ CREATE TABLE prepaid_tickets (
 
 -- --- AUTOMATION: Annual Promotion Renewal ---
 -- Ensure the scheduler is on (Requires Superuser privileges)
-SET GLOBAL event_scheduler = ON;
+-- SET GLOBAL event_scheduler = ON;
 
 DROP EVENT IF EXISTS AutoRenewAnnualPromotions;
 
@@ -409,17 +411,76 @@ DELIMITER //
 
 CREATE EVENT AutoRenewAnnualPromotions
 ON SCHEDULE EVERY 1 DAY
-STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY) -- Runs daily at midnight
+STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY)
 DO
 BEGIN
-    -- Update recurring promotions that have ended
     UPDATE event_promotions
     SET 
         start_date = DATE_ADD(start_date, INTERVAL 1 YEAR),
         end_date = DATE_ADD(end_date, INTERVAL 1 YEAR)
     WHERE 
-        end_date < CURDATE()      -- Promotion has expired
-        AND is_recurring = TRUE;  -- Flagged to renew
+        end_date < CURDATE() AND is_recurring = TRUE;
 END //
+
+DELIMITER ;
+
+
+-- --- TRIGGER 1: Auto-Restock Inventory (Adapted for Web App) ---
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS auto_restock $$
+
+CREATE TRIGGER auto_restock
+AFTER UPDATE ON inventory
+FOR EACH ROW
+BEGIN
+    DECLARE request_check INT DEFAULT 0;
+    DECLARE existing_request_id INT;
+
+    -- Only proceed if thresholds are set and current stock is below minimum
+    IF NEW.min_count IS NOT NULL AND NEW.def_count IS NOT NULL AND (NEW.count < NEW.min_count) THEN
+        
+        -- Check if there is already a PENDING request for this exact Item + Vendor
+        SELECT request_id INTO existing_request_id
+        FROM inventory_requests
+        WHERE status = 'Pending'
+          AND item_id = NEW.item_id 
+          AND vendor_id = NEW.vendor_id
+        LIMIT 1;
+
+        -- SCENARIO 1: No pending request exists -> Create a NEW one
+        IF existing_request_id IS NULL THEN
+            INSERT INTO inventory_requests (
+                public_request_id, 
+                vendor_id, 
+                item_id, 
+                requested_count, 
+                requested_by_id, 
+                location_id, 
+                request_date, 
+                status
+            )
+            SELECT 
+                UUID(), -- *** CRITICAL: Generate UUID for Web App Buttons ***
+                NEW.vendor_id,
+                NEW.item_id,
+                (NEW.def_count - NEW.count),
+                NULL, -- System generated, so no employee ID
+                V.location_id,
+                CURDATE(),
+                'Pending'
+            FROM vendors V 
+            WHERE V.vendor_id = NEW.vendor_id;
+
+        -- SCENARIO 2: Pending request exists -> Update it if count dropped further
+        -- This prevents multiple spam requests for the same item
+        ELSEIF existing_request_id IS NOT NULL AND NEW.count < OLD.count THEN
+            UPDATE inventory_requests
+            SET requested_count = requested_count + (OLD.count - NEW.count)
+            WHERE request_id = existing_request_id;
+        END IF;
+
+    END IF; 
+END$$
 
 DELIMITER ;

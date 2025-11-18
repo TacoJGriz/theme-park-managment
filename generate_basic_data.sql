@@ -263,31 +263,32 @@ INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 
 -- 10. INVENTORY
 -- Populate inventory (Ensuring at least 2 items per vendor)
-INSERT INTO inventory (item_id, vendor_id, count) VALUES
+-- NEW: Added min_count (Low Stock Threshold) and def_count (Target Restock)
+INSERT INTO inventory (item_id, vendor_id, count, min_count, def_count) VALUES
 -- Frontierland
-(1, 1, 200), (2, 1, 200),   -- Pecos Bill: Burgers, Tenders
-(5, 2, 300), (2, 2, 150),   -- Golden Horseshoe: Churros, Tenders
+(1, 1, 200, 50, 300), (2, 1, 200, 50, 300),   -- Pecos Bill: Burgers, Tenders (High Food Volume)
+(5, 2, 300, 75, 400), (2, 2, 150, 40, 200),   -- Golden Horseshoe: Churros, Tenders
 -- Tomorrowland
-(1, 3, 250), (2, 3, 250),   -- Cosmic Rays: Burgers, Tenders
-(5, 4, 200), (4, 4, 100),   -- Lunching Pad: Churros, Blue Milk (Sci-Fi drink)
+(1, 3, 250, 60, 350), (2, 3, 250, 60, 350),   -- Cosmic Rays: Burgers, Tenders
+(5, 4, 200, 50, 300), (4, 4, 100, 20, 150),   -- Lunching Pad: Churros, Blue Milk
 -- Fantasyland
-(1, 5, 150), (2, 5, 150),   -- Pinocchio: Burgers, Tenders
-(2, 6, 100), (3, 6, 300),   -- Friars Nook: Tenders, Dole Whip
+(1, 5, 150, 40, 250), (2, 5, 150, 40, 250),   -- Pinocchio: Burgers, Tenders
+(2, 6, 100, 30, 150), (3, 6, 300, 75, 400),   -- Friars Nook: Tenders, Dole Whip
 -- Main Entrance
-(8, 7, 500), (10, 7, 1000), (6, 7, 300), -- Emporium: Ears, Ponchos, T-Shirts
-(5, 8, 150), (3, 8, 200),   -- Main St Bakery: Churro, Dole Whip
+(8, 7, 500, 100, 600), (10, 7, 1000, 150, 800), (6, 7, 300, 50, 400), -- Emporium: Ears, Ponchos (High min/def), T-Shirts
+(5, 8, 150, 40, 200), (3, 8, 200, 50, 250),   -- Main St Bakery: Churro, Dole Whip
 -- Adventureland
-(3, 9, 400), (5, 9, 200),   -- Sunshine Tree: Dole Whip, Churro
-(3, 10, 500), (10, 10, 100),-- Aloha Isle: Dole Whip, Ponchos
+(3, 9, 400, 100, 500), (5, 9, 200, 50, 300),   -- Sunshine Tree: Dole Whip, Churro
+(3, 10, 500, 100, 600), (10, 10, 100, 20, 150),-- Aloha Isle: Dole Whip, Ponchos
 -- Liberty Square
-(2, 11, 150), (1, 11, 150), -- Columbia Harbour: Tenders, Burgers
-(1, 12, 200), (2, 12, 200), -- Liberty Tree: Burgers, Tenders
+(2, 11, 150, 40, 250), (1, 11, 150, 40, 250), -- Columbia Harbour: Tenders, Burgers
+(1, 12, 200, 50, 300), (2, 12, 200, 50, 300), -- Liberty Tree: Burgers, Tenders
 -- Toontown
-(8, 13, 300), (10, 13, 300),-- Gag Factory: Ears, Ponchos
-(3, 14, 100), (5, 14, 100), -- Farmers Market: Dole Whip, Churros
+(8, 13, 300, 75, 400), (10, 13, 300, 75, 400),-- Gag Factory: Ears, Ponchos
+(3, 14, 100, 25, 150), (5, 14, 100, 25, 150), -- Farmers Market: Dole Whip, Churros
 -- Galaxys Edge
-(9, 15, 50), (4, 15, 200),  -- Docking Bay 7: Light Sabers, Blue Milk
-(4, 16, 300), (5, 16, 150); -- Milk Stand: Blue Milk, Churros
+(9, 15, 50, 5, 50), (4, 15, 200, 30, 250),    -- Docking Bay 7: Light Sabers (Low min/def), Blue Milk
+(4, 16, 300, 50, 350), (5, 16, 150, 30, 200); -- Milk Stand: Blue Milk, Churros
 
 -- 11. PENDING REQUESTS (Updated for new IDs)
 -- Wage change request for Donald Duck (ID 16, Staff at Main Entrance) requested by Mickey (ID 6)

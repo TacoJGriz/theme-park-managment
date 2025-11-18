@@ -8,6 +8,11 @@
 	color: white;
 	margin-bottom: 1em;
 	min-height: 50px;
+	/* --- NEW: Sticky Header Styles --- */
+	position: sticky;
+	top: 0;
+	z-index: 1000; /* Ensures it stays on top of tables/content */
+	box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Optional: Adds a shadow so you see where it ends */
 	}
 	.nav-links {
 	display: flex;
@@ -113,7 +118,6 @@
 					<% } %>
 					<a href="/vendors">Vendors</a>
 					<a href="/map">Interactive Map</a>
-					<%# --- NEW LINK ADDED HERE --- %>
 
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 					<a href="/promotions">Promotions</a>

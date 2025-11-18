@@ -139,7 +139,7 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
         let whereClauses = [];
         let params = [];
 
-        if (role === 'Location Manager') {
+        if (role === 'Location Manager' || role === 'Staff') {
             whereClauses.push('v.location_id = ?');
             params.push(locationId);
         }

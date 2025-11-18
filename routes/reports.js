@@ -197,13 +197,12 @@ router.post('/attendance', isAuthenticated, canViewReports, async (req, res) => 
 // --- GET ROUTE FOR RIDE POPULARITY ---
 router.get('/ride-popularity', isAuthenticated, canViewReports, async (req, res) => {
     try {
-        // Default date to today
         const defaultDate = new Date().toISOString().substring(0, 10);
 
         res.render('ride-popularity-report', {
             selected_date: defaultDate,
-            report_data: null, // No data on initial load
-            chartTitle: 'Ride Popularity Report', // Default title
+            report_data: null,
+            chartTitle: 'Ride Popularity Report',
             error: null
         });
     } catch (error) {
@@ -222,38 +221,34 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
     let { selected_date } = req.body;
 
     try {
-        // Ensure we have a full date string for the helper function
         const dateForHelper = selected_date.length === 7 ? selected_date + '-01' : selected_date;
-
-        // 1. Get Date Range
         const { startDate, endDate } = getReportSettings(dateForHelper, 'month');
 
-        // 2. Create custom title
         const monthYearFormat = new Date(dateForHelper + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         const chartTitle = `Total Riders for ${monthYearFormat}`;
 
-        // 3. Build SQL Query (Now including ride_type)
+        // UPDATED QUERY: Added r.public_ride_id
         const reportQuery = `
             SELECT 
+                r.public_ride_id, -- ADDED
                 r.ride_name,
-                r.ride_type,  /* <--- Added this column */
+                r.ride_type,
                 l.location_name,
                 SUM(dr.ride_count) AS total_riders
             FROM daily_ride dr
             JOIN rides r ON dr.ride_id = r.ride_id
             JOIN location l ON r.location_id = l.location_id
             WHERE dr.dat_date BETWEEN ? AND ?
-            GROUP BY r.ride_id, r.ride_name, r.ride_type, l.location_name /* <--- Group by it too */
+            GROUP BY r.ride_id, r.public_ride_id, r.ride_name, r.ride_type, l.location_name
             HAVING total_riders > 0
             ORDER BY total_riders DESC
         `;
 
         const [reportData] = await pool.query(reportQuery, [startDate, endDate]);
 
-        // 4. Render View
         res.render('ride-popularity-report', {
             selected_date: selected_date,
-            report_data: reportData,
+            report_data: reportData, // Now contains public_ride_id
             chartTitle: chartTitle,
             error: null
         });
@@ -268,6 +263,7 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
         });
     }
 });
+
 // --- GET ROUTE FOR CLOSURE IMPACT REPORT ---
 router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
     try {

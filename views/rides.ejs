@@ -4,16 +4,26 @@
     <meta charset="UTF-8">
     <title>Rides</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+        }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #007bff; color: white;
+        }
         
-        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; align-items: center; }
-        th.sortable a:hover { text-decoration: underline; }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
+        th.sortable a { text-decoration: none;
+            color: white; display: flex; justify-content: space-between; align-items: center; }
+        th.sortable a:hover { text-decoration: underline;
+        }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px;
+        }
         
         /* Stats Bar Styles */
         .stats-bar {
@@ -29,56 +39,126 @@
             border-radius: 8px;
             text-align: center;
         }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 1.75em; }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; font-size: 0.9em; }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 1.75em;
+        }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; font-size: 0.9em;
+        }
 
         /* Colors for stats */
-        .stat-total { color: #007bff; }
-        .stat-open { color: #28a745; }
-        .stat-closed { color: #fd7e14; }
-        .stat-broken { color: #dc3545; }
-        .stat-type { color: #6f42c1; }
+        .stat-total { color: #007bff;
+        }
+        .stat-open { color: #28a745;
+        }
+        .stat-closed { color: #fd7e14;
+        }
+        .stat-broken { color: #dc3545;
+        }
+        .stat-type { color: #6f42c1;
+        }
 
         /* Filter Bar Styles */
-        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        .filter-bar { background-color: #f8f9fa;
+            border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
+        }
         .filter-controls {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr;
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls label { font-weight: bold;
+            display: block; margin-bottom: 5px; font-size: 0.9em; }
         .filter-controls input[type="search"],
-        .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
-        .filter-buttons { display: flex; gap: 10px; }
-        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box; }
-        .btn-filter { background-color: #007bff; }
-        .btn-clear { background-color: #6c757d; }
-
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:hover { background-color: #f1f1f1; }
-        .action-link { text-decoration: none; color: #007bff; font-weight: bold; display: block; margin-bottom: 5px; }
-        .action-link:hover { text-decoration: underline; }
-        .report-link { color: #dc3545; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838; }
-        .status-form select { padding: 5px; border-radius: 4px; }
-        .status-form button { padding: 5px 10px; margin-left: 5px; cursor: pointer; }
-        .status-OPEN { color: green; font-weight: bold; }
-        .status-CLOSED { color: orange; font-weight: bold; }
-        .status-BROKEN { color: red; font-weight: bold; }
-
-        /* Style for the Log Run link */
-        .log-run-link {
-            color: #28a745; font-weight: bold; display: inline-block; padding: 5px 10px; border: 1px solid #28a745; border-radius: 4px; text-decoration: none; margin-top: 5px; text-align: center;
+        .filter-controls select { width: 100%;
+            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
         }
-        .log-run-link:hover { background-color: #28a745; color: white; text-decoration: none; }
+        .filter-buttons { display: flex; gap: 10px;
+        }
+        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box;
+        }
+        .btn-filter { background-color: #007bff;
+        }
+        .btn-clear { background-color: #6c757d;
+        }
+
+        tr:nth-child(even) { background-color: #f9f9f9;
+        }
+        tr:hover { background-color: #f1f1f1;
+        }
+
+        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
+            color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .add-button:hover { background-color: #218838;
+        }
+        .status-form select { padding: 5px; border-radius: 4px;
+        }
+        .status-form button { padding: 5px 10px; margin-left: 5px; cursor: pointer;
+        }
+        .status-OPEN { color: green; font-weight: bold;
+        }
+        .status-CLOSED { color: orange; font-weight: bold;
+        }
+        .status-BROKEN { color: red; font-weight: bold;
+        }
+
+        /* --- NEW ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: block; /* Stack buttons vertically */
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85em; /* Slightly smaller font to fit */
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white; /* Default bg */
+            transition: all 0.2s;
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+
+        /* Button Variants */
+        .btn-maintenance {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-maintenance:hover { background-color: #17a2b8; color: white; }
+
+        .btn-history {
+            color: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .btn-history:hover { background-color: #6f42c1; color: white; }
+
+        .btn-report {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-report:hover { background-color: #dc3545; color: white; }
+
+        .btn-edit {
+            color: #d39e00;
+            border-color: #ffc107;
+        }
+        .btn-edit:hover { background-color: #ffc107; color: #212529; }
+
+        .btn-log {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-log:hover { background-color: #28a745; color: white; }
         
-        /* Style for DISABLED Log Run link */
-        .log-run-link-disabled {
-            color: #6c757d; font-weight: bold; display: inline-block; padding: 5px 10px; border: 1px solid #6c757d; border-radius: 4px; text-decoration: none; margin-top: 5px; text-align: center; background-color: #f8f9fa; cursor: not-allowed;
+        .btn-disabled {
+            color: #6c757d;
+            border-color: #ccc;
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            pointer-events: none;
         }
-        .run-history-link { color: #007bff; }
     </style>
 </head>
 <body>
@@ -132,11 +212,11 @@
             <form action="/rides" method="GET">
                 <div class="filter-controls">
                     <div>
-                      <label for="search">General Search</label>
+                        <label for="search">General Search</label>
                         <input type="search" id="search" name="search" placeholder="Name, Location, Status, Type..." value="<%= search %>">
                     </div>
                     <div>
-                       <label for="filter_location">Location</label>
+                        <label for="filter_location">Location</label>
                         <select id="filter_location" name="filter_location">
                             <option value="">All Locations</option>
                             <% locations.forEach(loc => { %>
@@ -201,9 +281,12 @@
                 }
                 let href = `/rides?search=${encodeURIComponent(search)}`;
                 if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
-                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`; }
-                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`; }
-                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`; }
+                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`;
+                }
+                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`;
+                }
+                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`;
+                }
                 return { href: href, indicator: indicator };
             };
             const nameSort = getSortState('name');
@@ -215,6 +298,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th class="sortable">
                         <a href="<%= nameSort.href %>">
                             <span>Name</span>
@@ -237,21 +321,22 @@
                         <a href="<%= statusSort.href %>">
                             <span>Status</span>
                             <span class="sort-indicator"><%= statusSort.indicator %></span>
-                         </a>
+                        </a>
                     </th>
                     <th>Update Status</th>
-                    <th>Actions</th>
+                    <th style="min-width: 160px;">Actions</th>
                 </tr>
-             </thead>
+            </thead>
             <tbody>
                 <% rides.forEach(ride => { %>
                     <tr>
+                        <td><%= ride.public_ride_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= ride.ride_name %></td>
                         <td><%= ride.ride_type %></td>
                         <td><%= ride.location_name %></td>
                         <td>
                             <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
-                         </td>
+                        </td>
                         <td>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                                 <form class="status-form" action="/rides/status/<%= ride.public_ride_id %>" method="POST">
@@ -268,26 +353,26 @@
                         </td>
                         <td>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
-                                <a href="/maintenance/ride/<%= ride.public_ride_id %>" class="action-link">View Maintenance</a>
+                                <a href="/maintenance/ride/<%= ride.public_ride_id %>" class="btn-action btn-maintenance">View Maintenance</a>
                             <% } %>
 
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <a href="/rides/history/<%= ride.public_ride_id %>" class="action-link run-history-link">View Run History</a>
+                                <a href="/rides/history/<%= ride.public_ride_id %>" class="btn-action btn-history">View Run History</a>
                             <% } %>
-            
-                             <a href="/maintenance/new/<%= ride.public_ride_id %>" class="action-link report-link">Report Issue</a>
+                            
+                             <a href="/maintenance/new/<%= ride.public_ride_id %>" class="btn-action btn-report">Report Issue</a>
 
                             <%# --- NEW: Edit Ride Button (Admin/Park Manager) --- %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-                                <a href="/rides/edit/<%= ride.public_ride_id %>" class="action-link" style="margin-top: 5px;">Edit Ride</a>
+                                <a href="/rides/edit/<%= ride.public_ride_id %>" class="btn-action btn-edit">Edit Ride</a>
                             <% } %>
                             
                             <%# --- Log Ride Run Link --- %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                                 <% if (ride.ride_status === 'BROKEN' || ride.ride_status === 'CLOSED') { %>
-                                    <span class="log-run-link-disabled">Log Run</span>
+                                    <span class="btn-action btn-disabled">Log Run</span>
                                 <% } else { %> 
-                                    <a href="/rides/log/<%= ride.public_ride_id %>" class="action-link log-run-link">Log Run</a>
+                                    <a href="/rides/log/<%= ride.public_ride_id %>" class="btn-action btn-log">Log Run</a>
                                 <% } %>
                             <% } %>
                          </td>

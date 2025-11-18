@@ -30,7 +30,8 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
                     target.hourly_rate, 
                     target.pending_hourly_rate,
                     requester.first_name as requester_first_name,
-                    requester.last_name as requester_last_name
+                    requester.last_name as requester_last_name,
+                    requester.public_employee_id as requester_public_id -- ADDED
                 FROM employee_demographics as target
                 JOIN employee_demographics as requester ON target.rate_change_requested_by = requester.employee_id
                 WHERE target.pending_hourly_rate IS NOT NULL
@@ -46,10 +47,13 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
                     m.maintenance_id,
                     m.public_maintenance_id,
                     r.ride_name,
+                    r.public_ride_id, -- ADDED
                     m.summary,
                     CONCAT(current_emp.first_name, ' ', current_emp.last_name) as current_employee_name,
                     CONCAT(pending_emp.first_name, ' ', pending_emp.last_name) as pending_employee_name,
-                    CONCAT(requester.first_name, ' ', requester.last_name) as requester_name
+                    pending_emp.public_employee_id as assignee_public_id, -- ADDED
+                    CONCAT(requester.first_name, ' ', requester.last_name) as requester_name,
+                    requester.public_employee_id as requester_public_id -- ADDED
                 FROM maintenance m
                 JOIN rides r ON m.ride_id = r.ride_id
                 LEFT JOIN employee_demographics current_emp ON m.employee_id = current_emp.employee_id
@@ -69,8 +73,11 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
                     ir.public_request_id,
                     ir.requested_count,
                     v.vendor_name,
+                    v.public_vendor_id, -- ADDED
                     i.item_name,
+                    i.public_item_id, -- ADDED
                     CONCAT(e.first_name, ' ', e.last_name) as requester_name,
+                    e.public_employee_id as requester_public_id, -- ADDED
                     COALESCE(inv.count, 0) as current_count
                 FROM inventory_requests ir
                 JOIN vendors v ON ir.vendor_id = v.vendor_id

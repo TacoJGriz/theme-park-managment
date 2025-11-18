@@ -4,17 +4,45 @@
     <meta charset="UTF-8">
     <title>Pending Employee Approvals</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #fd7e14; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .approve-button {
-            background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .approve-button:hover { background-color: #218838; }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
+        }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #fd7e14; color: white;
+        }
+        tr:nth-child(even) { background-color: #f9f9f9;
+        }
+        
+        /* --- NEW ACTION BUTTON STYLES --- */
+        .btn-action {
+            display: inline-block;
+            box-sizing: border-box;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-approve {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-approve:hover { background-color: #28a745; color: white; }
+
     </style>
 </head>
 <body>
@@ -57,10 +85,10 @@
                             <%# UPDATED: Only Admin can approve now %>
                             <% if (user.role === 'Admin') { %>
                                 <form action="/employees/approve/<%= targetUser.public_employee_id %>" method="POST" onsubmit="return confirm('Are you sure you want to approve this employee?');">
-                                <button type="submit" class="approve-button">Approve</button>
+                                    <button type="submit" class="btn-action btn-approve">Approve</button>
                                 </form>
                             <% } else { %>
-                                <span>(Pending Approval)</span>
+                                <span style="color: #6c757d; font-style: italic;">(Pending Approval)</span>
                             <% } %>
                         </td>
                    </tr>
