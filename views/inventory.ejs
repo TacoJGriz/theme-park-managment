@@ -16,13 +16,27 @@
         
         .button-bar { display: flex; justify-content: flex-end; margin-bottom: 1.5em; }
         .action-button { 
-            padding: 12px 20px; background-color: #007bff; 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 4px; 
-            font-weight: bold;
+            padding: 12px 20px; background-color: #007bff; color: white; 
+            text-decoration: none; border-radius: 4px; font-weight: bold;
         }
         .action-button:hover { background-color: #0056b3; }
+
+        /* New Button Styles for Table Actions */
+        .btn-action {
+            display: inline-block; padding: 6px 12px; border-radius: 4px;
+            text-decoration: none; font-weight: bold; font-size: 0.9em;
+            margin-right: 5px; border: none; cursor: pointer; color: white;
+        }
+        .btn-restock { background-color: #007bff; }
+        .btn-restock:hover { background-color: #0056b3; }
+        
+        .btn-destock { background-color: #dc3545; }
+        .btn-destock:hover { background-color: #c82333; }
+        
+        .btn-deshelf { background-color: #6c757d; }
+        .btn-deshelf:hover { background-color: #5a6268; }
+
+        .btn-pending { background-color: #ffc107; color: #333; cursor: not-allowed; pointer-events: none; }
 
         /* Drill-down link style */
         .manage-link {
@@ -56,13 +70,12 @@
                     <th>Vendor</th>
                     <th>Item</th>
                     <th>Current Count</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (inventory.length === 0) { %>
-                    <tr><td colspan="5" style="text-align: center; padding: 2em;">No inventory records found.</td></tr>
+                    <tr><td colspan="4" style="text-align: center; padding: 2em;">No inventory records found.</td></tr>
                 <% } %>
                 <% inventory.forEach(item => { %>
                     <tr>
@@ -71,31 +84,20 @@
                         <td><%= item.current_count %></td>
                         
                         <td>
-                            <%# --- 1. RESTOCK (Visible to All: Staff & Managers) --- %>
+                            <%# --- 1. RESTOCK (Visible to All) --- %>
                             <% if (item.pending_count) { %>
-                                <span class="status-Pending" style="font-size: 0.9em; cursor: not-allowed;">Restock Pending</span>
+                                <span class="btn-action btn-pending">Restock Pending</span>
                             <% } else { %>
-                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="action-link" style="color: #007bff;">Restock</a>
+                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-restock">Restock</a>
                             <% } %>
 
                             <%# --- 2. DESTOCK & DESHELF (Managers Only) --- %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-destock">Destock</a>
         
-                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="action-link" style="color: #dc3545; margin-left: 8px;">Destock</a>
-        
-                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" method="POST" style="display: inline-block; margin-left: 8px;" onsubmit="return confirm('Are you sure you want to remove this item from the shelf?');">
-                                    <button type="submit" style="background: none; border: none; color: #6c757d; font-weight: bold; cursor: pointer; text-decoration: underline; padding: 0; font-size: 1em;">Deshelf</button>
+                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to remove this item from the shelf?');">
+                                    <button type="submit" class="btn-action btn-deshelf">Deshelf</button>
                                 </form>
-    
-                            <% } %>
-                        </td>
-
-                        <td>
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                                <a href="/inventory/vendor/<%= item.public_vendor_id %>?returnTo=inventory" class="manage-link">Manage Vendor</a>
-    
-                            <% } else if (user.role === 'Staff') { %>
-                                <a href="/inventory/vendor/<%= item.public_vendor_id %>?returnTo=inventory" class="manage-link" style="background-color: #6c757d;">View Inventory</a>
                             <% } %>
                         </td>
                     </tr>

@@ -200,16 +200,27 @@ INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, descript
 (UUID(), 'Child', 99.00, 'Park admission for ages 3-9.', TRUE, FALSE),    
 (UUID(), 'Senior', 89.00, 'Park admission for ages 65+.', TRUE, FALSE);
 
--- 10. WEATHER & 11. PROMOTIONS (Standard)
-INSERT INTO weather_events (event_date, end_time, weather_type, park_closure) VALUES
-('2025-07-15 14:30:00', '2025-07-15 15:15:00', 'Thunderstorm', TRUE),
-('2025-10-19 12:00:00', '2025-10-19 14:00:00', 'Rain', FALSE);
+-- 7. PROMOTIONS
+INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring) VALUES
+('New Year Kickoff', 'Holiday', '2025-01-01', '2025-01-05', 20.00, 'Start the year with a bang!', TRUE),
+('MLK Weekend', 'Weekend', '2025-01-17', '2025-01-20', 15.00, 'Honor the dream with family fun.', TRUE),
+('Lunar New Year Festival', 'Holiday', '2025-01-28', '2025-02-02', 18.00, 'Celebrate the Year of the Snake with special parades.', TRUE),
+('Valentines Sweetheart Deal', 'Special', '2025-02-14', '2025-02-16', 25.00, 'Perfect date night discount.', TRUE),
+('Presidents Day Sale', 'Weekend', '2025-02-15', '2025-02-17', 10.00, 'School is out, fun is in!', TRUE),
+('St. Patricks Lucky Days', 'Special', '2025-03-14', '2025-03-17', 17.00, 'Wear green and save green!', TRUE),
+('Spring Break Splash', 'Seasonal', '2025-03-20', '2025-04-10', 10.00, 'Enjoy the warmer weather.', TRUE),
+('Easter Eggstravaganza', 'Holiday', '2025-04-18', '2025-04-20', 15.00, 'Egg hunts and bunny hops.', TRUE),
+('Memorial Day Salute', 'Holiday', '2025-05-23', '2025-05-26', 25.00, 'Kick off the summer season.', TRUE),
+('Summer School Out', 'Seasonal', '2025-06-01', '2025-06-15', 10.00, 'Celebrate the start of summer vacation.', TRUE),
+('Juneteenth Jubilee', 'Holiday', '2025-06-19', '2025-06-19', 19.00, 'Freedom celebration event.', TRUE),
+('Independence Week', 'Holiday', '2025-07-01', '2025-07-07', 15.00, 'Fireworks every night!', TRUE),
+('Labor Day Relaxer', 'Holiday', '2025-08-29', '2025-09-01', 20.00, 'The last big blast of summer.', TRUE),
+('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.', TRUE),
+('Veterans Day Honor', 'Special', '2025-11-11', '2025-11-11', 50.00, 'Special appreciation discount.', TRUE),
+('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.', TRUE),
+('Winter Wonderland', 'Holiday', '2025-12-01', '2026-01-05', 10.00, 'Holiday-themed event with artificial snow.', TRUE);
 
-INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary) VALUES
-('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.'),
-('Winter Wonderland', 'Holiday', '2025-12-01', '2026-01-05', 10.00, 'Holiday-themed event.');
-
--- 13. VENDORS (2 per location = 16 total)
+-- 8. VENDORS (2 per location = 16 total)
 -- ADDED vendor_status column
 INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) VALUES
 -- Frontierland
@@ -237,7 +248,7 @@ INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) 
 (UUID(), 'Docking Bay 7', 8, 'OPEN'),
 (UUID(), 'Milk Stand', 8, 'OPEN');
 
--- 14. ITEMS (Standard + Extras)
+-- 9. ITEMS (Standard + Extras)
 INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Food', 'Cheeseburger', 12.99, '1/3 lb Angus Burger'),
 (UUID(), 'Food', 'Chicken Tenders', 11.99, '4 Tenders with Fries'),
@@ -250,31 +261,46 @@ INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Souvenir', 'Light Saber', 200.00, 'Custom built sword'),
 (UUID(), 'Other', 'Poncho', 10.00, 'Plastic rain poncho');
 
--- 15. INVENTORY
--- Populate some random inventory
+-- 10. INVENTORY
+-- Populate inventory (Ensuring at least 2 items per vendor)
 INSERT INTO inventory (item_id, vendor_id, count) VALUES
-(1, 1, 200), (2, 1, 200), -- Pecos Bill: Burgers, Tenders
-(3, 10, 500), -- Aloha Isle: Dole Whip
-(4, 16, 300), -- Milk Stand: Blue Milk
-(8, 7, 500), (10, 7, 1000), -- Emporium: Ears, Ponchos
-(9, 15, 50), -- Docking Bay: Light Sabers? (Maybe not, but for demo)
-(5, 2, 300), -- Golden Horseshoe: Churros
-(1, 3, 250), (2, 3, 250); -- Cosmic Rays
-(5, 8, 150), -- Main St Bakery: Churro
-(3, 8, 200); -- Main St Bakery: Dole Whip
+-- Frontierland
+(1, 1, 200), (2, 1, 200),   -- Pecos Bill: Burgers, Tenders
+(5, 2, 300), (2, 2, 150),   -- Golden Horseshoe: Churros, Tenders
+-- Tomorrowland
+(1, 3, 250), (2, 3, 250),   -- Cosmic Rays: Burgers, Tenders
+(5, 4, 200), (4, 4, 100),   -- Lunching Pad: Churros, Blue Milk (Sci-Fi drink)
+-- Fantasyland
+(1, 5, 150), (2, 5, 150),   -- Pinocchio: Burgers, Tenders
+(2, 6, 100), (3, 6, 300),   -- Friars Nook: Tenders, Dole Whip
+-- Main Entrance
+(8, 7, 500), (10, 7, 1000), (6, 7, 300), -- Emporium: Ears, Ponchos, T-Shirts
+(5, 8, 150), (3, 8, 200),   -- Main St Bakery: Churro, Dole Whip
+-- Adventureland
+(3, 9, 400), (5, 9, 200),   -- Sunshine Tree: Dole Whip, Churro
+(3, 10, 500), (10, 10, 100),-- Aloha Isle: Dole Whip, Ponchos
+-- Liberty Square
+(2, 11, 150), (1, 11, 150), -- Columbia Harbour: Tenders, Burgers
+(1, 12, 200), (2, 12, 200), -- Liberty Tree: Burgers, Tenders
+-- Toontown
+(8, 13, 300), (10, 13, 300),-- Gag Factory: Ears, Ponchos
+(3, 14, 100), (5, 14, 100), -- Farmers Market: Dole Whip, Churros
+-- Galaxys Edge
+(9, 15, 50), (4, 15, 200),  -- Docking Bay 7: Light Sabers, Blue Milk
+(4, 16, 300), (5, 16, 150); -- Milk Stand: Blue Milk, Churros
 
--- 17. PENDING REQUESTS (Updated for new IDs)
+-- 11. PENDING REQUESTS (Updated for new IDs)
 -- Wage change request for Donald Duck (ID 16, Staff at Main Entrance) requested by Mickey (ID 6)
 UPDATE employee_demographics
 SET pending_hourly_rate = 19.50, rate_change_requested_by = 6
 WHERE employee_id = 16;
 
--- Maintenance reassignment: Matterhorn (Ride 15, Log 1) from Goofy (11) to Felix (12). Requested by Minnie (2).
+-- 12. Maintenance reassignment: Matterhorn (Ride 15, Log 1) from Goofy (11) to Felix (12). Requested by Minnie (2).
 UPDATE maintenance
 SET pending_employee_id = 12, assignment_requested_by = 2
 WHERE maintenance_id = 1;
 
--- 18. INVENTORY REQUESTS
+-- 13. INVENTORY REQUESTS
 INSERT INTO inventory_requests (public_request_id, vendor_id, item_id, requested_count, requested_by_id, location_id, request_date, status) VALUES
 (UUID(), 7, 10, 200, 17, 4, '2025-10-25', 'Pending'), -- Daisy (ID 17) requests Ponchos for Emporium (Loc 4)
 (UUID(), 16, 4, 100, 53, 8, '2025-10-25', 'Pending'); -- Finn (ID 54/53?) requests Blue Milk for Milk Stand (Loc 8)

@@ -231,6 +231,7 @@ CREATE TABLE event_promotions (
     end_date DATE NOT NULL,
     discount_percent DECIMAL(10,2) NOT NULL,
     summary VARCHAR(250),
+    is_recurring BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'If TRUE, this promotion automatically renews for the next year after expiring.',
     -- keys
     PRIMARY KEY (event_id),
     -- constraints
@@ -397,3 +398,28 @@ CREATE TABLE prepaid_tickets (
     FOREIGN KEY (visit_id) REFERENCES visits(visit_id) ON DELETE SET NULL,
     INDEX idx_purchase_id (purchase_id)
 );
+
+-- --- AUTOMATION: Annual Promotion Renewal ---
+-- Ensure the scheduler is on (Requires Superuser privileges)
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS AutoRenewAnnualPromotions;
+
+DELIMITER //
+
+CREATE EVENT AutoRenewAnnualPromotions
+ON SCHEDULE EVERY 1 DAY
+STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY) -- Runs daily at midnight
+DO
+BEGIN
+    -- Update recurring promotions that have ended
+    UPDATE event_promotions
+    SET 
+        start_date = DATE_ADD(start_date, INTERVAL 1 YEAR),
+        end_date = DATE_ADD(end_date, INTERVAL 1 YEAR)
+    WHERE 
+        end_date < CURDATE()      -- Promotion has expired
+        AND is_recurring = TRUE;  -- Flagged to renew
+END //
+
+DELIMITER ;

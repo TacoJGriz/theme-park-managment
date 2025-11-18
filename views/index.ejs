@@ -1,185 +1,119 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Welcome to Primus Theme Park</title>
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         .navbar {
-            background-color: #343a40;
- padding: 0 2em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
- }
-        .nav-brand { font-size: 1.5em; font-weight: bold; padding: 0.5em 0;
- }
-        .nav-links a {
-            color: white;
- text-decoration: none;
-            padding: 1em 1.5em;
-            display: inline-block;
-            transition: background-color 0.2s;
- }
-        .nav-links a:hover { background-color: #495057;
- }
-        
-        /* --- MODIFICATIONS START HERE --- */
-        .nav-links a.login-btn {
-            /* background-color: #007bff;
- <-- Removed */
-            border-radius: 4px;
-            margin-left: 1em;
-            font-weight: bold;
- }
-        .nav-links a.login-btn:hover { 
-            /* background-color: #0056b3;
- <-- Removed */
-            color: white;
- /* Ensure text is white on hover */
+            background-color: #343a40; padding: 0 2em;
+            display: flex; justify-content: space-between; align-items: center; color: white;
         }
+        .nav-brand { font-size: 1.5em; font-weight: bold; padding: 0.5em 0; }
+        .nav-links a {
+            color: white; text-decoration: none; padding: 1em 1.5em;
+            display: inline-block; transition: background-color 0.2s;
+        }
+        .nav-links a:hover { background-color: #495057; }
+        
+        .nav-links a.login-btn {
+            border-radius: 4px; margin-left: 1em; font-weight: bold;
+        }
+        .nav-links a.login-btn:hover { color: white; }
 
         .nav-links a.global-login-btn {
-            background-color: transparent;
- /* MODIFIED: No fill */
-            color: #17a2b8;
- /* ADDED: Set text to "blue" (cyan) */
+            background-color: transparent; color: #17a2b8;
         }
         .nav-links a.global-login-btn:hover {
-            background-color: #495057;
- /* Use default hover */
-            color: white;
- /* Ensure text is white on hover */
+            background-color: #495057; color: white;
         }
         
-        /* --- NEW: Style for Activate Button --- */
         .nav-links a.activate-btn {
-            color: #ffc107;
- /* Yellow */
-            font-weight: bold;
-            margin-left: 1em;
-            border-radius: 4px;
- }
-        .nav-links a.activate-btn:hover {
-            background-color: #495057;
- color: #ffc107;
+            color: #ffc107; font-weight: bold; margin-left: 1em; border-radius: 4px;
         }
-        /* --- END NEW --- */
+        .nav-links a.activate-btn:hover {
+            background-color: #495057; color: #ffc107;
+        }
 
         .hero {
-            background-color: #007bff;
- color: white;
-            padding: 4em 2em;
-            text-align: center;
+            background-color: #007bff; color: white; padding: 4em 2em; text-align: center;
         }
-        .hero h1 { font-size: 3em;
- margin: 0 0 0.25em 0; }
-        .hero p { font-size: 1.2em; margin: 0;
- }
+        .hero h1 { font-size: 3em; margin: 0 0 0.25em 0; }
+        .hero p { font-size: 1.2em; margin: 0; }
 
         .container {
-            max-width: 1200px;
- margin: 2em auto;
-            padding: 0 2em;
+            max-width: 1200px; margin: 2em auto; padding: 0 2em;
         }
-        /* ADDED: Explicit margin-top for headings following a card grid in the container (from previous step) */
         .container .card-container + h3 {
             margin-top: 2em;
- }
+        }
         h2 {
-            font-size: 2.2em;
- color: #444;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5em;
-            margin-top: 1.5em;
- }
+            font-size: 2.2em; color: #444;
+            border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-top: 1.5em;
+        }
 
-        /* Card Grid System (reused from dashboard) */
+        /* Card Grid System */
         .card-container {
-            display: grid;
- grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
         }
         .card {
-            background: white;
- padding: 20px;
-            border-radius: 8px;
+            background: white; padding: 20px; border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-left: 5px solid #007bff;
- /* --- NEW: Added flex properties to make card contents align --- */
-            display: flex;
- flex-direction: column;
-            justify-content: space-between;
-}
-        .card.promo { border-left-color: #28a745;
- }
-        .card.price { border-left-color: #17a2b8;
- }
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card.promo { border-left-color: #28a745; }
+        .card.price { border-left-color: #17a2b8; }
         
         .card h3 {
-            margin-top: 0;
- font-size: 1.4em;
-            color: #333;
+            margin-top: 0; font-size: 1.4em; color: #333;
         }
         .card .price {
-            font-size: 2em;
- font-weight: bold;
-            color: #0056b3;
-            margin: 0.5em 0;
+            font-size: 2em; font-weight: bold; color: #0056b3; margin: 0.5em 0;
         }
         .card .price-sub {
-            font-size: 1em;
- font-weight: normal;
-            color: #666;
+            font-size: 1em; font-weight: normal; color: #666;
         }
 
         /* Location Section */
         .location-section {
-            background: white;
- padding: 2em;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2em;
- }
+            background: white; padding: 2em; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2em;
+        }
         .location-section h3 {
-            font-size: 1.8em;
- color: #6f42c1; /* Purple */
-            margin-top: 0;
- }
+            font-size: 1.8em; color: #6f42c1; margin-top: 0;
+        }
         .location-section .rides-list {
-            list-style: none;
- padding-left: 0;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1em;
+            list-style: none; padding-left: 0;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1em;
         }
         .location-section .rides-list li {
-            background: #f8f9fa;
- padding: 1em;
-            border-radius: 4px;
-            border: 1px solid #eee;
+            background: #f8f9fa; padding: 1em; border-radius: 4px; border: 1px solid #eee;
         }
         .location-section .rides-list strong {
-            font-size: 1.1em;
- color: #343a40;
+            font-size: 1.1em; color: #343a40;
         }
         .purchase-button {
-            display: block;
- text-align: center;
-            padding: 12px 20px;
-            background-color: #17a2b8;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-top: 1em;
+            display: block; text-align: center; padding: 12px 20px;
+            background-color: #17a2b8; color: white; text-decoration: none;
+            border-radius: 4px; font-weight: bold; margin-top: 1em;
             transition: background-color 0.2s;
- }
+        }
         .purchase-button:hover {
             background-color: #138496;
- }
+        }
+
+        /* --- Weather Alert Styles --- */
+        .alert-banner {
+            padding: 1em; margin-bottom: 1.5em; border-radius: 8px; font-weight: bold; text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert-banner.closure {
+            background-color: #dc3545; color: white; border: 2px solid #bd2130;
+        }
+        .alert-banner.warning {
+            background-color: #ffc107; color: #333; border: 2px solid #e0a800;
+        }
     </style>
 </head>
 <body>
@@ -190,56 +124,52 @@
             <a href="#promotions">Promotions</a>
             <a href="#attractions">Attractions</a>
             <a href="#tickets">Tickets</a>
-            
-            <%# Replaced the two separate 
- 
-
-
-login buttons with a single one %>
             <a href="/login" class="login-btn global-login-btn">Login</a>
-            
             <a href="/member/register" class="activate-btn">Activate Your Pass</a>
-            
-            </div>
+        </div>
     </nav>
 
     <div class="hero">
         <h1>Welcome to Primus Theme Park!</h1>
- 
-  <p>Your magical adventure awaits!</p>
+        <p>Your magical adventure awaits!</p>
     </div>
 
     <div class="container">
 
-        <section id="promotions">
-     
+        <%# --- WEATHER ALERT SECTION (UPDATED) --- %>
+        <% if (typeof weatherAlerts !== 'undefined' && weatherAlerts.length > 0) { %>
+            <% weatherAlerts.forEach(alert => { %>
+                <div class="alert-banner <%= alert.park_closure ? 'closure' : 'warning' %>">
+                    <strong>⚠️ WEATHER ALERT:</strong> <%= alert.weather_type %> 
+                    <% if (alert.park_closure) { %>
+                        - PARK IS CURRENTLY CLOSED.
+                    <% } else { %>
+                        in progress.
+                    <% } %>
+                    
+                    <%# REMOVED specific end time display %>
+                    <span style="margin-left: 10px; font-weight: normal;">Please check back for updates.</span>
+                </div>
+            <% }); %>
+        <% } %>
 
-       <h2>Current & Upcoming Promotions</h2>
+        <section id="promotions">
+            <h2>Current & Upcoming Promotions</h2>
             <div class="card-container">
                 <% if (promotions.length > 0) { %>
                     <% promotions.forEach(promo => { %>
- 
-                     <div class="card promo">
-     
-                       <div>
-                       <h3><%= promo.event_name %></h3>
- 
-        <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
-               
-                 <p><%= promo.summary %></p>
-            
-                  <p><strong>Type:</strong> <%= promo.event_type %></p>
- 
-            <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
-       
-                     </div>
+                        <div class="card promo">
+                            <div>
+                                <h3><%= promo.event_name %></h3>
+                                <div class="price"><%= parseFloat(promo.discount_percent).toFixed(0) %>% <span class="price-sub">OFF</span></div>
+                                <p><%= promo.summary %></p>
+                                <p><strong>Type:</strong> <%= promo.event_type %></p>
+                                <p><strong>Valid:</strong> <%= new Date(promo.start_date).toLocaleDateString() %> - <%= new Date(promo.end_date).toLocaleDateString() %></p>
+                            </div>
                         </div>
-                    
-<% });
- %>
+                    <% }); %>
                 <% } else { %>
-                    <p>No special promotions are running today.
- Check back soon!</p>
+                    <p>No special promotions are running today. Check back soon!</p>
                 <% } %>
             </div>
         </section>
@@ -248,43 +178,39 @@ login buttons with a single one %>
             <h2>Explore Our Lands</h2>
             <% locations.forEach(location => { %>
                 <div class="location-section">
- 
-
-
-                <h3><%= location.location_name %></h3>
+                    <h3><%= location.location_name %></h3>
                     <p><em><%= location.summary %></em></p>
                     
-                    <h4>Rides in this Area:</h4>
- 
-
-
-   <ul class="rides-list">
+                    <h4>Attractions:</h4>
+                    <ul class="rides-list">
                         <% const ridesInLocation = allRides.filter(ride => ride.location_id === location.location_id); %>
                         <% if (ridesInLocation.length > 0) { %>
                             <% ridesInLocation.forEach(ride => { %>
- 
-
-
-                               <li>
+                                <li>
                                     <strong><%= ride.ride_name %></strong>
- 
-
-
-     (<%= ride.ride_type %>)
+                                    <br><span style="font-size: 0.9em; color: #666;">(<%= ride.ride_type %>)</span>
                                 </li>
                             <% }); %>
                         <% } else { %>
- 
+                            <p style="color: #666; font-style: italic;">No rides currently open in this location.</p>
+                        <% } %>
+                    </ul>
 
-
-                         <p>No rides currently open in this location.</p>
+                    <h4 style="margin-top: 1.5em;">Dining & Shopping:</h4>
+                    <ul class="rides-list">
+                        <% const vendorsInLocation = allVendors.filter(v => v.location_id === location.location_id); %>
+                        <% if (vendorsInLocation.length > 0) { %>
+                            <% vendorsInLocation.forEach(vendor => { %>
+                                <li>
+                                    <strong><%= vendor.vendor_name %></strong>
+                                </li>
+                            <% }); %>
+                        <% } else { %>
+                            <p style="color: #666; font-style: italic;">No dining or retail locations open.</p>
                         <% } %>
                     </ul>
                 </div>
- 
-
-
-     <% }); %>
+            <% }); %>
         </section>
 
         <section id="tickets">
@@ -292,64 +218,42 @@ login buttons with a single one %>
             <h3>Day Tickets</h3>
             <div class="card-container">
                 <% tickets.forEach(ticket => { %>
- 
-
-
-    <div class="card price" style="justify-content: space-between;">
+                    <div class="card price" style="justify-content: space-between;">
                         <div>
                             <h3><%= ticket.type_name %></h3>
                             <div class="price">$<%= parseFloat(ticket.base_price).toFixed(2) %></div>
- 
-  
-
-                   <p><%= ticket.description || 'Standard park admission.' %></p>
+                            <p><%= ticket.description || 'Standard park admission.' %></p>
                         </div>
-                        
-                        <%# 
- --- THIS IS THE FIX --- %>
                         <a href="/purchase-tickets" class="purchase-button" style="background-color: #28a745;">Purchase Tickets</a>
-                        <%# --- END OF FIX --- %>
-                        
-              </div>
-                <% });
- %>
-%>
+                    </div>
+                <% }); %>
             </div>
 
             <h3 style="margin-top: 2em;">Memberships</h3>
             
             <p style="text-align: center; font-size: 1.1em; margin-bottom: 2em;">
-                Already bought your pass in the park?
- <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
+                Already bought your pass in the park? <a href="/member/register" style="font-weight: bold; color: #007bff;">Activate your account here!</a>
             </p>
             
             <div class="card-container">
                 <% memberships.forEach(pass => { %>
                     <div class="card price">
- 
-           <div>
-                   <h3><%= pass.type_name %> Pass</h3>
+                        <div>
+                            <h3><%= pass.type_name %> Pass</h3>
                             <div class="price">
-                                <% if (pass.base_members > 1) { 
- 
-%>
+                                <% if (pass.base_members > 1) { %>
                                     Starts at $<%= parseFloat(pass.base_price).toFixed(2) %>
                                     <span class="price-sub">/ year (for <%= pass.base_members %> members)</span>
- 
-               <% } else { %>
+                                <% } else { %>
                                     $<%= parseFloat(pass.base_price).toFixed(2) %>
                                     <span class="price-sub">/ year</span>
- 
-                           <% } %>
+                                <% } %>
                             </div>
-                       
-     <p><%= pass.description %></p>
- 
-           </div>
-                                       <%# CHANGED: Use public_type_id for the link %>
-                                       <a href="/signup?type=<%= pass.public_type_id %>" class="purchase-button">Purchase Now</a>
+                            <p><%= pass.description %></p>
+                        </div>
+                        <a href="/signup?type=<%= pass.public_type_id %>" class="purchase-button">Purchase Now</a>
                     </div>
-            <% }); %>
+                <% }); %>
             </div>
         </section>
     </div>

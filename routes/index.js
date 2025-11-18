@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // Adjust path to db.js
 const {
@@ -33,22 +33,36 @@ router.get('/', async (req, res) => {
         );
 
         // Query 4: Get ticket & membership types
-        // ADDED public_ticket_type_id
         const [tickets] = await pool.query(
             "SELECT ticket_type_id, public_ticket_type_id, type_name, base_price, description FROM ticket_types WHERE is_active = TRUE AND is_member_type = FALSE ORDER BY base_price"
         );
 
-        // Query 5: Get membership types
-        // ADDED public_type_id
         const [memberships] = await pool.query(
             "SELECT type_id, public_type_id, type_name, base_price, description, base_members FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
         );
 
-        // Render the new homepage view with all this data
+        // --- NEW QUERY 5: Get OPEN Vendors ---
+        const [vendors] = await pool.query(
+            "SELECT vendor_name, location_id FROM vendors WHERE vendor_status = 'OPEN' ORDER BY vendor_name"
+        );
+
+        // --- NEW QUERY 6: Get Active/Ongoing Weather Alerts ---
+        // Checks for events happening NOW, or any full-day park closure for today.
+        const [weatherAlerts] = await pool.query(
+            `SELECT weather_type, park_closure, event_date, end_time 
+             FROM weather_events 
+             WHERE (event_date <= NOW() AND (end_time IS NULL OR end_time >= NOW())) 
+                OR (DATE(event_date) = CURDATE() AND park_closure = TRUE)
+             ORDER BY event_date DESC`
+        );
+
+        // Render the homepage view with all data
         res.render('index', {
             promotions: promotions,
             locations: locations,
             allRides: rides,
+            allVendors: vendors,       // <--- Passed to view
+            weatherAlerts: weatherAlerts, // <--- Passed to view
             tickets: tickets,
             memberships: memberships
         });

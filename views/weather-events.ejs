@@ -1,39 +1,167 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Weather Events</title>
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
+        /* Stats Bar */
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
+        .stat-card { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center; }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #007bff; }
+        .stat-card h3.danger { color: #dc3545; }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+
+        /* Filter Bar */
+        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em; align-items: flex-end; }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls input, .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .filter-btn { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; display: inline-block; }
+        .btn-filter { background-color: #007bff; }
+        .btn-clear { background-color: #6c757d; }
+
+        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #ffc107; color: #333; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        th.sortable a { text-decoration: none; color: #333; display: flex; justify-content: space-between; }
+        .action-btn { padding: 6px 12px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .action-btn:hover { background-color: #0056b3; }
+        
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Weather Events</h1>
-        <a href="/weather/new" class="add-button">Log New Weather Event</a>
+
+        <% if (success) { %><div class="message success"><%= success %></div><% } %>
+        <% if (error) { %><div class="message error"><%= error %></div><% } %>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3><%= counts.total || 0 %></h3>
+                <p>Total Events</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="danger"><%= counts.closure_count || 0 %></h3>
+                <p>Park Closures</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <form action="/weather" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" placeholder="Date (MM/DD/YYYY) or Type..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_type">Weather Type</label>
+                        <select id="filter_type" name="filter_type">
+                            <option value="">All Types</option>
+                            <% types.forEach(t => { %>
+                                <option value="<%= t.weather_type %>" <%= filters.type === t.weather_type ? 'selected' : '' %>><%= t.weather_type %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter_closure">Park Closure</label>
+                        <select id="filter_closure" name="filter_closure">
+                            <option value="">All</option>
+                            <option value="yes" <%= filters.closure === 'yes' ? 'selected' : '' %>>Yes</option>
+                            <option value="no" <%= filters.closure === 'no' ? 'selected' : '' %>>No</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="/weather" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                <% if (currentSort) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+        <a href="/weather/new" class="action-btn" style="background-color: #28a745; display: inline-block; margin-bottom: 10px;">Log New Event</a>
+
+        <% 
+            const getSortLink = (col) => {
+                let nextDir = 'asc'; // Default next state if not currently sorted
+                let icon = ''; 
+                
+                if (currentSort === col) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        icon = '▲';
+                    } else if (currentDir === 'desc') {
+                        nextDir = ''; // Empty string triggers "Undo Sort" (Default)
+                        icon = '▼';
+                    }
+                }
+                
+                let qs = `?search=${encodeURIComponent(search)}&filter_type=${encodeURIComponent(filters.type)}&filter_closure=${encodeURIComponent(filters.closure)}`;
+                
+                // Only add sort params if nextDir is not empty (not undoing)
+                if (nextDir) {
+                    qs += `&sort=${col}&dir=${nextDir}`;
+                }
+                
+                return { href: qs, icon };
+            }
+        %>
+
         <table>
             <thead>
                 <tr>
-                    <th>Event Date & Time</th>
-                    <th>End Time</th>
-                    <th>Type</th>
-                    <th>Park Closed?</th>
+                    <th class="sortable">
+                        <a href="/weather<%= getSortLink('date').href %>">
+                            <span>Date & Time</span><span><%= getSortLink('date').icon %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <%# ADDED: Sortable End Time %>
+                        <a href="/weather<%= getSortLink('end_time').href %>">
+                            <span>End Time</span><span><%= getSortLink('end_time').icon %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="/weather<%= getSortLink('type').href %>">
+                            <span>Type</span><span><%= getSortLink('type').icon %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="/weather<%= getSortLink('closure').href %>">
+                            <span>Park Closed?</span><span><%= getSortLink('closure').icon %></span>
+                        </a>
+                    </th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
+                <% if (events.length === 0) { %>
+                    <tr><td colspan="5" style="text-align: center; padding: 2em;">No events found.</td></tr>
+                <% } %>
                 <% events.forEach(event => { %>
                     <tr>
-                        <td><%= event.event_date.toLocaleString() %></td>
-                        <td><%= event.end_time ? event.end_time.toLocaleString() : 'N/A' %></td>
+                        <td><%= new Date(event.event_date).toLocaleString() %></td>
+                        <td><%= event.end_time ? new Date(event.end_time).toLocaleString() : 'N/A' %></td>
                         <td><%= event.weather_type %></td>
-                        <td><%= event.park_closure ? 'Yes' : 'No' %></td>
+                        <td style="<%= event.park_closure ? 'color: red; font-weight: bold;' : '' %>">
+                            <%= event.park_closure ? 'YES' : 'No' %>
+                        </td>
+                        <td>
+                            <a href="/weather/edit/<%= event.weather_id %>?returnQuery=<%= encodeURIComponent(currentQueryString) %>" class="action-btn">Edit</a>
+                        </td>
                     </tr>
                 <% }); %>
             </tbody>

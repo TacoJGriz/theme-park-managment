@@ -1,43 +1,158 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Event Promotions</title>
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
+        /* Stats Bar */
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
+        .stat-card { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center; }
+        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #6f42c1; } /* Purple for promos */
+        .stat-card h3.active { color: #28a745; }
+        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; }
+
+        /* Filter Bar */
+        .filter-bar { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em; align-items: flex-end; }
+        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .filter-controls input, .filter-controls select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .filter-btn { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; display: inline-block; }
+        .btn-filter { background-color: #007bff; }
+        .btn-clear { background-color: #6c757d; }
+
+        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #6f42c1; color: white; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between; }
+        .action-btn { padding: 6px 12px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .action-btn:hover { background-color: #0056b3; }
+        
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        
+        .active-badge { color: #28a745; font-weight: bold; font-size: 0.9em; border: 1px solid #28a745; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Event Promotions</h1>
-        <a href="/promotions/new" class="add-button">Create New Promotion</a>
+
+        <% if (success) { %><div class="message success"><%= success %></div><% } %>
+        <% if (error) { %><div class="message error"><%= error %></div><% } %>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3><%= counts.total || 0 %></h3>
+                <p>Total Promotions</p>
+            </div>
+            <%# UPDATED: Changed to "Remaining" count %>
+            <div class="stat-card">
+                <h3 class="active"><%= counts.remaining_count || 0 %></h3>
+                <p>Remaining in <%= currentYear %></p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <form action="/promotions" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" placeholder="Name or Summary..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_type">Event Type</label>
+                        <select id="filter_type" name="filter_type">
+                            <option value="">All Types</option>
+                            <% types.forEach(t => { %>
+                                <option value="<%= t.event_type %>" <%= filters.type === t.event_type ? 'selected' : '' %>><%= t.event_type %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter_status">Status</label>
+                        <select id="filter_status" name="filter_status">
+                            <option value="">All</option>
+                            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active Now</option>
+                            <option value="upcoming" <%= filters.status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+                            <option value="past" <%= filters.status === 'past' ? 'selected' : '' %>>Past</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="/promotions" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                <% if (currentSort) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+        <a href="/promotions/new" class="action-btn" style="background-color: #28a745; display: inline-block; margin-bottom: 10px;">Create New Promotion</a>
+
+        <% 
+            const getSortLink = (col) => {
+                let nextDir = 'asc';
+                let icon = ''; 
+                if (currentSort === col) {
+                    if (currentDir === 'asc') { nextDir = 'desc'; icon = '▲'; } 
+                    else if (currentDir === 'desc') { nextDir = ''; icon = '▼'; }
+                }
+                let qs = `?search=${encodeURIComponent(search)}&filter_type=${encodeURIComponent(filters.type)}&filter_status=${encodeURIComponent(filters.status)}`;
+                if (nextDir) qs += `&sort=${col}&dir=${nextDir}`;
+                return { href: qs, icon };
+            }
+            const today = new Date().toISOString().slice(0, 10);
+        %>
+
         <table>
             <thead>
                 <tr>
-                    <th>Event Name</th>
-                    <th>Type</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Discount</th>
-                    <th>Summary</th>
+                    <th class="sortable"><a href="/promotions<%= getSortLink('name').href %>"><span>Event Name</span><span><%= getSortLink('name').icon %></span></a></th>
+                    
+                    <th class="sortable"><a href="/promotions<%= getSortLink('type').href %>"><span>Type</span><span><%= getSortLink('type').icon %></span></a></th>
+                    
+                    <th class="sortable"><a href="/promotions<%= getSortLink('start_date').href %>"><span>Start Date</span><span><%= getSortLink('start_date').icon %></span></a></th>
+                    
+                    <th class="sortable"><a href="/promotions<%= getSortLink('end_date').href %>"><span>End Date</span><span><%= getSortLink('end_date').icon %></span></a></th>
+                    
+                    <th class="sortable"><a href="/promotions<%= getSortLink('discount').href %>"><span>Discount</span><span><%= getSortLink('discount').icon %></span></a></th>
+                    
+                    <%# REMOVED: Summary Column %>
+                    
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                <% promotions.forEach(promo => { %>
+                <% if (promotions.length === 0) { %>
+                    <tr><td colspan="6" style="text-align: center; padding: 2em;">No promotions found.</td></tr>
+                <% } %>
+                <% promotions.forEach(promo => { 
+                    const isActive = (today >= promo.start_date.toISOString().slice(0,10) && today <= promo.end_date.toISOString().slice(0,10));
+                %>
                     <tr>
-                        <td><%= promo.event_name %></td>
+                        <td>
+                            <%= promo.event_name %>
+                            <% if (isActive) { %><br><span class="active-badge">ACTIVE</span><% } %>
+                        </td>
                         <td><%= promo.event_type %></td>
                         <td><%= promo.start_date.toISOString().substring(0, 10) %></td>
                         <td><%= promo.end_date.toISOString().substring(0, 10) %></td>
                         <td><%= parseFloat(promo.discount_percent).toFixed(2) %>%</td>
-                        <td><%= promo.summary %></td>
+                        
+                        <%# REMOVED: Summary Data Cell %>
+                        
+                        <td>
+                            <a href="/promotions/edit/<%= promo.event_id %>?returnQuery=<%= encodeURIComponent(currentQueryString) %>" class="action-btn">Edit</a>
+                        </td>
                     </tr>
                 <% }); %>
             </tbody>

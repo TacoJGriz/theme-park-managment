@@ -736,11 +736,117 @@ router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAd
 // Path is '/weather'
 router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const [events] = await pool.query('SELECT * FROM weather_events ORDER BY event_date DESC');
-        res.render('weather-events', { events: events });
+        const { search, sort, dir, filter_type, filter_closure } = req.query;
+        const queryParams = new URLSearchParams(req.query);
+        const currentQueryString = queryParams.toString();
+
+        let whereClauses = [];
+        let params = [];
+
+        // 1. Search (Matches Type or Date in MM/DD/YYYY format)
+        if (search) {
+            // UPDATED: Search against the formatted date string to match UI display
+            whereClauses.push("(weather_type LIKE ? OR DATE_FORMAT(event_date, '%m/%d/%Y') LIKE ?)");
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        // 2. Filters
+        if (filter_type) {
+            whereClauses.push('weather_type = ?');
+            params.push(filter_type);
+        }
+        if (filter_closure) {
+            if (filter_closure === 'yes') whereClauses.push('park_closure = TRUE');
+            if (filter_closure === 'no') whereClauses.push('park_closure = FALSE');
+        }
+
+        let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        // 3. Stats
+        const countQuery = `
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN park_closure = TRUE THEN 1 ELSE 0 END) as closure_count
+            FROM weather_events ${whereQuery}
+        `;
+        const [stats] = await pool.query(countQuery, params);
+        const counts = stats[0];
+
+        // 4. Sorting (Supports 3-state: if sort/dir missing, use default)
+        let orderBy = 'ORDER BY event_date DESC'; // Default sort (Undo state)
+
+        if (sort && dir) {
+            const d = dir === 'asc' ? 'ASC' : 'DESC';
+            if (sort === 'date') orderBy = `ORDER BY event_date ${d}`;
+            if (sort === 'end_time') orderBy = `ORDER BY end_time ${d}`; // ADDED
+            if (sort === 'type') orderBy = `ORDER BY weather_type ${d}`;
+            if (sort === 'closure') orderBy = `ORDER BY park_closure ${d}`;
+        }
+
+        // 5. Fetch Data
+        const [events] = await pool.query(`SELECT * FROM weather_events ${whereQuery} ${orderBy}`, params);
+        const [types] = await pool.query('SELECT DISTINCT weather_type FROM weather_events ORDER BY weather_type');
+
+        res.render('weather-events', {
+            events, counts, types,
+            search: search || '',
+            filters: { type: filter_type || '', closure: filter_closure || '' },
+            currentSort: sort || '',
+            currentDir: dir || '',
+            currentQueryString,
+            success: req.session.success, error: req.session.error
+        });
+        req.session.success = null; req.session.error = null;
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching weather events');
+    }
+});
+
+// Path is '/weather/edit/:id'
+router.get('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    try {
+        const [event] = await pool.query('SELECT * FROM weather_events WHERE weather_id = ?', [req.params.id]);
+        if (event.length === 0) return res.status(404).send('Event not found');
+
+        // Pass the query string back to the view for "Smart Cancel"
+        res.render('edit-weather-event', {
+            event: event[0],
+            returnQuery: req.query.returnQuery || '',
+            error: null
+        });
+    } catch (error) {
+        res.status(500).send('Error loading edit page');
+    }
+});
+
+// Path is '/weather/edit/:id'
+router.post('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { event_date, end_time, weather_type, park_closure, returnQuery } = req.body;
+    try {
+        const isClosed = park_closure === '1';
+        const sql = "UPDATE weather_events SET event_date = ?, end_time = ?, weather_type = ?, park_closure = ? WHERE weather_id = ?";
+        await pool.query(sql, [event_date, end_time || null, weather_type, isClosed, req.params.id]);
+
+        req.session.success = "Weather event updated.";
+        res.redirect('/weather' + (returnQuery ? `?${returnQuery}` : ''));
+    } catch (error) {
+        console.error(error);
+        res.redirect('/weather');
+    }
+});
+
+// Path is '/weather/delete/:id'
+router.post('/weather/delete/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM weather_events WHERE weather_id = ?', [req.params.id]);
+        req.session.success = "Weather event deleted.";
+        res.redirect('/weather');
+    } catch (error) {
+        console.error(error);
+        req.session.error = "Error deleting event.";
+        res.redirect('/weather');
     }
 });
 
@@ -775,8 +881,74 @@ router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) 
 // Path is '/promotions'
 router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const [promotions] = await pool.query('SELECT * FROM event_promotions ORDER BY start_date DESC');
-        res.render('promotions', { promotions: promotions });
+        const { search, sort, dir, filter_type, filter_status } = req.query;
+        const queryParams = new URLSearchParams(req.query);
+        const currentQueryString = queryParams.toString();
+        const currentYear = new Date().getFullYear(); // Get current year for the view
+
+        let whereClauses = [];
+        let params = [];
+
+        // 1. Search (Name or Summary)
+        if (search) {
+            whereClauses.push('(event_name LIKE ? OR summary LIKE ?)');
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        // 2. Filters
+        if (filter_type) {
+            whereClauses.push('event_type = ?');
+            params.push(filter_type);
+        }
+
+        if (filter_status === 'active') {
+            whereClauses.push('CURDATE() BETWEEN start_date AND end_date');
+        } else if (filter_status === 'upcoming') {
+            whereClauses.push('start_date > CURDATE()');
+        } else if (filter_status === 'past') {
+            whereClauses.push('end_date < CURDATE()');
+        }
+
+        let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        // 3. Stats (Updated to count Remaining in Current Year)
+        // "Remaining" means the promotion has not ended yet (end_date >= today)
+        const countQuery = `
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN end_date >= CURDATE() AND YEAR(end_date) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as remaining_count
+            FROM event_promotions ${whereQuery}
+        `;
+        const [stats] = await pool.query(countQuery, params);
+        const counts = stats[0];
+
+        // 4. Sorting (Added Type and End Date)
+        let orderBy = 'ORDER BY start_date DESC'; // Default sort
+        if (sort && dir) {
+            const d = dir === 'asc' ? 'ASC' : 'DESC';
+            if (sort === 'name') orderBy = `ORDER BY event_name ${d}`;
+            if (sort === 'type') orderBy = `ORDER BY event_type ${d}`;      // ADDED
+            if (sort === 'start_date') orderBy = `ORDER BY start_date ${d}`;
+            if (sort === 'end_date') orderBy = `ORDER BY end_date ${d}`;    // ADDED
+            if (sort === 'discount') orderBy = `ORDER BY discount_percent ${d}`;
+        }
+
+        // 5. Fetch Data
+        const [promotions] = await pool.query(`SELECT * FROM event_promotions ${whereQuery} ${orderBy}`, params);
+        const [types] = await pool.query('SELECT DISTINCT event_type FROM event_promotions ORDER BY event_type');
+
+        res.render('promotions', {
+            promotions, counts, types,
+            search: search || '',
+            filters: { type: filter_type || '', status: filter_status || '' },
+            currentSort: sort || '',
+            currentDir: dir || '',
+            currentQueryString,
+            currentYear,
+            success: req.session.success, error: req.session.error
+        });
+        req.session.success = null; req.session.error = null;
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching promotions');
@@ -790,21 +962,60 @@ router.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req,
 
 // Path is '/promotions'
 router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body;
-    let connection;
+    const { event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring } = req.body;
     try {
-        connection = await pool.getConnection();
+        // Checkbox returns '1' if checked, undefined if not
+        const isRecurring = is_recurring === '1';
+
         const sql = `
-            INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        await connection.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null]);
+        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null, isRecurring]);
+        req.session.success = "Promotion created successfully.";
         res.redirect('/promotions');
     } catch (error) {
         console.error(error);
         res.render('add-promotion', { error: "Database error adding promotion. Name might be duplicate." });
-    } finally {
-        if (connection) connection.release();
+    }
+});
+
+// Path is '/promotions/edit/:id' (Edit Page)
+router.get('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    try {
+        const [promo] = await pool.query('SELECT * FROM event_promotions WHERE event_id = ?', [req.params.id]);
+        if (promo.length === 0) return res.status(404).send('Promotion not found');
+
+        res.render('edit-promotion', {
+            promotion: promo[0],
+            returnQuery: req.query.returnQuery || '',
+            error: null
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading edit page');
+    }
+});
+
+// Path is '/promotions/edit/:id' (Update Action)
+router.post('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring, returnQuery } = req.body;
+    try {
+        const isRecurring = is_recurring === '1';
+
+        const sql = `
+            UPDATE event_promotions 
+            SET event_name = ?, event_type = ?, start_date = ?, end_date = ?, discount_percent = ?, summary = ?, is_recurring = ?
+            WHERE event_id = ?
+        `;
+        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null, isRecurring, req.params.id]);
+
+        req.session.success = "Promotion updated successfully.";
+        res.redirect('/promotions' + (returnQuery ? `?${returnQuery}` : ''));
+    } catch (error) {
+        console.error(error);
+        req.session.error = "Error updating promotion.";
+        res.redirect('/promotions');
     }
 });
 
@@ -820,6 +1031,19 @@ router.get('/locations/edit/:public_location_id', isAuthenticated, isAdminOrPark
     } catch (error) {
         console.error("Error loading edit location page:", error);
         res.status(500).send('Error loading page');
+    }
+});
+
+// Path is '/promotions/delete/:id' (Delete Action)
+router.post('/promotions/delete/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM event_promotions WHERE event_id = ?', [req.params.id]);
+        req.session.success = "Promotion deleted.";
+        res.redirect('/promotions');
+    } catch (error) {
+        console.error(error);
+        req.session.error = "Error deleting promotion.";
+        res.redirect('/promotions');
     }
 });
 
