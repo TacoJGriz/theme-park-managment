@@ -91,8 +91,8 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
         const memberId = req.session.member.id; // Internal ID is secure in session
         const [result] = await pool.query(`
             SELECT 
-                m.first_name, m.last_name, m.email, m.phone_number, m.date_of_birth, m.end_date,
-                m.public_membership_id, -- ADDED
+                m.first_name, m.last_name, m.email, m.phone_number, m.date_of_birth, m.end_date, m.start_date,
+                m.public_membership_id,
                 mt.type_name,
                 CASE 
                     WHEN m.end_date >= CURDATE() THEN 'Active' 
@@ -102,12 +102,21 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
             JOIN membership_type mt ON m.type_id = mt.type_id
             WHERE m.membership_id = ?
         `, [memberId]);
+
         if (result.length === 0) {
             return res.redirect('/member/logout');
         }
         const memberData = result[0];
 
-        // *** Renewal eligibility check ***
+        // --- Get Visit Stats (Count & Last Visit) ---
+        const [visitResult] = await pool.query(
+            "SELECT COUNT(*) as count, MAX(visit_date) as last_visit FROM visits WHERE membership_id = ?",
+            [memberId]
+        );
+        const visitCount = visitResult[0].count || 0;
+        const lastVisitDate = visitResult[0].last_visit ? new Date(visitResult[0].last_visit) : null;
+
+        // Renewal eligibility check
         const [paymentResult] = await pool.query(
             "SELECT COUNT(*) as count FROM member_payment_methods WHERE membership_id = ?",
             [memberId]
@@ -121,23 +130,25 @@ router.get('/dashboard', isMemberAuthenticated, async (req, res) => {
 
         const isExpired = endDate < today;
         const canRenew = (today >= renewalWindowStartDate) || isExpired;
-
-        const showRenewalBanner = canRenew; // Show banner if they are eligible
+        const showRenewalBanner = canRenew;
 
         res.render('member-dashboard', {
             member: {
-                id: memberData.public_membership_id, // CHANGED to public ID
+                id: memberData.public_membership_id,
                 firstName: memberData.first_name,
                 lastName: memberData.last_name,
                 email: memberData.email,
                 phone: memberData.phone_number,
                 dob: memberData.date_of_birth,
                 endDate: memberData.end_date,
+                startDate: memberData.start_date || new Date(), // Fallback if null
                 typeName: memberData.type_name,
                 status: memberData.member_status
             },
-            showRenewalBanner: showRenewalBanner, // Pass new variable
-            hasPaymentMethods: hasPaymentMethods  // Pass new variable
+            visitCount: visitCount,
+            lastVisitDate: lastVisitDate,
+            showRenewalBanner: showRenewalBanner,
+            hasPaymentMethods: hasPaymentMethods
         });
     } catch (error) {
         console.error("Error fetching member dashboard:", error);

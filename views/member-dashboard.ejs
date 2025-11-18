@@ -2,195 +2,363 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Member Dashboard</title>
+    <title>Member Dashboard | Primus Park</title>
+    
+    <%# --- Import Fonts & Icons --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        /* ... (all <style> content is unchanged) ... */
-        body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
-        .dashboard-container { padding: 2em; max-width: 900px;
-margin: 0 auto; }
-        h1 { color: #444;
-}
-        .welcome-message { font-size: 1.2em; margin-bottom: 1.5em; padding-bottom: 0.5em;
-border-bottom: 1px solid #ddd;}
+        :root {
+            --primary: #6f42c1;     /* Magical Purple */
+            --primary-dark: #5a32a3;
+            --secondary: #ffc107;   /* Gold */
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --success: #28a745;
+            --danger: #dc3545;
+            --glass: rgba(255, 255, 255, 0.9);
+        }
 
-        .renewal-banner {
-            padding: 1em 1.5em;
-            margin-bottom: 1.5em;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid transparent;
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background-color: #f0f2f5; 
+            color: #333; 
         }
-        .renewal-banner.expiring {
-            background-color: #fff3cd;
-            border-color: #ffeeba;
-            color: #856404;
+
+        .dashboard-container { 
+            max-width: 1100px; 
+            margin: 2em auto; 
+            padding: 0 2em; 
         }
-        .renewal-banner.expired {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
+
+        /* --- Welcome Section --- */
+        .welcome-header {
+            margin-bottom: 2em;
         }
-        .renewal-banner p {
+        .welcome-header h1 {
+            font-family: 'Lobster', cursive;
+            font-size: 2.5em;
+            color: var(--dark);
             margin: 0;
-            font-weight: bold;
         }
-        .renewal-banner .controls {
-            display: flex;
-            align-items: center;
-            gap: 1em;
-        }
-        .renewal-banner .renew-btn {
-            padding: 8px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            color: white;
-            white-space: nowrap;
-        }
-        .renewal-banner.expiring .renew-btn {
-            background-color: #ffc107;
-            color: #333;
-        }
-        .renewal-banner.expired .renew-btn {
-            background-color: #dc3545;
-        }
-        .renewal-banner .close-btn {
-            font-family: monospace;
-            font-size: 1.5em;
-            text-decoration: none;
-            cursor: pointer;
-            color: inherit;
-            opacity: 0.7;
-        }
-        .renewal-banner .close-btn:hover {
-            opacity: 1;
-        }
-        
-        .profile-container {
-            background: white;
-padding: 1em 2em 2em 2em; /* More padding on top/bottom */
-            border-radius: 8px;
-box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .profile-container h3 {
-            margin-top: 1.5em;
-border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            font-size: 1.3em;
-            color: #17a2b8;
-}
-        .profile-container h3:first-child {
-            margin-top: 0;
-/* No top margin for the first heading */
-        }
-        
-        .info-pair {
-            display: flex;
-justify-content: space-between; /* Pushes label and value apart */
-            align-items: center;
-font-size: 1.1em;
-            padding: 1em 0.5em; /* Padding top/bottom, slight left/right */
-            border-bottom: 1px solid #f0f0f0;
-}
-        .info-pair:last-child {
-            border-bottom: none;
-/* No border on the last item */
+        .welcome-header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 0.2em;
         }
 
-        .info-pair strong { 
-            color: #333;
-margin-right: 2em; /* Space between label and value */
+        /* --- Grid Layout --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
         }
-        .info-pair span { 
-            color: #555;
-/* Long text (like email) will no longer overflow */
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        /* --- Digital Member Card --- */
+        .member-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 20px;
+            padding: 2em;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(111, 66, 193, 0.3);
+            overflow: hidden;
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         
-        .info-pair .status-Active { 
-            color: #28a745;
-font-weight: bold; 
+        /* Decorative Circles on Card */
+        .member-card::before {
+            content: ''; position: absolute; top: -50px; right: -50px;
+            width: 150px; height: 150px; background: rgba(255,255,255,0.1);
+            border-radius: 50%;
         }
-        .info-pair .status-Expired { 
-            color: #dc3545;
-font-weight: bold; 
-        }       
+        .member-card::after {
+            content: ''; position: absolute; bottom: -30px; left: -30px;
+            width: 100px; height: 100px; background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2; }
+        .card-brand { font-family: 'Lobster', cursive; font-size: 1.5em; letter-spacing: 1px; color: var(--secondary); }
+        
+        /* QR Code Style */
+        .card-qr {
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            width: 80px;
+            height: 80px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .card-qr img { width: 100%; height: 100%; display: block; }
+
+        .card-body { margin-top: 1em; position: relative; z-index: 2; }
+        .card-label { font-size: 0.75em; text-transform: uppercase; opacity: 0.7; margin-bottom: 2px; }
+        .card-value { font-size: 1.4em; font-weight: 600; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .card-id { font-family: monospace; font-size: 1.2em; letter-spacing: 2px; margin-top: 5px; }
+
+        .card-footer { display: flex; justify-content: space-between; margin-top: 1.5em; position: relative; z-index: 2; }
+        .card-footer div { display: flex; flex-direction: column; }
+
+        /* --- Stats Bar (3 Columns) --- */
+        .stats-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5em;
+            margin-top: 1.5em;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3 Columns for Visits, Date, Days Left */
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .stat-box { text-align: center; position: relative; }
+        
+        /* Vertical Dividers */
+        .stat-box:not(:last-child)::after {
+            content: ''; position: absolute; right: 0; top: 10%; height: 80%;
+            width: 1px; background: #eee;
+        }
+        
+        .stat-val { display: block; font-size: 1.6em; font-weight: 700; color: var(--primary); line-height: 1.2; }
+        .stat-lbl { font-size: 0.85em; color: #888; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+
+
+        /* --- Profile Details Section --- */
+        .details-panel {
+            background: white;
+            padding: 2em;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .details-panel h3 { margin-top: 0; color: var(--dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .info-row { 
+            display: flex; justify-content: space-between; 
+            padding: 12px 0; border-bottom: 1px solid #f9f9f9; 
+            font-size: 0.95em;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #888; font-weight: 600; }
+        .info-data { color: var(--dark); font-weight: 600; }
+        .status-badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 0.85em;
+        }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-expired { background: #f8d7da; color: #721c24; }
+
+        /* --- Quick Actions Grid --- */
+        .actions-section { margin-top: 3em; }
+        .actions-section h3 { font-size: 1.5em; margin-bottom: 1em; color: var(--dark); }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .action-btn {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            padding: 2em 1.5em;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            color: var(--primary);
+        }
+        .action-icon { font-size: 2.5em; margin-bottom: 15px; color: var(--primary); }
+        .action-label { font-weight: 700; font-size: 1.1em; }
+        .action-desc { font-size: 0.85em; color: #888; margin-top: 5px; }
+
+        /* --- Renewal Banner (Polished) --- */
+        .renewal-banner {
+            background: #fff3cd; border-left: 5px solid #ffc107;
+            padding: 1.5em; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2em; box-shadow: 0 4px 10px rgba(255, 193, 7, 0.15);
+        }
+        .renewal-banner.expired { background: #f8d7da; border-left-color: #dc3545; }
+        .renewal-text { color: #856404; font-weight: 600; font-size: 1.1em; }
+        .renewal-banner.expired .renewal-text { color: #721c24; }
+        
+        .banner-btn {
+            background: #ffc107; color: #333; text-decoration: none;
+            padding: 10px 20px; border-radius: 30px; font-weight: bold;
+            transition: background 0.2s;
+        }
+        .banner-btn:hover { background: #e0a800; }
+        .renewal-banner.expired .banner-btn { background: #dc3545; color: white; }
+        .renewal-banner.expired .banner-btn:hover { background: #c82333; }
 
     </style>
 </head>
 <body>
     <%- include('partials/member-header') %>
+
     <div class="dashboard-container">
+        
+        <%# --- Renewal Banner Logic --- %>
         <% if (showRenewalBanner) { %>
             <% 
                 let bannerClass = 'expiring';
                 let bannerText = `Your membership expires on ${new Date(member.endDate).toLocaleDateString()}!`;
+                let btnText = "Renew Now";
+                let btnLink = "/member/renew";
+
                 if (member.status === 'Expired') {
                     bannerClass = 'expired';
-                    bannerText = 'Your membership has expired!';
+                    bannerText = 'Your membership has expired! Renew today to restore access.';
+                }
+                if (!hasPaymentMethods) {
+                    btnText = "Add Payment to Renew";
+                    btnLink = "/member/manage";
                 }
             %>
             <div class="renewal-banner <%= bannerClass %>" id="renewalBanner">
-                <p><%= bannerText %></p>
-                <div class="controls">
-                    <% if (hasPaymentMethods) { %>
-                        <a href="/member/renew" class="renew-btn">Renew Now</a>
-                    <% } else { %>
-                        <a href="/member/manage" class="renew-btn">Add Payment to Renew</a>
-                    <% } %>
-                    <a class="close-btn" onclick="document.getElementById('renewalBanner').style.display='none'">&times;</a>
+                <div class="renewal-text">
+                    <i class="fa-solid fa-circle-exclamation" style="margin-right: 8px;"></i>
+                    <%= bannerText %>
                 </div>
+                <a href="<%= btnLink %>" class="banner-btn"><%= btnText %></a>
             </div>
         <% } %>
 
-        <h1>Member Dashboard</h1>
+        <div class="welcome-header">
+            <h1>Welcome back, <%= member.firstName %>!</h1>
+            <p>Ready for another day of magic? Here is your pass.</p>
+        </div>
 
-        <p class="welcome-message">
-            Hello, <strong><%= member.firstName %> <%= member.lastName %></strong>!
-</p>
-
-        <div class="profile-container">
+        <div class="dashboard-grid">
             
-            <h3>My Membership</h3>
-            <div class="info-pair">
-                <strong>Member ID:</strong>
-                <%# Show clean 8-char public ID %>
-                <span><%= member.id.substring(0, 8).toUpperCase() %></span>
-            </div>
-      
-      <div class="info-pair">
-                <strong>Membership Type:</strong>
-                <span><%= member.typeName %></span>
-            </div>
-            <div class="info-pair">
-                <strong>Status:</strong>
-                <span 
-class="status-<%= member.status %>"><%= member.status %></span>
-            </div>
-            <div class="info-pair">
-                <strong>Valid Through:</strong>
-                <span><%= new Date(member.endDate).toLocaleDateString() %></span>
+            <div class="left-col">
+                <div class="member-card">
+                    <div class="card-top">
+                        <div class="card-brand"><i class="fa-solid fa-wand-magic-sparkles"></i> Primus Park</div>
+                        
+                        <div class="card-qr">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= member.id %>" alt="Scan Pass">
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="card-label">Membership Type</div>
+                        <div class="card-value"><%= member.typeName %> Pass</div>
+                        <div class="card-id"><%= member.id.substring(0, 8).toUpperCase() %></div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div>
+                            <span class="card-label">Member Since</span>
+                            <span><%= new Date(member.startDate).getFullYear() %></span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="card-label">Valid Through</span>
+                            <span><%= new Date(member.endDate).toLocaleDateString() %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat-box">
+                        <span class="stat-val"><%= visitCount %></span>
+                        <span class="stat-lbl">Total Visits</span>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <span class="stat-val" style="font-size: 1.4em; line-height: 1.3;">
+                            <%= (typeof lastVisitDate !== 'undefined' && lastVisitDate) ? lastVisitDate.toLocaleDateString(undefined, {month:'short', day:'numeric'}) : '--' %>
+                        </span>
+                        <span class="stat-lbl">Last Visit</span>
+                    </div>
+
+                    <div class="stat-box">
+                        <% 
+                            const daysLeft = Math.ceil((new Date(member.endDate) - new Date()) / (1000 * 60 * 60 * 24));
+                            const daysDisplay = daysLeft > 0 ? daysLeft : 0;
+                        %>
+                        <span class="stat-val"><%= daysDisplay %></span>
+                        <span class="stat-lbl">Days Left</span>
+                    </div>
+                </div>
             </div>
 
-            <h3>My Contact Info</h3>
-         
-   <div class="info-pair">
-                <strong>Email:</strong>
-                <span><%= member.email %></span>
+            <div class="details-panel">
+                <h3>Profile Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Status</span>
+                    <span class="status-badge <%= member.status === 'Active' ? 'status-active' : 'status-expired' %>">
+                        <%= member.status %>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-data"><%= member.firstName %> <%= member.lastName %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-data"><%= member.email %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-data"><%= member.phone || 'N/A' %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date of Birth</span>
+                    <span class="info-data"><%= new Date(member.dob).toLocaleDateString() %></span>
+                </div>
+                <div style="margin-top: 1.5em; text-align: right;">
+                    <a href="/member/edit" style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 0.9em;">
+                        Edit Details <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
             </div>
-            <div class="info-pair">
-                <strong>Phone:</strong>
-                <span><%= member.phone ||
-'N/A' %></span>
-            </div>
-             <div class="info-pair">
-                <strong>Date of Birth:</strong>
-                <span><%= new Date(member.dob).toLocaleDateString() %></span>
+
+        </div>
+
+        <div class="actions-section">
+            <h3>Quick Actions</h3>
+            <div class="actions-grid">
+                <a href="/member/manage" class="action-btn">
+                    <i class="fa-solid fa-users-gear action-icon"></i>
+                    <span class="action-label">Manage Account</span>
+                    <span class="action-desc">Family members & payments</span>
+                </a>
+                <a href="/member/history" class="action-btn">
+                    <i class="fa-solid fa-clock-rotate-left action-icon"></i>
+                    <span class="action-label">Visit History</span>
+                    <span class="action-desc">View past trips & receipts</span>
+                </a>
+                <a href="/member/promotions" class="action-btn">
+                    <i class="fa-solid fa-tags action-icon"></i>
+                    <span class="action-label">My Offers</span>
+                    <span class="action-desc">Exclusive member deals</span>
+                </a>
+                <a href="/" class="action-btn">
+                    <i class="fa-solid fa-map-location-dot action-icon"></i>
+                    <span class="action-label">Park Map</span>
+                    <span class="action-desc">Plan your next visit</span>
+                </a>
             </div>
         </div>
+
     </div>
 </body>
 </html>

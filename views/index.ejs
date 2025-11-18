@@ -15,7 +15,7 @@
             --accent: #17a2b8;      /* Cyan/Blue */
             --dark: #343a40;
             --light: #f8f9fa;
-            --hero-overlay: rgba(0, 0, 0, 0.4); /* Slightly lighter to see fireworks */
+            --hero-overlay: rgba(0, 0, 0, 0.3); /* Lighter overlay to show more image */
         }
 
         body { 
@@ -26,6 +26,7 @@
             display: flex; 
             flex-direction: column; 
             min-height: 100vh;
+            scroll-behavior: smooth;
         }
 
         /* --- Typography --- */
@@ -68,41 +69,49 @@
         }
         .nav-links a.activate-btn:hover { background-color: #e0a800; color: var(--dark); }
 
-        /* --- Hero Section (Animated) --- */
+        /* --- Hero Section (UPDATED) --- */
         .hero {
-            /* Local Fireworks Background */
             background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), 
                         url('/images/hero-bg.png');
             background-size: cover;
-            background-position: center 30%; /* Adjust center point */
-            background-attachment: fixed; /* Parallax effect */
+            background-position: center 30%; 
+            background-attachment: fixed; 
             color: white;
-            /* Increased padding for a "full screen" feel */
-            padding: 10em 2em 12em 2em; 
+            /* Flexbox Layout for full height centering */
+            min-height: 90vh; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Spreads content vs stats */
+            align-items: center;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             position: relative;
             overflow: hidden;
+            padding-top: 4em; /* Space from navbar */
+        }
+
+        /* Wrapper for text/buttons to keep them centered */
+        .hero-content {
+            margin: auto 0; /* Vertically center this block */
+            padding: 0 2em;
         }
         
-        /* Text Entrance Animations */
         .hero h1 { 
             color: white; font-size: 5em; margin: 0; 
             text-shadow: 0 4px 20px rgba(0,0,0,0.6);
-            opacity: 0; /* Start hidden */
+            opacity: 0; 
             animation: slideDownFade 1s ease-out forwards;
             animation-delay: 0.2s;
         }
         .hero p { 
             font-size: 1.8em; margin-top: 0.5em; font-weight: 300; 
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            opacity: 0; /* Start hidden */
+            opacity: 0; 
             animation: slideUpFade 1s ease-out forwards;
             animation-delay: 0.5s;
         }
         .hero-buttons {
             margin-top: 2.5em;
-            opacity: 0; /* Start hidden */
+            opacity: 0; 
             animation: slideUpFade 1s ease-out forwards;
             animation-delay: 0.8s;
         }
@@ -116,32 +125,17 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Scroll Indicator Arrow */
-        .scroll-indicator {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.7);
-            font-size: 2em;
-            animation: bounce 2s infinite;
-            cursor: pointer;
-        }
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
-            40% {transform: translateX(-50%) translateY(-10px);}
-            60% {transform: translateX(-50%) translateY(-5px);}
-        }
-
-        /* --- Stats Section --- */
+        /* --- Stats Section (UPDATED: Transparent Overlay) --- */
         .stats-section {
-            background-color: var(--dark);
+            width: 100%;
+            /* Glassmorphism Effect */
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(10px); 
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 3em 2em;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 2;
+            padding: 2em 1em; /* Reduced vertical padding slightly */
+            box-sizing: border-box;
+            /* No margin, sits at bottom of hero via flexbox */
         }
         .stats-grid {
             max-width: 1200px;
@@ -150,7 +144,7 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2em;
         }
-        .stat-item { padding: 1em; }
+        .stat-item { padding: 0.5em; }
         .stat-number {
             font-family: 'Lobster', cursive;
             font-size: 3.5em;
@@ -158,6 +152,7 @@
             line-height: 1;
             display: block;
             margin-bottom: 0.2em;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
         .stat-label {
             font-family: 'Poppins', sans-serif;
@@ -165,14 +160,28 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 2em 4em 2em; flex-grow: 1; }
+        /* --- Scroll Indicator Arrow (UPDATED Position) --- */
+        .scroll-indicator {
+            margin-bottom: 1em; /* Position just above stats bar */
+            color: rgba(255,255,255,0.7);
+            font-size: 2em;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 4em 2em; flex-grow: 1; }
 
         /* --- Weather Alert --- */
         .alert-banner {
-            padding: 1em; margin-top: 2em; margin-bottom: 2em; 
+            padding: 1em; margin-top: 0; margin-bottom: 2em; 
             border-radius: 8px; font-weight: bold; text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             position: relative; z-index: 10;
@@ -185,14 +194,13 @@
             display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px;
         }
         
-        /* --- Promotion Cards (Thematic) --- */
+        /* --- Promotion Cards --- */
         .card.promo {
             background: white; border-radius: 12px; overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border-top: 5px solid var(--primary);
             transition: transform 0.3s ease;
-            padding: 0; /* Reset padding for internal layout */
-            display: flex; flex-direction: column;
+            padding: 0; display: flex; flex-direction: column;
         }
         .card.promo:hover { transform: translateY(-5px); }
         
@@ -278,23 +286,23 @@
         .premium .purchase-button { background-color: var(--secondary); color: black; }
         .premium .purchase-button:hover { background-color: #e0a800; }
 
-        /* --- Featured Ride Spotlight (UPDATED) --- */
+        /* --- Featured Ride Spotlight --- */
         .featured-ride {
             position: relative;
-            min-height: 450px; /* Changed from height to min-height for flexibility */
+            min-height: 450px;
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.2)), url('/images/space-mountain.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed; /* Parallax */
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* Align text to left */
+            justify-content: flex-start; 
             margin: 4em 0;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            padding: 4em; /* Increased inner padding */
-            box-sizing: border-box; /* Ensure padding is included in width/height */
+            padding: 4em;
+            box-sizing: border-box;
         }
         .featured-content {
             max-width: 500px;
@@ -419,6 +427,29 @@
             background-color: black;
         }
 
+        /* --- Back to Top Button --- */
+        #backToTop {
+            display: none; /* Hidden by default */
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: var(--secondary);
+            color: var(--dark);
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        #backToTop:hover {
+            background-color: #e0a800;
+            transform: translateY(-5px);
+        }
+
     </style>
 </head>
 <body>
@@ -436,36 +467,38 @@
 
     <div class="hero">
         
-        <h1>Welcome to Primus Theme Park</h1>
-        <p>Where your magical adventure awaits!</p>
-        
-        <div class="hero-buttons">
-            <a href="#tickets" style="background: var(--secondary); color: black; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; margin-right: 10px;">Buy Tickets</a>
-            <a href="#attractions" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; border: 1px solid white;">Explore</a>
+        <div class="hero-content">
+            <h1>Welcome to Primus Theme Park</h1>
+            <p>Where your magical adventure awaits!</p>
+            
+            <div class="hero-buttons">
+                <a href="#tickets" style="background: var(--secondary); color: black; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; margin-right: 10px;">Buy Tickets</a>
+                <a href="#attractions" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1em; border: 1px solid white;">Explore</a>
+            </div>
+
+            <div class="scroll-indicator" onclick="document.getElementById('statsSection').scrollIntoView({behavior: 'smooth'})">
+                ▼
+            </div>
         </div>
 
-        <div class="scroll-indicator" onclick="document.getElementById('statsSection').scrollIntoView({behavior: 'smooth'})">
-            ▼
-        </div>
-    </div>
-
-    <div class="stats-section" id="statsSection">
-        <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-number" data-target="40">0</span>
-                <span class="stat-label">Attractions</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" data-target="8">0</span>
-                <span class="stat-label">Themed Lands</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" data-target="16">0</span>
-                <span class="stat-label">Dining Spots</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" data-target="100">0</span>
-                <span class="stat-label">% Magical</span>
+        <div class="stats-section" id="statsSection">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="40">0</span>
+                    <span class="stat-label">Attractions</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="8">0</span>
+                    <span class="stat-label">Themed Lands</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="16">0</span>
+                    <span class="stat-label">Dining Spots</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="100">0</span>
+                    <span class="stat-label">% Magical</span>
+                </div>
             </div>
         </div>
     </div>
@@ -695,9 +728,12 @@
         </div>
     </div>
 
+    <button onclick="topFunction()" id="backToTop" title="Go to top">↑</button>
+
     <%- include('partials/footer') %>
 
     <script>
+        // Stats Animation Script
         const statsSection = document.getElementById('statsSection');
         const counters = document.querySelectorAll('.stat-number');
         let started = false; // Function should run only once
@@ -717,7 +753,7 @@
                             setTimeout(updateCount, 20);
                         } else {
                             counter.innerText = target;
-                            // Append "+" for specific labels if needed (optional logic)
+                            // Append "+" for specific labels if needed
                             if(target > 10) counter.innerText += '+';
                             if(target === 100) counter.innerText = '100'; // Reset for %
                         }
@@ -727,7 +763,26 @@
             }
         }, { threshold: 0.5 });
 
-        observer.observe(statsSection);
+        if (statsSection) {
+            observer.observe(statsSection);
+        }
+
+        // Back to Top Button Script
+        const backToTopBtn = document.getElementById("backToTop");
+
+        window.onscroll = function() {scrollFunction()};
+
+        function scrollFunction() {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                backToTopBtn.style.display = "block";
+            } else {
+                backToTopBtn.style.display = "none";
+            }
+        }
+
+        function topFunction() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
     </script>
 </body>
 </html>
