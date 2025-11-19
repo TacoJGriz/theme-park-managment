@@ -1,5 +1,3 @@
-USE park_database;
-
 DROP PROCEDURE IF EXISTS GenerateHistoricalData;
 
 DELIMITER //
@@ -45,7 +43,7 @@ BEGIN
     DECLARE v_ride_id INT;
     DECLARE v_ride_type VARCHAR(50);
     DECLARE v_capacity INT;
-    DECLARE v_ride_status ENUM('OPEN', 'CLOSED', 'BROKEN');
+    DECLARE v_ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE'); -- UPDATED ENUM HERE
     DECLARE v_ride_weather_mult DECIMAL(5, 2);
     DECLARE v_ride_participation_rate DECIMAL(5, 2);
     DECLARE v_total_riders INT;
@@ -107,8 +105,9 @@ BEGIN
     INSERT INTO temp_active_promotions (start_date, end_date, discount_percent)
     SELECT start_date, end_date, discount_percent FROM event_promotions;
 
+    -- *** CRITICAL FIX: Updated ENUM to include 'WEATHER CLOSURE' ***
     DROP TEMPORARY TABLE IF EXISTS temp_rides;
-    CREATE TEMPORARY TABLE temp_rides ( ride_id INT PRIMARY KEY, ride_type VARCHAR(50), capacity INT, ride_status ENUM('OPEN', 'CLOSED', 'BROKEN') );
+    CREATE TEMPORARY TABLE temp_rides ( ride_id INT PRIMARY KEY, ride_type VARCHAR(50), capacity INT, ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE') );
     INSERT INTO temp_rides (ride_id, ride_type, capacity, ride_status)
     SELECT ride_id, ride_type, capacity, ride_status FROM rides;
 
@@ -182,17 +181,24 @@ BEGIN
         SET i = 0;
         SELECT COALESCE(MAX(discount_percent), 0) INTO v_promo_percent FROM temp_active_promotions WHERE v_date BETWEEN start_date AND end_date;
         
+        -- MANDATORY STAFF SELECTION BEFORE VISIT LOOP
+        SET v_staff_id = NULL;
+        
+        -- Since basic data guarantees staff exists (max_staff_id > 0), we use ORDER BY RAND() 
+        -- to reliably fetch a single Staff ID from the temporary table.
+        IF max_staff_id > 0 THEN
+            SELECT employee_id INTO v_staff_id FROM temp_staff_employees ORDER BY RAND() LIMIT 1;
+        END IF;
+
+        -- v_staff_id is now a valid Staff ID (or remains NULL if something went wrong, 
+        -- which is acceptable but ensures no non-staff log entries).
+        SET v_visit_datetime = CONCAT(v_date, ' ', LPAD(FLOOR(8 + RAND() * 8), 2, '0'), ':', LPAD(FLOOR(RAND() * 60), 2, '0'), ':00');
+
         visit_loop: LOOP
             IF i >= v_total_visitors_today THEN LEAVE visit_loop; END IF;
             
             SET v_is_member = (RAND() < 0.25 AND max_member_id > 0); 
             
-            -- Safe Staff Selection
-            SET v_staff_id = NULL;
-            IF max_staff_id > 0 THEN
-                SELECT employee_id INTO v_staff_id FROM temp_staff_employees WHERE id = FLOOR(1 + RAND() * max_staff_id) LIMIT 1;
-            END IF;
-
             SET v_visit_datetime = CONCAT(v_date, ' ', LPAD(FLOOR(8 + RAND() * 8), 2, '0'), ':', LPAD(FLOOR(RAND() * 60), 2, '0'), ':00');
 
             IF v_is_member THEN
@@ -238,7 +244,7 @@ BEGIN
             IF done THEN LEAVE ride_loop; END IF;
 
             SET v_ride_weather_mult = 1.0;
-            IF v_park_closure THEN SET v_ride_status = 'CLOSED';
+            IF v_park_closure THEN SET v_ride_status = 'WEATHER CLOSURE'; -- Use the correct ENUM value
             ELSEIF v_weather_type = 'Rain' AND (v_ride_type = 'Rollercoaster' OR v_ride_type = 'Water Ride') THEN SET v_ride_weather_mult = 0.5;
             ELSEIF v_weather_type = 'Heatwave' AND v_ride_type = 'Water Ride' THEN SET v_ride_weather_mult = 1.5;
             END IF;

@@ -28,7 +28,7 @@
         }
         .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #007bff;
         }
-        .stat-card h3.warning { color: #dc3545;
+        .stat-card h3.critical { color: #dc3545;
         }
         .stat-card h3.pending { color: #d39e00;
         }
@@ -102,7 +102,7 @@
         .action-button:hover { background-color: #0056b3;
         }
 
-        /* --- NEW ACTION BUTTON STYLES --- */
+        /* --- ACTION BUTTON STYLES --- */
         .btn-action {
             display: block;
             width: 100%;
@@ -161,8 +161,8 @@
                 <p>Total Records</p>
             </div>
             <div class="stat-card">
-                <h3 class="warning"><%= counts.low_stock_count || 0 %></h3>
-                <p>Low Stock (&lt;10)</p>
+                <h3 class="critical"><%= counts.out_of_stock_count || 0 %></h3>
+                <p>Out of Stock</p>
             </div>
             <div class="stat-card">
                 <h3 class="pending"><%= counts.pending_count || 0 %></h3>
@@ -194,7 +194,7 @@
                         <select id="filter_status" name="filter_status">
                             <option value="">All</option>
                             <option value="ok" <%= filters.status === 'ok' ? 'selected' : '' %>>OK</option>
-                            <option value="low_stock" <%= filters.status === 'low_stock' ? 'selected' : '' %>>Low Stock</option>
+                            <option value="out_of_stock" <%= filters.status === 'out_of_stock' ? 'selected' : '' %>>Out of Stock</option>
                             <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending Request</option>
                         </select>
                     </div>
@@ -213,7 +213,7 @@
         </div>
 
         <div class="button-bar">
-            <% if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') { %>
+            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                 <a href="/inventory/add" class="action-button" style="background-color: #28a745; margin-right: 10px;">Add Item to Shelf</a>
             <% } %>
             <a href="/inventory/requests" class="action-button">View All Restock Requests</a>
@@ -260,7 +260,7 @@
                             <span>Current Count</span> <span class="sort-indicator"><%= getSortState('count').indicator %></span>
                         </a>
                     </th>
-                    <th style="min-width: 140px;">Actions</th>
+                    <th>Actions</th> 
                 </tr>
             </thead>
             <tbody>

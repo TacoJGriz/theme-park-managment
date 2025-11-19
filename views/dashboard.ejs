@@ -232,9 +232,6 @@
                         <h3>Retail & Inventory</h3>
                     </div>
                     <div class="card-body">
-                        <%# --- NEW: Added Link Here --- %>
-                        <a href="/vendors"><i class="fa-solid fa-shop"></i> View Vendors</a>
-
                         <% if (user.role !== 'Staff') { %>
                             <a href="/items"><i class="fa-solid fa-barcode"></i> Master Item List</a>
                         <% } %>
@@ -268,10 +265,7 @@
                     </div>
                     <div class="card-body">
                         <a href="/users"><i class="fa-solid fa-users-viewfinder"></i> Manage Employees</a>
-                        <% if (user.role === 'Admin') { %>
-                            <a href="/employees/pending" class="important-link"><i class="fa-solid fa-user-plus"></i> Pending Hires</a>
-                        <% } %>
-                        <%# Removed generic View Reports link %>
+                        <%# Removed Pending Hires Link %>
                     </div>
                 </div>
             <% } %>

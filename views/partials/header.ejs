@@ -8,11 +8,11 @@
 	color: white;
 	margin-bottom: 1em;
 	min-height: 50px;
-	/* --- NEW: Sticky Header Styles --- */
+	/* --- Sticky Header Styles (Added in Turn 24) --- */
 	position: sticky;
 	top: 0;
 	z-index: 1000; /* Ensures it stays on top of tables/content */
-	box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Optional: Adds a shadow so you see where it ends */
+	box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 	}
 	.nav-links {
 	display: flex;
@@ -105,9 +105,7 @@
 			<div class="dropdown-content">
 				<a href="/users">Employees</a>
 
-				<% if (user.role === 'Admin') { %>
-				<a href="/employees/pending" class="special-link">Pending Hires</a>
-				<% } %>
+				<%# The Pending Hires link was removed %>
 
 				<a href="/approvals" class="special-link">Pending Requests</a>
 
@@ -116,7 +114,7 @@
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
 					<a href="/locations">Locations</a>
 					<% } %>
-					<a href="/vendors">Vendors</a>
+					<%# The main "Manage Vendors" link is now housed under Retail for simplicity %>
 					<a href="/map">Interactive Map</a>
 
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
@@ -134,6 +132,8 @@
 				<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
 				<a href="/items">Items</a>
 				<% } %>
+				<a href="/vendors">Vendors</a>
+				<%# View Vendors Link Added %>
 				<a href="/inventory">Inventory</a>
 			</div>
 		</div>

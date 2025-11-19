@@ -24,20 +24,6 @@ const canAddEmployees = (req, res, next) => {
     res.status(403).send('Forbidden: Admin access required');
 };
 
-// UPDATED: Only Admin can approve employees now
-const canApproveEmployees = (req, res, next) => {
-    const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin') { return next(); }
-    res.status(403).send('Forbidden: Admin access required.');
-};
-
-// UPDATED: Only Admin can view pending employees now
-const canViewPendingEmployees = (req, res, next) => {
-    const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin') { return next(); }
-    res.status(403).send('Forbidden: Admin access required.');
-};
-
 const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') { return next(); }
@@ -153,15 +139,6 @@ const getReportSettings = (selectedDate, grouping) => {
     return { startDate, endDate, sqlDateFormat, labelFormat };
 };
 
-// UPDATED: Only Admin can approve wages now
-const canApproveWages = (req, res, next) => {
-    const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin') {
-        return next();
-    }
-    res.status(403).send('Forbidden: Admin access required.');
-};
-
 const canApproveMaintenance = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') {
@@ -268,11 +245,8 @@ const isGuest = (req, res, next) => {
 module.exports = {
     isAuthenticated,
     isAdmin,
-    // isHR is removed
     isParkManager,
     canAddEmployees,
-    canApproveEmployees,
-    canViewPendingEmployees,
     isAdminOrParkManager,
     canViewUsers,
     isMaintenanceOrHigher,
@@ -283,7 +257,6 @@ module.exports = {
     canManageInventory,
     canViewReports,
     getReportSettings,
-    canApproveWages,
     canApproveMaintenance,
     canLogRideRun,
     canViewRideHistory,

@@ -19,27 +19,6 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
         let reassignments = [];
         let inventoryRequests = [];
 
-        // UPDATED: Only Admin handles wage approvals now
-        if (role === 'Admin') {
-            const rateChangeQuery = `
-                SELECT 
-                    target.employee_id, 
-                    target.public_employee_id,
-                    target.first_name, 
-                    target.last_name, 
-                    target.hourly_rate, 
-                    target.pending_hourly_rate,
-                    requester.first_name as requester_first_name,
-                    requester.last_name as requester_last_name,
-                    requester.public_employee_id as requester_public_id -- ADDED
-                FROM employee_demographics as target
-                JOIN employee_demographics as requester ON target.rate_change_requested_by = requester.employee_id
-                WHERE target.pending_hourly_rate IS NOT NULL
-            `;
-            const [rateResults] = await pool.query(rateChangeQuery);
-            rateChanges = rateResults;
-        }
-
         // Maintenance approvals (Admin or Park Manager)
         if (role === 'Admin' || role === 'Park Manager') {
             const reassignmentQuery = `
@@ -101,41 +80,6 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
     } catch (error) {
         console.error("Error fetching approvals:", error);
         res.status(500).send("Error loading approvals page.");
-    }
-});
-
-// POST /approve/rate/:public_employee_id
-router.post('/approve/rate/:public_employee_id', isAuthenticated, canApproveWages, async (req, res) => {
-    try {
-        const sql = `
-            UPDATE employee_demographics 
-            SET hourly_rate = pending_hourly_rate, 
-                pending_hourly_rate = NULL, 
-                rate_change_requested_by = NULL 
-            WHERE public_employee_id = ?
-        `;
-        await pool.query(sql, [req.params.public_employee_id]);
-        res.redirect('/approvals');
-    } catch (error) {
-        console.error("Error approving rate change:", error);
-        res.status(500).send("Error processing approval.");
-    }
-});
-
-// POST /reject/rate/:public_employee_id
-router.post('/reject/rate/:public_employee_id', isAuthenticated, canApproveWages, async (req, res) => {
-    try {
-        const sql = `
-            UPDATE employee_demographics 
-            SET pending_hourly_rate = NULL, 
-                rate_change_requested_by = NULL 
-            WHERE public_employee_id = ?
-        `;
-        await pool.query(sql, [req.params.public_employee_id]);
-        res.redirect('/approvals');
-    } catch (error) {
-        console.error("Error rejecting rate change:", error);
-        res.status(500).send("Error processing rejection.");
     }
 });
 

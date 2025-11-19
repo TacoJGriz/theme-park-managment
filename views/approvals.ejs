@@ -64,47 +64,7 @@
     <div class="container">
         <h1>Pending Approvals</h1>
 
-        <%# Only show this section if the user *can* see it (Admin/Head of HR) %>
-        <% if (user.role === 'Admin' || user.role === 'Head of HR') { %>
-            <h2>Hourly Rate Changes</h2>
-            <% if (rateChanges.length > 0) { %>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Employee ID</th>
-                            <th>Employee Name</th>
-                            <th>Current Rate</th>
-                            <th>Requested Rate</th>
-                            <th>Requester ID</th>
-                            <th>Requested By</th>
-                            <th style="min-width: 150px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% rateChanges.forEach(req => { %>
-                            <tr>
-                                <td><%= req.public_employee_id.substring(0, 8).toUpperCase() %></td>
-                                <td><%= req.first_name %> <%= req.last_name %></td>
-                                <td>$<%= parseFloat(req.hourly_rate).toFixed(2) %></td>
-                                <td>$<%= parseFloat(req.pending_hourly_rate).toFixed(2) %></td>
-                                <td><%= req.requester_public_id.substring(0, 8).toUpperCase() %></td>
-                                <td><%= req.requester_first_name %> <%= req.requester_last_name %></td>
-                                <td>
-                                    <form action="/approve/rate/<%= req.public_employee_id %>" method="POST" style="display: inline;">
-                                        <button type="submit" class="btn-action btn-approve">Approve</button>
-                                    </form>
-                                    <form action="/reject/rate/<%= req.public_employee_id %>" method="POST" style="display: inline;">
-                                        <button type="submit" class="btn-action btn-reject">Reject</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p class="no-pending">No pending hourly rate changes.</p>
-            <% } %>
-        <% } %>
+        <%# Hourly Rate Changes Section Removed %>
 
         <%# Only show this section if the user *can* see it (Admin/Park Manager) %>
         <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>

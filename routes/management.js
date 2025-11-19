@@ -824,15 +824,30 @@ router.get('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (re
 // Path is '/weather/edit/:id'
 router.post('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { event_date, end_time, weather_type, park_closure, returnQuery } = req.body;
+    const weatherId = req.params.id;
+
+    // --- SERVER-SIDE VALIDATION: Check for future end_time ---
+    if (end_time) {
+        const endTimeDate = new Date(end_time);
+        const now = new Date();
+        // Allow a small buffer (5 seconds) to account for transmission time
+        if (endTimeDate.getTime() > now.getTime() + 5000) {
+            req.session.error = "Error: End time cannot be set in the future.";
+            return res.redirect(`/weather/edit/${weatherId}` + (returnQuery ? `?returnQuery=${returnQuery}` : ''));
+        }
+    }
+    // --- END VALIDATION ---
+
     try {
         const isClosed = park_closure === '1';
         const sql = "UPDATE weather_events SET event_date = ?, end_time = ?, weather_type = ?, park_closure = ? WHERE weather_id = ?";
-        await pool.query(sql, [event_date, end_time || null, weather_type, isClosed, req.params.id]);
+        await pool.query(sql, [event_date, end_time || null, weather_type, isClosed, weatherId]);
 
         req.session.success = "Weather event updated.";
         res.redirect('/weather' + (returnQuery ? `?${returnQuery}` : ''));
     } catch (error) {
         console.error(error);
+        req.session.error = "Database error updating event.";
         res.redirect('/weather');
     }
 });
@@ -857,9 +872,22 @@ router.get('/weather/new', isAuthenticated, isAdminOrParkManager, async (req, re
 
 // Path is '/weather'
 router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_date, weather_type } = req.body;
+    const { event_date, weather_type, park_closure } = req.body;
     const end_time = req.body.end_time ? req.body.end_time : null;
-    const park_closure = req.body.park_closure === '1';
+    const isClosed = park_closure === '1';
+
+    // --- SERVER-SIDE VALIDATION: Check for future end_time ---
+    if (end_time) {
+        const endTimeDate = new Date(end_time);
+        const now = new Date();
+        // Allow a small buffer (5 seconds)
+        if (endTimeDate.getTime() > now.getTime() + 5000) {
+            return res.render('add-weather-event', {
+                error: "Error: End time cannot be set in the future."
+            });
+        }
+    }
+    // --- END VALIDATION ---
 
     let connection;
     try {
@@ -868,7 +896,8 @@ router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) 
             INSERT INTO weather_events (event_date, end_time, weather_type, park_closure)
             VALUES (?, ?, ?, ?)
         `;
-        await connection.query(sql, [event_date, end_time, weather_type, park_closure]);
+        await connection.query(sql, [event_date, end_time, weather_type, isClosed]);
+        req.session.success = "Weather event logged successfully.";
         res.redirect('/weather');
     } catch (error) {
         console.error(error);

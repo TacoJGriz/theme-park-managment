@@ -15,7 +15,7 @@
         /* --- Stats Bar Styles --- */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(3, 1fr); /* Changed from 4 to 3 columns */
             gap: 1em;
             margin-bottom: 1.5em;
         }
@@ -45,7 +45,7 @@
         }
         .filter-controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 1em;
             align-items: flex-end;
         }
@@ -105,9 +105,9 @@
         .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
         }
 
-        /* --- NEW ACTION BUTTON STYLES --- */
+        /* --- ACTION BUTTON STYLES --- */
         .btn-action {
-            display: block; /* Stack buttons vertically */
+            display: block;
             width: 100%;
             box-sizing: border-box;
             padding: 5px 10px;
@@ -151,7 +151,7 @@
 
         <h1>Park Employees</h1>
 
-        <%# --- STATS BAR --- %>
+        <%# --- STATS BAR (Removed Pending Stat) --- %>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3><%= counts.total || 0 %></h3>
@@ -165,13 +165,9 @@
                 <h3 class="inactive"><%= counts.inactive || 0 %></h3>
                 <p>Inactive</p>
             </div>
-             <div class="stat-card">
-                <h3 style="color: #fd7e14;"><%= counts.pending || 0 %></h3>
-                <p>Pending</p>
-            </div>
         </div>
 
-        <%# --- FILTER BAR --- %>
+        <%# --- FILTER BAR (Removed Pending Filter Option) --- %>
         <div class="filter-bar">
             <form action="" method="GET">
                 <div class="filter-controls">
@@ -211,7 +207,7 @@
                             <option value="">All Statuses</option>
                             <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
                             <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-                            <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                            <%# Removed pending filter option %>
                         </select>
                     </div>
 
@@ -247,7 +243,6 @@
                         indicator = '▼';
                     }
                 }
-                // Construct URL with all current filters + new sort
                 let href = `?search=${encodeURIComponent(search)}`;
                 if (filters.role) href += `&filter_role=${encodeURIComponent(filters.role)}`;
                 if (filters.location) href += `&filter_location=${encodeURIComponent(filters.location)}`;
@@ -315,9 +310,8 @@
                             <% } %>
                         </td>
                         <td>
-                            <% if (targetUser.is_pending_approval) { %>
-                                <span style="color: #fd7e14; font-weight: bold;">Pending</span>
-                            <% } else if (targetUser.is_active) { %>
+                            <%# Simplified Status Check (Removed is_pending_approval) %>
+                            <% if (targetUser.is_active) { %>
                                 <span style="color: green;">Active</span>
                             <% } else { %>
                                 <span style="color: #dc3545;">Inactive</span>

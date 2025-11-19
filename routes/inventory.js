@@ -42,12 +42,12 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
         // 4. Status Filter Logic
         // We handle this by adding specific conditions to the WHERE clause
         // Note: 'ir' is the joined inventory_requests table
-        if (filter_status === 'low_stock') {
-            whereClauses.push('i.count < 10');
+        if (filter_status === 'out_of_stock') { // UPDATED FILTER NAME
+            whereClauses.push('i.count = 0');    // UPDATED COUNT LOGIC
         } else if (filter_status === 'pending') {
             whereClauses.push('ir.request_id IS NOT NULL');
         } else if (filter_status === 'ok') {
-            whereClauses.push('i.count >= 10 AND ir.request_id IS NULL');
+            whereClauses.push('i.count > 0 AND ir.request_id IS NULL');
         }
 
         let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -56,7 +56,7 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
         const statsQuery = `
             SELECT
                 COUNT(*) as total_records,
-                SUM(CASE WHEN i.count < 10 THEN 1 ELSE 0 END) as low_stock_count,
+                SUM(CASE WHEN i.count = 0 THEN 1 ELSE 0 END) as out_of_stock_count,
                 SUM(CASE WHEN ir.request_id IS NOT NULL THEN 1 ELSE 0 END) as pending_count
             FROM inventory i
             JOIN vendors v ON i.vendor_id = v.vendor_id

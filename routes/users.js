@@ -208,7 +208,7 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
 
     let connection;
     try {
-        const isPending = false;
+        const isPending = FALSE; // Set to FALSE since Admin bypasses pending status
         const publicEmployeeId = crypto.randomUUID();
         const hash = await bcrypt.hash(password, saltRounds);
         connection = await pool.getConnection();
@@ -400,36 +400,6 @@ router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmploy
             returnQuery: returnQuery,
             error: "A database error occurred while resetting the password."
         });
-    }
-});
-
-// ... (Pending Employees routes remain unchanged) ...
-// GET /pending
-router.get('/pending', isAuthenticated, canViewPendingEmployees, async (req, res) => {
-    try {
-        const [pendingUsers] = await pool.query(`
-            SELECT e.employee_id, e.public_employee_id, e.first_name, e.last_name, e.email, e.employee_type, e.hire_date, l.location_name
-            FROM employee_demographics e
-            LEFT JOIN location l ON e.location_id = l.location_id
-            WHERE e.is_pending_approval = TRUE
-            ORDER BY e.hire_date
-        `);
-        res.render('pending-employees', { users: pendingUsers, success: null, error: null });
-    } catch (error) {
-        res.status(500).send("Error fetching pending employees.");
-    }
-});
-
-// POST /approve/:public_employee_id
-router.post('/approve/:public_employee_id', isAuthenticated, canApproveEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
-    try {
-        const sql = "UPDATE employee_demographics SET is_pending_approval = FALSE WHERE public_employee_id = ?";
-        await pool.query(sql, [public_employee_id]);
-        req.session.success = "Employee approved successfully.";
-        res.redirect(req.baseUrl + '/pending');
-    } catch (error) {
-        res.status(500).send("Error approving employee.");
     }
 });
 

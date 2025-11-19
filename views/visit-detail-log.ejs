@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visit Log Detail</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        h1 small { display: block; font-size: 0.5em; color: #6c757d; font-weight: normal; }
+        
+        /* --- FIX: Updated Back Link to Button Style --- */
+        .back-link { 
+            display: inline-block; 
+            margin-bottom: 1.5em; 
+            text-decoration: none; 
+            font-weight: bold; 
+            padding: 10px 15px; 
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .back-link:hover { 
+            background-color: #0056b3; 
+            text-decoration: none; 
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+        th { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; background-color: #444; color: white; }
+        
+        /* Set consistent font size for all table entries */
+        td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+            font-size: 1em;
+        }
+        
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .price { color: #28a745; font-weight: bold; }
+        
+        /* Ensures consistency */
+        .member-id { 
+            font-weight: normal; 
+            text-transform: uppercase;
+        } 
+        
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Detailed Visit Log<small>Viewing visits for <%= interval %> (Grouped by <%= grouping %>)</small></h1>
+        
+        <%# --- FIX: Construct Smart Recall URL --- %>
+        <%
+            // The full report query state is passed in req.query.back_query
+            // We link back to /reports/attendance and pass the encoded query to the backend as the body of a POST (which the Attendance Report handles)
+            const backUrl = '/reports/attendance?' + (typeof back_query !== 'undefined' ? back_query : '');
+        %>
+        <a href="<%= backUrl %>" class="back-link">&laquo; Back to Attendance Report</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Visit Time</th>
+                    <th>Ticket Type</th>
+                    <th>Visitor Name</th>
+                    <th>Member ID</th>
+                    <th>Price Paid</th>
+                    <th>Logged By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (visitLogs.length === 0) { %>
+                    <tr><td colspan="6" style="text-align: center; padding: 2em;">No individual visit logs found for this period.</td></tr>
+                <% } %>
+                <% visitLogs.forEach(log => { 
+                    const totalPaid = log.ticket_price - log.discount_amount;
+                %>
+                    <tr>
+                        <td><%= new Date(log.visit_date).toLocaleString() %></td>
+                        <td><%= log.ticket_type %></td>
+                        <td><%= log.visitor_name %></td>
+                        <td class="member-id"> 
+                            <% if (log.member_id !== 'N/A') { %>
+                                <%= log.member_id.substring(0, 8).toUpperCase() %>
+                            <% } else { %>
+                                <%= log.member_id %>
+                            <% } %>
+                        </td>
+                        <td><span class="price">$<%= parseFloat(totalPaid).toFixed(2) %></span></td>
+                        <td><%= log.logged_by_employee %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

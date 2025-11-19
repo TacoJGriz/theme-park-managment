@@ -74,12 +74,13 @@ CREATE TABLE location (
 ALTER TABLE employee_demographics
 ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
+/* --- MODIFIED: Added 'WEATHER CLOSURE' to ENUM list for Triggers --- */
 CREATE TABLE rides (
     ride_id INT NOT NULL AUTO_INCREMENT,
     public_ride_id VARCHAR(36) NULL UNIQUE COMMENT 'Public-facing UUID for rides',
     ride_name VARCHAR(50) NOT NULL,
     ride_type ENUM('Rollercoaster', 'Water Ride', 'Flat Ride', 'Show', 'Other') NOT NULL,
-    ride_status ENUM('OPEN', 'CLOSED', 'BROKEN'),
+    ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE'),
     max_weight INT,
     min_height INT,
     capacity INT,
@@ -277,7 +278,7 @@ CREATE TABLE item (
     CONSTRAINT chk_item_price_positive CHECK (price >= 0)
 );
 
-/* --- UPDATED: Added min_count and def_count for Trigger --- */
+/* --- UPDATED: Added min_count and def_count for Auto-Restock Trigger --- */
 CREATE TABLE inventory (
     item_id INT NOT NULL,
     vendor_id INT NOT NULL,
@@ -406,14 +407,11 @@ CREATE TABLE prepaid_tickets (
 );
 
 -- --- AUTOMATION: Annual Promotion Renewal ---
--- Ensure the scheduler is on (Requires Superuser privileges)
 -- SET GLOBAL event_scheduler = ON;
-
-DROP EVENT IF EXISTS AutoRenewAnnualPromotions;
 
 DELIMITER //
 
-CREATE EVENT AutoRenewAnnualPromotions
+CREATE EVENT IF NOT EXISTS AutoRenewAnnualPromotions
 ON SCHEDULE EVERY 1 DAY
 STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY) -- Runs daily at midnight
 DO
@@ -431,7 +429,7 @@ END //
 DELIMITER ;
 
 
--- --- TRIGGER 1: Auto-Restock Inventory (Adapted for Web App) ---
+-- --- TRIGGER 1: Auto-Restock Inventory (from previous step) ---
 DELIMITER $$
 
 DROP TRIGGER IF EXISTS auto_restock $$
@@ -479,7 +477,6 @@ BEGIN
             WHERE V.vendor_id = NEW.vendor_id;
 
         -- SCENARIO 2: Pending request exists -> Update it if count dropped further
-        -- This prevents multiple spam requests for the same item
         ELSEIF existing_request_id IS NOT NULL AND NEW.count < OLD.count THEN
             UPDATE inventory_requests
             SET requested_count = requested_count + (OLD.count - NEW.count)
@@ -487,6 +484,38 @@ BEGIN
         END IF;
 
     END IF; 
+END$$
+
+DELIMITER ;
+
+
+-- --- TRIGGER 2: Weather Closure & Reopening ---
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS weather_closure $$
+CREATE TRIGGER weather_closure
+AFTER INSERT ON weather_events
+FOR EACH ROW
+BEGIN
+    -- Sets all OPEN rides to 'WEATHER CLOSURE' if a park-closing event starts now
+	IF NEW.end_time IS NULL AND NEW.park_closure IS TRUE THEN
+		UPDATE rides
+        SET ride_status = 'WEATHER CLOSURE'
+		WHERE ride_status = 'OPEN';
+	END IF;
+END$$
+
+DROP TRIGGER IF EXISTS weather_ended $$
+CREATE TRIGGER weather_ended
+AFTER UPDATE ON weather_events
+FOR EACH ROW
+BEGIN
+    -- Sets all 'WEATHER CLOSURE' rides back to 'OPEN' once the event is marked complete
+	IF OLD.end_time IS NULL AND NEW.end_time IS NOT NULL AND OLD.park_closure IS TRUE THEN
+	UPDATE rides
+    SET ride_status = 'OPEN'
+    WHERE ride_status = 'WEATHER CLOSURE';
+    END IF;
 END$$
 
 DELIMITER ;

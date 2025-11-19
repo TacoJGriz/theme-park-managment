@@ -218,7 +218,7 @@ INSERT INTO event_promotions (event_name, event_type, start_date, end_date, disc
 ('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.', TRUE),
 ('Veterans Day Honor', 'Special', '2025-11-11', '2025-11-11', 50.00, 'Special appreciation discount.', TRUE),
 ('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.', TRUE),
-('Winter Wonderland', 'Holiday', '2025-12-01', '2026-01-05', 10.00, 'Holiday-themed event with artificial snow.', TRUE);
+('Winter Wonderland', 'Holiday', '2025-12-01', '2025-12-31', 10.00, 'Holiday-themed event with artificial snow.', TRUE);
 
 -- 8. VENDORS (2 per location = 16 total)
 -- ADDED vendor_status column

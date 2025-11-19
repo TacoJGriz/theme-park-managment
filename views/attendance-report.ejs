@@ -6,16 +6,27 @@
     <%# Link to Chart.js library %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        body { font-family: sans-serif;
+            margin: 0; background-color: #f4f4f9; color: #333; }
         /* UPDATED: Increased max-width for a wider layout */
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
+        .container { max-width: 1200px;
+            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        }
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px;
+            background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em;
+            align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold;
+        }
+        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box;
+            border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px;
+            background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
+        }
+        button:hover { background-color: #0056b3;
+        }
         
         .chart-container { 
             margin-top: 2em;
@@ -23,14 +34,13 @@
             padding: 15px;
             background: #fff;
             border-radius: 8px;
-    
             /* CRITICAL FIXES FOR STRETCHING: */
-            position: relative; 
+            position: relative;
             height: 50vh;        /* Fixed height relative to viewport */
             min-height: 300px;
             max-height: 600px;
             width: 100%;         /* Fill available width */
-            overflow: hidden;    /* Prevents infinite resizing loops */
+            overflow: hidden;
         }
 
         /* Table Styles */
@@ -48,7 +58,7 @@
             text-align: left;
         }
         .data-table th {
-            background-color: #343a40; /* Matches header */
+            background-color: #343a40;
             color: white;
             font-weight: bold;
         }
@@ -58,8 +68,8 @@
         
         /* Highlight rows with spikes */
         .spike-row {
-            background-color: #ffe6e6 !important; /* Light red background */
-            border-left: 5px solid #dc3545;      /* Red accent on left */
+            background-color: #ffe6e6 !important;
+            border-left: 5px solid #dc3545;
         }
         .spike-text {
             color: #dc3545;
@@ -74,7 +84,29 @@
             font-size: 1.1em;
         }
 
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        .error { color: #d9534f;
+            font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px;
+        }
+
+        /* --- ACTION BUTTON STYLES --- */
+        .btn-action { 
+            display: block; 
+            width: 100%; 
+            box-sizing: border-box; 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            text-align: center; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 0.85em; 
+            border: 1px solid transparent; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            opacity: 0.9;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -163,6 +195,7 @@
                     <tr>
                         <th><%= labelFormat %></th> <th>Visitor Count</th>
                         <th>Status</th>
+                        <th style="min-width: 140px;">Actions</th> 
                     </tr>
                 </thead>
                 <tbody>
@@ -174,10 +207,34 @@
                                 <% if (row.isSpike) { %>
                                     <span class="spike-text">⚠ High Traffic Spike</span>
                                     <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
-                                        +<%= row.zScore %>x normal variation
+                                        +<%= row.zScore %>x normal 
+                                        variation
                                     </div>
                                 <% } else { %>
                                     <span style="color: #28a745;">Normal</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <%# --- NEW: Reconstruct the full POST payload as a query string for the back link --- %>
+                                <% 
+                                    // 1. Capture the current report's filter state
+                                    const reportStateQuery = [
+                                        'selected_date=' + encodeURIComponent(selected_date),
+                                        'grouping=' + encodeURIComponent(grouping),
+                                        'membership_type_id=' + encodeURIComponent(membership_type_id),
+                                        'location_id=' + encodeURIComponent(location_id),
+                                        'ticket_type_id=' + encodeURIComponent(ticket_type_id)
+                                    ].join('&');
+
+                                    // 2. Build the link to the detail page, passing the report state as a parameter
+                                    const logDetailLink = `/reports/visit-log?grouping=${grouping}&interval=${encodeURIComponent(row.label)}&mem_type=${membership_type_id}&loc_id=${location_id}&ticket_id=${ticket_type_id}&back_query=${encodeURIComponent(reportStateQuery)}`;
+                                %>
+                                <% if (row.count > 0) { %>
+                                    <a href="<%= logDetailLink %>" 
+                                       class="btn-action btn-detail" 
+                                       style="color: white; background-color: #007bff; border-color: #007bff;">
+                                        View Visit Log
+                                    </a>
                                 <% } %>
                             </td>
                         </tr>
@@ -188,6 +245,7 @@
                         <td>SUMMARY</td>
                         <td>Total: <%= totalVisitors.toLocaleString() %></td>
                         <td>Avg: ~<%= avgVisitors %> / period</td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>
@@ -197,7 +255,6 @@
                 const reportData = <%- JSON.stringify(attendance_data) %>;
                 const labels = reportData.map(item => item.label);
                 const counts = reportData.map(item => item.count);
-                
                 // Dynamic arrays for styling spike points on the chart
                 const pointColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)');
                 const pointRadii = reportData.map(item => item.isSpike ? 8 : 4);
@@ -237,8 +294,10 @@
                         plugins: {
                             tooltip: {
                                 callbacks: {
-                                    title: function(context) { return context[0].label; },
-                                    label: function(context) { return `Visitors: ${context.parsed.y}`; }
+                                    title: function(context) { return context[0].label;
+                                    },
+                                    label: function(context) { return `Visitors: ${context.parsed.y}`;
+                                    }
                                 }
                             }
                         }

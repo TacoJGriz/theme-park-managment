@@ -194,6 +194,105 @@ router.post('/attendance', isAuthenticated, canViewReports, async (req, res) => 
     }
 });
 
+// --- GET /reports/visit-log ---
+router.get('/visit-log', isAuthenticated, canViewReports, async (req, res) => {
+    // mem_type, loc_id, ticket_id are strings of IDs or 'all'/'non-member'
+    const { grouping, interval, mem_type, loc_id, ticket_id, back_query } = req.query; // CHANGED: Captured back_query
+
+    if (!grouping || !interval) {
+        return res.status(400).send('Missing required report parameters.');
+    }
+
+    try {
+        let whereClause = ' WHERE 1=1 ';
+        let params = [];
+
+        // --- 1. Filter by Time Interval ---
+        if (grouping === 'day') {
+            // Interval format: YYYY-MM-DD HH:00 (e.g., 2025-11-18 08:00)
+            const dateHour = interval.trim();
+            const nextHour = new Date(dateHour);
+            nextHour.setHours(nextHour.getHours() + 1);
+            const nextHourString = nextHour.toISOString().replace('T', ' ').substring(0, 19);
+
+            whereClause += 'AND v.visit_date >= ? AND v.visit_date < ? ';
+            params.push(dateHour + ':00', nextHourString);
+
+        } else if (grouping === 'week' || grouping === 'month') {
+            // Interval format: YYYY-MM-DD (e.g., 2025-11-18)
+            const date = interval.trim();
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextDayString = nextDay.toISOString().substring(0, 10);
+
+            whereClause += 'AND DATE(v.visit_date) >= ? AND DATE(v.visit_date) < ? ';
+            params.push(date, nextDayString);
+
+        } else if (grouping === 'year') {
+            // Interval format: YYYY-MM (e.g., 2025-11)
+            const [year, month] = interval.split('-');
+            const startDate = `${year}-${month}-01`;
+            const nextMonthInt = parseInt(month, 10) === 12 ? 1 : parseInt(month, 10) + 1;
+            const nextYear = parseInt(month, 10) === 12 ? parseInt(year) + 1 : parseInt(year);
+            const endDate = `${nextYear}-${String(nextMonthInt).padStart(2, '0')}-01`;
+
+            whereClause += 'AND v.visit_date >= ? AND v.visit_date < ? ';
+            params.push(startDate, endDate);
+        }
+
+        // --- 2. Filter by Report Filters ---
+        if (mem_type === 'non-member') {
+            whereClause += 'AND v.membership_id IS NULL ';
+        } else if (mem_type !== 'all') {
+            whereClause += 'AND m.type_id = ? ';
+            params.push(mem_type);
+        }
+
+        if (loc_id && loc_id !== 'all') {
+            whereClause += 'AND l.location_id = ? ';
+            params.push(loc_id);
+        }
+
+        if (ticket_id && ticket_id !== 'all') {
+            whereClause += 'AND v.ticket_type_id = ? ';
+            params.push(ticket_id);
+        }
+
+        // --- 3. Fetch Detailed Visit Data ---
+        const logQuery = `
+            SELECT
+                v.visit_id,
+                v.visit_date,
+                v.ticket_price,
+                v.discount_amount,
+                tt.type_name AS ticket_type,
+                COALESCE(CONCAT(m.first_name, ' ', m.last_name), 'Day Guest') AS visitor_name,
+                COALESCE(m.public_membership_id, 'N/A') AS member_id,
+                COALESCE(CONCAT(e.first_name, ' ', e.last_name), 'System') AS logged_by_employee
+            FROM visits v
+            LEFT JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id
+            LEFT JOIN membership m ON v.membership_id = m.membership_id
+            LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id
+            LEFT JOIN location l ON e.location_id = l.location_id
+            ${whereClause}
+            ORDER BY v.visit_date ASC
+        `;
+
+        const [visitLogs] = await pool.query(logQuery, params);
+
+        res.render('visit-detail-log', {
+            visitLogs: visitLogs,
+            grouping: grouping,
+            interval: interval,
+            back_query: back_query // Pass the smart recall query string
+        });
+
+    } catch (error) {
+        console.error("Error fetching detailed visit log:", error);
+        res.status(500).send("Error loading visit log.");
+    }
+});
+
 // --- GET ROUTE FOR RIDE POPULARITY ---
 router.get('/ride-popularity', isAuthenticated, canViewReports, async (req, res) => {
     try {
