@@ -21,10 +21,12 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         let summaryParams = []; // Params for the summary query
         let orderBy = ' ORDER BY m.membership_id ASC'; // Default sort to group families
 
-        // ADDED public_type_id
         const [memberTypes] = await pool.query(
             'SELECT type_id, type_name, public_type_id FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
+
+        // --- NEW: Subquery for visit count ---
+        const visitCountSubquery = `(SELECT COUNT(*) FROM visits v WHERE v.membership_id = m.membership_id) AS visit_count`;
 
         let query;
         let summaryQuery;
@@ -33,7 +35,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             // --- Find matching groups ---
             const searchTerm = `%${search}%`;
 
-            // UPDATED: Added OR CONCAT(m_search.first_name, ' ', m_search.last_name) LIKE ?
             const searchWhere = `(
                 m_search.first_name LIKE ? OR 
                 m_search.last_name LIKE ? OR 
@@ -44,22 +45,16 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 m_search.public_membership_id LIKE ?
             )`;
 
-            // UPDATED: Added searchTerm one more time to the array for the new parameter
             const searchParams = [
-                searchTerm,
-                searchTerm,
-                searchTerm, // This matches the CONCAT(first, ' ', last)
-                searchTerm,
-                searchTerm,
-                searchTerm,
-                searchTerm
+                searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm
             ];
 
             // 1. Main Query: Select all members belonging to a matched group
+            // UPDATED: Added visit_count
             query = `
                 SELECT 
                     m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
-                    m.public_membership_id, -- ADDED
+                    m.public_membership_id,
                     m.primary_member_id, 
                     mt.type_name,
                     DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
@@ -68,7 +63,8 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                         WHEN m.end_date >= CURDATE() THEN 'Active' 
                         ELSE 'Expired' 
                     END AS member_status,
-                    m.start_date, m.end_date
+                    m.start_date, m.end_date,
+                    ${visitCountSubquery} -- ADDED
                 FROM membership m
                 JOIN (
                     SELECT DISTINCT COALESCE(m_search.primary_member_id, m_search.membership_id) AS group_id
@@ -78,7 +74,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
             `;
 
-            // 2. Summary Query: Get counts based on the matched groups
+            // 2. Summary Query (Unchanged mostly, relies on search params)
             summaryQuery = `
                 SELECT 
                     COUNT(m.membership_id) AS totalMembers,
@@ -97,16 +93,17 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             summaryParams = [...searchParams];
 
             // Add filters *after* grouping
-            if (filter_type) whereClauses.push('m.type_id = ?'); // Filter by internal type_id
+            if (filter_type) whereClauses.push('m.type_id = ?');
             if (filter_status === 'active') whereClauses.push('m.end_date >= CURDATE()');
             if (filter_status === 'expired') whereClauses.push('m.end_date < CURDATE()');
 
         } else {
             // --- ORIGINAL LOGIC (when not searching) ---
+            // UPDATED: Added visit_count
             query = `
                 SELECT 
                     m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
-                    m.public_membership_id, -- ADDED
+                    m.public_membership_id,
                     m.primary_member_id,
                     mt.type_name,
                     DATE_FORMAT(m.start_date, '%m/%d/%Y') AS start_date_formatted,
@@ -115,7 +112,8 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                         WHEN m.end_date >= CURDATE() THEN 'Active' 
                         ELSE 'Expired' 
                     END AS member_status,
-                    m.start_date, m.end_date
+                    m.start_date, m.end_date,
+                    ${visitCountSubquery} -- ADDED
                 FROM membership m
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
             `;
@@ -131,7 +129,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
             // Add filters
             if (filter_type) {
-                whereClauses.push('m.type_id = ?'); // Filter by internal type_id
+                whereClauses.push('m.type_id = ?');
                 params.push(filter_type);
             }
             if (filter_status === 'active') {
@@ -139,7 +137,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             } else if (filter_status === 'expired') {
                 whereClauses.push('m.end_date < CURDATE()');
             }
-            summaryParams = [...params]; // Summary and main params are the same here
+            summaryParams = [...params];
         }
 
         // Apply filters to queries
@@ -159,14 +157,15 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         // Handle Sorting
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
-                'id': 'm.membership_id', // Sort by internal ID is fine for employees
+                'id': 'm.membership_id',
                 'name': 'm.last_name',
                 'email': 'm.email',
                 'phone': 'm.phone_number',
                 'type': 'mt.type_name',
                 'start_date': 'm.start_date',
                 'end_date': 'm.end_date',
-                'status': 'm.end_date >= CURDATE()'
+                'status': 'm.end_date >= CURDATE()',
+                'visits': 'visit_count' // NEW SORT KEY
             };
             if (validSorts[sort]) {
                 if (sort === 'name') {
@@ -186,18 +185,18 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         if (search) queryParams.set('search', search);
         if (sort) queryParams.set('sort', sort);
         if (dir) queryParams.set('dir', dir);
-        if (filter_type) queryParams.set('filter_type', filter_type); // Stays internal type_id
+        if (filter_type) queryParams.set('filter_type', filter_type);
         if (filter_status) queryParams.set('filter_status', filter_status);
         const currentQueryString = queryParams.toString();
 
         res.render('members', {
-            members: members, // Now contains public_membership_id
-            types: memberTypes, // Now contains public_type_id
+            members: members,
+            types: memberTypes,
             search: search || "",
             currentSort: sort,
             currentDir: dir,
             filters: {
-                type: filter_type || "", // Stays internal type_id
+                type: filter_type || "",
                 status: filter_status || ""
             },
             counts: counts,

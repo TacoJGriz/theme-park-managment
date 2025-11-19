@@ -14,7 +14,7 @@ BEGIN
     DECLARE i INT;
     
     -- Weather
-    DECLARE v_weather_type ENUM('Rain', 'Thunderstorm', 'Tornado Warning', 'Heatwave', 'Other'); -- Fixed ENUM list to match schema
+    DECLARE v_weather_type ENUM('Rain', 'Thunderstorm', 'Tornado Warning', 'Heatwave', 'Other'); 
     DECLARE v_weather_multiplier DECIMAL(5, 2) DEFAULT 1.0;
     DECLARE v_park_closure BOOL DEFAULT FALSE;
     DECLARE v_month INT;
@@ -25,9 +25,7 @@ BEGIN
     DECLARE v_day_score DECIMAL(5, 2);
     DECLARE v_month_score DECIMAL(5, 2);
     DECLARE v_holiday_score DECIMAL(5, 2);
-    DECLARE v_random_factor DECIMAL(5, 2);
     DECLARE v_total_visitors_today INT;
-    DECLARE v_is_holiday BOOL DEFAULT FALSE;
 
     -- Visit
     DECLARE v_is_member BOOL;
@@ -38,23 +36,23 @@ BEGIN
     DECLARE v_discount DECIMAL(10, 2);
     DECLARE v_promo_percent DECIMAL(5, 2);
     DECLARE v_visit_datetime DATETIME;
+    
+    -- NEW: Variable for the Group UUID
+    DECLARE v_visit_group_id VARCHAR(36); 
 
     -- Ride
     DECLARE v_ride_id INT;
     DECLARE v_ride_type VARCHAR(50);
     DECLARE v_capacity INT;
-    DECLARE v_ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE'); -- UPDATED ENUM HERE
+    DECLARE v_ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE'); 
     DECLARE v_ride_weather_mult DECIMAL(5, 2);
-    DECLARE v_ride_participation_rate DECIMAL(5, 2);
     DECLARE v_total_riders INT;
-    DECLARE v_avg_fill DECIMAL(10, 2);
     DECLARE v_total_runs INT;
     DECLARE done INT DEFAULT FALSE;
     
     -- Temp Table Max IDs
     DECLARE max_member_id INT;
     DECLARE max_staff_id INT;
-    -- Removed max_ticket_id as we will use ORDER BY RAND() for tickets
 
     -- CURSORS
     DECLARE ride_cursor CURSOR FOR
@@ -62,9 +60,8 @@ BEGIN
         
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- 2. CLEANUP PREVIOUS DATA (Optional, usually safer to keep specific to range)
+    -- 2. CLEANUP PREVIOUS DATA 
     SET SQL_SAFE_UPDATES = 0;
-    -- Only delete data in the target range to allow overlapping calls
     DELETE FROM daily_ride WHERE YEAR(dat_date) BETWEEN p_start_year AND p_end_year;
     DELETE FROM daily_stats WHERE YEAR(date_rec) BETWEEN p_start_year AND p_end_year;
     DELETE FROM visits WHERE YEAR(visit_date) BETWEEN p_start_year AND p_end_year;
@@ -94,7 +91,6 @@ BEGIN
     INSERT INTO temp_staff_employees (employee_id)
     SELECT employee_id FROM employee_demographics WHERE employee_type = 'Staff' AND is_active = TRUE;
 
-    -- Simplified temp table for tickets (no ID needed for RAND sort)
     DROP TEMPORARY TABLE IF EXISTS temp_ticket_types;
     CREATE TEMPORARY TABLE temp_ticket_types ( ticket_type_id INT, base_price DECIMAL(10, 2) );
     INSERT INTO temp_ticket_types (ticket_type_id, base_price)
@@ -105,7 +101,6 @@ BEGIN
     INSERT INTO temp_active_promotions (start_date, end_date, discount_percent)
     SELECT start_date, end_date, discount_percent FROM event_promotions;
 
-    -- *** CRITICAL FIX: Updated ENUM to include 'WEATHER CLOSURE' ***
     DROP TEMPORARY TABLE IF EXISTS temp_rides;
     CREATE TEMPORARY TABLE temp_rides ( ride_id INT PRIMARY KEY, ride_type VARCHAR(50), capacity INT, ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE') );
     INSERT INTO temp_rides (ride_id, ride_type, capacity, ride_status)
@@ -114,6 +109,7 @@ BEGIN
     SELECT COUNT(*) INTO max_member_id FROM temp_active_members;
     SELECT COUNT(*) INTO max_staff_id FROM temp_staff_employees;
 
+    -- MODIFIED: Added visit_group_id to temp table
     DROP TEMPORARY TABLE IF EXISTS temp_visits_batch;
     CREATE TEMPORARY TABLE temp_visits_batch (
         batch_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -122,7 +118,8 @@ BEGIN
         ticket_type_id INT NOT NULL,
         ticket_price DECIMAL(10,2) NULL,
         discount_amount DECIMAL(10,2) NULL,
-        logged_by_employee_id INT
+        logged_by_employee_id INT,
+        visit_group_id VARCHAR(36) -- NEW COLUMN
     );
     
     DROP TEMPORARY TABLE IF EXISTS temp_ride_batch;
@@ -143,14 +140,13 @@ BEGIN
             LEAVE day_loop;
         END IF;
 
-        -- A. WEATHER
-        SET v_weather_type = NULL; -- Reset
+        -- A. WEATHER (Unchanged)
+        SET v_weather_type = NULL;
         SET v_weather_multiplier = 1.0;
         SET v_park_closure = FALSE;
         SET v_month = MONTH(v_date);
         SET v_roll = RAND();
 
-        -- Simplified weather logic using allowed ENUM values
         IF v_month IN (6, 7, 8) THEN 
             IF v_roll < 0.03 THEN SET v_weather_type = 'Thunderstorm'; SET v_weather_multiplier = 0.2; SET v_park_closure = TRUE;
             ELSEIF v_roll < 0.08 THEN SET v_weather_type = 'Heatwave'; SET v_weather_multiplier = 0.8;
@@ -167,7 +163,7 @@ BEGIN
             VALUES (CONCAT(v_date, ' 14:00:00'), CONCAT(v_date, ' 16:00:00'), v_weather_type, v_park_closure);
         END IF;
 
-        -- B. VISITORS COUNT
+        -- B. VISITORS COUNT (Unchanged)
         SET v_dow = DAYOFWEEK(v_date);
         SET v_day_score = CASE WHEN v_dow = 7 THEN 2.5 WHEN v_dow = 1 THEN 2.0 WHEN v_dow = 6 THEN 1.5 ELSE 1.0 END;
         SET v_month_score = CASE WHEN v_month IN (6, 7, 8) THEN 1.8 WHEN v_month IN (3, 4, 10) THEN 1.2 WHEN v_month = 12 THEN 1.5 ELSE 0.9 END;
@@ -177,66 +173,62 @@ BEGIN
 
         SET v_total_visitors_today = FLOOR(p_base_daily_visitors * v_day_score * v_month_score * v_holiday_score * v_weather_multiplier * (0.85 + (RAND() * 0.3)));
         
-        -- C. GENERATE VISITS
+        -- C. GENERATE VISITS (Updated logic)
         SET i = 0;
         SELECT COALESCE(MAX(discount_percent), 0) INTO v_promo_percent FROM temp_active_promotions WHERE v_date BETWEEN start_date AND end_date;
         
-        -- MANDATORY STAFF SELECTION BEFORE VISIT LOOP
         SET v_staff_id = NULL;
-        
-        -- Since basic data guarantees staff exists (max_staff_id > 0), we use ORDER BY RAND() 
-        -- to reliably fetch a single Staff ID from the temporary table.
         IF max_staff_id > 0 THEN
             SELECT employee_id INTO v_staff_id FROM temp_staff_employees ORDER BY RAND() LIMIT 1;
         END IF;
 
-        -- v_staff_id is now a valid Staff ID (or remains NULL if something went wrong, 
-        -- which is acceptable but ensures no non-staff log entries).
         SET v_visit_datetime = CONCAT(v_date, ' ', LPAD(FLOOR(8 + RAND() * 8), 2, '0'), ':', LPAD(FLOOR(RAND() * 60), 2, '0'), ':00');
 
         visit_loop: LOOP
             IF i >= v_total_visitors_today THEN LEAVE visit_loop; END IF;
             
-            SET v_is_member = (RAND() < 0.25 AND max_member_id > 0); 
+            -- Generate a unique Group ID for this "transaction"
+            SET v_visit_group_id = UUID(); 
             
+            SET v_is_member = (RAND() < 0.25 AND max_member_id > 0); 
             SET v_visit_datetime = CONCAT(v_date, ' ', LPAD(FLOOR(8 + RAND() * 8), 2, '0'), ':', LPAD(FLOOR(RAND() * 60), 2, '0'), ':00');
 
             IF v_is_member THEN
                 SELECT membership_id INTO v_member_id FROM temp_active_members WHERE id = FLOOR(1 + RAND() * max_member_id) LIMIT 1;
-                -- 1 is Member ticket type internal ID
-                INSERT INTO temp_visits_batch (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id)
-                VALUES (v_member_id, v_visit_datetime, 1, 0.00, 0.00, v_staff_id);
+                
+                -- Insert with Group ID
+                INSERT INTO temp_visits_batch (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+                VALUES (v_member_id, v_visit_datetime, 1, 0.00, 0.00, v_staff_id, v_visit_group_id);
             ELSE
-                -- *** FIX: USE ORDER BY RAND() for small table safety ***
                 SELECT ticket_type_id, base_price INTO v_ticket_type_id, v_base_price 
                 FROM temp_ticket_types 
                 ORDER BY RAND() LIMIT 1; 
                 
-                -- Default if null (sanity check)
                 IF v_ticket_type_id IS NULL THEN
-                     -- Hardcode fallback (e.g. Adult ID 2) if something goes wrong, though unlikely with fix
                      SET v_ticket_type_id = 2; SET v_base_price = 109.00;
                 END IF;
 
                 SET v_discount = v_base_price * (v_promo_percent / 100.0);
                 
-                INSERT INTO temp_visits_batch (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id)
-                VALUES (NULL, v_visit_datetime, v_ticket_type_id, v_base_price, v_discount, v_staff_id);
+                -- Insert with Group ID
+                INSERT INTO temp_visits_batch (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+                VALUES (NULL, v_visit_datetime, v_ticket_type_id, v_base_price, v_discount, v_staff_id, v_visit_group_id);
             END IF;
             
             SET i = i + 1;
         END LOOP visit_loop;
         
-        -- Bulk Insert
-        INSERT INTO visits (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id)
-        SELECT membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id FROM temp_visits_batch;
+        -- Bulk Insert into Main Table
+        INSERT INTO visits (membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id)
+        SELECT membership_id, visit_date, ticket_type_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id FROM temp_visits_batch;
+        
         TRUNCATE TABLE temp_visits_batch;
 
         -- D. DAILY STATS
         INSERT INTO daily_stats (date_rec, visitor_count) VALUES (v_date, v_total_visitors_today)
         ON DUPLICATE KEY UPDATE visitor_count = v_total_visitors_today;
 
-        -- E. RIDES
+        -- E. RIDES (Unchanged)
         OPEN ride_cursor;
         SET done = FALSE;
         ride_loop: LOOP
@@ -244,7 +236,7 @@ BEGIN
             IF done THEN LEAVE ride_loop; END IF;
 
             SET v_ride_weather_mult = 1.0;
-            IF v_park_closure THEN SET v_ride_status = 'WEATHER CLOSURE'; -- Use the correct ENUM value
+            IF v_park_closure THEN SET v_ride_status = 'WEATHER CLOSURE'; 
             ELSEIF v_weather_type = 'Rain' AND (v_ride_type = 'Rollercoaster' OR v_ride_type = 'Water Ride') THEN SET v_ride_weather_mult = 0.5;
             ELSEIF v_weather_type = 'Heatwave' AND v_ride_type = 'Water Ride' THEN SET v_ride_weather_mult = 1.5;
             END IF;
@@ -283,3 +275,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+CALL GenerateHistoricalData(2025, 2025, 20);

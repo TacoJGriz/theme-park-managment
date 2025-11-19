@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maintenance Report</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1400px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
+        /* Form Styling */
+        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
+        button:hover { background-color: #c82333; }
+
+        /* Table Styling */
+        .report-table {
+            width: 100%;
+            margin-top: 2em;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+        .report-table th, .report-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            white-space: nowrap; 
+        }
+        .report-table th {
+            background-color: #6c757d;
+            color: white;
+            font-weight: 600;
+        }
+        .report-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .report-table tbody tr:hover { background-color: #f1f1f1; }
+        
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase; }
+        .status-open { background-color: #ffeeba; color: #856404; }
+        .status-complete { background-color: #d4edda; color: #155724; }
+
+        .btn-view { text-decoration: none; color: #007bff; font-weight: bold; font-size: 0.9em; border: 1px solid #007bff; padding: 4px 10px; border-radius: 4px; transition: background-color 0.2s; display: inline-block; }
+        .btn-view:hover { background-color: #007bff; color: white; }
+
+        .ride-id { font-family: monospace; color: #666; font-weight: bold; }
+        .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; background: #e9ecef; color: #495057; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Maintenance Report</h1>
+
+        <form action="/reports/maintenance" method="POST">
+            <div class="form-grid">
+                <div>
+                    <label for="selected_date1">Start Date:</label>
+                    <input type="date" id="selected_date1" name="selected_date1" value="<%= selected_date1 %>" required>
+                </div>
+                <div>
+                    <label for="selected_date2">End Date:</label>
+                    <input type="date" id="selected_date2" name="selected_date2" value="<%= selected_date2 %>" required>
+                </div>
+                <div>
+                    <label for="locations_selected">Filter by Location:</label>
+                    <select id="locations_selected" name="locations_selected" required>
+                        <% locations.forEach(location => { %>
+                            <option value="<%= location.location_id %>" <%= String(location.location_id) === String(locations_selected) ? 'selected' : '' %>>
+                                <%= location.location_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div style="grid-column: 4; align-self: end;">
+                    <button type="submit">Generate Report</button>
+                </div>
+            </div>
+        </form>
+
+        <% if (data && data.length > 0) { %>
+            
+            <%# --- SMART RECALL: Generate the current state string --- %>
+            <% 
+                const backParams = new URLSearchParams();
+                backParams.set('d1', selected_date1);
+                backParams.set('d2', selected_date2);
+                backParams.set('loc', locations_selected);
+                const backQuery = backParams.toString();
+            %>
+
+            <h2>Maintenance Requests Found: <%= data.length %></h2>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Ride ID</th>
+                        <th>Ride</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Report Date</th>
+                        <th>Completion Date</th>
+                        <th>Assigned To</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% data.forEach(item => { %>
+                        <tr>
+                            <td class="ride-id"><%= (item.public_ride_id) ? item.public_ride_id.substring(0, 8).toUpperCase() : 'N/A' %></td>
+                            <td style="font-weight: bold;"><%= item.ride_name %></td>
+                            <td><span class="pill"><%= item.ride_type %></span></td>
+                            <td><%= item.location_name %></td>
+                            <td><%= item.report_date.toLocaleDateString() %></td>
+                            <td><%= item.end_date ? item.end_date.toLocaleDateString() : '---' %></td>
+                            <td><%= item.assigned_employee_name || 'Unassigned' %></td>
+                            <td>
+                                <% if (item.end_date) { %>
+                                    <span class="status-badge status-complete">Complete</span>
+                                <% } else { %>
+                                    <span class="status-badge status-open">Open</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (item.public_ride_id) { %>
+                                    <%# --- Pass back_query to the view --- %>
+                                    <a href="/maintenance/ride/<%= item.public_ride_id %>?back_query=<%= encodeURIComponent(backQuery) %>" class="btn-view">View Log</a>
+                                <% } else { %>
+                                    <span style="color: #999;">No Link</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else if (data && data.length === 0) { %>
+            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No maintenance records found for the selected criteria.</p>
+        <% } %>
+
+    </div>
+</body>
+</html>

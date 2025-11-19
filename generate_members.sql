@@ -79,8 +79,8 @@ BEGIN
         SET random_id = FLOOR(1 + RAND() * max_last_name_id);
         SELECT name INTO random_last_name FROM temp_last_names WHERE id = random_id;
         
-        -- Generate unique email
-        SET random_email = CONCAT(LOWER(random_first_name), '.', LOWER(random_last_name), i, '@parkmember.com');
+        -- FIX: Append start_year to ensure uniqueness across different batch calls
+        SET random_email = CONCAT(LOWER(random_first_name), '.', LOWER(random_last_name), i, '.', start_year, '@parkmember.com');
 
         -- Generate random Date of Birth
         SET dob_offset = FLOOR(RAND() * 18627); 
@@ -98,10 +98,9 @@ BEGIN
         SELECT type_id INTO random_type_id FROM temp_member_types WHERE id = random_id;
 
         -- Insert the new member
-        -- ADDED public_membership_id
         INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
         VALUES (
-            UUID(), -- ADDED
+            UUID(),
             random_first_name,
             random_last_name,
             random_email,
@@ -132,8 +131,22 @@ DELIMITER ;
 
 -- --- Execution and Cleanup ---
 
--- Cleanup existing initial dummy members to prevent conflicts and ensure a clean slate
+-- 1. Cleanup existing data
+SET SQL_SAFE_UPDATES = 0;
 DELETE FROM visits WHERE membership_id IS NOT NULL; 
+DELETE FROM member_payment_methods; -- Clear payments linked to members
+DELETE FROM membership_purchase_history; -- Clear history linked to members
+DELETE FROM member_auth; -- Clear logins linked to members
+DELETE FROM membership; -- Clear the members themselves
+
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
-CALL GenerateMembers(500, 2024);
+-- 2. Generate "Past" Members (Start Year 2024)
+-- These will mostly be EXPIRED by Nov 2025
+CALL GenerateMembers(300, 2024);
+
+-- 3. Generate "Current" Members (Start Year 2025)
+-- These will mostly be ACTIVE in Nov 2025
+CALL GenerateMembers(300, 2025);
+SET SQL_SAFE_UPDATES = 1;
+-- Result: ~600 Total Members with a roughly 50/50 split between Active and Expired.

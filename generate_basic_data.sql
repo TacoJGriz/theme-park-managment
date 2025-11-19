@@ -180,11 +180,32 @@ INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, max_weight
 (UUID(), 'Alien Swirling Saucers', 'Flat Ride', 'OPEN', 400, 32, 16, 8);
 
 -- 5. MAINTENANCE LOGS
--- Example logs
-INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date, end_date, summary, employee_id, cost) VALUES
-(UUID(), 15, '2025-10-20', '2025-10-21', NULL, 'Track repairs needed on turn 3.', 11, NULL), -- Matterhorn (Broken)
-(UUID(), 35, '2025-10-22', '2025-10-23', NULL, 'Leak in hull detected.', 12, NULL), -- Donald's Boat (Broken)
-(UUID(), 10, '2025-10-01', '2025-10-01', '2025-10-05', 'Hydraulic check.', 13, 500.00); -- Astro Orbiter (Closed)
+-- Inserting 20 Total Logs: 18 Completed, 2 Open (Active)
+-- Reported by Staff (IDs 16-55), Assigned to Maintenance (IDs 11-15)
+INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date, end_date, summary, employee_id, assignment_requested_by, cost) VALUES
+-- OPEN / ACTIVE ISSUES (2 Entries)
+(UUID(), 15, '2025-10-20', '2025-10-21', NULL, 'Matterhorn: Track repairs needed on turn 3.', 11, 26, NULL), -- Reported by Snow White (26), Assigned to Goofy (11)
+(UUID(), 35, '2025-10-22', '2025-10-23', NULL, 'Donalds Boat: Leak in hull detected.', 12, 49, NULL),      -- Reported by Donald (31/49?), Assigned to Felix (12)
+
+-- COMPLETED ISSUES (18 Entries)
+(UUID(), 10, '2025-10-01', '2025-10-01', '2025-10-05', 'Astro Orbiter: Hydraulic pump replacement.', 13, 21, 500.00),
+(UUID(), 1,  '2025-01-10', '2025-01-11', '2025-01-12', 'Big Thunder: Loose safety bar row 4.', 14, 16, 150.00),
+(UUID(), 6,  '2025-02-14', '2025-02-15', '2025-02-16', 'Space Mountain: Audio sync issue.', 15, 22, 75.00),
+(UUID(), 11, '2025-03-05', '2025-03-06', '2025-03-07', 'Small World: Boat stuck in tunnel.', 11, 27, 200.00),
+(UUID(), 21, '2025-03-20', '2025-03-21', '2025-03-25', 'Jungle Cruise: Engine stall on boat 5.', 12, 36, 450.00),
+(UUID(), 26, '2025-04-01', '2025-04-02', '2025-04-02', 'Haunted Mansion: Doom buggy door jam.', 13, 41, 100.00),
+(UUID(), 36, '2025-05-12', '2025-05-12', '2025-05-14', 'Rise of Resistance: Droid animatronic reset.', 14, 51, 800.00),
+(UUID(), 2,  '2025-06-01', '2025-06-02', '2025-06-03', 'Splash Mountain: Sensor cleaning.', 15, 17, 50.00),
+(UUID(), 7,  '2025-06-15', '2025-06-15', '2025-06-16', 'Buzz Lightyear: Laser gun malfunction.', 11, 23, 120.00),
+(UUID(), 22, '2025-07-04', '2025-07-05', '2025-07-05', 'Pirates: Water filtration check.', 12, 37, 300.00),
+(UUID(), 27, '2025-07-20', '2025-07-21', '2025-07-22', 'Liberty Boat: Paddle wheel routine maint.', 13, 42, 600.00),
+(UUID(), 31, '2025-08-10', '2025-08-11', '2025-08-11', 'Car Toon Spin: Steering wheel loose.', 14, 46, 90.00),
+(UUID(), 37, '2025-08-25', '2025-08-25', '2025-08-27', 'Smugglers Run: Screen projector alignment.', 15, 52, 1200.00),
+(UUID(), 3,  '2025-09-05', '2025-09-05', '2025-09-06', 'Tom Sawyer Island: Bridge slat replacement.', 11, 18, 250.00),
+(UUID(), 8,  '2025-09-15', '2025-09-15', '2025-09-15', 'PeopleMover: Track obstruction cleared.', 12, 24, 0.00),
+(UUID(), 13, '2025-10-01', '2025-10-01', '2025-10-02', 'Dumbo: Hydraulic fluid top-up.', 13, 28, 180.00),
+(UUID(), 38, '2025-10-10', '2025-10-10', '2025-10-12', 'Star Tours: Seat belt sensor faulty.', 14, 53, 150.00),
+(UUID(), 39, '2025-10-15', '2025-10-16', '2025-10-17', 'Slinky Dog: Brake fin inspection.', 15, 54, 350.00);
 
 -- 6. MEMBERSHIP_TYPE & 8. TICKET_TYPES (Standard)
 INSERT INTO membership_type (public_type_id, type_name, base_price, base_members, additional_member_price, description, is_active) VALUES

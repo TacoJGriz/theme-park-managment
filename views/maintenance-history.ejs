@@ -3,146 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <title>Maintenance History</title>
-     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        h1 small { color: #666; font-weight: normal;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #6c757d; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        tr:hover { background-color: #f1f1f1;
- }
-        .action-link {
-            text-decoration: none;
- color: #28a745;
-            font-weight: bold;
-            display: block; /* Ensures links stack vertically */
-            margin-bottom: 5px;
- /* Adds space between links */
-        }
-        .action-link:hover { text-decoration: underline;
- }
-        /* --- NEW: Style for the reassign link --- */
-        .reassign-link {
-            color: #007bff;
- }
-        /* --- NEW: Style for the pending note --- */
-        .pending-note {
-            font-style: italic;
- color: #856404; /* A brownish-yellow */
-            font-size: 0.9em;
- display: block;
-            margin-top: 5px;
-        }
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        .status-open { background-color: #fff;
- }
-        .status-closed { background-color: #ffeeba;
- }
+        /* Header Styling */
+        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; display: flex; justify-content: space-between; align-items: center; }
+        h1 small { font-size: 0.6em; color: #777; font-weight: normal; margin-left: 10px; }
 
-        /* --- 'BACK' LINK STYLE --- */
-        .back-link {
-            display: inline-block;
- margin-bottom: 1.5em;
-            text-decoration: none;
-            color: #007bff;
-            font-weight: bold;
-        }
-        .back-link:hover {
-            text-decoration: underline;
- }
+        /* Buttons */
+        .btn-report { background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .btn-report:hover { background-color: #218838; }
+
+        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; padding: 8px 15px; background-color: #e9ecef; border-radius: 4px; }
+        .back-link:hover { background-color: #dee2e6; color: #0056b3; }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+        th { background-color: #17a2b8; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; vertical-align: top; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* Status Badges */
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase; }
+        .status-open { background-color: #ffeeba; color: #856404; }
+        .status-complete { background-color: #d4edda; color: #155724; }
+        .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+        /* Action Buttons */
+        .btn-action { display: inline-block; padding: 5px 10px; font-size: 0.85em; font-weight: bold; text-decoration: none; border-radius: 4px; border: 1px solid transparent; margin-right: 5px; }
+        
+        .btn-complete { color: #28a745; border-color: #28a745; background: white; }
+        .btn-complete:hover { background-color: #28a745; color: white; }
+
+        .btn-assign { color: #ffc107; border-color: #ffc107; background: white; color: #333; }
+        .btn-assign:hover { background-color: #ffc107; color: #333; }
+
+        .cost { font-family: monospace; font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
-        <h1>Maintenance History for <br><small><%= ride.ride_name %></small></h1>
         
-        <a href="/rides" class="back-link">&laquo;
- Back to Rides List</a>
+        <%# --- SMART RECALL BUTTON --- %>
+        <% if (typeof back_query !== 'undefined' && back_query) { %>
+            <%# Decode the query string to ensure it renders correctly %>
+            <a href="/reports/maintenance?<%= decodeURIComponent(back_query) %>" class="back-link">&laquo; Back to Maintenance Report</a>
+        <% } else { %>
+            <a href="/rides" class="back-link">&laquo; Back to Rides List</a>
+        <% } %>
+
+        <h1>
+            Maintenance History
+            <small>Ride: <%= ride.ride_name %></small>
+            <a href="/maintenance/new/<%= ride.public_ride_id %>" class="btn-report">+ Report New Issue</a>
+        </h1>
 
         <table>
             <thead>
                 <tr>
-                    <th>Reported On</th>
-                    <th>Summary</th>
-                    
- <th>Assigned To</th>
-                    <th>Completed On</th>
+                    <th>Report Date</th>
+                    <th style="width: 30%;">Issue Summary</th>
+                    <th>Assigned To</th>
+                    <th>Completion</th>
                     <th>Cost</th>
-                    <th>Status / Actions</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
-        
-     <tbody>
+            <tbody>
                 <% if (maintenance_logs.length === 0) { %>
-                    <tr>
-                        <td colspan="6" style="text-align: center;">No maintenance records found for this ride.</td>
-                    </tr>
- 
-               <% } %>
+                    <tr><td colspan="7" style="text-align: center; padding: 2em;">No maintenance records found.</td></tr>
+                <% } %>
+
                 <% maintenance_logs.forEach(log => { %>
-                    <tr class="<%= log.end_date ? 'status-closed' : 'status-open' %>">
-                        <td><%= log.report_date.toISOString().substring(0, 10) %></td>
-         
-               <td><%= log.summary %></td>
+                    <tr>
+                        <td><%= new Date(log.report_date).toLocaleDateString() %></td>
+                        <td><%= log.summary %></td>
                         <td>
-                            <%# --- MODIFIED: Show pending request --- %>
-                        
-     <%= log.employee_name || 'Unassigned' %>
-                            <% if(log.pending_employee_name) { %>
-                                <span class="pending-note">Pending Reassignment to: <%= log.pending_employee_name %></span>
-                       
-     <% } %>
+                            <%= log.employee_name || 'Unassigned' %>
+                            <% if (log.pending_employee_name) { %>
+                                <br><small style="color: #e0a800;">(Pending transfer to: <%= log.pending_employee_name %>)</small>
+                            <% } %>
                         </td>
-                        <td><%= log.end_date ?
- log.end_date.toISOString().substring(0, 10) : '---' %></td>
-                        <td>$<%= log.cost ?
- parseFloat(log.cost).toFixed(2) : '0.00' %></td>
+                        <td><%= log.end_date ? new Date(log.end_date).toLocaleDateString() : '---' %></td>
                         <td>
-                            <%# --- MODIFIED: Added Reassign Link --- %>
-                            <% if (log.end_date) { %>
-      
-                           Completed
+                            <% if (log.cost) { %>
+                                <span class="cost">$<%= parseFloat(log.cost).toFixed(2) %></span>
                             <% } else { %>
-                                <%# Check for "Complete" permission %>
-     
-                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Maintenance') { %>
-                                    <%# CHANGED: Link now uses public_maintenance_id %>
-                                    <a href="/maintenance/complete/<%= log.public_maintenance_id %>" class="action-link">Complete Work Order</a>
-                
-                 <% } %>
+                                -
+                            <% } %>
+                        </td>
+                        
+                        <%# --- COLUMN 1: STATUS --- %>
+                        <td>
+                            <% if (log.end_date) { %>
+                                <span class="status-badge status-complete">Complete</span>
+                            <% } else { %>
+                                <span class="status-badge status-open">Open</span>
+                            <% } %>
+                        </td>
 
-                                <%# Check for "Reassign" permission %>
-                                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 
- 'Location Manager' || user.role === 'Maintenance') { %>
-                                    <%# CHANGED: Link now uses public_maintenance_id %>
-                                    <a href="/maintenance/reassign/<%= log.public_maintenance_id %>" class="action-link reassign-link">Reassign</a>
-                                <% } %>
-
-                  
-               <%# Show "Open" status if user has no actions %>
-                                <% if (user.role === 'Staff' ||
- (user.role === 'Location Manager' && !log.end_date)) { %>
-                                    <span style="font-weight: bold; color: #dc3545;">Open</span>
-                                <% } %>
-                   
-           <% } %>
+                        <%# --- COLUMN 2: ACTIONS --- %>
+                        <td>
+                            <% if (!log.end_date) { %>
+                                <a href="/maintenance/complete/<%= log.public_maintenance_id %>" class="btn-action btn-complete">Complete</a>
+                                <a href="/maintenance/reassign/<%= log.public_maintenance_id %>" class="btn-action btn-assign">Reassign</a>
+                            <% } else { %>
+                                <span style="color: #aaa; font-size: 0.9em;">Closed</span>
+                            <% } %>
                         </td>
                     </tr>
-                <% });
- %>
+                <% }); %>
             </tbody>
         </table>
     </div>

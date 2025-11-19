@@ -18,23 +18,22 @@ router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
     }
     res.status(403).send('Forbidden: Access denied.');
 }, async (req, res) => {
-    const { public_ride_id } = req.params; // CHANGED
+    const { public_ride_id } = req.params;
     const { role, locationId } = req.session.user;
+    const { back_query } = req.query; // --- CAPTURE QUERY PARAM ---
+
     let ride;
 
     try {
-        // Query by public_ride_id
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
-        const internalRideId = ride.ride_id; // Get internal ID for log query
+        const internalRideId = ride.ride_id;
 
-        if (role === 'Location Manager') {
-            if (ride.location_id !== locationId) {
-                return res.status(403).send('Forbidden: You can only view maintenance for rides in your location.');
-            }
+        if (role === 'Location Manager' && ride.location_id !== locationId) {
+            return res.status(403).send('Forbidden: You can only view maintenance for rides in your location.');
         }
 
         const query = `
@@ -43,12 +42,16 @@ router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
             FROM maintenance m
             LEFT JOIN employee_demographics e ON m.employee_id = e.employee_id
             LEFT JOIN employee_demographics pending_emp ON m.pending_employee_id = pending_emp.employee_id
-            WHERE m.ride_id = ? -- Query logs by internal ride_id
+            WHERE m.ride_id = ?
             ORDER BY m.report_date DESC, m.maintenance_id DESC
         `;
-        const [maintenance_logs] = await pool.query(query, [internalRideId]); // Use internal ID
+        const [maintenance_logs] = await pool.query(query, [internalRideId]);
 
-        res.render('maintenance-history', { ride: ride, maintenance_logs: maintenance_logs });
+        res.render('maintenance-history', {
+            ride: ride,
+            maintenance_logs: maintenance_logs,
+            back_query: back_query // --- PASS TO VIEW ---
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching maintenance history');

@@ -3,84 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <title>Visit History</title>
-    <%# --- Import Fonts --- %>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
-            --primary: #6f42c1;
-            --accent: #17a2b8;
-            --dark: #343a40;
-        }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
-        
-        .container { max-width: 1000px; margin: 2em auto; padding: 0 1em; }
-        
-        h1 { 
-            font-family: 'Lobster', cursive;
-            color: var(--dark);
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 0.5em;
-            margin-bottom: 1em;
-            font-size: 2.5em;
-        }
-        /* Sub-header for context if needed */
-        h1 small { 
-            font-family: 'Poppins', sans-serif; 
-            color: #666; 
-            font-size: 0.5em; 
-            font-weight: 400; 
-            display: block; 
-            margin-top: 5px;
-        }
+    <%# --- CONDITIONAL FONTS & STYLES --- %>
+    <% if (user) { %>
+        <%# --- EMPLOYEE VIEW: Functional & Consistent --- %>
+        <style>
+            body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+            
+            /* Standard Admin Container */
+            .container { 
+                max-width: 1200px; 
+                margin: 2em auto; 
+                background: white; 
+                padding: 2em; 
+                border-radius: 8px; 
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            }
 
-        .back-link { 
-            display: inline-block; margin-bottom: 2em; 
-            text-decoration: none; color: var(--accent); font-weight: 600;
-        }
-        .back-link:hover { text-decoration: underline; }
+            /* Standard Headers */
+            h1 { 
+                color: #444; 
+                border-bottom: 2px solid #eee; 
+                padding-bottom: 0.5em; 
+                margin-bottom: 1em; 
+                font-size: 2em;
+            }
+            h1 small { 
+                color: #6c757d; 
+                font-size: 0.6em; 
+                font-weight: normal; 
+                margin-left: 10px; 
+            }
 
-        /* Card & Table Styling */
-        .table-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-        table { width: 100%; border-collapse: collapse; }
-        
-        th { 
-            background-color: var(--dark); 
-            color: white; 
-            padding: 15px; 
-            text-align: left; 
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9em;
-        }
-        
-        td { padding: 15px; border-bottom: 1px solid #f0f0f0; color: #555; }
-        tr:hover { background-color: #f9f9f9; }
-        
-        /* Badge for Group Size */
-        .badge-group {
-            background: #e2e6ea;
-            color: var(--dark);
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
+            /* Standard Table */
+            table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+            th { 
+                background-color: #17a2b8; /* Matches Members List Header */
+                color: white; 
+                padding: 12px; 
+                text-align: left; 
+                border-bottom: 1px solid #ddd; 
+            }
+            td { 
+                padding: 12px; 
+                border-bottom: 1px solid #ddd; 
+                color: #333;
+            }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            tr:hover { background-color: #f1f1f1; }
 
-        .action-link { 
-            color: var(--accent); 
-            font-weight: 600; 
-            text-decoration: none;
-        }
-        .action-link:hover { text-decoration: underline; }
-    </style>
+            /* Standard Links */
+            .back-link { 
+                display: inline-block; 
+                margin-bottom: 1.5em; 
+                text-decoration: none; 
+                color: #007bff; 
+                font-weight: bold; 
+                padding: 8px 15px;
+                background-color: #e9ecef;
+                border-radius: 4px;
+            }
+            .back-link:hover { 
+                background-color: #dee2e6; 
+                text-decoration: none; 
+                color: #0056b3;
+            }
+
+            .action-link { color: #007bff; font-weight: bold; text-decoration: none; }
+            .action-link:hover { text-decoration: underline; }
+
+            /* Neutral Badge */
+            .badge-group { 
+                background: #e9ecef; 
+                padding: 3px 8px; 
+                border-radius: 4px; 
+                font-size: 0.9em; 
+                font-weight: bold;
+                color: #495057;
+            }
+            
+            /* Reset card styles for admin view */
+            .table-card { box-shadow: none; background: transparent; }
+        </style>
+
+    <% } else { %>
+        <%# --- MEMBER VIEW: Fancy & Branded --- %>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        
+        <style>
+            :root {
+                --primary: #6f42c1;
+                --accent: #17a2b8;
+                --dark: #343a40;
+            }
+            body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
+            
+            .container { max-width: 1000px; margin: 2em auto; padding: 0 1em; }
+            
+            h1 { 
+                font-family: 'Lobster', cursive;
+                color: var(--dark);
+                border-bottom: 2px solid #e9ecef;
+                padding-bottom: 0.5em;
+                margin-bottom: 1em;
+                font-size: 2.5em;
+            }
+            h1 small { 
+                font-family: 'Poppins', sans-serif;
+                color: #666; 
+                font-size: 0.5em; 
+                font-weight: 400; 
+                display: block; 
+                margin-top: 5px;
+            }
+
+            .back-link { 
+                display: inline-block;
+                margin-bottom: 2em; 
+                text-decoration: none; color: var(--accent); font-weight: 600;
+            }
+            .back-link:hover { text-decoration: underline; }
+
+            /* Card & Table Styling */
+            .table-card {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+                overflow: hidden;
+            }
+            table { width: 100%; border-collapse: collapse; }
+            
+            th { 
+                background-color: var(--dark);
+                color: white; 
+                padding: 15px; 
+                text-align: left; 
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.9em;
+            }
+            
+            td { padding: 15px; border-bottom: 1px solid #f0f0f0; color: #555; }
+            tr:hover { background-color: #f9f9f9; }
+            
+            /* Badge for Group Size */
+            .badge-group {
+                background: #e2e6ea;
+                color: var(--dark);
+                padding: 3px 8px;
+                border-radius: 10px;
+                font-size: 0.85em;
+                font-weight: 600;
+            }
+
+            .action-link { 
+                color: var(--accent);
+                font-weight: 600; 
+                text-decoration: none;
+            }
+            .action-link:hover { text-decoration: underline; }
+        </style>
+    <% } %>
 </head>
 <body>
     <% if (user) { %>
@@ -90,11 +175,14 @@
     <% } %>
 
     <div class="container">
-        <%# UPDATED: Removed specific name from title %>
-        <h1>Visit History</h1>
+        <h1>Visit History
+            <% if (user) { %>
+                <small>(Member: <%= member.first_name %> <%= member.last_name %>)</small>
+            <% } %>
+        </h1>
         
         <% if (user) { %>
-            <a href="/members<%= typeof currentQueryString !== 'undefined' && currentQueryString ? '?' + currentQueryString : '' %>" class="back-link" style="color: #007bff;">&laquo; Back to Members List</a>
+            <a href="/members<%= typeof currentQueryString !== 'undefined' && currentQueryString ? '?' + currentQueryString : '' %>" class="back-link">&laquo; Back to Members List</a>
         <% } else { %>
             <a href="/member/dashboard" class="back-link">&laquo; Back to Dashboard</a>
         <% } %>
@@ -116,6 +204,7 @@
                             <td colspan="5" style="text-align: center; padding: 3em; font-style: italic;">No visit records found for this member.</td>
                         </tr>
                     <% } %>
+                    
                     <% visits.forEach(visit => { %>
                         <tr>
                             <td>
@@ -127,7 +216,7 @@
                             <td style="font-weight: bold; color: #333;">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
                             <td>
                                 <% if (user) { %>
-                                    <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link" style="color: #007bff;">View Receipt</a>
+                                    <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link" target="_blank">View Receipt</a>
                                 <% } else { %>
                                     <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
                                 <% } %>

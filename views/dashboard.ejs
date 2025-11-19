@@ -20,8 +20,7 @@
 
         /* --- Assignment Info Box --- */
         .assignment-info {
-            background-color: #e7f5ff;
-            color: #004085;
+            background-color: #e7f5ff; color: #004085;
             border-left: 5px solid #007bff;
             padding: 1.5em;
             border-radius: 4px;
@@ -32,17 +31,14 @@
 
         /* --- Grid Layout --- */
         .card-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
         }
 
         /* --- Card Styles --- */
         .card {
-            background: white;
-            padding: 0; /* Removed padding to handle header/body separately */
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: white; padding: 0; /* Removed padding to handle header/body separately */
+            border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: transform 0.2s, box-shadow 0.2s;
             overflow: hidden;
             display: flex;
@@ -50,13 +46,11 @@
             border-top: 4px solid #ccc; /* Default border color */
         }
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
         .card-header {
-            padding: 1.2em 1.5em;
-            background-color: #fff;
+            padding: 1.2em 1.5em; background-color: #fff;
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
@@ -66,13 +60,11 @@
         .card-icon { font-size: 1.4em; width: 30px; text-align: center; }
 
         .card-body {
-            padding: 1.2em 1.5em;
-            flex-grow: 1;
+            padding: 1.2em 1.5em; flex-grow: 1;
         }
 
         .card a {
-            display: block;
-            text-decoration: none;
+            display: block; text-decoration: none;
             color: #555;
             padding: 8px 10px;
             border-radius: 6px;
@@ -81,13 +73,11 @@
             font-weight: 500;
         }
         .card a:hover {
-            background-color: #f8f9fa;
-            color: #007bff;
+            background-color: #f8f9fa; color: #007bff;
             padding-left: 15px; /* Slide effect */
         }
         .card a i {
-            margin-right: 8px;
-            color: #adb5bd;
+            margin-right: 8px; color: #adb5bd;
             width: 20px;
             text-align: center;
         }
@@ -118,8 +108,7 @@
 
         /* Highlight Special Links */
         .important-link {
-            color: #d39e00 !important;
-            font-weight: bold !important;
+            color: #d39e00 !important; font-weight: bold !important;
         }
     </style>
 </head>
@@ -132,8 +121,7 @@
 
         <% if (user) { %>
             <p class="welcome-message">
-                Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
-                You are logged in as <strong><%= user.role %></strong>.
+                Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>! You are logged in as <strong><%= user.role %></strong>.
             </p>
 
             <% if ((user.role === 'Staff' || user.role === 'Location Manager') && user.locationName) { %>
@@ -241,7 +229,7 @@
                 </div>
             <% } %>
 
-            <%# --- REPORTS & ANALYTICS (NEW CARD) --- %>
+            <%# --- REPORTS & ANALYTICS (UPDATED) --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                 <div class="card reports">
                     <div class="card-header">
@@ -252,6 +240,8 @@
                         <a href="/reports/attendance"><i class="fa-solid fa-users-line"></i> Attendance Report</a>
                         <a href="/reports/ride-popularity"><i class="fa-solid fa-star"></i> Ride Popularity</a>
                         <a href="/reports/closure-impact"><i class="fa-solid fa-cloud-showers-heavy"></i> Closure Impact</a>
+                        <%# --- NEW LINK ADDED HERE --- %>
+                        <a href="/reports/maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Report</a>
                     </div>
                 </div>
             <% } %>

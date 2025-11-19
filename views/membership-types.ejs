@@ -24,15 +24,21 @@
         
         .action-link { text-decoration: none;
             color: #007bff; font-weight: bold; }
-        .toggle-form { display: inline-block; margin-left: 10px;
-        }
-        .toggle-form button { background: none; border: none; cursor: pointer; font-weight: bold;
-            text-decoration: underline; }
-        
-        .status-active { color: #28a745; font-weight: bold; }
-        .status-inactive { color: #dc3545; font-weight: bold; }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
+        /* --- MODIFIED: Removed the conflicting .toggle-form button styles --- */
+        .toggle-form { 
+            display: block; 
+            width: 100%; 
+            margin: 0; 
+        }
+        
+        .status-active { color: #28a745;
+            font-weight: bold; }
+        .status-inactive { color: #dc3545; font-weight: bold;
+        }
+
+        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold;
+        }
         .error { color: #d9534f; background-color: #f2dede;
         }
         .success { color: #155724; background-color: #d4edda;
@@ -56,16 +62,23 @@
             transition: all 0.2s;
             font-family: inherit;
         }
-        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:last-child { margin-bottom: 0;
+        }
 
-        .btn-edit { color: #007bff; border-color: #007bff; }
-        .btn-edit:hover { background-color: #007bff; color: white; }
+        .btn-edit { color: #007bff; border-color: #007bff;
+        }
+        .btn-edit:hover { background-color: #007bff; color: white;
+        }
 
-        .btn-deactivate { color: #dc3545; border-color: #dc3545; }
-        .btn-deactivate:hover { background-color: #dc3545; color: white; }
+        .btn-deactivate { color: #dc3545; border-color: #dc3545;
+        }
+        .btn-deactivate:hover { background-color: #dc3545; color: white;
+        }
 
-        .btn-activate { color: #28a745; border-color: #28a745; }
-        .btn-activate:hover { background-color: #28a745; color: white; }
+        .btn-activate { color: #28a745; border-color: #28a745;
+        }
+        .btn-activate:hover { background-color: #28a745; color: white;
+        }
 
     </style>
 </head>
@@ -82,7 +95,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th> <%# --- ADDED COLUMN --- %>
+                    <th>ID</th> 
                     <th>Type Name</th>
                     <th>Base Price</th>
                     <th>Base Members</th>
@@ -94,7 +107,6 @@
             <tbody>
                 <% types.forEach(type => { %>
                     <tr>
-                        <%# --- ADDED DATA CELL --- %>
                         <td><%= type.public_type_id.substring(0, 8).toUpperCase() %></td>
                         <td><%= type.type_name %></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
@@ -117,7 +129,8 @@
                         <td>
                             <a href="/memberships/types/edit/<%= type.public_type_id %>" class="btn-action btn-edit">Edit</a>
                             
-                            <form class="toggle-form" action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST" onsubmit="return confirm('Are you sure?');" style="width: 100%;">
+                            <%# MODIFIED: Form class updated to use standard block styling %>
+                            <form class="toggle-form" action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST" onsubmit="return confirm('Are you sure?');">
                                 <% if (type.is_active) { %>
                                     <button type="submit" class="btn-action btn-deactivate">Deactivate</button>
                                 <% } else { %>
