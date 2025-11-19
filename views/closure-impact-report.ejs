@@ -7,69 +7,91 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
+margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 1200px;
-            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
+}
         form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px;
-            background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1em;
-            align-items: end; }
+background-color: #fafafa; }
+        .form-grid { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1em; /* MODIFIED: 3-column layout */
+align-items: end; }
         .form-grid label { display: block; margin-bottom: 5px; font-weight: bold;
-        }
-        .form-grid input[type="number"] { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
-            border: 1px solid #ccc; }
+}
+        .form-grid input[type="number"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; /* MODIFIED: Added select styling */
+border: 1px solid #ccc; }
         button { padding: 10px 20px; background-color: #007bff;
-            color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
-        }
+color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
+}
         button:hover { background-color: #0056b3;
-        }
+}
         
         /* --- Charts Layout --- */
         .charts-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 2em;
             margin-bottom: 3em;
             margin-top: 1em;
-        }
+}
         .chart-card {
             background: #fff;
-            border: 1px solid #e9ecef;
+border: 1px solid #e9ecef;
             border-radius: 8px;
             padding: 1.5em;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            /* Removed min-height to rely on inner wrapper */
-        }
+}
         .chart-card h3 {
             margin-top: 0;
-            text-align: center;
+text-align: center;
             font-size: 1.1em;
             color: #555;
             border-bottom: 1px solid #f0f0f0;
             padding-bottom: 10px;
             margin-bottom: 15px;
-        }
+}
         
         /* --- NEW: Wrapper to constrain Chart.js height --- */
         .chart-wrapper {
             position: relative;
-            height: 300px; /* Fixed height prevents infinite loop */
+height: 300px; /* Fixed height prevents infinite loop */
             width: 100%;
-        }
+}
 
         table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-        }
+}
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
-        }
+}
         th { background-color: #dc3545; color: white;
-        }
+}
         tr:nth-child(even) { background-color: #f9f9f9;
-        }
+}
         .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
-            margin-bottom: 15px; }
+margin-bottom: 15px; }
+
+        /* --- ACTION BUTTON STYLES --- */
+        .btn-action { 
+            display: inline-block; /* Changed to inline-block for better table fit */
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            text-align: center; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 0.85em;
+            border: 1px solid transparent; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .btn-detail {
+             background-color: #ffc107; 
+             color: #333; 
+             border-color: #ffc107;
+        }
+        .btn-detail:hover {
+            background-color: #e0a800;
+            color: #212529;
+        }
     </style>
 </head>
 <body>
@@ -83,15 +105,31 @@
         <% } %>
 
         <form action="/reports/closure-impact" method="POST">
-            <div class="form-grid">
+            <div class="form-grid" style="grid-template-columns: 2fr 2fr 1fr;">
                 <div>
                     <label for="selected_date">Enter Year:</label>
                     <input type="number" id="selected_date" name="selected_date" 
-                           value="<%= selected_date.substring(0, 4) %>" 
+                    
+                       value="<%= selected_date.substring(0, 4) %>" 
                            placeholder="YYYY" 
                            min="2020" max="2099" step="1" 
                            required>
+    
                 </div>
+                
+                <%# --- Weather Type Filter --- %>
+                <div>
+                    <label for="filter_type">Filter by Weather Type:</label>
+                    <select id="filter_type" name="filter_type">
+                        <option value="all">All Types</option>
+                        <% weatherTypes.forEach(type => { %>
+                            <option value="<%= type.weather_type %>" <%= filters.type === type.weather_type ? 'selected' : '' %>>
+                                <%= type.weather_type %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
                 <div style="align-self: end;">
                     <button type="submit">Generate Report</button>
                 </div>
@@ -109,11 +147,13 @@
                         <canvas id="lossByTypeChart"></canvas>
                     </div>
                 </div>
+               
                 <div class="chart-card">
                     <h3>Impact Magnitude per Closure (Lost Visitors)</h3>
                     <div class="chart-wrapper">
                         <canvas id="lossTimelineChart"></canvas>
                     </div>
+       
                 </div>
             </div>
 
@@ -121,14 +161,14 @@
             <%
                 const formatImpact = (num) => {
                     const n = Math.round(num);
-                    if (n > 0) {
+if (n > 0) {
                         return `<span style="color: green;">+${n.toLocaleString()}</span>`;
-                    }
+}
                     if (n < 0) {
                         return `<span style="color: red;">${n.toLocaleString()}</span>`;
-                    }
+}
                     return n.toLocaleString();
-                };
+};
             %>
 
             <table>
@@ -136,18 +176,23 @@
                     <tr>
                         <th>Closure Date</th>
                         <th>Weather Type</th>
+ 
                         <th>Actual Visitors</th>
                         <th>Typical Visitors</th>
                         <th>Impact (Loss/Gain)</th>
                         <th>Actual Rides</th>
+ 
                         <th>Typical Rides</th>
                         <th>Impact (Loss/Gain)</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
+               
                 <tbody>
                     <% report_data.forEach(event => { %>
                         <tr>
                             <td><%= new Date(event.event_date).toLocaleDateString() %></td>
+                    
                             <td><%= event.weather_type %></td>
                             
                             <%# --- Visitor Stats --- %>
@@ -156,21 +201,38 @@
                             <td><%- formatImpact(event.actual_visitors - event.benchmark_visitors) %></td>
 
                             <%# --- Ride Stats --- %>
+    
                             <td><%= parseInt(event.actual_rides).toLocaleString() %></td>
                             <td><%= Math.round(event.benchmark_rides).toLocaleString() %></td>
                             <td><%- formatImpact(event.actual_rides - event.benchmark_rides) %></td>
+                            <td>
+                                <%# --- NEW: Button redirects to /weather with presets --- %>
+                                <% 
+                                    // Format date to MM/DD/YYYY for the search input on the target page
+                                    const searchDate = new Date(event.event_date).toLocaleDateString('en-US', { 
+                                        year: 'numeric', month: '2-digit', day: '2-digit' 
+                                    });
+                                    
+                                    // Construct the URL with query params
+                                    const targetUrl = `/weather?search=${encodeURIComponent(searchDate)}&filter_closure=yes&filter_type=${encodeURIComponent(event.weather_type)}`;
+                                %>
+                                <a href="<%= targetUrl %>" target="_blank" class="btn-action btn-detail">
+                                    View Weather
+                                </a>
+                            </td>
+            
                         </tr>
-                    <% }); %>
+                    <% });
+%>
                 </tbody>
             </table>
 
             <script>
                 // --- DATA PREPARATION ---
                 const rawData = <%- JSON.stringify(report_data) %>;
-                
-                // 1. Prepare Data for "Loss by Weather Type" (Doughnut)
+// 1. Prepare Data for "Loss by Weather Type" (Doughnut)
                 const lossByType = {};
-                const timelineLabels = [];
+const timelineLabels = [];
                 const timelineData = [];
                 
                 rawData.forEach(event => {
@@ -181,80 +243,94 @@
                     // Aggregate for Pie Chart
                     if (!lossByType[event.weather_type]) {
                         lossByType[event.weather_type] = 0;
-                    }
+        
+}
                     lossByType[event.weather_type] += loss;
                     
                     // Prepare for Timeline Chart
                     timelineLabels.push(`${new Date(event.event_date).toLocaleDateString()} (${event.weather_type})`);
                     timelineData.push(loss);
                 });
-
-                // --- CHART 1: DOUGHNUT CHART ---
+// --- CHART 1: DOUGHNUT CHART ---
                 const ctxType = document.getElementById('lossByTypeChart').getContext('2d');
-                new Chart(ctxType, {
+new Chart(ctxType, {
                     type: 'doughnut',
                     data: {
                         labels: Object.keys(lossByType),
                         datasets: [{
-                            data: Object.values(lossByType),
+      
+                       data: Object.values(lossByType),
                             backgroundColor: [
                                 '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                            ],
+           
+                  ],
                             borderWidth: 1
                         }]
                     },
-                    options: {
+          
+                  options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'bottom' },
+              
+               legend: { position: 'bottom' },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                    
+                  label: function(context) {
                                         return ` Lost Visitors: ${context.parsed.toLocaleString()}`;
                                     }
+  
                                 }
                             }
                         }
-                    }
+                  
+}
                 });
-
-                // --- CHART 2: BAR CHART (TIMELINE) ---
+// --- CHART 2: BAR CHART (TIMELINE) ---
                 const ctxTime = document.getElementById('lossTimelineChart').getContext('2d');
-                new Chart(ctxTime, {
+new Chart(ctxTime, {
                     type: 'bar',
                     data: {
                         labels: timelineLabels,
                         datasets: [{
-                            label: 'Estimated Lost Visitors',
+      
+                       label: 'Estimated Lost Visitors',
                             data: timelineData,
                             backgroundColor: 'rgba(220, 53, 69, 0.6)', // Bootstrap Danger Red
-                            borderColor: 'rgba(220, 53, 69, 1)',
+          
+                   borderColor: 'rgba(220, 53, 69, 1)',
                             borderWidth: 1
                         }]
                     },
-                    options: {
+     
+                options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: {
+         
+                     y: {
                                 beginAtZero: true,
                                 title: { display: true, text: 'Visitors Lost (Count)' }
-                            }
+       
+                      }
                         },
                         plugins: {
-                            legend: { display: false },
+                            legend: { 
+display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    
+label: function(context) {
                                         return ` Impact: -${context.parsed.y.toLocaleString()} visitors`;
-                                    }
+}
                                 }
                             }
                         }
-                    }
+                
+     }
                 });
-            </script>
+ </script>
 
         <% } else if (report_data && report_data.length === 0) { %>
             <p style="text-align: center; font-weight: bold; margin-top: 2em;">No park closure data found for the selected year.</p>

@@ -298,10 +298,17 @@ router.get('/ride-popularity', isAuthenticated, canViewReports, async (req, res)
     try {
         const defaultDate = new Date().toISOString().substring(0, 10);
 
+        // NEW: Fetch all locations and ride types
+        const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+        const [rideTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
+
         res.render('ride-popularity-report', {
             selected_date: defaultDate,
             report_data: null,
             chartTitle: 'Ride Popularity Report',
+            locations: locations, // ADDED
+            rideTypes: rideTypes, // ADDED
+            filters: { location: '', type: '' }, // ADDED
             error: null
         });
     } catch (error) {
@@ -310,26 +317,51 @@ router.get('/ride-popularity', isAuthenticated, canViewReports, async (req, res)
             selected_date: new Date().toISOString().substring(0, 10),
             report_data: null,
             chartTitle: 'Ride Popularity Report',
-            error: 'Error loading page. Please try again.'
+            locations: [], // ADDED
+            rideTypes: [], // ADDED
+            filters: { location: '', type: '' }, // ADDED
+            error: 'Error loading page setup data. Please try again.'
         });
     }
 });
 
 // --- POST ROUTE FOR RIDE POPULARITY ---
 router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res) => {
-    let { selected_date } = req.body;
+    let { selected_date, filter_location, filter_type } = req.body; // MODIFIED: Added filters
+
+    let locations = []; // NEW
+    let rideTypes = []; // NEW
 
     try {
+        // NEW: Re-fetch necessary data for dropdowns
+        [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+        [rideTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
+
         const dateForHelper = selected_date.length === 7 ? selected_date + '-01' : selected_date;
         const { startDate, endDate } = getReportSettings(dateForHelper, 'month');
 
         const monthYearFormat = new Date(dateForHelper + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         const chartTitle = `Total Riders for ${monthYearFormat}`;
 
-        // UPDATED QUERY: Added r.public_ride_id
+        // Build WHERE clause based on filters
+        let whereClauses = ['dr.dat_date BETWEEN ? AND ?'];
+        let params = [startDate, endDate];
+
+        if (filter_location && filter_location !== 'all') {
+            whereClauses.push('l.location_id = ?');
+            params.push(filter_location);
+        }
+        if (filter_type && filter_type !== 'all') {
+            whereClauses.push('r.ride_type = ?');
+            params.push(filter_type);
+        }
+
+        let whereQuery = `WHERE ${whereClauses.join(' AND ')}`;
+
+        // UPDATED QUERY: Uses dynamic WHERE clause
         const reportQuery = `
             SELECT 
-                r.public_ride_id, -- ADDED
+                r.public_ride_id, 
                 r.ride_name,
                 r.ride_type,
                 l.location_name,
@@ -337,27 +369,48 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
             FROM daily_ride dr
             JOIN rides r ON dr.ride_id = r.ride_id
             JOIN location l ON r.location_id = l.location_id
-            WHERE dr.dat_date BETWEEN ? AND ?
+            ${whereQuery}
             GROUP BY r.ride_id, r.public_ride_id, r.ride_name, r.ride_type, l.location_name
             HAVING total_riders > 0
             ORDER BY total_riders DESC
         `;
 
-        const [reportData] = await pool.query(reportQuery, [startDate, endDate]);
+        const [reportData] = await pool.query(reportQuery, params);
 
+        // 4. Render View with Data
         res.render('ride-popularity-report', {
             selected_date: selected_date,
-            report_data: reportData, // Now contains public_ride_id
+            report_data: reportData,
             chartTitle: chartTitle,
+            locations: locations, // ADDED
+            rideTypes: rideTypes, // ADDED
+            filters: { // ADDED
+                location: filter_location || '',
+                type: filter_type || ''
+            },
             error: null
         });
 
     } catch (error) {
         console.error("Error generating ride popularity report:", error);
+        // Re-fetch dropdown data on error for proper re-render
+        try {
+            [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
+            [rideTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
+        } catch (fetchErr) {
+            locations = []; rideTypes = [];
+        }
+
         res.render('ride-popularity-report', {
             selected_date: selected_date,
             report_data: null,
             chartTitle: 'Ride Popularity Report',
+            locations: locations, // ADDED
+            rideTypes: rideTypes, // ADDED
+            filters: { // ADDED
+                location: filter_location || '',
+                type: filter_type || ''
+            },
             error: `Error generating report: ${error.message}`
         });
     }
@@ -367,10 +420,15 @@ router.post('/ride-popularity', isAuthenticated, canViewReports, async (req, res
 router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
     try {
         const defaultDate = new Date().toISOString().substring(0, 10);
+        // NEW: Fetch all distinct weather types from the database
+        const [weatherTypes] = await pool.query("SELECT DISTINCT weather_type FROM weather_events ORDER BY weather_type");
+
         res.render('closure-impact-report', {
             selected_date: defaultDate,
             report_data: null,
             chartTitle: '',
+            weatherTypes: weatherTypes, // ADDED
+            filters: { type: '' },      // ADDED
             error: null
         });
     } catch (error) {
@@ -379,24 +437,42 @@ router.get('/closure-impact', isAuthenticated, canViewReports, async (req, res) 
             selected_date: new Date().toISOString().substring(0, 10),
             report_data: null,
             chartTitle: '',
-            error: 'Error loading page. Please try again.'
+            weatherTypes: [],
+            filters: { type: '' },
+            error: 'Error loading page setup data. Please try again.'
         });
     }
 });
 
 // --- POST ROUTE FOR CLOSURE IMPACT REPORT ---
 router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res) => {
-    const { selected_date } = req.body; // This will now be a string like "2025"
+    const { selected_date, filter_type } = req.body;
+
+    let weatherTypes = [];
 
     try {
-        // 1. Get the year from the selected date
+        // 1. Get the year and re-fetch types for dropdown
         const year = parseInt(selected_date, 10);
         if (isNaN(year)) {
             throw new Error("Invalid year format submitted.");
         }
         const chartTitle = `Year ${year}`;
+        // Re-fetch the dropdown options
+        [weatherTypes] = await pool.query("SELECT DISTINCT weather_type FROM weather_events ORDER BY weather_type");
 
-        // 2. Build SQL Query (This logic is already correct)
+        // Build WHERE clauses: base filters (park_closure=TRUE, YEAR=?)
+        let whereClauses = ['w.park_closure = TRUE', 'YEAR(w.event_date) = ?'];
+        let params = [year];
+
+        // NEW FILTER LOGIC: Weather Type
+        if (filter_type && filter_type !== 'all') {
+            whereClauses.push('w.weather_type = ?');
+            params.push(filter_type);
+        }
+
+        const whereQuery = `WHERE ${whereClauses.join(' AND ')}`;
+
+        // 2. Build SQL Query
         const reportQuery = `
             WITH MonthlyDOWStats AS (
                 -- First, calculate the average visitors and rides for each day-of-week per month/year
@@ -421,7 +497,9 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
             )
             -- Now, get the closure day's stats and join our new averages
             SELECT
+                w.weather_id,
                 w.event_date,
+                w.end_time,
                 w.weather_type,
                 COALESCE(ds.visitor_count, 0) AS actual_visitors,
                 COALESCE(SUM(dr.ride_count), 0) AS actual_rides,
@@ -434,33 +512,64 @@ router.post('/closure-impact', isAuthenticated, canViewReports, async (req, res)
                 YEAR(w.event_date) = ma.stat_year 
                 AND MONTH(w.event_date) = ma.stat_month 
                 AND DAYOFWEEK(w.event_date) = ma.stat_dow
-            WHERE
-                w.park_closure = TRUE
-                AND YEAR(w.event_date) = ?
+            ${whereQuery}
             GROUP BY
-                w.event_date, w.weather_type, ds.visitor_count, ma.avg_visitors, ma.avg_rides
+                w.weather_id, w.event_date, w.end_time, w.weather_type, ds.visitor_count, ma.avg_visitors, ma.avg_rides
             ORDER BY
                 w.event_date ASC;
         `;
 
-        const [reportData] = await pool.query(reportQuery, [year]);
+        const [reportData] = await pool.query(reportQuery, params);
 
         // 4. Render View with Data
         res.render('closure-impact-report', {
-            selected_date: selected_date, // Pass the "2025" string back
+            selected_date: selected_date,
             report_data: reportData,
             chartTitle: chartTitle,
+            weatherTypes: weatherTypes,
+            filters: { type: filter_type || '' },
             error: null
         });
 
     } catch (error) {
         console.error("Error generating closure impact report:", error);
+        try {
+            [weatherTypes] = await pool.query("SELECT DISTINCT weather_type FROM weather_events ORDER BY weather_type");
+        } catch (fetchErr) {
+            weatherTypes = [];
+        }
+
         res.render('closure-impact-report', {
-            selected_date: selected_date, // Pass back the submitted year
+            selected_date: selected_date,
             report_data: null,
             chartTitle: '',
+            weatherTypes: weatherTypes,
+            filters: { type: filter_type || '' },
             error: `Error generating report: ${error.message}`
         });
+    }
+});
+
+// --- NEW ROUTE: GET /reports/weather-log/:id (Detail View) ---
+router.get('/weather-log/:id', isAuthenticated, canViewReports, async (req, res) => {
+    const { id } = req.params;
+    const { back_query } = req.query;
+
+    try {
+        const [eventResult] = await pool.query('SELECT * FROM weather_events WHERE weather_id = ?', [id]);
+
+        if (eventResult.length === 0) {
+            return res.status(404).send('Weather event log not found.');
+        }
+
+        res.render('weather-log-detail', {
+            event: eventResult[0],
+            back_query: back_query // Pass the smart recall query string
+        });
+
+    } catch (error) {
+        console.error("Error fetching detailed weather log:", error);
+        res.status(500).send("Error loading weather log.");
     }
 });
 

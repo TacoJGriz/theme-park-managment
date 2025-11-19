@@ -1,1 +1,1 @@
-CALL GenerateHistoricalData(2025, 2025, 20);
+CALL GenerateHistoricalData(2025, 2025, 100);

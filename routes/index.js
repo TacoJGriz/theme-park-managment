@@ -27,9 +27,9 @@ router.get('/', async (req, res) => {
         // Query 2: Get all locations
         const [locations] = await pool.query("SELECT location_id, location_name, summary FROM location ORDER BY location_name");
 
-        // Query 3: Get all OPEN rides
+        // Query 3: Get ALL rides (Removed 'OPEN' filter to show total park capacity)
         const [rides] = await pool.query(
-            "SELECT ride_id, ride_name, ride_type, location_id FROM rides WHERE ride_status = 'OPEN' ORDER BY ride_name"
+            "SELECT ride_id, ride_name, ride_type, location_id, ride_status FROM rides ORDER BY ride_name"
         );
 
         // Query 4: Get ticket & membership types
@@ -41,13 +41,12 @@ router.get('/', async (req, res) => {
             "SELECT type_id, public_type_id, type_name, base_price, description, base_members FROM membership_type WHERE is_active = TRUE ORDER BY base_price"
         );
 
-        // --- NEW QUERY 5: Get OPEN Vendors ---
+        // Query 5: Get ALL Vendors (Removed 'OPEN' filter)
         const [vendors] = await pool.query(
-            "SELECT vendor_name, location_id FROM vendors WHERE vendor_status = 'OPEN' ORDER BY vendor_name"
+            "SELECT vendor_name, location_id, vendor_status FROM vendors ORDER BY vendor_name"
         );
 
-        // --- NEW QUERY 6: Get Active/Ongoing Weather Alerts ---
-        // Checks for events happening NOW, or any full-day park closure for today.
+        // Query 6: Get Active/Ongoing Weather Alerts
         const [weatherAlerts] = await pool.query(
             `SELECT weather_type, park_closure, event_date, end_time 
              FROM weather_events 
@@ -61,8 +60,8 @@ router.get('/', async (req, res) => {
             promotions: promotions,
             locations: locations,
             allRides: rides,
-            allVendors: vendors,       // <--- Passed to view
-            weatherAlerts: weatherAlerts, // <--- Passed to view
+            allVendors: vendors,
+            weatherAlerts: weatherAlerts,
             tickets: tickets,
             memberships: memberships
         });
