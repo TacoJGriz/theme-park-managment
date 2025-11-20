@@ -58,9 +58,14 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 });
 
 // POST /visits
+// POST /visits
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     // Capture original returnQuery for error handling
-    const { ticket_type_id, returnQuery: originalReturnQuery } = req.body;
+    const {
+        ticket_type_id,
+        returnQuery: originalReturnQuery,
+        ticket_quantity // ADDED: Retrieve the quantity input
+    } = req.body;
     const member_ids = [].concat(req.body.member_ids || []);
     const visit_date = new Date();
     const { id: actorId } = req.session.user;
@@ -167,7 +172,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
             // Clear returnQuery on SUCCESS for Standard/Member check-in (resets smart return)
             const resetReturnQuery = '';
-            res.render('member-visit-receipt', { // <-- CHANGE IS HERE
+            res.render('member-visit-receipt', {
                 receipt: receiptData,
                 fromLogVisit: true,
                 returnQuery: resetReturnQuery
@@ -176,29 +181,58 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         } else {
             // --- NON-MEMBER LOGIC (Standard Ticket) ---
             await connection.beginTransaction();
+
+            // 1. Get Quantity and validate
+            const quantity = parseInt(ticket_quantity) || 1;
+            if (quantity <= 0) throw new Error("Ticket quantity must be at least 1.");
+
             const [promos] = await pool.query("SELECT event_name, discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
             const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
             const promoName = (promos.length > 0) ? promos[0].event_name : 'N/A';
-            let finalTicketPrice = parseFloat(ticket.base_price);
-            let finalDiscountAmount = finalTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
 
-            await connection.query(`INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id) VALUES (?, ?, NULL, ?, ?, ?, ?)`,
-                [visit_date, ticket_type_id, finalTicketPrice, finalDiscountAmount, actorId, visitGroupId]);
+            // 2. Calculate price/discount for A SINGLE ticket
+            const singleTicketPrice = parseFloat(ticket.base_price);
+            const singleDiscountAmount = singleTicketPrice * (parseFloat(currentDiscountPercent) / 100.0);
 
+            // 3. Calculate total for X tickets
+            const totalBasePrice = singleTicketPrice * quantity;
+            const totalDiscountAmount = singleDiscountAmount * quantity;
+            const totalCost = totalBasePrice - totalDiscountAmount;
+
+            let ticketCodes = []; // To store codes for the receipt carousel
+
+            // 4. Loop to insert visits and generate codes
+            for (let i = 0; i < quantity; i++) {
+                const singleTicketCode = crypto.randomUUID();
+
+                // Log each ticket purchase/visit individually
+                await connection.query(`
+                    INSERT INTO visits (visit_date, ticket_type_id, membership_id, ticket_price, discount_amount, logged_by_employee_id, visit_group_id) 
+                    VALUES (?, ?, NULL, ?, ?, ?, ?)`,
+                    [visit_date, ticket_type_id, singleTicketPrice, singleDiscountAmount, actorId, visitGroupId]);
+
+                ticketCodes.push({
+                    name: ticket.type_name,
+                    code: singleTicketCode
+                });
+            }
+
+            // 5. Build receipt data with collective totals
             let receiptData = {
-                visit_group_id: visitGroupId, visit_date: formatReceiptDate(visit_date), ticket_name: ticket.type_name,
-                base_price: finalTicketPrice, discount_amount: finalDiscountAmount, total_cost: finalTicketPrice - finalDiscountAmount,
-                promo_applied: promoName, is_member: false, staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+                visit_group_id: visitGroupId,
+                visit_date: formatReceiptDate(visit_date),
+                ticket_name: ticket.type_name,
+                base_price: totalBasePrice,          // Total base price
+                discount_amount: totalDiscountAmount, // Total discount
+                total_cost: totalCost,               // Total cost
+                promo_applied: promoName,
+                is_member: false,
+                staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
                 member_id: null, member_name: null, member_type: null, member_phone: null, subMembers: []
             };
 
-            // --- FIX: Generate UUID and add to tickets array to trigger visual view ---
-            const singleTicketCode = crypto.randomUUID();
-            receiptData.tickets = [{
-                name: ticket.type_name,
-                code: singleTicketCode
-            }];
-            // --- END FIX ---
+            // Set the generated tickets for the carousel view
+            receiptData.tickets = ticketCodes;
 
             await connection.commit();
 

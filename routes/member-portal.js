@@ -301,7 +301,7 @@ router.get('/history/receipt-group/:visit_group_id', isMemberAuthenticated, asyn
                 }))
         };
 
-        res.render('visit-receipt', { receipt: receiptData });
+        res.render('member-visit-receipt', { receipt: receiptData });
 
     } catch (error) {
         console.error("Error fetching receipt group:", error);
