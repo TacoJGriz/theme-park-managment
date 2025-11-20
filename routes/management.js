@@ -365,32 +365,54 @@ router.post('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail,
     }
 });
 
-// POST /vendors/delete/:public_vendor_id (NEW)
+// POST /vendors/delete/:public_vendor_id
 router.post('/vendors/delete/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
     const { public_vendor_id } = req.params;
     const { role, locationId } = req.session.user;
 
+    let connection;
     try {
-        // Check existence and permission
-        const [vendorRes] = await pool.query('SELECT location_id, vendor_name FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
-        if (vendorRes.length === 0) return res.redirect('/vendors');
+        connection = await pool.getConnection();
 
-        if (role === 'Location Manager' && vendorRes[0].location_id !== locationId) {
+        // 1. Check existence and permission
+        const [vendorRes] = await connection.query('SELECT vendor_id, location_id, vendor_name FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        if (vendorRes.length === 0) {
+            connection.release();
+            return res.redirect('/vendors');
+        }
+        const vendor = vendorRes[0];
+
+        if (role === 'Location Manager' && vendor.location_id !== locationId) {
+            connection.release();
             return res.status(403).send('Forbidden');
         }
 
-        await pool.query('DELETE FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
-        req.session.success = `Vendor "${vendorRes[0].vendor_name}" deleted successfully.`;
+        // 2. Start Transaction
+        await connection.beginTransaction();
+
+        // 3. Delete dependencies first (Inventory & Requests)
+        // Delete inventory requests for this vendor
+        await connection.query('DELETE FROM inventory_requests WHERE vendor_id = ?', [vendor.vendor_id]);
+
+        // Delete actual inventory for this vendor
+        await connection.query('DELETE FROM inventory WHERE vendor_id = ?', [vendor.vendor_id]);
+
+        // 4. Delete the Vendor
+        await connection.query('DELETE FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+
+        // 5. Commit
+        await connection.commit();
+
+        req.session.success = `Vendor "${vendor.vendor_name}" and its inventory were deleted successfully.`;
         res.redirect('/vendors');
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error("Error deleting vendor:", error);
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            req.session.error = "Cannot delete this vendor because it has inventory items or history associated with it.";
-        } else {
-            req.session.error = "Database error deleting vendor.";
-        }
+        req.session.error = "Database error deleting vendor.";
         res.redirect('/vendors');
+    } finally {
+        if (connection) connection.release();
     }
 });
 
