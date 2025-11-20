@@ -1,34 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const crypto = require('crypto'); // ADDED
+const crypto = require('crypto');
 const {
     isAuthenticated,
     canViewRides,
     isAdminOrParkManager,
     canLogRideRun,
     canViewRideHistory
-} = require('../middleware/auth'); // Adjust path to auth.js
+} = require('../middleware/auth');
 
 // --- RIDE & MAINTENANCE MANAGEMENT ---
 
 // GET /rides (Main rides list)
-// Path changed from /rides to /
 router.get('/', isAuthenticated, canViewRides, async (req, res) => {
     try {
         const { role, locationId } = req.session.user;
 
         // --- 1. Get query params ---
         const {
-            search,
-            sort,
-            dir,
-            filter_type,
-            filter_status,
-            filter_location
+            search, sort, dir, filter_type, filter_status, filter_location
         } = req.query;
 
-        let orderBy = ' ORDER BY r.ride_name ASC'; // Default sort
+        let orderBy = ' ORDER BY r.ride_name ASC';
         let whereClauses = [];
         let params = [];
 
@@ -36,7 +30,6 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
         const [allLocations] = await pool.query('SELECT location_id, public_location_id, location_name FROM location ORDER BY location_name');
         const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
 
-        // MODIFIED: Fetch all defined ENUM values from the schema to include unused statuses (like WEATHER CLOSURE)
         const [schemaResult] = await pool.query(
             `SELECT COLUMN_TYPE 
              FROM INFORMATION_SCHEMA.COLUMNS 
@@ -45,14 +38,10 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
 
         let allStatuses = [];
         if (schemaResult.length > 0) {
-            // Parse string format: enum('OPEN','CLOSED','BROKEN','WEATHER CLOSURE')
             const enumString = schemaResult[0].COLUMN_TYPE;
-            // Remove "enum(" and ")" and single quotes, then split into array
             const values = enumString.substring(5, enumString.length - 1).replace(/'/g, '').split(',');
-            // Map to object structure expected by EJS
             allStatuses = values.map(status => ({ ride_status: status }));
         } else {
-            // Fallback if schema query fails
             const [distinctStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
             allStatuses = distinctStatuses;
         }
@@ -82,7 +71,6 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             params.push(filter_status);
         }
         if (filter_location) {
-            // Filter by internal location_id from form value
             whereClauses.push('r.location_id = ?');
             params.push(filter_location);
         }
@@ -141,21 +129,27 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
 
         // --- 10. Render with all data ---
         res.render('rides', {
-            rides: rides, // Contains public_ride_id
+            rides: rides,
             search: search || "",
             currentSort: sort,
             currentDir: dir,
-            locations: allLocations, // Contains public_location_id and internal location_id
+            locations: allLocations,
             types: allTypes,
             statuses: allStatuses,
             filters: {
                 type: filter_type || "",
                 status: filter_status || "",
-                location: filter_location || "" // This is the internal location_id
+                location: filter_location || ""
             },
             counts: counts,
-            currentQueryString: currentQueryString // <-- THIS FIXES THE ERROR
+            currentQueryString: currentQueryString,
+            success: req.session.success, // ADDED
+            error: req.session.error      // ADDED
         });
+
+        // Clear messages after display
+        req.session.success = null; // ADDED
+        req.session.error = null;   // ADDED
 
     } catch (error) {
         console.error(error);
@@ -164,7 +158,6 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
 });
 
 // GET /rides/new
-// Path changed from /rides/new to /new
 router.get('/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const { returnQuery } = req.query;
@@ -177,7 +170,6 @@ router.get('/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
 });
 
 // POST /rides
-// Path changed from /rides to /
 router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight, returnQuery } = req.body;
     const publicRideId = crypto.randomUUID();
@@ -193,6 +185,9 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
             ride_name, ride_type, ride_status, location_id,
             capacity || null, min_height || null, max_weight || null
         ]);
+
+        req.session.success = 'Ride added successfully.'; // ADDED
+
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
     } catch (error) {
@@ -209,7 +204,6 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
 });
 
 // POST /rides/status/:public_ride_id
-// Path changed to /status/:public_ride_id
 router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
     const { public_ride_id } = req.params;
     const { ride_status, returnQuery } = req.body;
@@ -224,7 +218,6 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
     let validStatuses = [];
     if (schemaResult.length > 0) {
         const enumString = schemaResult[0].COLUMN_TYPE;
-        // Parse string "enum('A','B','C')" -> ["A", "B", "C"]
         validStatuses = enumString.substring(5, enumString.length - 1).replace(/'/g, '').split(',');
     }
 
@@ -253,6 +246,8 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
         const sql = "UPDATE rides SET ride_status = ? WHERE public_ride_id = ?";
         await connection.query(sql, [ride_status, public_ride_id]);
 
+        // req.session.success = 'Status updated.'; // Optional: feedback for status change
+
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
 
@@ -265,7 +260,6 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
 });
 
 // GET /rides/log/:public_ride_id
-// Path changed to /log/:public_ride_id
 router.get('/log/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
     const { public_ride_id } = req.params;
     const { role, locationId } = req.session.user;
@@ -298,7 +292,6 @@ router.get('/log/:public_ride_id', isAuthenticated, canLogRideRun, async (req, r
 });
 
 // POST /rides/run/:public_ride_id
-// Path changed to /run/:public_ride_id
 router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
     const { public_ride_id } = req.params;
     const { rider_count, returnQuery } = req.body;
@@ -357,6 +350,9 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
         );
 
         await connection.commit();
+
+        req.session.success = 'Ride run logged successfully.'; // ADDED
+
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
 
@@ -375,21 +371,20 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
 });
 
 // GET /rides/history/:public_ride_id
-// Path changed to /history/:public_ride_id
 router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, async (req, res) => {
-    const { public_ride_id } = req.params; // CHANGED
-    const { returnQuery } = req.query; // CAPTURE returnQuery
+    const { public_ride_id } = req.params;
+    const { returnQuery } = req.query;
     const { role, locationId } = req.session.user;
     const today = new Date().toISOString().substring(0, 10);
     let ride;
 
     try {
-        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]); // CHANGED
+        const [rideResult] = await pool.query('SELECT ride_id, ride_name, location_id, capacity, public_ride_id FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
-        const internalRideId = ride.ride_id; // Get internal ID for logging
+        const internalRideId = ride.ride_id;
 
         if ((role === 'Location Manager' || role === 'Staff') && ride.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only view history for rides in your location.');
@@ -397,7 +392,7 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
 
         const [todayStatsResult] = await pool.query(
             'SELECT SUM(run_count) as today_runs, SUM(ride_count) as today_riders FROM daily_ride WHERE ride_id = ? AND dat_date = ?',
-            [internalRideId, today] // Use internal ID
+            [internalRideId, today]
         );
         const todayStats = {
             today_runs: todayStatsResult[0].today_runs || 0,
@@ -406,7 +401,7 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
 
         const [allTimeStatsResult] = await pool.query(
             'SELECT SUM(run_count) as total_runs, SUM(ride_count) as total_riders FROM daily_ride WHERE ride_id = ?',
-            [internalRideId] // Use internal ID
+            [internalRideId]
         );
         const allTimeStats = {
             total_runs: allTimeStatsResult[0].total_runs || 0,
@@ -415,7 +410,7 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
 
         const [dailyHistory] = await pool.query(
             'SELECT dat_date, run_count, ride_count FROM daily_ride WHERE ride_id = ? ORDER BY dat_date DESC',
-            [internalRideId] // Use internal ID
+            [internalRideId]
         );
 
         res.render('ride-run-history', {
@@ -423,7 +418,7 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
             todayStats: todayStats,
             allTimeStats: allTimeStats,
             dailyHistory: dailyHistory,
-            returnQuery: returnQuery || '' 
+            returnQuery: returnQuery || ''
         });
 
     } catch (error) {
@@ -436,14 +431,11 @@ router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async
     const { public_ride_id } = req.params;
     const { returnQuery } = req.query;
     try {
-        // 1. Fetch Ride Details
         const [rideResult] = await pool.query('SELECT * FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (rideResult.length === 0) {
             return res.status(404).send('Ride not found');
         }
         const ride = rideResult[0];
-
-        // 2. Fetch Locations for Dropdown
         const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
 
         res.render('edit-ride', {
@@ -459,7 +451,6 @@ router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async
     }
 });
 
-// POST /rides/edit/:public_ride_id
 router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { public_ride_id } = req.params;
     const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight, returnQuery } = req.body;
@@ -476,6 +467,8 @@ router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, asyn
             capacity || null, min_height || null, max_weight || null,
             public_ride_id
         ]);
+
+        req.session.success = 'Ride details updated.'; // ADDED
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
@@ -494,6 +487,8 @@ router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, asyn
     }
 });
 
+// POST /delete/:public_ride_id
+// UPDATED to handle dependencies
 router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { public_ride_id } = req.params;
     const { returnQuery } = req.body;
@@ -502,22 +497,42 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
     try {
         connection = await pool.getConnection();
 
-        const [ride] = await connection.query('SELECT ride_name FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+        // 1. Get Internal ID
+        const [ride] = await connection.query('SELECT ride_id, ride_name FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (ride.length === 0) {
+            req.session.error = 'Ride not found.';
             const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
             return res.redirect(redirectUrl);
         }
+        const rideId = ride[0].ride_id;
 
-        await connection.query('DELETE FROM rides WHERE public_ride_id = ?', [public_ride_id]);
+        // 2. Start Transaction
+        await connection.beginTransaction();
+
+        // 3. Delete Dependencies (Order matters!)
+        // Delete maintenance logs first
+        await connection.query('DELETE FROM maintenance WHERE ride_id = ?', [rideId]);
+
+        // Delete daily_ride history
+        await connection.query('DELETE FROM daily_ride WHERE ride_id = ?', [rideId]);
+
+        // 4. Delete Ride
+        await connection.query('DELETE FROM rides WHERE ride_id = ?', [rideId]);
+
+        // 5. Commit
+        await connection.commit();
+
+        req.session.success = `Ride "${ride[0].ride_name}" and its history were deleted successfully.`;
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error("Error deleting ride:", error);
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            console.error("Cannot delete ride due to existing history logs.");
-        }
+
+        req.session.error = "Error deleting ride. Database constraint error.";
+
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
     } finally {
