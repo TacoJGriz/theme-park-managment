@@ -2,106 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Park Promotions</title>
+    <title>Park Promotions | Primus Park</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        /* --- Shared Theme Variables --- */
         :root {
             --primary: #6f42c1;
             --accent: #17a2b8;
             --dark: #343a40;
-            --success: #28a745;
+            --light: #f8f9fa;
+            --bg-page: #f0f2f5; /* Darker than light for contrast */
+            --white: #ffffff;
+            --radius: 12px;
+            --shadow-md: 0 4px 15px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+            --border-color: #e0e0e0;
         }
 
         body { 
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', sans-serif; 
             margin: 0; 
-            background-color: #f0f2f5; 
-            color: #333; 
+            background-color: var(--bg-page); /* UPDATED: Better contrast */
+            color: var(--dark); 
         }
-        .container { 
-            max-width: 1100px;
-            margin: 2em auto; 
-            padding: 0 2em;
-        }
+        .container { max-width: 1200px; margin: 3em auto; padding: 0 2em; }
+        
         h1 { 
-            font-family: 'Lobster', cursive;
-            color: var(--dark);
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 0.5em;
-            margin-bottom: 1.5em;
-            font-size: 2.5em;
+            font-family: 'Lobster', cursive; color: var(--dark); font-size: 3em;
+            border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1.5em;
         }
         
         .card-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            display: grid; 
+            /* UPDATED: Wider columns (380px) to fit date string */
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); 
             gap: 25px;
         }
+        
+        /* Magic Promo Card */
         .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            border-top: 5px solid var(--primary); /* Purple top border */
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            border-top: 5px solid var(--primary);
+            /* UPDATED: Added border for better definition against white/light backgrounds */
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
             transition: transform 0.2s;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow: hidden;
         }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .card-body {
-            padding: 2em;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .card h3 { 
-            margin-top: 0; 
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: 1.3em; 
-            color: var(--dark);
-            margin-bottom: 0.5em;
-        }
-        .card .offer {
-            font-size: 2.5em;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0.2em 0 0.5em 0;
-            line-height: 1;
-        }
-        .card .offer-sub { 
-            font-size: 0.4em;
-            font-weight: 600; 
-            color: #666;
-            text-transform: uppercase;
-            display: block;
-            margin-top: 5px;
-        }
-        .card .summary {
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 1.5em;
-            flex-grow: 1;
-        }
-        .card-footer {
-            background-color: #f8f9fa;
-            padding: 1em 2em;
-            font-size: 0.9em;
-            color: #666;
-            border-top: 1px solid #eee;
-        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .card-body { padding: 2em; flex-grow: 1; display: flex; flex-direction: column; }
+        
         .tag {
-            display: inline-block;
-            background: #e9ecef;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #495057;
+            display: inline-block; background: #e9ecef; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.8em; font-weight: 700; margin-bottom: 15px; color: #495057; text-transform: uppercase;
+            align-self: flex-start;
+        }
+        
+        .card h3 { margin: 0 0 0.5em 0; font-size: 1.4em; color: var(--dark); font-weight: 700; }
+        
+        .offer {
+            font-size: 2.5em; font-weight: 800; color: var(--primary); margin: 0.2em 0 0.5em 0; line-height: 1;
+        }
+        .offer-sub { font-size: 0.4em; font-weight: 600; color: #666; text-transform: uppercase; display: block; margin-top: 5px; }
+        
+        .summary { color: #555; line-height: 1.6; margin-bottom: 1.5em; flex-grow: 1; }
+        
+        .card-footer {
+            background-color: #f8f9fa; padding: 1em 2em; font-size: 0.9em; color: #666; border-top: 1px solid #eee;
+            display: flex; align-items: center; gap: 8px;
+            /* UPDATED: Prevent wrapping of date string */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -113,7 +91,7 @@
         <div class="card-container">
             <% if (promotions.length > 0) { %>
                 <% promotions.forEach(promo => { %>
-                    <div class="card promo">
+                    <div class="card">
                         <div class="card-body">
                             <span class="tag"><%= promo.event_type %> Event</span>
                             <h3><%= promo.event_name %></h3>

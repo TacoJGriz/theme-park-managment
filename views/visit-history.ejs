@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,164 +6,85 @@
     
     <%# --- CONDITIONAL FONTS & STYLES --- %>
     <% if (user) { %>
-        <%# --- EMPLOYEE VIEW: Functional & Consistent --- %>
+        <%# --- EMPLOYEE VIEW (Standard Admin) --- %>
         <style>
             body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-            
-            /* Standard Admin Container */
-            .container { 
-                max-width: 1200px; 
-                margin: 2em auto; 
-                background: white; 
-                padding: 2em; 
-                border-radius: 8px; 
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            }
-
-            /* Standard Headers */
-            h1 { 
-                color: #444; 
-                border-bottom: 2px solid #eee; 
-                padding-bottom: 0.5em; 
-                margin-bottom: 1em; 
-                font-size: 2em;
-            }
-            h1 small { 
-                color: #6c757d; 
-                font-size: 0.6em; 
-                font-weight: normal; 
-                margin-left: 10px; 
-            }
-
-            /* Standard Table */
+            .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; font-size: 2em; }
             table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-            th { 
-                background-color: #17a2b8; /* Matches Members List Header */
-                color: white; 
-                padding: 12px; 
-                text-align: left; 
-                border-bottom: 1px solid #ddd; 
-            }
-            td { 
-                padding: 12px; 
-                border-bottom: 1px solid #ddd; 
-                color: #333;
-            }
+            th { background-color: #17a2b8; color: white; padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+            td { padding: 12px; border-bottom: 1px solid #ddd; color: #333; }
             tr:nth-child(even) { background-color: #f9f9f9; }
-            tr:hover { background-color: #f1f1f1; }
-
-            /* Standard Links */
-            .back-link { 
-                display: inline-block; 
-                margin-bottom: 1.5em; 
-                text-decoration: none; 
-                color: #007bff; 
-                font-weight: bold; 
-                padding: 8px 15px;
-                background-color: #e9ecef;
-                border-radius: 4px;
-            }
-            .back-link:hover { 
-                background-color: #dee2e6; 
-                text-decoration: none; 
-                color: #0056b3;
-            }
-
+            .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; padding: 8px 15px; background-color: #e9ecef; border-radius: 4px; }
+            .back-link:hover { background-color: #dee2e6; color: #0056b3; }
             .action-link { color: #007bff; font-weight: bold; text-decoration: none; }
             .action-link:hover { text-decoration: underline; }
-
-            /* Neutral Badge */
-            .badge-group { 
-                background: #e9ecef; 
-                padding: 3px 8px; 
-                border-radius: 4px; 
-                font-size: 0.9em; 
-                font-weight: bold;
-                color: #495057;
-            }
-            
-            /* Reset card styles for admin view */
-            .table-card { box-shadow: none; background: transparent; }
         </style>
-
     <% } else { %>
-        <%# --- MEMBER VIEW: Fancy & Branded --- %>
+        <%# --- MEMBER VIEW (Magical Theme) --- %>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
         
         <style>
+            /* --- STANDARDIZED VARIABLES --- */
             :root {
                 --primary: #6f42c1;
-                --accent: #17a2b8;
+                --accent: #17a2b8; /* Member Theme */
                 --dark: #343a40;
+                --light: #f8f9fa;
+                --white: #ffffff;
+                --gray: #6c757d;
+                --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+                --radius: 12px;
+                --transition: all 0.3s ease;
             }
-            body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
             
-            .container { max-width: 1000px; margin: 2em auto; padding: 0 1em; }
+            body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--light); color: var(--dark); }
+            .container { max-width: 1000px; margin: 3em auto; padding: 0 2em; }
             
             h1 { 
-                font-family: 'Lobster', cursive;
-                color: var(--dark);
-                border-bottom: 2px solid #e9ecef;
-                padding-bottom: 0.5em;
-                margin-bottom: 1em;
-                font-size: 2.5em;
+                font-family: 'Lobster', cursive; color: var(--dark); font-size: 3em;
+                border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em;
             }
-            h1 small { 
-                font-family: 'Poppins', sans-serif;
-                color: #666; 
-                font-size: 0.5em; 
-                font-weight: 400; 
-                display: block; 
-                margin-top: 5px;
-            }
+            h1 small { font-family: 'Poppins', sans-serif; color: var(--gray); font-size: 0.5em; font-weight: 400; display: block; margin-top: 5px; }
 
-            .back-link { 
-                display: inline-block;
-                margin-bottom: 2em; 
-                text-decoration: none; color: var(--accent); font-weight: 600;
-            }
-            .back-link:hover { text-decoration: underline; }
-
-            /* Card & Table Styling */
+            /* --- Magic Card & Table --- */
             .table-card {
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+                background: var(--white);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-lg);
                 overflow: hidden;
+                border-top: 5px solid var(--accent); /* Theme Accent */
             }
+            
             table { width: 100%; border-collapse: collapse; }
-            
             th { 
-                background-color: var(--dark);
-                color: white; 
-                padding: 15px; 
-                text-align: left; 
-                font-weight: 600;
-                text-transform: uppercase;
-                font-size: 0.9em;
+                background-color: var(--dark); color: var(--white); 
+                padding: 1.2em; text-align: left; font-weight: 600; 
+                text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px;
             }
-            
-            td { padding: 15px; border-bottom: 1px solid #f0f0f0; color: #555; }
+            td { padding: 1.2em; border-bottom: 1px solid #f0f0f0; color: #555; }
             tr:hover { background-color: #f9f9f9; }
-            
-            /* Badge for Group Size */
-            .badge-group {
-                background: #e2e6ea;
-                color: var(--dark);
-                padding: 3px 8px;
-                border-radius: 10px;
-                font-size: 0.85em;
-                font-weight: 600;
-            }
 
-            .action-link { 
-                color: var(--accent);
-                font-weight: 600; 
-                text-decoration: none;
+            /* --- Buttons --- */
+            .btn-back { 
+                display: inline-block; margin-bottom: 2em; 
+                text-decoration: none; color: var(--gray); font-weight: 600; 
+                transition: var(--transition);
             }
-            .action-link:hover { text-decoration: underline; }
+            .btn-back:hover { color: var(--accent); transform: translateX(-5px); }
+
+            .btn-view {
+                display: inline-block; padding: 6px 15px;
+                background-color: var(--accent); color: var(--white);
+                border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.85em;
+                transition: var(--transition);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            .btn-view:hover { background-color: #138496; transform: translateY(-2px); }
+            
+            .badge-group { background: #e2e6ea; color: var(--dark); padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; }
         </style>
     <% } %>
 </head>
@@ -176,15 +97,13 @@
 
     <div class="container">
         <h1>Visit History
-            <% if (user) { %>
-                <small>(Member: <%= member.first_name %> <%= member.last_name %>)</small>
-            <% } %>
+            <% if (user) { %> <small>(Member: <%= member.first_name %> <%= member.last_name %>)</small> <% } %>
         </h1>
         
         <% if (user) { %>
             <a href="/members<%= typeof currentQueryString !== 'undefined' && currentQueryString ? '?' + currentQueryString : '' %>" class="back-link">&laquo; Back to Members List</a>
         <% } else { %>
-            <a href="/member/dashboard" class="back-link">&laquo; Back to Dashboard</a>
+            <a href="/member/dashboard" class="btn-back">← Back to Dashboard</a>
         <% } %>
 
         <div class="table-card">
@@ -200,25 +119,22 @@
                 </thead>
                 <tbody>
                     <% if (visits.length === 0) { %>
-                        <tr>
-                            <td colspan="5" style="text-align: center; padding: 3em; font-style: italic;">No visit records found for this member.</td>
-                        </tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 3em; font-style: italic;">No visit records found.</td></tr>
                     <% } %>
-                    
                     <% visits.forEach(visit => { %>
                         <tr>
                             <td>
                                 <strong><%= new Date(visit.visit_date).toLocaleDateString() %></strong><br>
-                                <span style="font-size: 0.85em; color: #888;"><%= new Date(visit.visit_date).toLocaleTimeString() %></span>
+                                <span style="font-size: 0.85em; color: var(--gray);"><%= new Date(visit.visit_date).toLocaleTimeString() %></span>
                             </td>
                             <td><%= visit.type_name %></td>
                             <td><span class="badge-group"><%= visit.group_size %> Guest<%= visit.group_size > 1 ? 's' : '' %></span></td>
-                            <td style="font-weight: bold; color: #333;">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
+                            <td style="font-weight: bold; color: var(--dark);">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
                             <td>
                                 <% if (user) { %>
                                     <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link" target="_blank">View Receipt</a>
                                 <% } else { %>
-                                    <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="action-link">View Receipt</a>
+                                    <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="btn-view">View Receipt</a>
                                 <% } %>
                             </td>
                         </tr>

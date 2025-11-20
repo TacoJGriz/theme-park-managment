@@ -2,183 +2,231 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Membership Purchase Receipt</title>
+    <title>Purchase Receipt | Primus Park</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Courier New', Courier, monospace;
- margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
+        /* --- STANDARDIZED VARIABLES --- */
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;        /* Member Theme */
+            --secondary: #ffc107;
+            --success: #28a745;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.15);
+            --radius: 16px;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: var(--light); 
+            color: var(--dark);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
- }
-        h1 {
-            font-weight: bold;
- margin: 0;
+            min-height: 100vh;
         }
-        .receipt-container {
-            width: 400px;
- background: #ffffff;
-            border: 1px solid #ccc;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            padding: 2em;
-            box-sizing: border-box;
- }
+
+        .container { 
+            max-width: 500px; 
+            width: 95%;
+            margin-bottom: 3em;
+        }
+
+        /* --- Receipt Card --- */
+        .receipt-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            animation: floatUp 0.4s ease-out;
+        }
+        
+        @keyframes floatUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* --- Header --- */
         .receipt-header {
+            background: linear-gradient(135deg, var(--accent), #138496);
+            color: white;
+            padding: 2em;
             text-align: center;
- border-bottom: 2px dashed #333;
-            padding-bottom: 1em;
-            margin-bottom: 1em;
+            position: relative;
+        }
+        .receipt-header h1 {
+            font-family: 'Lobster', cursive;
+            margin: 0;
+            font-size: 2.2em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .receipt-header p {
-            margin: 4px 0;
- font-size: 0.9em;
+            margin: 0.2em 0 0 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
-        .receipt-item {
+
+        /* --- Body --- */
+        .receipt-body {
+            padding: 2em;
+        }
+        
+        .info-row {
             display: flex;
- justify-content: space-between;
-            margin-bottom: 0.75em;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
             font-size: 0.95em;
         }
-        .receipt-item .label {
-            font-weight: bold;
- }
-        .receipt-item .value {
+        .info-row:last-child { border-bottom: none; }
+
+        .label { 
+            color: var(--gray); 
+            font-weight: 600; 
+            font-size: 0.85em; 
+            text-transform: uppercase;
+        }
+        .value { 
+            font-weight: 600; 
+            color: var(--dark); 
             text-align: right;
- }
-        .receipt-total {
-            border-top: 2px solid #333;
- margin-top: 1.5em;
-            padding-top: 1em;
         }
-        .receipt-total .receipt-item .label,
-        .receipt-total .receipt-item .value {
-            font-size: 1.2em;
- font-weight: bold;
-            color: #000;
-        }
-        .receipt-footer {
-            text-align: center;
- font-size: 0.85em;
-            margin-top: 2em;
-            border-top: 2px dashed #333;
-            padding-top: 1em;
- }
-        .close-button {
-            display: block;
- width: 400px;
-            box-sizing: border-box;
-            padding: 12px 20px;
-            background-color: #17a2b8;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 1em;
- font-weight: bold;
-            text-decoration: none;
-            text-align: center;
+        
+        /* Highlighted Values */
+        .value.id { font-family: 'Courier New', monospace; letter-spacing: 1px; }
+        .value.main { font-size: 1.1em; color: var(--accent); }
+
+        /* --- Sub Members --- */
+        .sub-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1em;
             margin-top: 1.5em;
-            font-family: sans-serif;
- }
-        .close-button:hover {
-            background-color: #138496;
- }
+            border: 1px solid #eee;
+        }
+        .sub-item {
+            display: flex; justify-content: space-between;
+            font-size: 0.9em; margin-bottom: 5px;
+        }
+
+        /* --- Footer / Total --- */
+        .receipt-footer {
+            background: #f8f9fa;
+            padding: 1.5em 2em;
+            border-top: 2px dashed #ccc;
+        }
+        .total-row {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .total-label { font-weight: 700; font-size: 1.1em; }
+        .total-amount { 
+            font-family: 'Lobster', cursive; 
+            font-size: 2em; 
+            color: var(--success); 
+            line-height: 1;
+        }
+
+        /* --- Buttons --- */
+        .btn-close {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 2em;
+            text-align: center;
+            background-color: var(--dark);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 30px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-close:hover { background-color: black; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
-    <div class="receipt-container">
-        <div class="receipt-header">
-            <h1>PRIMUS THEME PARK</h1>
-            <p>123 Adventure Way, Orlando, FL</p>
-            <p>Membership Purchase Receipt</p>
-        </div>
-
-        <div class="receipt-body">
-            <div class="receipt-item">
-
-    <span class="label">Purchase ID:</span>
-            <span class="value"><%= purchase.public_purchase_id.substring(0, 8).toUpperCase() %></span>
-        </div>
-
-
-            <div class="receipt-item">
-                <span class="label">Member ID:</span>
-                <span class="value"><%= purchase.membership_id_display.substring(0, 8).toUpperCase() %></span>     
-    
-         </div>
-            <div class="receipt-item">
-                <span class="label">Member Name:</span>
-                <span class="value"><%= purchase.first_name %> <%= purchase.last_name %></span>
+    <div class="container">
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <h1>Primus Park</h1>
+                <p>Payment Receipt</p>
             </div>
-            <% if (purchase.subMembers && purchase.subMembers.length > 0) { %>
-       
-         <div class="receipt-item">
-                    <span class="label">Group Members:</span>
-                    <span class="value"><%= purchase.subMembers.length %> Added</span>
+
+            <div class="receipt-body">
+                <div class="info-row">
+                    <span class="label">Transaction ID</span>
+                    <span class="value id"><%= purchase.public_purchase_id.substring(0, 8).toUpperCase() %></span>
                 </div>
-                <% purchase.subMembers.forEach(sub => { %>
-        
-         <div class="receipt-item" style="padding-left: 2em;">
-                <span class="label">- <%= sub.first_name %> <%= sub.last_name %></span>
-                <span class="value">ID: <%= sub.public_membership_id.substring(0, 8).toUpperCase() %></span>
-            </div>
-                <% });
- %>
-            <% } %>
-            <div class="receipt-item">
-                <span class="label">Purchase Date:</span> 
-               <span class="value"><%= new Date(purchase.purchase_date).toLocaleString() %></span>
+                <div class="info-row">
+                    <span class="label">Date</span>
+                    <span class="value"><%= new Date(purchase.purchase_date).toLocaleString() %></span>
+                </div>
+                
+                <div class="info-row" style="margin-top: 10px;">
+                    <span class="label">Item Purchased</span>
+                    <span class="value main"><%= purchase.type_name %></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Primary Member</span>
+                    <span class="value"><%= purchase.first_name %> <%= purchase.last_name %></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Member ID</span>
+                    <span class="value id"><%= purchase.membership_id_display.substring(0, 8).toUpperCase() %></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Valid Term</span>
+                    <span class="value">
+                        <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
+                        <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
+                    </span>
+                </div>
+
+                <% if (purchase.subMembers && purchase.subMembers.length > 0) { %>
+                    <div class="sub-list">
+                        <div style="font-weight:bold; font-size:0.75em; color:var(--gray); text-transform:uppercase; margin-bottom:0.5em;">
+                            Additional Members (<%= purchase.subMembers.length %>)
+                        </div>
+                        <% purchase.subMembers.forEach(sub => { %>
+                            <div class="sub-item">
+                                <span><%= sub.first_name %> <%= sub.last_name %></span>
+                                <span class="id"><%= sub.public_membership_id.substring(0, 8).toUpperCase() %></span>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
             </div>
 
-
-            <div class="receipt-item">
-          
-       <span class="label">Item:</span>
-                <span class="value"><%= purchase.type_name %></span>
-            </div>
-        
-    <div class="receipt-item">
-                <span class="label">Term Valid:</span>
-                <span class="value">
-              
-       <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
-                    <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
-            
-    </span>
-            </div>
-            
-            <div class="receipt-item">
-             
-     <span class="label">Payment Method:</span>
-                <span class="value"><%= purchase.payment_method_name ||
- 'N/A' %></span>
-            </div>
-
-            <div class="receipt-total">
-                <div class="receipt-item">
-                    <span class="label">TOTAL:</span>
-                    <span 
-class="value">$<%= parseFloat(purchase.price_paid).toFixed(2) %></span>
-             
-     </div>
+            <div class="receipt-footer">
+                <div class="total-row">
+                    <span class="total-label">Total Paid</span>
+                    <span class="total-amount">$<%= parseFloat(purchase.price_paid).toFixed(2) %></span>
+                </div>
+                <div style="text-align:right; font-size:0.85em; color:var(--gray); margin-top:5px;">
+                    <%= purchase.payment_method_name || 'N/A' %>
+                </div>
             </div>
         </div>
 
-        <div class="receipt-footer">
-            <p>Thank you for being a member!</p>
-        </div>
+        <% if (typeof fromEmployee !== 'undefined' && fromEmployee) { %>
+            <a href="/members" class="btn-close" style="background-color: var(--success);">Back to Member List</a>
+        <% } else { %>
+            <a href="/member/purchases" class="btn-close">Close Receipt</a>
+        <% } %>
     </div>
-
-    <% if (typeof fromEmployee !== 'undefined' && fromEmployee) { %>
-        <a href="/members" class="close-button" style="background-color: #28a745;">&laquo Back to Members List</a>
-    <% } else { %>
-  
-       <a href="/member/purchases" class="close-button">&laquo Back to Purchase History</a>
-    <% } %>
 
 </body>
 </html>

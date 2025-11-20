@@ -3,73 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit My Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Shared Theme --- */
         :root {
-            --primary: #6f42c1;
             --accent: #17a2b8;
             --dark: #343a40;
+            --light: #f8f9fa;
+            --radius: 12px;
         }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; }
-        
-        .container { max-width: 700px; margin: 2em auto; padding: 0 1em; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--light); color: var(--dark); margin: 0; }
+        .container { max-width: 700px; margin: 3em auto; padding: 0 1em; }
         
         .card {
-            background: white;
-            padding: 2.5em;
-            border-radius: 12px;
+            background: white; padding: 2.5em; border-radius: var(--radius);
             box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent); /* Standard Accent */
         }
 
-        h1 { 
-            font-family: 'Lobster', cursive;
-            color: var(--dark);
-            text-align: center; 
-            margin-top: 0;
-            margin-bottom: 1em;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5em;
-        }
-
-        form { width: 100%; }
+        h1 { font-family: 'Lobster', cursive; color: var(--dark); text-align: center; margin: 0 0 1em 0; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; }
         .full-width { grid-column: 1 / -1; }
         
-        div.input-group { margin-bottom: 0.5em; }
         label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
-        
-        input, select { 
-            width: 100%; padding: 12px; box-sizing: border-box; 
-            border-radius: 8px; border: 1px solid #ccc; 
-            font-family: 'Poppins', sans-serif;
-            transition: border-color 0.2s;
+        input { 
+            width: 100%; padding: 12px; box-sizing: border-box; border-radius: 8px; border: 2px solid #eee; 
+            font-family: 'Poppins', sans-serif; font-size: 1em; transition: 0.3s;
         }
         input:focus { outline: none; border-color: var(--accent); }
         input[readonly] { background-color: #f8f9fa; cursor: not-allowed; color: #6c757d; }
         
-        button { 
-            padding: 12px 30px; 
-            background-color: var(--accent);
-            color: white; border: none; 
-            cursor: pointer; border-radius: 8px; 
-            font-size: 1em; font-weight: 700;
-            display: inline-block;
-            transition: background-color 0.2s;
+        .btn-save { 
+            padding: 12px 30px; background-color: var(--accent); color: white; border: none; cursor: pointer; border-radius: 30px; font-size: 1.1em; font-weight: 700; transition: 0.3s;
         }
-        button:hover { background-color: #138496; }
-        
-        .error { color: white; font-weight: bold; background-color: #dc3545; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; }
+        .btn-save:hover { background-color: #138496; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         .button-group { margin-top: 2em; display: flex; justify-content: space-between; align-items: center; }
         .cancel-link { color: #6c757d; text-decoration: none; font-weight: 600; }
-        .cancel-link:hover { text-decoration: underline; }
+        .cancel-link:hover { text-decoration: underline; color: var(--dark); }
         
-        small { display: block; margin-top: 5px; color: #888; }
+        .error { color: white; font-weight: bold; background-color: #dc3545; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; text-align: center; }
     </style>
 </head>
 <body>
     <%- include('partials/member-header') %>
-    
     <div class="container">
         <div class="card">
             <h1>Edit My Profile</h1>
@@ -77,35 +54,20 @@
             
             <form action="/member/edit" method="POST">
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label for="first_name">First Name</label>
-                        <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
+                    <div><label>First Name</label><input type="text" name="first_name" value="<%= member.first_name %>" required></div>
+                    <div><label>Last Name</label><input type="text" name="last_name" value="<%= member.last_name %>" required></div>
+                    <div class="full-width">
+                        <label>Email (Username)</label>
+                        <input type="email" name="email" value="<%= member.email %>" readonly>
+                        <small style="display:block; margin-top:5px; color:#888;">Your email cannot be changed here.</small>
                     </div>
-                    <div class="input-group">
-                        <label for="last_name">Last Name</label>
-                        <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
-                    </div>
-                    
-                    <div class="full-width input-group">
-                        <label for="email">Email (Username)</label>
-                        <input type="email" id="email" name="email" value="<%= member.email %>" readonly>
-                        <small>Your email is your username and cannot be changed here.</small>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="phone_number">Phone Number</label>
-                        <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>">
-                    </div>
-        
-                    <div class="input-group">
-                        <label for="date_of_birth">Date of Birth</label>
-                        <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
-                    </div>
+                    <div><label>Phone Number</label><input type="tel" name="phone_number" value="<%= member.phone_number || '' %>"></div>
+                    <div><label>Date of Birth</label><input type="date" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required></div>
                 </div>
                 
                 <div class="button-group">
                     <a href="/member/manage" class="cancel-link">Cancel</a>
-                    <button type="submit">Save Changes</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
                 </div>
             </form>
         </div>

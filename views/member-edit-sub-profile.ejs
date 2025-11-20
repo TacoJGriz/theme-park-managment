@@ -2,67 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Sub-Member Profile</title>
+    <title>Edit Family Member | Primus Park</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em;
- }
-        h1 small { color: #17a2b8; font-size: 0.7em; display: block; font-weight: normal;
- }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
- border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid;
- grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px;
- }
-        label { display: block; margin-bottom: 5px; font-weight: bold;
- }
-        input { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
- border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #17a2b8;
- color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em;
- }
-        .error { color: red; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
- }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
- }
-        .cancel-link:hover { text-decoration: underline;
- }
+        :root {
+            --accent: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --radius: 12px;
+        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--light); color: var(--dark); margin: 0; }
+        .container { max-width: 600px; margin: 3em auto; padding: 0 1em; }
+        
+        .card {
+            background: white; padding: 2.5em; border-radius: var(--radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        h1 { font-family: 'Lobster', cursive; color: var(--dark); text-align: center; margin: 0 0 0.2em 0; }
+        h1 small { font-family: 'Poppins', sans-serif; font-size: 0.5em; color: #666; display: block; margin-top: 5px; font-weight: 400; }
+        .divider { border-bottom: 2px solid #eee; margin-bottom: 1.5em; padding-bottom: 1em; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; }
+        .full-width { grid-column: 1 / -1; }
+        
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
+        input { 
+            width: 100%; padding: 12px; box-sizing: border-box; border-radius: 8px; border: 2px solid #eee; 
+            font-family: 'Poppins', sans-serif; font-size: 1em; transition: 0.3s;
+        }
+        input:focus { outline: none; border-color: var(--accent); }
+        
+        .btn-save { 
+            padding: 12px 30px; background-color: var(--accent); color: white; border: none; cursor: pointer; border-radius: 30px; font-size: 1.1em; font-weight: 700; transition: 0.3s;
+        }
+        .btn-save:hover { background-color: #138496; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .button-group { margin-top: 2em; display: flex; justify-content: space-between; align-items: center; }
+        .cancel-link { color: #6c757d; text-decoration: none; font-weight: 600; }
+        .cancel-link:hover { text-decoration: underline; color: var(--dark); }
+        
+        .error { color: white; font-weight: bold; background-color: #dc3545; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; text-align: center; }
     </style>
 </head>
 <body>
     <%- include('partials/member-header') %>
-    <h1>Edit Member Profile
-        <%# Show clean 8-char public ID %>
-        <small>For: <%= subMember.first_name %> <%= subMember.last_name %> (ID: <%= subMember.public_membership_id.substring(0, 8).toUpperCase() %>)</small>
-    </h1>
-    
-    <% if (typeof error !== 'undefined' && error) { %>
-        <p class="error"><%= error %></p>
-    <% } %>
-    
-    <%# CHANGED: Action now uses public_membership_id %>
-    <form action="/member/edit-sub/<%= subMember.public_membership_id %>" method="POST">
-        <div class="form-grid">
-              <div>
-                <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" value="<%= subMember.first_name %>" required>
-            </div>
-            <div>
-                <label for="last_name">Last Name:</label>
-           
-      <input type="text" id="last_name" name="last_name" value="<%= subMember.last_name %>" required>
-            </div>
-            <div>
-                <label for="date_of_birth">Date of Birth:</label>
-                <input type="date" id="date_of_birth" name="date_of_birth" value="<%= subMember.date_of_birth.toISOString().substring(0, 10) %>" required>
-            </div>
+    <div class="container">
+        <div class="card">
+            <h1>Edit Family Member
+                <small>For: <%= subMember.first_name %> <%= subMember.last_name %></small>
+            </h1>
+            <div class="divider"></div>
+            
+            <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
+            
+            <form action="/member/edit-sub/<%= subMember.public_membership_id %>" method="POST">
+                <div class="form-grid">
+                    <div><label>First Name</label><input type="text" name="first_name" value="<%= subMember.first_name %>" required></div>
+                    <div><label>Last Name</label><input type="text" name="last_name" value="<%= subMember.last_name %>" required></div>
+                    <div class="full-width">
+                        <label>Date of Birth</label>
+                        <input type="date" name="date_of_birth" value="<%= subMember.date_of_birth.toISOString().substring(0, 10) %>" required>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <a href="/member/manage" class="cancel-link">Cancel</a>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
         </div>
- 
-        <br>
-        <button type="submit">Save Changes</button>
-        <a href="/member/manage" class="cancel-link">Cancel</a>
-    </form>
+    </div>
 </body>
 </html>

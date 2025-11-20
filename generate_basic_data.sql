@@ -111,7 +111,7 @@ UPDATE location SET manager_id = 9, manager_start = '2023-01-15' WHERE location_
 UPDATE location SET manager_id = 10, manager_start = '2019-12-20' WHERE location_id = 8; -- Leia
 
 -- 3. EMPLOYEE_AUTH
--- Password for everyone is 'password'
+-- Password for everyone is 'Clubhouse123'
 -- Insert for IDs 1-55
 INSERT INTO employee_auth (employee_id, password_hash)
 SELECT employee_id, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'
@@ -207,13 +207,19 @@ INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date
 (UUID(), 38, '2025-10-10', '2025-10-10', '2025-10-12', 'Star Tours: Seat belt sensor faulty.', 14, 53, 150.00),
 (UUID(), 39, '2025-10-15', '2025-10-16', '2025-10-17', 'Slinky Dog: Brake fin inspection.', 15, 54, 350.00);
 
--- 6. MEMBERSHIP_TYPE & 8. TICKET_TYPES (Standard)
-INSERT INTO membership_type (public_type_id, type_name, base_price, base_members, additional_member_price, description, is_active) VALUES
-(UUID(), 'Platinum', 799.00, 1, NULL, 'All-access individual pass with perks.', TRUE),
-(UUID(), 'Gold', 599.00, 1, NULL, 'Standard individual annual pass.', TRUE),
-(UUID(), 'Individual', 399.00, 1, NULL, 'Basic annual pass for one person.', TRUE),
-(UUID(), 'Family', 798.00, 2, 249.00, 'Flexible pass for 2 members. Add additional family members at a discount.', TRUE),
-(UUID(), 'Founders Club', 299.00, 1, NULL, 'Legacy pass, no longer available for new signups.', FALSE);
+-- 6. MEMBERSHIP_TYPE & TICKET_TYPES (Standard)
+-- UPDATED: Added guest_pass_limit (Platinum=4, Gold=2, Family=2, Individual=0)
+INSERT INTO membership_type (public_type_id, type_name, base_price, base_members, additional_member_price, guest_pass_limit, description, is_active) VALUES
+-- ID 1: Platinum
+(UUID(), 'Platinum', 799.00, 1, NULL, 4, 'The ultimate VIP experience. 365-day access with NO blackout dates. Includes 4 Guest Passes.', TRUE),
+-- ID 2: Gold
+(UUID(), 'Gold', 599.00, 1, NULL, 2, 'Perfect for regulars. Unlimited access except for major peak holidays. Includes 2 Guest Passes.', TRUE),
+-- ID 3: Silver (Formerly Individual)
+(UUID(), 'Silver', 399.00, 1, NULL, 0, 'Our best value option. Valid on most days, but blocked on all holidays and peak weekends.', TRUE),
+-- ID 4: Family
+(UUID(), 'Family', 798.00, 2, 249.00, 2, 'Admission for 2 members. Blocked on major peak holidays (same as Gold). Includes 2 Guest Passes.', TRUE),
+-- ID 5: Founders (Legacy)
+(UUID(), 'Founders Club', 299.00, 1, NULL, 0, 'Legacy pass, no longer available.', FALSE);
 
 INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type) VALUES
 (UUID(), 'Member', 0.00, 'System ticket for active members.', TRUE, TRUE),    
@@ -221,7 +227,39 @@ INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, descript
 (UUID(), 'Child', 99.00, 'Park admission for ages 3-9.', TRUE, FALSE),    
 (UUID(), 'Senior', 89.00, 'Park admission for ages 65+.', TRUE, FALSE);
 
--- 7. PROMOTIONS
+-- 7. BLACKOUT DATES
+-- Applying restrictions to Gold (ID 2) and Individual (ID 3) tiers.
+-- Platinum (ID 1) has no blackout dates.
+INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
+-- SILVER RESTRICTIONS (Heavy)
+(3, '2025-01-01', 'New Years Day'),
+(3, '2025-05-26', 'Memorial Day'),
+(3, '2025-07-04', 'Independence Day'),
+(3, '2025-09-01', 'Labor Day'),
+(3, '2025-10-31', 'Halloween'),
+(3, '2025-11-27', 'Thanksgiving'),
+(3, '2025-12-24', 'Christmas Eve'),
+(3, '2025-12-25', 'Christmas Day'),
+(3, '2025-12-31', 'New Years Eve'),
+(3, '2026-01-01', 'New Years Day'),
+
+-- GOLD RESTRICTIONS (Peak Only)
+(2, '2025-07-04', 'Independence Day'), -- Peak Summer
+(2, '2025-10-31', 'Halloween'),        -- Peak Fall
+(2, '2025-11-27', 'Thanksgiving'),     -- Peak Holiday Start
+(2, '2025-12-25', 'Christmas Day'),    -- Peak Winter
+(2, '2025-12-31', 'New Years Eve');    -- Peak Party
+
+-- 7b. FAMILY RESTRICTIONS (Aligning with Gold to prevent loopholes)
+-- Family (ID 4) shares the same "Peak Day" restrictions as Gold (ID 2).
+INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
+(4, '2025-07-04', 'Independence Day'),
+(4, '2025-10-31', 'Halloween'),
+(4, '2025-11-27', 'Thanksgiving'),
+(4, '2025-12-25', 'Christmas Day'),
+(4, '2025-12-31', 'New Years Eve');
+
+-- 8. PROMOTIONS
 INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring) VALUES
 ('New Year Kickoff', 'Holiday', '2025-01-01', '2025-01-05', 20.00, 'Start the year with a bang!', TRUE),
 ('MLK Weekend', 'Weekend', '2025-01-17', '2025-01-20', 15.00, 'Honor the dream with family fun.', TRUE),
@@ -241,7 +279,7 @@ INSERT INTO event_promotions (event_name, event_type, start_date, end_date, disc
 ('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.', TRUE),
 ('Winter Wonderland', 'Holiday', '2025-12-01', '2025-12-31', 10.00, 'Holiday-themed event with artificial snow.', TRUE);
 
--- 8. VENDORS (2 per location = 16 total)
+-- 9. VENDORS (2 per location = 16 total)
 -- ADDED vendor_status column
 INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) VALUES
 -- Frontierland
@@ -269,7 +307,7 @@ INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) 
 (UUID(), 'Docking Bay 7', 8, 'OPEN'),
 (UUID(), 'Milk Stand', 8, 'OPEN');
 
--- 9. ITEMS (Standard + Extras)
+-- 10. ITEMS (Standard + Extras)
 INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Food', 'Cheeseburger', 12.99, '1/3 lb Angus Burger'),
 (UUID(), 'Food', 'Chicken Tenders', 11.99, '4 Tenders with Fries'),
@@ -282,7 +320,7 @@ INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Souvenir', 'Light Saber', 200.00, 'Custom built sword'),
 (UUID(), 'Other', 'Poncho', 10.00, 'Plastic rain poncho');
 
--- 10. INVENTORY
+-- 11. INVENTORY
 -- Populate inventory (Ensuring at least 2 items per vendor)
 -- NEW: Added min_count (Low Stock Threshold) and def_count (Target Restock)
 INSERT INTO inventory (item_id, vendor_id, count, min_count, def_count) VALUES
@@ -311,18 +349,22 @@ INSERT INTO inventory (item_id, vendor_id, count, min_count, def_count) VALUES
 (9, 15, 50, 5, 50), (4, 15, 200, 30, 250),    -- Docking Bay 7: Light Sabers (Low min/def), Blue Milk
 (4, 16, 300, 50, 350), (5, 16, 150, 30, 200); -- Milk Stand: Blue Milk, Churros
 
--- 11. PENDING REQUESTS (Updated for new IDs)
+-- 12. PENDING REQUESTS (Updated for new IDs)
 -- Wage change request for Donald Duck (ID 16, Staff at Main Entrance) requested by Mickey (ID 6)
 UPDATE employee_demographics
 SET pending_hourly_rate = 19.50, rate_change_requested_by = 6
 WHERE employee_id = 16;
 
--- 12. Maintenance reassignment: Matterhorn (Ride 15, Log 1) from Goofy (11) to Felix (12). Requested by Minnie (2).
+-- 13. Maintenance reassignment: Matterhorn (Ride 15, Log 1) from Goofy (11) to Felix (12). Requested by Minnie (2).
 UPDATE maintenance
 SET pending_employee_id = 12, assignment_requested_by = 2
 WHERE maintenance_id = 1;
 
--- 13. INVENTORY REQUESTS
+-- 14. INVENTORY REQUESTS
 INSERT INTO inventory_requests (public_request_id, vendor_id, item_id, requested_count, requested_by_id, location_id, request_date, status) VALUES
 (UUID(), 7, 10, 200, 17, 4, '2025-10-25', 'Pending'), -- Daisy (ID 17) requests Ponchos for Emporium (Loc 4)
 (UUID(), 16, 4, 100, 53, 8, '2025-10-25', 'Pending'); -- Finn (ID 54/53?) requests Blue Milk for Milk Stand (Loc 8)
+
+-- 15. Add "Guest Pass" as a system ticket type
+INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type)
+VALUES (UUID(), 'Guest Pass', 0.00, 'Redeemable annual guest pass.', TRUE, TRUE);

@@ -1,185 +1,228 @@
-<style>
-	.navbar {
-	background-color: #343a40;
-	padding: 0 20px;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	color: white;
-	margin-bottom: 1em;
-	min-height: 50px;
-	/* --- Sticky Header Styles (Added in Turn 24) --- */
-	position: sticky;
-	top: 0;
-	z-index: 1000; /* Ensures it stays on top of tables/content */
-	box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-	}
-	.nav-links {
-	display: flex;
-	height: 100%;
-	}
-	.nav-links a, .dropdown .dropbtn {
-	color: #f8f9fa;
-	text-decoration: none;
-	padding: 15px 12px;
-	transition: background-color 0.2s;
-	margin-right: 5px;
-	display: flex;
-	align-items: center;
-	height: 100%;
-	box-sizing: border-box;
-	background-color: transparent;
-	border: none;
-	font-family: inherit;
-	font-size: inherit;
-	cursor: pointer;
-	}
-	.nav-links a:hover, .dropdown:hover .dropbtn {
-	background-color: #495057;
-	}
-	.user-info {
-	font-weight: bold;
-	}
-	.user-info a {
-	color: #dc3545;
-	font-weight: bold;
-	margin-left: 20px;
-	text-decoration: none;
-	}
-	.user-info a:hover {
-	text-decoration: underline;
-	}
+<%# --- Import Fonts (Ensures they are available on every page including the header) --- %>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+		<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-	/* --- Dropdown Styles --- */
-	.dropdown {
-	position: relative;
-	display: inline-block;
-	height: 100%;
-	}
-	.dropdown .dropbtn {
-	font-weight: normal;
-	}
-	.dropdown-content {
-	display: none;
-	position: absolute;
-	background-color: #f9f9f9;
-	min-width: 200px;
-	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-	z-index: 1000;
-	border-radius: 0 0 4px 4px;
-	}
-	.dropdown-content a {
-	color: black;
-	padding: 12px 16px;
-	text-decoration: none;
-	display: block;
-	height: auto;
-	line-height: 1.5;
-	}
-	.dropdown-content a:hover {
-	background-color: #f1f1f1;
-	}
+			<style>
+				/* --- GLOBAL THEME VARIABLES (Standardized) --- */
+				:root {
+				/* Brand Colors */
+				--primary: #6f42c1;       /* Magical Purple */
+				--primary-dark: #5a32a3;  /* Deep Purple */
+				--secondary: #ffc107;     /* Gold */
+				--accent: #17a2b8;        /* Cyan/Teal */
 
-	.dropdown:hover .dropdown-content {
-	display: block;
-	}
+				/* Neutrals */
+				--dark: #343a40;          /* Charcoal */
+				--light: #f8f9fa;         /* Off-white background */
+				--white: #ffffff;
+				--gray: #6c757d;
 
-	.special-link {
-	color: #dc3545 !important;
-	font-weight: bold;
-	}
-</style>
+				/* Status Colors */
+				--success: #28a745;
+				--danger: #dc3545;
+				--warning: #ffc107;
 
-<% if (user) { %>
-<nav class="navbar">
-	<div class="nav-links">
-		<a href="/dashboard">Dashboard</a>
+				/* Effects */
+				--shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+				--shadow-md: 0 4px 15px rgba(0,0,0,0.1);
+				--shadow-lg: 0 10px 30px rgba(111, 66, 193, 0.2); /* Purple glow */
+				--radius: 12px;
+				--transition: all 0.3s ease;
+				}
 
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
-		<a href="/rides">Rides</a>
-		<% } %>
+				/* --- Header Styles --- */
+				.navbar {
+				background-color: var(--dark);
+				padding: 0 20px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				color: var(--white);
+				margin-bottom: 1em;
+				min-height: 50px;
+				position: sticky;
+				top: 0;
+				z-index: 1000;
+				box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+				font-family: 'Poppins', sans-serif;
+				}
 
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-		<div class="dropdown">
-			<button class="dropbtn">Management ▼</button>
-			<div class="dropdown-content">
-				<a href="/users">Employees</a>
+				.nav-links {
+				display: flex;
+				height: 100%;
+				}
 
-				<%# The Pending Hires link was removed %>
+				.nav-links a, .dropdown .dropbtn {
+				color: #f8f9fa;
+				text-decoration: none;
+				padding: 15px 12px;
+				transition: background-color 0.2s;
+				margin-right: 5px;
+				display: flex;
+				align-items: center;
+				height: 100%;
+				box-sizing: border-box;
+				background-color: transparent;
+				border: none;
+				font-family: inherit;
+				font-size: 0.95em;
+				font-weight: 600;
+				cursor: pointer;
+				}
 
-				<a href="/approvals" class="special-link">Pending Requests</a>
+				.nav-links a:hover, .dropdown:hover .dropbtn {
+				background-color: rgba(255,255,255,0.1);
+				color: var(--secondary);
+				}
 
-				<hr style="margin: 5px 0; border: 0; border-top: 1px solid #ddd;">
+				.user-info {
+				font-weight: 600;
+				font-size: 0.9em;
+				}
+				.user-info span {
+				color: #eee;
+				}
+				.user-info a {
+				color: var(--secondary);
+				font-weight: 700;
+				margin-left: 20px;
+				text-decoration: none;
+				transition: opacity 0.2s;
+				}
+				.user-info a:hover {
+				text-decoration: underline;
+				opacity: 0.9;
+				}
+
+				/* --- Dropdown Styles --- */
+				.dropdown {
+				position: relative;
+				display: inline-block;
+				height: 100%;
+				}
+
+				.dropdown-content {
+				display: none;
+				position: absolute;
+				background-color: var(--white);
+				min-width: 200px;
+				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+				z-index: 1000;
+				border-radius: 0 0 4px 4px;
+				top: 100%;
+				}
+
+				.dropdown-content a {
+				color: var(--dark);
+				padding: 12px 16px;
+				text-decoration: none;
+				display: block;
+				height: auto;
+				line-height: 1.5;
+				font-weight: normal;
+				}
+
+				.dropdown-content a:hover {
+				background-color: var(--light);
+				color: var(--primary);
+				}
+
+				.dropdown:hover .dropdown-content {
+				display: block;
+				}
+
+				.special-link {
+				color: var(--danger) !important;
+				font-weight: bold !important;
+				}
+			</style>
+
+			<% if (user) { %>
+			<nav class="navbar">
+				<div class="nav-links">
+					<a href="/dashboard">Dashboard</a>
+
+					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
+					<a href="/rides">Rides</a>
+					<% } %>
+
+					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+					<div class="dropdown">
+						<button class="dropbtn">Management ▼</button>
+						<div class="dropdown-content">
+							<a href="/users">Employees</a>
+							<a href="/approvals" class="special-link">Pending Requests</a>
+							<hr style="margin: 5px 0; border: 0; border-top: 1px solid #ddd;">
+								<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+								<a href="/locations">Locations</a>
+								<% } %>
+								<a href="/map">Interactive Map</a>
+								<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+								<a href="/promotions">Promotions</a>
+								<a href="/weather">Weather</a>
+								<% } %>
+						</div>
+					</div>
+					<% } %>
+
+					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+					<div class="dropdown">
+						<button class="dropbtn">Retail ▼</button>
+						<div class="dropdown-content">
+							<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+							<a href="/items">Items</a>
+							<% } %>
+							<a href="/vendors">Vendors</a>
+							<a href="/inventory">Inventory</a>
+						</div>
+					</div>
+					<% } %>
+
+					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
+					<div class="dropdown">
+						<button class="dropbtn">Guests ▼</button>
+						<div class="dropdown-content">
+							<a href="/visits/new">Log Park Entry</a>
+							<a href="/members">Manage Members</a>
+							<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+							<a href="/memberships/types">Membership Types</a>
+							<a href="/ticket-types">Ticket Types</a>
+							<% } %>
+						</div>
+					</div>
+					<% } %>
 
 					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-					<a href="/locations">Locations</a>
+					<div class="dropdown">
+						<button class="dropbtn">Reports ▼</button>
+						<div class="dropdown-content">
+							<a href="/reports/attendance">Attendance Report</a>
+							<a href="/reports/ride-popularity">Ride Popularity Report</a>
+							<a href="/reports/closure-impact">Closure Impact Report</a>
+							<a href="/reports/maintenance">Maintenance Report</a>
+						</div>
+					</div>
 					<% } %>
-					<%# The main "Manage Vendors" link is now housed under Retail for simplicity %>
-					<a href="/map">Interactive Map</a>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-					<a href="/promotions">Promotions</a>
-					<a href="/weather">Weather</a>
-					<% } %>
-			</div>
-		</div>
-		<% } %>
+					<a href="/style-guide" style="color: #adb5bd; font-size: 0.8em; margin-left: 10px;">🎨 Styles</a>
+				</div>
 
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-		<div class="dropdown">
-			<button class="dropbtn">Retail ▼</button>
-			<div class="dropdown-content">
-				<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-				<a href="/items">Items</a>
-				<% } %>
-				<a href="/vendors">Vendors</a>
-				<%# View Vendors Link Added %>
-				<a href="/inventory">Inventory</a>
-			</div>
-		</div>
-		<% } %>
-
-		<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
-		<div class="dropdown">
-			<button class="dropbtn">Guests ▼</button>
-			<div class="dropdown-content">
-				<a href="/visits/new">Log Park Entry</a>
-				<a href="/members">Manage Members</a>
-				<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-				<a href="/memberships/types">Membership Types</a>
-				<a href="/ticket-types">Ticket Types</a>
-				<% } %>
-			</div>
-		</div>
-		<% } %>
-
-		<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-		<div class="dropdown">
-			<button class="dropbtn">Reports ▼</button>
-			<div class="dropdown-content">
-				<a href="/reports/attendance">Attendance Report</a>
-				<a href="/reports/ride-popularity">Ride Popularity Report</a>
-				<a href="/reports/closure-impact">Closure Impact Report</a>
-				<a href="/reports/maintenance">Maintenance Report</a>
-				<%# -- NEW LINK ADDED -- %>
-			</div>
-		</div>
-		<% } %>
-	</div>
-
-	<div class="user-info">
-		<span>
-			Welcome,
-			<%= user.firstName %> (<%= user.role %>)
-		</span>
-		<a href="/change-password" style="color: #ffc107;">Change Password</a>
-		<a href="/employee/logout">Logout</a>
-	</div>
-</nav>
-<% } else { %>
-<nav class="navbar">
-	<div class="nav-links">
-		<a href="/login">Login</a>
-	</div>
-</nav>
-<% } %>
+				<div class="user-info">
+					<span>
+						Welcome, <%= user.firstName %> (<%= user.role %>)
+					</span>
+					<a href="/change-password" style="color: var(--secondary);">Change Password</a>
+					<a href="/employee/logout">Logout</a>
+				</div>
+			</nav>
+			<% } else { %>
+			<nav class="navbar">
+				<div class="nav-links">
+					<a href="/">Home</a>
+					<a href="/purchase-tickets">Tickets</a>
+					<a href="/login">Login</a>
+					<a href="/style-guide" style="color: #adb5bd; font-size: 0.8em; margin-left: 10px;">🎨 Styles</a>
+				</div>
+			</nav>
+			<% } %>

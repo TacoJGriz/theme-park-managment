@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Maintenance Report</title>
+    <%# Link to Chart.js library %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 1400px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -10,42 +12,40 @@
         
         /* Form Styling */
         form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
+        .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1em; align-items: end; }
+        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        .form-grid input, .form-grid select { width: 100%; padding: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; }
         button:hover { background-color: #c82333; }
 
+        /* Metrics Section */
+        .metrics-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5em; margin-bottom: 2em; }
+        .metric-card { background: #fff; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5em; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #6c757d; }
+        .metric-card h3 { margin: 0; font-size: 2em; color: #333; }
+        .metric-card p { margin: 5px 0 0 0; color: #666; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
+        .metric-card.highlight { border-top-color: #dc3545; background-color: #fff5f5; }
+        .metric-card.highlight h3 { color: #dc3545; }
+
+        /* Charts Section */
+        .charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 2em; margin-bottom: 3em; }
+        .chart-wrapper { background: white; padding: 1em; border: 1px solid #eee; border-radius: 8px; height: 300px; position: relative; }
+        .chart-wrapper h4 { margin-top: 0; text-align: center; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
         /* Table Styling */
-        .report-table {
-            width: 100%;
-            margin-top: 2em;
-            border-collapse: collapse;
-            font-size: 0.95em;
-        }
-        .report-table th, .report-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-            white-space: nowrap; 
-        }
-        .report-table th {
-            background-color: #6c757d;
-            color: white;
-            font-weight: 600;
-        }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .report-table th, .report-table td { padding: 12px 10px; border-bottom: 1px solid #ddd; text-align: left; white-space: nowrap; }
+        .report-table th { background-color: #6c757d; color: white; font-weight: 600; }
         .report-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
         .report-table tbody tr:hover { background-color: #f1f1f1; }
         
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase; }
+        .ride-id { font-family: monospace; color: #666; font-weight: bold; font-size: 1em; }
+        
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 0.8em; }
         .status-open { background-color: #ffeeba; color: #856404; }
         .status-complete { background-color: #d4edda; color: #155724; }
-
-        .btn-view { text-decoration: none; color: #007bff; font-weight: bold; font-size: 0.9em; border: 1px solid #007bff; padding: 4px 10px; border-radius: 4px; transition: background-color 0.2s; display: inline-block; }
+        
+        .btn-view { text-decoration: none; color: #007bff; font-weight: bold; padding: 2px 6px; border: 1px solid #007bff; border-radius: 4px; font-size: 0.85em; transition: background 0.2s; }
         .btn-view:hover { background-color: #007bff; color: white; }
-
-        .ride-id { font-family: monospace; color: #666; font-weight: bold; }
-        .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; background: #e9ecef; color: #495057; }
     </style>
 </head>
 <body>
@@ -56,53 +56,93 @@
         <form action="/reports/maintenance" method="POST">
             <div class="form-grid">
                 <div>
-                    <label for="selected_date1">Start Date:</label>
-                    <input type="date" id="selected_date1" name="selected_date1" value="<%= selected_date1 %>" required>
+                    <label>Start Date:</label>
+                    <input type="date" name="selected_date1" value="<%= selected_date1 %>" required>
                 </div>
                 <div>
-                    <label for="selected_date2">End Date:</label>
-                    <input type="date" id="selected_date2" name="selected_date2" value="<%= selected_date2 %>" required>
+                    <label>End Date:</label>
+                    <input type="date" name="selected_date2" value="<%= selected_date2 %>" required>
                 </div>
                 <div>
-                    <label for="locations_selected">Filter by Location:</label>
-                    <select id="locations_selected" name="locations_selected" required>
-                        <% locations.forEach(location => { %>
-                            <option value="<%= location.location_id %>" <%= String(location.location_id) === String(locations_selected) ? 'selected' : '' %>>
-                                <%= location.location_name %>
+                    <label>Location:</label>
+                    <select name="locations_selected">
+                        <% locations.forEach(loc => { %>
+                            <option value="<%= loc.location_id %>" <%= String(loc.location_id) === String(locations_selected) ? 'selected' : '' %>>
+                                <%= loc.location_name %>
                             </option>
                         <% }); %>
                     </select>
                 </div>
-                <div style="grid-column: 4; align-self: end;">
-                    <button type="submit">Generate Report</button>
+                <div>
+                    <label>Ride Type:</label>
+                    <select name="type_selected">
+                        <option value="all">All Types</option>
+                        <% rideTypes.forEach(t => { %>
+                            <option value="<%= t.ride_type %>" <%= t.ride_type === type_selected ? 'selected' : '' %>>
+                                <%= t.ride_type %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit">Update Report</button>
                 </div>
             </div>
         </form>
 
         <% if (data && data.length > 0) { %>
             
-            <%# --- SMART RECALL: Generate the current state string --- %>
+            <div class="metrics-bar">
+                <div class="metric-card highlight">
+                    <h3><%= metrics.avg_monthly %></h3>
+                    <p>Avg. Breakdowns / Month</p>
+                </div>
+                <div class="metric-card">
+                    <h3><%= metrics.total %></h3>
+                    <p>Total Incidents</p>
+                </div>
+                <div class="metric-card">
+                    <h3><%= metrics.avg_repair_days %> Days</h3>
+                    <p>Avg. Repair Time</p>
+                </div>
+                <div class="metric-card">
+                    <h3>$<%= parseFloat(metrics.total_cost).toLocaleString() %></h3>
+                    <p>Total Cost</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h4>Maintenance Trend (Incidents)</h4>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h4>Breakdowns by Ride Type</h4>
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
             <% 
                 const backParams = new URLSearchParams();
                 backParams.set('d1', selected_date1);
                 backParams.set('d2', selected_date2);
                 backParams.set('loc', locations_selected);
+                backParams.set('type', type_selected);
                 const backQuery = backParams.toString();
             %>
 
-            <h2>Maintenance Requests Found: <%= data.length %></h2>
             <table class="report-table">
                 <thead>
                     <tr>
                         <th>Ride ID</th>
-                        <th>Ride</th>
+                        <th>Ride Name</th>
                         <th>Type</th>
                         <th>Location</th>
-                        <th>Report Date</th>
-                        <th>Completion Date</th>
-                        <th>Assigned To</th>
+                        <th>Reported</th>
+                        <th>Completed</th>
+                        <th>Cost</th>
                         <th>Status</th>
-                        <th>Details</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,11 +150,11 @@
                         <tr>
                             <td class="ride-id"><%= (item.public_ride_id) ? item.public_ride_id.substring(0, 8).toUpperCase() : 'N/A' %></td>
                             <td style="font-weight: bold;"><%= item.ride_name %></td>
-                            <td><span class="pill"><%= item.ride_type %></span></td>
+                            <td><%= item.ride_type %></td>
                             <td><%= item.location_name %></td>
                             <td><%= item.report_date.toLocaleDateString() %></td>
-                            <td><%= item.end_date ? item.end_date.toLocaleDateString() : '---' %></td>
-                            <td><%= item.assigned_employee_name || 'Unassigned' %></td>
+                            <td><%= item.end_date ? item.end_date.toLocaleDateString() : '-' %></td>
+                            <td><%= item.cost ? '$' + parseFloat(item.cost).toFixed(2) : '-' %></td>
                             <td>
                                 <% if (item.end_date) { %>
                                     <span class="status-badge status-complete">Complete</span>
@@ -124,20 +164,58 @@
                             </td>
                             <td>
                                 <% if (item.public_ride_id) { %>
-                                    <%# --- Pass back_query to the view --- %>
                                     <a href="/maintenance/ride/<%= item.public_ride_id %>?back_query=<%= encodeURIComponent(backQuery) %>" class="btn-view">View Log</a>
-                                <% } else { %>
-                                    <span style="color: #999;">No Link</span>
                                 <% } %>
                             </td>
                         </tr>
                     <% }); %>
                 </tbody>
             </table>
-        <% } else if (data && data.length === 0) { %>
-            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No maintenance records found for the selected criteria.</p>
-        <% } %>
 
+            <script>
+                // --- TIMELINE CHART ---
+                const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+                new Chart(timelineCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: <%- JSON.stringify(chartData.timeline.labels) %>,
+                        datasets: [{
+                            label: 'Incidents Reported',
+                            data: <%- JSON.stringify(chartData.timeline.data) %>,
+                            backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+
+                // --- TYPE CHART ---
+                const typeCtx = document.getElementById('typeChart').getContext('2d');
+                new Chart(typeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: <%- JSON.stringify(chartData.types.labels) %>,
+                        datasets: [{
+                            data: <%- JSON.stringify(chartData.types.data) %>,
+                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } }
+                    }
+                });
+            </script>
+
+        <% } else if (data && data.length === 0) { %>
+            <p style="text-align: center; padding: 3em; font-style: italic;">No maintenance records found for the selected criteria.</p>
+        <% } %>
     </div>
 </body>
 </html>

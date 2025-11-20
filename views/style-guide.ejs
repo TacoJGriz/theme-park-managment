@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Primus Park | Design System</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 1100px;
+            margin: 2em auto;
+            padding: 0 2em;
+        }
+        
+        section {
+            background: var(--white);
+            padding: 3em;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 3em;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4 { margin-top: 0; color: var(--dark); }
+        
+        .font-display { font-family: 'Lobster', cursive; }
+        .font-body { font-family: 'Poppins', sans-serif; }
+
+        .text-magical {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        /* --- COLOR SWATCHES --- */
+        .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+        .swatch {
+            height: 100px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 30px; /* Pill shape for friendlier look */
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1em;
+            text-align: center;
+        }
+        
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+
+        .btn-secondary { background-color: var(--secondary); color: var(--dark); }
+        .btn-secondary:hover { background-color: #e0a800; }
+
+        .btn-accent { background-color: var(--accent); color: white; }
+        .btn-accent:hover { background-color: #138496; }
+
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+
+        /* --- CARDS --- */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        
+        .card-magic {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            border-top: 5px solid var(--primary); /* Brand accent */
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex; flex-direction: column;
+        }
+        .card-magic:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .card-body { padding: 2em; }
+        .card-footer { background: var(--light); padding: 1em 2em; border-top: 1px solid #eee; font-size: 0.9em; color: var(--gray); }
+
+        /* --- FORMS --- */
+        .form-group { margin-bottom: 1.5em; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
+        
+        input[type="text"], input[type="email"], select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
+        }
+
+        /* --- TABLES --- */
+        .table-magic {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .table-magic th {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+        }
+        .table-magic td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+        .table-magic tr:hover { background-color: #f9f9f9; }
+
+        /* --- BADGES --- */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-active { background: #d4edda; color: var(--success); }
+        .badge-expired { background: #f8d7da; color: var(--danger); }
+        .badge-info { background: #cce5ff; color: #004085; }
+
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 4em;">
+            <h1 class="font-display" style="font-size: 3.5em; color: var(--primary);">Style Guide</h1>
+            <p style="font-size: 1.2em; color: var(--gray);">Standardized Design System for Member & Visitor Views</p>
+        </div>
+
+        <section>
+            <div class="section-title">Color Palette</div>
+            <div class="swatch-grid">
+                <div class="swatch" style="background: var(--primary);">Primary<br>#6f42c1</div>
+                <div class="swatch" style="background: var(--secondary); color: #333;">Secondary (Gold)<br>#ffc107</div>
+                <div class="swatch" style="background: var(--accent);">Accent (Teal)<br>#17a2b8</div>
+                <div class="swatch" style="background: var(--dark);">Dark<br>#343a40</div>
+                <div class="swatch" style="background: var(--success);">Success<br>#28a745</div>
+                <div class="swatch" style="background: var(--danger);">Danger<br>#dc3545</div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Typography</div>
+            <h1 class="font-display">Heading 1 (Lobster) - Magical Titles</h1>
+            <h2>Heading 2 (Poppins) - Section Headers</h2>
+            <h3>Heading 3 (Poppins) - Card Titles</h3>
+            <p>This is standard body text. It is legible, clean, and uses the 'Poppins' font family. We use this for descriptions, summaries, and general information. <span class="text-magical" style="font-weight:700;">Gradient Text is available for emphasis!</span></p>
+            <p style="color: var(--gray); font-size: 0.9em;">This is muted small text used for metadata or hints.</p>
+        </section>
+
+        <section>
+            <div class="section-title">Buttons & Actions</div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="btn btn-primary">Primary Action</button>
+                <button class="btn btn-secondary">Secondary Action</button>
+                <button class="btn btn-accent">Accent Button</button>
+                <button class="btn btn-outline">Outline Button</button>
+                <button class="btn btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">Disabled</button>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Magic Cards</div>
+            <div class="card-grid">
+                <div class="card-magic">
+                    <div class="card-body">
+                        <span class="badge badge-active" style="margin-bottom: 10px; display:inline-block;">Active</span>
+                        <h3>Standard Card</h3>
+                        <p style="color: #666;">Cards have a colored top border, subtle shadow, and a "lift" effect on hover. Use these for promotions, items, or dashboard widgets.</p>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;">View Details</button>
+                    </div>
+                </div>
+
+                <div class="card-magic" style="text-align: center; border-top-color: var(--secondary);">
+                    <div class="card-body">
+                        <h3 style="color: #666; font-size: 1em; text-transform: uppercase;">Total Visits</h3>
+                        <div style="font-size: 3.5em; font-weight: 700; color: var(--primary); line-height: 1;">24</div>
+                        <p style="color: var(--success); font-weight: bold; margin-top: 5px;">+2 this month</p>
+                    </div>
+                    <div class="card-footer">Updated just now</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Form Elements</div>
+            <form>
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Input Field</label>
+                        <input type="text" placeholder="Enter some text...">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Dropdown</label>
+                        <select>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Text Area</label>
+                    <textarea rows="3" placeholder="Type a description..."></textarea>
+                </div>
+            </form>
+        </section>
+
+        <section>
+            <div class="section-title">Data Tables</div>
+            <table class="table-magic">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Activity</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Oct 24, 2025</td>
+                        <td>Park Visit - Main Entrance</td>
+                        <td><span class="badge badge-active">Completed</span></td>
+                        <td style="text-align: right; font-weight: bold;">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Sep 12, 2025</td>
+                        <td>Annual Renewal (Gold)</td>
+                        <td><span class="badge badge-active">Processed</span></td>
+                        <td style="text-align: right; font-weight: bold;">$599.00</td>
+                    </tr>
+                    <tr>
+                        <td>Jan 01, 2024</td>
+                        <td>Old Membership</td>
+                        <td><span class="badge badge-expired">Expired</span></td>
+                        <td style="text-align: right; font-weight: bold;">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </div>
+    <%- include('partials/footer') %>
+</body>
+</html>

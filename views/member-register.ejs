@@ -2,50 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Activate Your Membership</title>
-    <%# --- Import Google Fonts for Personality --- %>
+    <title>Activate Membership | Primus Park</title>
+    <%# --- Import Google Fonts --- %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- Shared Variables & Fonts from index.ejs --- */
+        /* --- STANDARDIZED THEME VARIABLES --- */
         :root {
-            --primary: #6f42c1; /* Magical Purple */
-            --primary-dark: #5a32a3;
-            --secondary: #ffc107; /* Gold/Yellow */
-            --accent: #17a2b8; /* Cyan/Blue */
+            --primary: #6f42c1;
+            --secondary: #ffc107;
+            --accent: #17a2b8;        /* Cyan/Teal - Member Theme Color */
             --dark: #343a40;
-            --hero-overlay: rgba(0, 0, 0, 0.4); 
-            --error: #d9534f;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
             --success: #28a745;
+            --danger: #dc3545;
+            
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+            --hero-overlay: rgba(0, 0, 0, 0.4); 
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: var(--light);
+            color: var(--dark);
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            /* --- Hero Background Effect --- */
+            /* Hero Background */
             background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('/images/hero-bg.png');
             background-size: cover;
             background-position: center 30%;
             background-attachment: fixed;
         }
 
-        /* --- Form Styling --- */
+        /* --- Standardized Card --- */
         form {
             max-width: 450px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95); /* Semi-transparent white card */
-            padding: 3em; /* Increased padding */
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border-top: 5px solid var(--accent); /* Member Theme accent */
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3em;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border-top: 5px solid var(--accent); /* Member Accent Color */
+            box-sizing: border-box;
         }
 
         h1 {
@@ -53,52 +60,73 @@
             color: var(--dark);
             text-align: center;
             margin-top: 0;
+            margin-bottom: 0.5em;
+            letter-spacing: 1px;
+            font-size: 2.2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--gray);
             margin-bottom: 1.5em;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5em;
+            font-size: 0.95em;
         }
 
-        div { margin-bottom: 1.5em; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; }
+        div.form-group { margin-bottom: 1.5em; }
+        
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
 
+        /* --- Standardized Inputs --- */
         input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
             box-sizing: border-box;
-            border-radius: 8px; /* Slightly more rounded */
-            border: 1px solid #ccc;
-            transition: border-color 0.2s;
+            border-radius: 8px; 
+            border: 2px solid #eee;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            transition: var(--transition);
         }
-        input:focus { border-color: var(--accent); outline: none; }
+        input:focus { 
+            outline: none; 
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
+        }
 
         .error {
-            color: white;
-            font-weight: 700;
-            background-color: var(--error);
+            color: var(--white);
+            font-weight: 600;
+            background-color: var(--danger);
             padding: 1em;
             border-radius: 8px;
             margin-bottom: 1.5em;
             text-align: center;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
         }
 
+        /* --- Standardized Button (.btn-success for Activation) --- */
         button {
             width: 100%;
             padding: 12px 20px;
-            background-color: var(--success); /* Green for "Activate" */
-            color: white;
+            background-color: var(--success); /* Green for "Go" */
+            color: var(--white);
             border: none;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 30px;
             font-size: 1.1em;
-            font-weight: 700;
-            transition: background-color 0.2s;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
         }
-        button:hover { background-color: #218838; }
+        button:hover { 
+            background-color: #218838; 
+            transform: translateY(-2px);
+        }
         
         .info-note {
             text-align: center;
             font-size: 0.9em;
-            color: #6c757d;
+            color: var(--gray);
             margin-top: 1.5em;
             margin-bottom: 0;
         }
@@ -108,48 +136,42 @@
             font-weight: 700;
             transition: color 0.2s;
         }
-        .info-note a:hover { text-decoration: underline; color: #007bff; }
+        .info-note a:hover { text-decoration: underline; color: var(--primary); }
     </style>
 </head>
 <body>
     <form action="/member/register" method="POST">
-        <h1>Activate Your Member Account</h1>
+        <h1>Activate Account</h1>
+        <p class="subtitle">Set up online access for your membership.</p>
 
         <% if (typeof error !== 'undefined' && error) { %>
             <p class="error"><%= error %></p>
         <% } %>
 
-        <div>
+        <div class="form-group">
             <label for="email">Membership Email:</label>
-            <input type="email" id="email" 
- name="email" placeholder="Email given at purchase" required>
+            <input type="email" id="email" name="email" placeholder="Email used at purchase" required>
         </div>
         
-        <div>
-            <%# CHANGED: Label and placeholder now refer to the public ID %>
+        <div class="form-group">
             <label for="membership_id">Membership ID:</label>
-            <input type="text" id="membership_id" name="membership_id" placeholder="Found on your member card or receipt" required>
+            <input type="text" id="membership_id" name="membership_id" placeholder="Found on your receipt/card" required>
         </div>
 
-  
-       <div>
+        <div class="form-group">
             <label for="password">New Password:</label>
-    
-         <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" placeholder="Create a password" required>
         </div>
 
-        <div>
-            <label for="confirm_password">Confirm New Password:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required>
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
         </div>
         
- 
         <button type="submit">Create Account</button>
 
         <p class="info-note">
-      
-       Already have an account?
-<a href="/login">Log In</a> <%# MODIFIED: Points to global /login %>
+            Already have an account? <a href="/login">Log In</a>
         </p>
     </form>
 </body>

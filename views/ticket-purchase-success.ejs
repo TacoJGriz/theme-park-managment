@@ -2,315 +2,365 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Purchase Successful!</title>
-    <%# --- Include Barcode Library --- %>
+    <title>Tickets Ready! | Primus Park</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    
+    <%# Import Fonts %>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
+        /* --- Local Variables for Stability --- */
+        :root {
+            --ticket-gold: #ffc107;
+            --ticket-dark: #343a40;
+            --ticket-blue: #17a2b8;
+            --bg-color: #222; /* Dark background makes tickets pop on screen */
+        }
+
         body { 
             font-family: 'Poppins', sans-serif;
             margin: 0; 
-            background-color: #f0f2f5; 
-            color: #333; 
+            background-color: var(--bg-color); 
+            color: white; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            padding: 2em;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .page-header {
             text-align: center;
-            margin-bottom: 2em;
+            margin-bottom: 30px;
+            animation: fadeIn 1s;
         }
         .page-header h1 { 
-            color: #28a745; 
-            margin: 0 0 0.2em 0;
-        }
-        .page-header p {
-            color: #666;
+            font-family: 'Lobster', cursive;
+            font-size: 3em;
+            color: var(--ticket-gold);
             margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
+        .page-header p { margin-top: 5px; opacity: 0.8; }
 
-        /* --- TICKET CONTAINER (CAROUSEL) --- */
+        /* --- Ticket Carousel --- */
         .carousel-container {
             position: relative;
             width: 100%;
-            max-width: 380px; /* Limit width for realistic ticket shape */
-            margin: 0 auto;
+            max-width: 360px; /* Mobile ticket width on screen */
         }
 
-        /* --- THE TICKET VISUAL --- */
+        /* --- THE TICKET STYLE (Digital Wallet Look) --- */
         .ticket-visual {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            color: #333;
+            border-radius: 20px;
             overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            display: none; /* Hidden by default for carousel logic */
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            display: none; /* Hidden by default for carousel */
-            animation: slideUp 0.4s ease-out;
         }
-        .ticket-visual.active {
-            display: block;
-        }
+        
+        /* Only the 'active' ticket is shown on screen */
+        .ticket-visual.active { display: block; }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* -- Ticket Header Section -- */
-        .ticket-header {
-            background: linear-gradient(135deg, #17a2b8, #138496);
-            padding: 1.5em;
-            text-align: center;
+        /* Top Section */
+        .ticket-top {
+            background: var(--ticket-blue);
+            padding: 20px;
             color: white;
             position: relative;
-            /* Dashed line at bottom of header */
-            border-bottom: 2px dashed rgba(255, 255, 255, 0.6);
+            text-align: center;
+            border-bottom: 3px dashed rgba(255,255,255,0.5);
+            
+            /* Force Print Colors */
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
         }
 
-        /* The "Notches" (Circle cutouts) */
-        .ticket-header::before, 
-        .ticket-header::after {
-            content: "";
-            position: absolute;
-            bottom: -10px; /* Half the height to sit on the line */
-            width: 20px;
-            height: 20px;
-            background-color: #f0f2f5; /* Matches body bg to look transparent */
-            border-radius: 50%;
-            z-index: 2;
-        }
-        .ticket-header::before { left: -10px; }
-        .ticket-header::after { right: -10px; }
-
-        .park-name {
-            font-size: 0.8em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        /* Park Logo Text */
+        .park-logo {
+            font-family: 'Lobster', cursive;
+            font-size: 1.5em;
             opacity: 0.9;
-            margin-bottom: 5px;
         }
-        .ticket-title {
-            font-size: 1.6em;
+        /* Ticket Type */
+        .ticket-type-title {
+            font-size: 2em;
             font-weight: 800;
-            margin: 0;
             text-transform: uppercase;
             line-height: 1.1;
+            margin-top: 5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* -- Ticket Body Section -- */
-        .ticket-body {
-            padding: 2em 1.5em;
+        /* Middle Section */
+        .ticket-mid {
+            padding: 25px;
             text-align: center;
         }
-
-        .info-row {
-            margin-bottom: 1.2em;
-        }
+        .info-group { margin-bottom: 15px; }
         .info-label {
-            display: block;
             font-size: 0.75em;
             color: #888;
             text-transform: uppercase;
+            font-weight: 700;
             letter-spacing: 1px;
+        }
+        .info-val {
+            font-size: 1.3em;
             font-weight: 600;
-            margin-bottom: 3px;
-        }
-        .info-value {
-            display: block;
-            font-size: 1.1em;
-            color: #333;
-            font-weight: bold;
-        }
-        .price-paid {
-            color: #28a745;
+            color: #222;
         }
 
-        /* -- Barcode Section -- */
-        .barcode-area {
-            margin-top: 1em;
-            padding-top: 1em;
+        /* Bottom Section (Barcode) */
+        .ticket-bottom {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
             border-top: 1px solid #eee;
+            
+            /* Force Print Colors */
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
         }
-        .barcode-svg {
+        .barcode-container svg {
             width: 100%;
-            height: auto;
-            max-height: 60px;
-        }
-        .ticket-code-text {
-            font-family: 'Courier New', monospace;
-            color: #555;
-            font-size: 0.9em;
-            letter-spacing: 1px;
+            height: 70px;
             display: block;
+        }
+        
+        /* UPDATED: Smaller font for full UUID */
+        .code-text {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 0; /* Reduced spacing to fit */
+            color: #555;
             margin-top: 5px;
+            font-size: 0.65em; /* Smaller size */
+            word-break: break-all; /* Force wrap if needed */
         }
 
         /* --- Navigation Arrows --- */
-        .carousel-nav {
+        .nav-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 1.5em;
+            margin-top: 20px;
+            width: 100%;
         }
         .nav-btn {
-            background: white;
-            border: 1px solid #ddd;
-            color: #333;
-            width: 40px;
-            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 50px; height: 50px;
             border-radius: 50%;
-            font-size: 1.2em;
+            font-size: 1.5em;
             cursor: pointer;
             transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
         }
         .nav-btn:hover:not(:disabled) {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
+            background: var(--ticket-gold);
+            color: #222;
+            border-color: var(--ticket-gold);
+            transform: scale(1.1);
         }
-        .nav-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .ticket-counter {
-            font-weight: bold;
-            color: #6c757d;
-            font-size: 0.9em;
-        }
+        .nav-btn:disabled { opacity: 0.3; cursor: default; }
+        
+        .counter { font-weight: bold; letter-spacing: 1px; }
 
-        .bottom-actions {
-            margin-top: 2em;
+        /* --- Footer Actions --- */
+        .footer-actions {
+            margin-top: 40px;
             text-align: center;
         }
-        .home-link {
-            color: #007bff;
+        .btn-print {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #ccc;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: 0.2s;
+        }
+        .btn-print:hover { background: white; color: #222; }
+        
+        .link-home {
+            display: block;
+            margin-top: 15px;
+            color: var(--ticket-gold);
             text-decoration: none;
             font-weight: bold;
         }
-        .home-link:hover { text-decoration: underline; }
+        .link-home:hover { text-decoration: underline; }
 
-        /* Receipt Details (Hidden by default, optional expansion) */
-        .receipt-mini {
-            background: #fff;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 2em;
-            font-size: 0.85em;
-            color: #666;
-            text-align: center;
-            border: 1px solid #e0e0e0;
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        /* ========================================= */
+        /* --- PRINT STYLES (UPDATED) --- */
+        /* ========================================= */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                height: auto !important;
+                min-height: 0 !important;
+            }
+
+            /* Hide UI Elements */
+            .page-header, .footer-actions, .nav-controls {
+                display: none !important;
+            }
+
+            /* Layout Container for Print */
+            .carousel-container {
+                max-width: none !important;
+                width: 100% !important;
+                display: block !important; /* Block layout stacks them vertically */
+                margin: 0 !important;
+            }
+
+            /* Force Ticket Visibility */
+            .ticket-visual {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                animation: none !important;
+                transform: none !important;
+                
+                /* Print Layout Adjustments */
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                margin: 0 auto 30px auto !important; /* Center and add gap */
+                max-width: 400px !important; /* Keep ticket width sane on paper */
+                page-break-inside: avoid !important; /* Don't cut ticket in half */
+            }
+
+            /* Ensure Colors Print */
+            .ticket-top {
+                background-color: #17a2b8 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .ticket-bottom {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="page-header">
         <h1>Purchase Confirmed!</h1>
-        <p>Your tickets are ready.</p>
-    </div>
-
-    <div class="receipt-mini">
-        Sent to: <strong><%= receipt.email || receipt.phone %></strong> • 
-        Total: <strong>$<%= receipt.total.toFixed(2) %></strong>
+        <p>Your digital tickets are ready.</p>
     </div>
 
     <div class="carousel-container">
         
         <% receipt.tickets.forEach((ticket, index) => { %>
-            <div class="ticket-visual <%= index === 0 ? 'active' : '' %>" id="ticket-<%= index %>">
+            <div class="ticket-visual <%= index === 0 ? 'active' : '' %>">
                 
-                <div class="ticket-header">
-                    <div class="park-name">Primus Park</div>
-                    <div class="ticket-title"><%= ticket.name %></div>
-                    </div>
+                <div class="ticket-top">
+                    <div class="park-logo">Primus Park</div>
+                    <div class="ticket-type-title"><%= ticket.name %></div>
+                </div>
 
-                <div class="ticket-body">
-                    <div class="info-row">
-                        <span class="info-label">Valid Date</span>
-                        <span class="info-value"><%= receipt.purchaseDate.split(',')[0] %></span>
+                <div class="ticket-mid">
+                    <div class="info-group">
+                        <div class="info-label">Valid Date</div>
+                        <div class="info-val"><%= receipt.purchaseDate.split(',')[0] %></div>
                     </div>
-                    
-                    <div class="info-row">
-                        <span class="info-label">Price Paid</span>
-                        <span class="info-value price-paid">$<%= ticket.price.toFixed(2) %></span>
-                    </div>
-
-                    <div class="barcode-area">
-                        <svg id="barcode-<%= index %>"
-                             class="barcode-svg"
-                             data-format="CODE128"
-                             data-value="<%= ticket.code %>"
-                             data-text=" " 
-                             data-displayValue="false">
-                        </svg>
-                        <span class="ticket-code-text"><%= ticket.code %></span>
+                    <div class="info-group">
+                        <div class="info-label">Admit</div>
+                        <div class="info-val">1 Guest</div>
                     </div>
                 </div>
+
+                <div class="ticket-bottom">
+                    <div class="barcode-container">
+                        <svg id="barcode-<%= index %>"
+                             data-format="CODE128"
+                             data-value="<%= ticket.code %>"
+                             data-displayValue="false">
+                        </svg>
+                    </div>
+                    <%# Full Token ID displayed with smaller font %>
+                    <div class="code-text"><%= ticket.code %></div> 
+                </div>
+
             </div>
         <% }); %>
 
-        <div class="carousel-nav">
-            <button id="prevBtn" class="nav-btn">&larr;</button>
-            <span id="ticketCounter" class="ticket-counter">Ticket 1 of <%= receipt.tickets.length %></span>
-            <button id="nextBtn" class="nav-btn">&rarr;</button>
+        <div class="nav-controls">
+            <button id="prevBtn" class="nav-btn">←</button>
+            <span id="counter" class="counter">1 / <%= receipt.tickets.length %></span>
+            <button id="nextBtn" class="nav-btn">→</button>
         </div>
 
     </div>
 
-    <div class="bottom-actions">
-        <button onclick="window.print()" style="background:none; border:none; color:#555; cursor:pointer; font-size:0.9em; margin-bottom:10px; text-decoration:underline;">
-            🖨 Print Tickets
-        </button>
-        <br>
-        <a href="/" class="home-link">Return to Homepage</a>
+    <div class="footer-actions">
+        <button class="btn-print" onclick="window.print()">Print All Tickets</button>
+        <a href="/" class="link-home">Return to Homepage</a>
     </div>
 
     <script>
-        // --- CAROUSEL LOGIC ---
-        const tickets = document.querySelectorAll('.ticket-visual');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const counter = document.getElementById('ticketCounter');
-        let currentIndex = 0;
-        const totalTickets = tickets.length;
-
-        function updateCarousel(index) {
-            // Hide all
-            tickets.forEach(t => t.classList.remove('active'));
-            // Show current
-            tickets[index].classList.add('active');
-            
-            // Update Text & Buttons
-            counter.textContent = `Ticket ${index + 1} of ${totalTickets}`;
-            prevBtn.disabled = index === 0;
-            nextBtn.disabled = index === totalTickets - 1;
-        }
-
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateCarousel(currentIndex);
-            }
-        });
-
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < totalTickets - 1) {
-                currentIndex++;
-                updateCarousel(currentIndex);
-            }
-        });
-
-        // Init
-        updateCarousel(0);
-
-        // --- BARCODE INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            JsBarcode(".barcode-svg").init();
+            const tickets = document.querySelectorAll('.ticket-visual');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const counter = document.getElementById('counter');
+            let currentIndex = 0;
+            const total = tickets.length;
+
+            // Init Barcodes
+            // Note: We init ALL barcodes immediately so they appear when printing
+            tickets.forEach((ticketEl, index) => {
+                const svg = ticketEl.querySelector('svg');
+                if(svg) {
+                    JsBarcode(svg, svg.dataset.value, {
+                        format: "CODE128",
+                        displayValue: false,
+                        height: 70,
+                        width: 2,
+                        margin: 0
+                    });
+                }
+            });
+
+            function updateUI() {
+                tickets.forEach((t, i) => {
+                    t.classList.toggle('active', i === currentIndex);
+                });
+                counter.textContent = `${currentIndex + 1} / ${total}`;
+                
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex === total - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) { currentIndex--; updateUI(); }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < total - 1) { currentIndex++; updateUI(); }
+            });
+
+            updateUI();
         });
     </script>
-
 </body>
 </html>

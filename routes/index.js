@@ -8,6 +8,15 @@ const {
 } = require('../middleware/auth'); // Adjust path to auth.js
 const crypto = require('crypto');
 
+// GET /style-guide (Design System Reference)
+router.get('/style-guide', (req, res) => {
+    // Pass user/member objects so the header renders correctly for whoever is logged in
+    res.render('style-guide', {
+        user: req.session.user || null,
+        member: req.session.member || null
+    });
+});
+
 // GET / (Public Homepage)
 router.get('/', async (req, res) => {
     // Check if anyone is logged in

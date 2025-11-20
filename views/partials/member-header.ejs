@@ -1,71 +1,137 @@
-<%# --- Import Fonts (Ensures they are available on every page including the header) --- %>
+<%# --- Import Fonts --- %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-		<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-			<style>
-				.navbar {
-				background-color: #17a2b8; /* Member-themed color */
-				padding: 0 20px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				color: white;
-				margin-bottom: 2em;
-				min-height: 60px;
-				font-family: 'Poppins', sans-serif; /* UPDATED FONT */
-				box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Added depth */
-				}
-				.nav-links { display: flex; height: 100%; }
-				.nav-links a {
-				color: #f8f9fa;
-				text-decoration: none;
-				padding: 0 15px;
-				transition: background-color 0.2s, color 0.2s;
-				margin-right: 5px;
-				display: flex;
-				align-items: center;
-				height: 100%;
-				box-sizing: border-box;
-				font-weight: 600;
-				font-size: 0.95em;
-				}
-				.nav-links a:hover {
-				background-color: rgba(255,255,255,0.15);
-				color: white;
-				}
-				.user-info {
-				font-weight: 600;
-				font-size: 0.9em;
-				}
-				.user-info a {
-				color: #fff3cd; /* Light yellow for contrast */
-				font-weight: 700;
-				margin-left: 20px;
-				text-decoration: none;
-				transition: opacity 0.2s;
-				}
-				.user-info a:hover {
-				text-decoration: underline;
-				opacity: 0.9;
-				}
-			</style>
+<style>
+    /* --- GLOBAL THEME VARIABLES (Standardized) --- */
+    :root {
+        /* Brand Colors */
+        --primary: #6f42c1;       /* Magical Purple */
+        --primary-dark: #5a32a3;
+        --secondary: #ffc107;     /* Gold */
+        --accent: #17a2b8;        /* Cyan/Teal (Member Theme) */
+        
+        /* Neutrals */
+        --dark: #343a40;
+        --light: #f8f9fa;
+        --white: #ffffff;
+        --gray: #6c757d;
+        
+        /* Status */
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
 
-			<% if (member) { %>
-			<nav class="navbar">
-				<div class="nav-links">
-					<a href="/member/dashboard">Dashboard</a>
-					<a href="/member/history">Visit History</a>
-					<a href="/member/purchases">Purchases</a>
-					<a href="/member/manage">Account</a>
-					<a href="/member/promotions">Promotions</a>
-				</div>
-				<div class="user-info">
-					<span>
-						Welcome, <%= member.firstName || member.first_name %>!
-					</span>
-					<a href="/member/change-password">Change Password</a>
-					<a href="/member/logout" style="color: #fff; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 20px; margin-left: 15px;">Logout</a>
-				</div>
-			</nav>
-			<% } %>
+        /* Effects */
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+        --radius: 12px;
+        --transition: all 0.3s ease;
+    }
+
+    /* --- Header Container --- */
+    .navbar {
+        background-color: var(--accent); /* Member Theme Color */
+        padding: 0.8em 2em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--white);
+        margin-bottom: 2em;
+        min-height: 50px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* --- Navigation Links --- */
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .nav-links a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        transition: var(--transition);
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+
+    .nav-links a:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--white);
+        transform: translateY(-1px);
+    }
+
+    /* --- User Info Section --- */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .welcome-text {
+        font-weight: 600;
+        font-size: 0.95em;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* --- Action Buttons (Standardized) --- */
+    .btn-nav {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        display: inline-block;
+    }
+
+    /* FIX: "Change Password" is now Gold for high visibility */
+    .btn-password {
+        background-color: var(--secondary);
+        color: var(--dark);
+        border: 1px solid var(--secondary);
+    }
+    .btn-password:hover {
+        background-color: #e0a800;
+        color: var(--dark);
+        transform: translateY(-1px);
+    }
+
+    /* "Logout" is semi-transparent white */
+    .btn-logout {
+        background-color: rgba(0, 0, 0, 0.15);
+        color: var(--white);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-logout:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+</style>
+
+<% if (member) { %>
+<nav class="navbar">
+    <div class="nav-links">
+        <a href="/member/dashboard">Dashboard</a>
+        <a href="/member/history">Visit History</a>
+        <a href="/member/purchases">Purchases</a>
+        <a href="/member/manage">Account</a>
+        <a href="/member/promotions">Promotions</a>
+    </div>
+    <div class="user-info">
+        <span class="welcome-text">
+            Welcome, <%= member.firstName || member.first_name %>!
+        </span>
+        <a href="/member/change-password" class="btn-nav btn-password">Change Password</a>
+        <a href="/member/logout" class="btn-nav btn-logout">Logout</a>
+    </div>
+</nav>
+<% } %>

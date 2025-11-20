@@ -15,6 +15,10 @@ BEGIN
     DECLARE random_start_date DATE;
     DECLARE random_end_date DATE;
     DECLARE random_type_id INT;
+    
+    -- NEW: Variable for Guest Passes
+    DECLARE v_guest_passes INT DEFAULT 0;
+
     DECLARE dob_offset INT;
     DECLARE start_offset INT;
     
@@ -27,7 +31,6 @@ BEGIN
     -- --- Temporary Tables Setup (OPTIMIZED) ---
     
     DROP TEMPORARY TABLE IF EXISTS temp_first_names;
-    -- OPTIMIZATION: Added id column
     CREATE TEMPORARY TABLE temp_first_names (
         id INT AUTO_INCREMENT PRIMARY KEY, 
         name VARCHAR(25)
@@ -39,7 +42,6 @@ BEGIN
     ('Charles'), ('Karen');
 
     DROP TEMPORARY TABLE IF EXISTS temp_last_names;
-    -- OPTIMIZATION: Added id column
     CREATE TEMPORARY TABLE temp_last_names (
         id INT AUTO_INCREMENT PRIMARY KEY, 
         name VARCHAR(25)
@@ -51,11 +53,11 @@ BEGIN
     ('Jackson'), ('Martin');
     
     DROP TEMPORARY TABLE IF EXISTS temp_member_types;
-    -- OPTIMIZATION: Added id column
     CREATE TEMPORARY TABLE temp_member_types (
         id INT AUTO_INCREMENT PRIMARY KEY, 
         type_id INT
     );
+    -- Types: 1=Platinum, 2=Gold, 3=Silver, 4=Family
     INSERT INTO temp_member_types (type_id) VALUES (1), (2), (3), (4);
 
     -- OPTIMIZATION: Get the max row counts ONCE before the loop
@@ -66,20 +68,19 @@ BEGIN
 
     -- --- Member Generation Loop (OPTIMIZED) ---
 
-    -- OPTIMIZATION: Wrap loop in a single transaction
     START TRANSACTION;
 
     WHILE i < num_members DO
         
-        -- OPTIMIZATION: Select random first name by ID
+        -- Select random first name
         SET random_id = FLOOR(1 + RAND() * max_first_name_id);
         SELECT name INTO random_first_name FROM temp_first_names WHERE id = random_id;
         
-        -- OPTIMIZATION: Select random last name by ID
+        -- Select random last name
         SET random_id = FLOOR(1 + RAND() * max_last_name_id);
         SELECT name INTO random_last_name FROM temp_last_names WHERE id = random_id;
         
-        -- FIX: Append start_year to ensure uniqueness across different batch calls
+        -- Generate unique email
         SET random_email = CONCAT(LOWER(random_first_name), '.', LOWER(random_last_name), i, '.', start_year, '@parkmember.com');
 
         -- Generate random Date of Birth
@@ -90,15 +91,35 @@ BEGIN
         SET start_offset = FLOOR(365 * RAND());
         SET random_start_date = DATE_ADD(CONCAT(start_year, '-01-01'), INTERVAL start_offset DAY); 
         
-        -- Generate End Date
+        -- Generate End Date (1 Year Validity)
         SET random_end_date = DATE_SUB(DATE_ADD(random_start_date, INTERVAL 1 YEAR), INTERVAL 1 DAY); 
 
-        -- OPTIMIZATION: Select a random active membership type by ID
+        -- Select random membership type
         SET random_id = FLOOR(1 + RAND() * max_type_id);
         SELECT type_id INTO random_type_id FROM temp_member_types WHERE id = random_id;
 
-        -- Insert the new member
-        INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date)
+        -- NEW: Determine Guest Pass Allowance based on Type
+        -- 1=Platinum(4), 2=Gold(2), 3=Silver(0), 4=Family(2)
+        SET v_guest_passes = CASE 
+            WHEN random_type_id = 1 THEN 4
+            WHEN random_type_id = 2 THEN 2
+            WHEN random_type_id = 4 THEN 2
+            ELSE 0 
+        END;
+
+        -- Insert the new member with guest passes
+        INSERT INTO membership (
+            public_membership_id, 
+            first_name, 
+            last_name, 
+            email, 
+            phone_number, 
+            date_of_birth, 
+            type_id, 
+            start_date, 
+            end_date,
+            guest_passes_remaining -- NEW COLUMN
+        )
         VALUES (
             UUID(),
             random_first_name,
@@ -110,17 +131,16 @@ BEGIN
             random_dob,
             random_type_id,
             random_start_date,
-            random_end_date
+            random_end_date,
+            v_guest_passes -- NEW VALUE
         );
 
         SET i = i + 1;
     END WHILE;
 
-    -- OPTIMIZATION: Commit the single transaction
     COMMIT;
 
     -- --- Cleanup Temporary Tables ---
-    
     DROP TEMPORARY TABLE IF EXISTS temp_first_names;
     DROP TEMPORARY TABLE IF EXISTS temp_last_names;
     DROP TEMPORARY TABLE IF EXISTS temp_member_types;
@@ -134,19 +154,16 @@ DELIMITER ;
 -- 1. Cleanup existing data
 SET SQL_SAFE_UPDATES = 0;
 DELETE FROM visits WHERE membership_id IS NOT NULL; 
-DELETE FROM member_payment_methods; -- Clear payments linked to members
-DELETE FROM membership_purchase_history; -- Clear history linked to members
-DELETE FROM member_auth; -- Clear logins linked to members
-DELETE FROM membership; -- Clear the members themselves
+DELETE FROM member_payment_methods; 
+DELETE FROM membership_purchase_history; 
+DELETE FROM member_auth; 
+DELETE FROM membership; 
 
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
 -- 2. Generate "Past" Members (Start Year 2024)
--- These will mostly be EXPIRED by Nov 2025
 CALL GenerateMembers(300, 2024);
 
 -- 3. Generate "Current" Members (Start Year 2025)
--- These will mostly be ACTIVE in Nov 2025
 CALL GenerateMembers(300, 2025);
 SET SQL_SAFE_UPDATES = 1;
--- Result: ~600 Total Members with a roughly 50/50 split between Active and Expired.

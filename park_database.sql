@@ -136,12 +136,28 @@ CREATE TABLE membership_type (
     base_members INT NOT NULL DEFAULT 1 COMMENT 'Members included in base price',
     additional_member_price DECIMAL(10, 2) NULL DEFAULT NULL COMMENT 'Price for each member above the base',
     
+    /* --- NEW: Guest Pass Limit --- */
+    guest_pass_limit INT NOT NULL DEFAULT 0 COMMENT 'Number of free guest passes per year included with this tier',
+    
     description VARCHAR(250),
     is_active BOOL NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (type_id),
     INDEX idx_public_type_id (public_type_id),
-    CONSTRAINT chk_base_price_positive CHECK (base_price >= 0)
+    CONSTRAINT chk_base_price_positive CHECK (base_price >= 0),
+    CONSTRAINT chk_guest_pass_limit CHECK (guest_pass_limit >= 0)
+);
+
+/* --- NEW: Blackout Dates Table --- */
+CREATE TABLE blackout_dates (
+    blackout_id INT NOT NULL AUTO_INCREMENT,
+    type_id INT NOT NULL,
+    blackout_date DATE NOT NULL,
+    reason VARCHAR(100),
+    
+    PRIMARY KEY (blackout_id),
+    FOREIGN KEY (type_id) REFERENCES membership_type(type_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_type_date (type_id, blackout_date)
 );
 
 CREATE TABLE membership (
@@ -157,6 +173,9 @@ CREATE TABLE membership (
     start_date DATE NOT NULL DEFAULT (CURDATE()),
     end_date DATE NOT NULL,
     
+    /* --- NEW: Tracking Remaining Guest Passes --- */
+    guest_passes_remaining INT NOT NULL DEFAULT 0 COMMENT 'Decrements when a guest pass is used',
+    
     PRIMARY KEY (membership_id),
     INDEX idx_public_membership_id (public_membership_id),
     FOREIGN KEY (type_id) 
@@ -167,7 +186,8 @@ CREATE TABLE membership (
         FOREIGN KEY (primary_member_id)
         REFERENCES membership(membership_id)
         ON DELETE SET NULL, -- If primary is deleted, sub-members become their own primary
-    CONSTRAINT chk_membership_dates CHECK (end_date > start_date)
+    CONSTRAINT chk_membership_dates CHECK (end_date > start_date),
+    CONSTRAINT chk_guest_passes CHECK (guest_passes_remaining >= 0)
 );
 
 CREATE TABLE ticket_types (

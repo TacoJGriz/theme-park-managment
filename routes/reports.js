@@ -408,33 +408,34 @@ router.get('/weather-log/:id', isAuthenticated, canViewReports, async (req, res)
 
 // GET /reports/maintenance
 router.get('/maintenance', isAuthenticated, canViewReports, async (req, res) => {
-    const aWeekAgo = new Date();
-    aWeekAgo.setDate(aWeekAgo.getDate() - 7);
+    // Default to last 90 days for a better trend view
+    const defaultStart = new Date();
+    defaultStart.setDate(defaultStart.getDate() - 90);
 
-    // 1. Grab params from Query String (for Smart Recall)
-    const { d1, d2, loc } = req.query;
-
-    let locationOptions = [{ location_id: 'all', location_name: 'All Locations' }];
+    const { d1, d2, loc, type } = req.query;
 
     try {
+        // 1. Fetch Dropdown Data
         const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
-        locationOptions = [{ location_id: 'all', location_name: 'All Locations' }, ...locations];
+        const locationOptions = [{ location_id: 'all', location_name: 'All Locations' }, ...locations];
 
-        // Defaults
-        let selected_date1 = d1 || aWeekAgo.toISOString().substring(0, 10);
+        const [rideTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
+
+        // 2. Set Filters
+        let selected_date1 = d1 || defaultStart.toISOString().substring(0, 10);
         let selected_date2 = d2 || new Date().toISOString().substring(0, 10);
         let locations_selected = loc || 'all';
-        let reportData = null;
+        let type_selected = type || 'all';
 
-        // 2. If params exist, Run the Query immediately (Smart Recall Logic)
-        if (d1 && d2) {
-            let reportQuery = `
+        // 3. Build Query
+        let reportQuery = `
             SELECT
               m.maintenance_id,
               m.public_maintenance_id,
               m.report_date,
               m.end_date,
               m.summary AS issue_summary,
+              m.cost,
               r.ride_name,
               r.ride_type,
               r.public_ride_id,
@@ -446,24 +447,86 @@ router.get('/maintenance', isAuthenticated, canViewReports, async (req, res) => 
             LEFT JOIN employee_demographics e ON m.employee_id = e.employee_id
         `;
 
-            let whereClauses = [' m.report_date BETWEEN ? AND ? '];
-            let params = [selected_date1, selected_date2];
+        let whereClauses = [' m.report_date BETWEEN ? AND ? '];
+        let params = [selected_date1, selected_date2];
 
-            if (locations_selected && locations_selected !== 'all') {
-                whereClauses.push(' l.location_id = ? ');
-                params.push(locations_selected);
+        if (locations_selected && locations_selected !== 'all') {
+            whereClauses.push(' l.location_id = ? ');
+            params.push(locations_selected);
+        }
+
+        if (type_selected && type_selected !== 'all') {
+            whereClauses.push(' r.ride_type = ? ');
+            params.push(type_selected);
+        }
+
+        reportQuery += ' WHERE ' + whereClauses.join(' AND ') + ' ORDER BY m.report_date DESC ';
+        const [reportData] = await pool.query(reportQuery, params);
+
+        // --- 4. Calculate Statistics ---
+
+        // A. Duration in Months (for Average Calc)
+        const start = new Date(selected_date1);
+        const end = new Date(selected_date2);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        // Use 30.44 as avg days in month. Ensure min 1 month to avoid infinity.
+        const durationInMonths = Math.max(1, diffDays / 30.44);
+
+        // B. Aggregate Metrics
+        let totalReports = reportData.length;
+        let totalCost = 0;
+        let totalRepairDays = 0;
+        let closedCount = 0;
+
+        // C. Aggregate Chart Data
+        const typeCounts = {};
+        const timelineCounts = {}; // Key: "Month Year"
+
+        reportData.forEach(row => {
+            // Cost & Repair Time
+            if (row.cost) totalCost += parseFloat(row.cost);
+            if (row.end_date) {
+                const repTime = Math.ceil((new Date(row.end_date) - new Date(row.report_date)) / (1000 * 60 * 60 * 24));
+                totalRepairDays += repTime;
+                closedCount++;
             }
 
-            reportQuery += ' WHERE ' + whereClauses.join(' AND ') + ' ORDER BY m.report_date DESC ';
-            [reportData] = await pool.query(reportQuery, params);
-        }
+            // Type Data
+            typeCounts[row.ride_type] = (typeCounts[row.ride_type] || 0) + 1;
+
+            // Timeline Data (Group by Month)
+            const dateKey = new Date(row.report_date).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            timelineCounts[dateKey] = (timelineCounts[dateKey] || 0) + 1;
+        });
+
+        const metrics = {
+            total: totalReports,
+            // The Requested Stat: Average number of breakdowns per month in this period
+            avg_monthly: (totalReports / durationInMonths).toFixed(1),
+            total_cost: totalCost.toFixed(2),
+            avg_repair_days: closedCount > 0 ? (totalRepairDays / closedCount).toFixed(1) : '0'
+        };
+
+        // Sort timeline keys chronologically
+        const timelineLabels = Object.keys(timelineCounts).sort((a, b) => new Date(a) - new Date(b));
+        const timelineValues = timelineLabels.map(k => timelineCounts[k]);
+
+        const chartData = {
+            types: { labels: Object.keys(typeCounts), data: Object.values(typeCounts) },
+            timeline: { labels: timelineLabels, data: timelineValues }
+        };
 
         res.render('maintenance-report', {
             locations: locationOptions,
+            rideTypes: rideTypes,
             selected_date1: selected_date1,
             selected_date2: selected_date2,
             locations_selected: locations_selected,
+            type_selected: type_selected,
             data: reportData,
+            metrics: metrics,
+            chartData: chartData,
             error: null
         });
 
@@ -475,13 +538,14 @@ router.get('/maintenance', isAuthenticated, canViewReports, async (req, res) => 
 
 // POST /reports/maintenance
 router.post('/maintenance', isAuthenticated, canViewReports, async (req, res) => {
-    const { selected_date1, selected_date2, locations_selected } = req.body;
-    // Redirect to GET route with params
+    const { selected_date1, selected_date2, locations_selected, type_selected } = req.body;
     const params = new URLSearchParams({
         d1: selected_date1,
         d2: selected_date2,
-        loc: locations_selected
+        loc: locations_selected,
+        type: type_selected
     });
     res.redirect(`/reports/maintenance?${params.toString()}`);
 });
+
 module.exports = router;

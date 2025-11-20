@@ -1,142 +1,244 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Purchase Successful!</title>
+    <title>Welcome to the Club!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: sans-serif;
- margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
+        /* --- Page Variables --- */
+        :root {
+            --primary: #6f42c1;
+            --success: #28a745;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.2);
+            --radius: 16px;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: var(--light); 
+            color: var(--dark);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
- }
-        .container {
-            max-width: 500px;
- width: 100%;
-            background: white;
-            padding: 2.5em;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: center;
- }
-        h1 {
-            color: #28a745;
- /* Green for success */
-            margin-top: 0;
-            margin-bottom: 0.5em;
- }
-        .receipt {
-            background: #f8f9fa;
- border: 1px solid #dee2e6;
-            padding: 1.5em;
-            border-radius: 8px;
-            text-align: left;
-            margin-top: 2em;
-            margin-bottom: 2em;
- }
-        .receipt-item {
-            display: flex;
- justify-content: space-between;
-            padding: 0.5em 0;
-            border-bottom: 1px solid #eee;
+            min-height: 100vh;
+            background-image: radial-gradient(#e9ecef 1px, transparent 1px);
+            background-size: 20px 20px;
         }
-        .receipt-item:last-child {
-            border-bottom: none;
- }
-        .receipt-item strong {
-            color: #555;
- }
-        .receipt-total {
-            font-size: 1.2em;
- font-weight: bold;
-            color: #000;
-            margin-top: 0.5em;
+
+        .container { 
+            max-width: 480px; 
+            width: 95%;
+            margin-bottom: 3em;
         }
-        .continue-button {
-            display: block;
- width: 100%;
-            box-sizing: border-box;
-            padding: 12px 20px;
-            background-color: #17a2b8;
+
+        /* --- The Magic Card --- */
+        .receipt-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* --- Receipt Header --- */
+        .receipt-header {
+            /* Fallback color first, then gradient */
+            background-color: var(--success); 
+            background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 1.1em;
- font-weight: bold;
-            text-decoration: none;
+            padding: 2.5em 2em;
             text-align: center;
+            position: relative;
         }
-        .continue-button:hover {
-            background-color: #138496;
- }
+        
+        .icon-check {
+            background: white;
+            color: var(--success);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .receipt-header h1 {
+            font-family: 'Lobster', cursive;
+            margin: 0;
+            font-size: 2.8em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: white; /* Enforce white text */
+        }
+        .receipt-header p {
+            margin: 0.5em 0 0 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            opacity: 0.95;
+            color: white; /* Enforce white text */
+        }
+
+        /* --- Receipt Body --- */
+        .receipt-body {
+            padding: 2em;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        
+        .label { 
+            color: var(--gray); 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            font-size: 0.75em; 
+            letter-spacing: 1px; 
+        }
+        .value { 
+            font-weight: 700; 
+            color: var(--dark); 
+            text-align: right; 
+        }
+        
+        .highlight { 
+            color: var(--primary); 
+            font-size: 1.2em; 
+            font-family: 'Courier New', monospace;
+        }
+
+        /* --- Sub Members List --- */
+        .sub-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1em;
+            margin-top: 1em;
+            border: 1px solid #eee;
+        }
+        .sub-item {
+            display: flex; justify-content: space-between;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        /* --- Total Section --- */
+        .receipt-footer {
+            background: #f1f3f5;
+            padding: 1.5em 2em;
+            border-top: 2px dashed #ccc;
+        }
+        .total-row {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .total-label { font-weight: 800; font-size: 1.1em; text-transform: uppercase; color: var(--dark); }
+        .total-amount { 
+            font-family: 'Lobster', cursive; 
+            font-size: 2.2em; 
+            color: var(--success); 
+            line-height: 1; 
+            text-shadow: 1px 1px 0px white;
+        }
+
+        /* --- Actions --- */
+        .btn-continue {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
+            transition: all 0.2s ease;
+            margin-top: 2em;
+            font-size: 1.1em;
+        }
+        .btn-continue:hover {
+            background-color: #5a32a3;
+            transform: translateY(-3px);
+        }
     </style>
 </head>
 <body>
-    
     <div class="container">
-        <h1>Thank You For Your Purchase!</h1>
-        <p>Your membership is now active and your account has been created.
- A copy of this receipt has been saved to your account.</p>
-
-        <div class="receipt">
-            <h3>Purchase Confirmation</h3>
-
-            <div class="receipt-item">
-                <strong>Purchase ID:</strong>
-                <span class="value"><%= receipt.purchaseId.substring(0, 8).toUpperCase() %></span>
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <div class="icon-check">✓</div>
+                <h1>Welcome!</h1>
+                <p>Your membership is active.</p>
             </div>
-            
-            <div class="receipt-item">
-                <strong>Primary Member:</strong>
-                <span><%= receipt.memberName %></span>
-        
-     </div>
-            <% if (receipt.subMembers && receipt.subMembers.length > 0) { %>
-                <div class="receipt-item">
-                    <strong>Group Members:</strong>
-                    <span><%= receipt.subMembers.length %> Added</span>
-               
-  </div>
-                <% receipt.subMembers.forEach(sub => { %>
-                <div class="receipt-item" style="padding-left: 2em;">
-                    <span>- <%= sub.firstName %> <%= sub.lastName %></span>
+
+            <div class="receipt-body">
+                <div class="detail-row">
+                    <span class="label">Transaction ID</span>
+                    <span class="value"><%= receipt.purchaseId.substring(0, 8).toUpperCase() %></span>
                 </div>
-                <% });
- %>
-            <% } %>
-            <div class="receipt-item">
-                <strong>Membership ID:</strong>
-                <%# Show clean 8-char public ID %>
-                <span><%= receipt.membershipId.substring(0, 8).toUpperCase() %></span>
+                <div class="detail-row">
+                    <span class="label">Member Name</span>
+                    <span class="value"><%= receipt.memberName %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Member ID</span>
+                    <span class="value highlight"><%= receipt.membershipId.substring(0, 8).toUpperCase() %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Pass Type</span>
+                    <span class="value"><%= receipt.typeName %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Valid Until</span>
+                    <span class="value"><%= receipt.endDate %></span>
+                </div>
+
+                <% if (receipt.subMembers && receipt.subMembers.length > 0) { %>
+                    <div class="sub-list">
+                        <div style="font-weight:bold; margin-bottom:0.5em; font-size:0.75em; color:#666; text-transform:uppercase;">Group Members Included</div>
+                        <% receipt.subMembers.forEach(sub => { %>
+                            <div class="sub-item">
+                                <span><%= sub.firstName %> <%= sub.lastName %></span>
+                                <span style="color: var(--success); font-weight:bold; font-size:0.8em;">✓ ADDED</span>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
             </div>
-            <div class="receipt-item">
-             
-     <strong>Membership Type:</strong>
-                <span><%= receipt.typeName %></span>
-            </div>
-            <div class="receipt-item">
-                <strong>Valid Through:</strong>
-                <span><%= receipt.endDate %></span>
-            </div>
-      
-       
-            <div class="receipt-item">
-                <strong>Payment Method:</strong>
-                <span><%= receipt.paymentMethod %></span>
-            </div>
-            <div class="receipt-item receipt-total">
-                <strong>Amount Paid:</strong>
-   
-               <span>$<%= receipt.pricePaid.toFixed(2) %></span>
+
+            <div class="receipt-footer">
+                <div class="total-row">
+                    <span class="total-label">Total Paid</span>
+                    <span class="total-amount">$<%= receipt.pricePaid.toFixed(2) %></span>
+                </div>
+                <div style="font-size: 0.85em; color: var(--gray); margin-top: 8px;">
+                    Paid via <%= receipt.paymentMethod %>
+                </div>
             </div>
         </div>
 
-        <a href="/member/dashboard" class="continue-button">Continue to Your Account</a>
+        <a href="/member/dashboard" class="btn-continue">Go to My Dashboard</a>
     </div>
 
 </body>
