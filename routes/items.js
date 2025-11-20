@@ -160,35 +160,48 @@ router.post('/edit/:public_item_id', isAuthenticated, canManageRetail, async (re
 });
 
 // POST /items/delete/:public_item_id
+// UPDATED: Deletes dependencies first (Inventory & Requests)
 router.post('/delete/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
     const { public_item_id } = req.params;
+    let connection;
     try {
-        const sql = 'DELETE FROM item WHERE public_item_id = ?';
-        const [result] = await pool.query(sql, [public_item_id]);
+        connection = await pool.getConnection();
 
-        if (result.affectedRows === 0) {
-            // Redirect with error if item wasn't found (though unlikely if accessed from edit page)
-            req.session.error = "Error: Item not found for deletion.";
-        } else {
-            req.session.success = "Item successfully deleted.";
+        // 1. Get internal ID
+        const [itemRes] = await connection.query('SELECT item_id, item_name FROM item WHERE public_item_id = ?', [public_item_id]);
+        if (itemRes.length === 0) {
+            connection.release();
+            req.session.error = "Error: Item not found.";
+            return res.redirect('/items');
         }
+        const item = itemRes[0];
 
-        // Redirect back to the master list
+        // 2. Start Transaction
+        await connection.beginTransaction();
+
+        // 3. Delete Dependencies
+        // Delete inventory requests for this item
+        await connection.query('DELETE FROM inventory_requests WHERE item_id = ?', [item.item_id]);
+
+        // Delete actual inventory for this item from all vendors
+        await connection.query('DELETE FROM inventory WHERE item_id = ?', [item.item_id]);
+
+        // 4. Delete the Item
+        await connection.query('DELETE FROM item WHERE item_id = ?', [item.item_id]);
+
+        // 5. Commit
+        await connection.commit();
+
+        req.session.success = `Item "${item.item_name}" and all associated inventory records were deleted successfully.`;
         res.redirect('/items');
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error("Error deleting item:", error);
-        let errorMessage = "An unexpected error occurred during deletion.";
-
-        // MySQL error code for Foreign Key Constraint (ER_ROW_IS_REFERENCED)
-        if (error.code === 'ER_ROW_IS_REFERENCED') {
-            errorMessage = "Deletion failed: This item is still active in one or more vendor inventories. Please deshelf the item from all vendors first.";
-        }
-
-        // Store error in session and redirect back to the edit page (or item list)
-        req.session.error = errorMessage;
+        req.session.error = "Database error deleting item.";
         res.redirect(`/items/edit/${public_item_id}`);
+    } finally {
+        if (connection) connection.release();
     }
 });
-
 module.exports = router;

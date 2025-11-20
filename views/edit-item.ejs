@@ -14,12 +14,12 @@
 
         /* Main Container */
         .container { 
-            max-width: 800px; 
+            max-width: 800px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Headings */
@@ -33,7 +33,7 @@
         }
         
         h1 small { 
-            display: block; 
+            display: block;
             font-size: 0.6em;
             color: #777; 
             font-weight: normal; 
@@ -88,7 +88,7 @@
 
         /* Error Message */
         .error { 
-            color: #721c24; 
+            color: #721c24;
             background-color: #f8d7da; 
             border-color: #f5c6cb;
             padding: 1em; 
@@ -99,9 +99,9 @@
 
         /* Buttons */
         button { 
-            padding: 12px 25px; 
+            padding: 12px 25px;
             background-color: #007bff; /* Blue for Edit/Save */
-            color: white; 
+            color: white;
             border: none; 
             border-radius: 8px; 
             cursor: pointer; 
@@ -112,7 +112,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         button:hover { 
-            background-color: #0056b3; 
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
@@ -137,9 +137,45 @@
             transition: color 0.2s;
         }
         .cancel-link:hover { 
-            color: #343a40; 
+            color: #343a40;
             text-decoration: underline;
         }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideIn 0.2s;
+        }
+        .modal-content h3 { margin-top: 0; color: #dc3545; }
+        .modal-content p { color: #555; margin-bottom: 1.5em; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
+        .btn-modal-cancel {
+            padding: 10px 20px; background: #e9ecef; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
+        }
+        .btn-modal-confirm {
+            padding: 10px 20px; background: #dc3545; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -189,12 +225,52 @@
             <button type="submit">Save Changes</button>
         </form>
         
-        <%# Separate Delete Form %>
-        <form action="/items/delete/<%= item.public_item_id %>" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete this item? This action cannot be undone and will fail if the item is currently in stock.');">
-            <button type="submit" class="delete-btn">Delete Item Permanently</button>
+        <%# Separate Delete Form with Modal Trigger %>
+        <form id="deleteForm" action="/items/delete/<%= item.public_item_id %>" method="POST">
+             <button type="button" class="delete-btn" onclick="openModal()">Delete Item Permanently</button>
         </form>
 
         <a href="/items" class="cancel-link">Cancel</a>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Item?</h3>
+            <p>Are you sure you want to delete <strong><%= item.item_name %></strong>?<br>
+            This action cannot be undone and will remove this item from all vendor inventories.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <%# Calls JS function to submit the form %>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
+            </div>
+        </div>
+    </div>
+
+    <%# --- SCRIPT --- %>
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            deleteForm.submit();
+        }
+
+        // Close if clicking outside modal
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

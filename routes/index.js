@@ -59,8 +59,7 @@ router.get('/', async (req, res) => {
         const [weatherAlerts] = await pool.query(
             `SELECT weather_type, park_closure, event_date, end_time 
              FROM weather_events 
-             WHERE (event_date <= NOW() AND (end_time IS NULL OR end_time >= NOW())) 
-                OR (DATE(event_date) = CURDATE() AND park_closure = TRUE)
+             WHERE event_date <= NOW() AND (end_time IS NULL OR end_time >= NOW())
              ORDER BY event_date DESC`
         );
 

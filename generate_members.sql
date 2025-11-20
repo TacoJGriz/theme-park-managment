@@ -162,8 +162,6 @@ DELETE FROM membership;
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
 -- 2. Generate "Past" Members (Start Year 2024)
-CALL GenerateMembers(300, 2024);
+CALL GenerateMembers(4512, 2024);
 
--- 3. Generate "Current" Members (Start Year 2025)
-CALL GenerateMembers(300, 2025);
 SET SQL_SAFE_UPDATES = 1;
