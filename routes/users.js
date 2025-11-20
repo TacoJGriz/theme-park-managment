@@ -208,7 +208,7 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
 
     let connection;
     try {
-        const isPending = FALSE; // Set to FALSE since Admin bypasses pending status
+        const isPending = false; // CORRECTED: Use lowercase 'false'
         const publicEmployeeId = crypto.randomUUID();
         const hash = await bcrypt.hash(password, saltRounds);
         connection = await pool.getConnection();
