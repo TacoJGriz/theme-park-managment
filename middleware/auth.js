@@ -241,13 +241,16 @@ const isGuest = (req, res, next) => {
 };
 
 const countPendingApprovals = async (req, res, next) => {
+    // Initialize defaults
+    res.locals.approvalCount = 0;
+    res.locals.newApprovalCount = 0;
+    res.locals.maintenanceCount = 0; // Initialize maintenance count
+
     if (!req.session || !req.session.user) {
-        res.locals.approvalCount = 0;
-        res.locals.newApprovalCount = 0;
         return next();
     }
 
-    const { role, locationId } = req.session.user;
+    const { id, role, locationId } = req.session.user; // Destructure id for queries
     let count = 0;
 
     try {
@@ -278,15 +281,23 @@ const countPendingApprovals = async (req, res, next) => {
             count += iResult[0].count;
         }
 
+        // 3. Active Maintenance Assignments (Maintenance Staff only)
+        if (role === 'Maintenance') {
+            const [assignResult] = await pool.query(
+                'SELECT COUNT(*) as count FROM maintenance WHERE employee_id = ? AND end_date IS NULL',
+                [id]
+            );
+            res.locals.maintenanceCount = assignResult[0].count;
+        }
+
         res.locals.approvalCount = count;
 
-        // Calculate "New" since last check
+        // Calculate "New" since last check (For Admins/Managers)
         const lastCheck = req.session.lastApprovalCheckCount || 0;
         res.locals.newApprovalCount = Math.max(0, count - lastCheck);
 
     } catch (error) {
-        console.error("Error counting approvals:", error);
-        res.locals.approvalCount = 0;
+        console.error("Error counting approvals/notifications:", error);
     }
     next();
 };

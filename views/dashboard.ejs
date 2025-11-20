@@ -7,62 +7,77 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>        
-        .dashboard-container { padding: 2em; max-width: 1400px; margin: 0 auto; }
+        .dashboard-container { padding: 2em;
+            max-width: 1400px; margin: 0 auto; }
         
-        h1 { color: #444; margin-bottom: 0.2em; }
+        h1 { color: #444;
+            margin-bottom: 0.2em; }
         
         .welcome-message { 
-            font-size: 1.1em; margin-bottom: 2em; padding-bottom: 1em;
+            font-size: 1.1em;
+            margin-bottom: 2em; padding-bottom: 1em;
             border-bottom: 1px solid #ddd; color: #666;
         }
 
         /* --- Assignment Info Box --- */
         .assignment-info {
-            background-color: #e7f5ff; color: #004085;
+            background-color: #e7f5ff;
+            color: #004085;
             border-left: 5px solid #007bff;
             padding: 1.5em;
             border-radius: 4px;
             margin-bottom: 2em;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .assignment-info strong { display: block; font-size: 1.1em; margin-bottom: 0.5em; }
+        .assignment-info strong { display: block; font-size: 1.1em; margin-bottom: 0.5em;
+        }
 
         /* --- Grid Layout --- */
         .card-container {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
         }
 
         /* --- Card Styles --- */
         .card {
-            background: white; padding: 0; /* Removed padding to handle header/body separately */
-            border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: white;
+            padding: 0; /* Removed padding to handle header/body separately */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: transform 0.2s, box-shadow 0.2s;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            border-top: 4px solid #ccc; /* Default border color */
+            border-top: 4px solid #ccc;
+            /* Default border color */
         }
         .card:hover {
-            transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
         .card-header {
-            padding: 1.2em 1.5em; background-color: #fff;
+            padding: 1.2em 1.5em;
+            background-color: #fff;
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .card-header h3 { margin: 0; font-size: 1.2em; color: #333; }
-        .card-icon { font-size: 1.4em; width: 30px; text-align: center; }
+        .card-header h3 { margin: 0; font-size: 1.2em; color: #333;
+        }
+        .card-icon { font-size: 1.4em; width: 30px; text-align: center;
+        }
 
         .card-body {
-            padding: 1.2em 1.5em; flex-grow: 1;
+            padding: 1.2em 1.5em;
+            flex-grow: 1;
         }
 
         .card a {
-            display: block; text-decoration: none;
+            display: block;
+            text-decoration: none;
             color: #555;
             padding: 8px 10px;
             border-radius: 6px;
@@ -71,42 +86,72 @@
             font-weight: 500;
         }
         .card a:hover {
-            background-color: #f8f9fa; color: #007bff;
+            background-color: #f8f9fa;
+            color: #007bff;
             padding-left: 15px; /* Slide effect */
         }
         .card a i {
-            margin-right: 8px; color: #adb5bd;
+            margin-right: 8px;
+            color: #adb5bd;
             width: 20px;
             text-align: center;
         }
-        .card a:hover i { color: #007bff; }
+        .card a:hover i { color: #007bff;
+        }
 
         /* --- Specific Card Colors --- */
-        .card.rides { border-top-color: #dc3545; }
-        .card.rides .card-icon { color: #dc3545; }
+        .card.rides { border-top-color: #dc3545;
+        }
+        .card.rides .card-icon { color: #dc3545;
+        }
 
-        .card.guests { border-top-color: #28a745; }
-        .card.guests .card-icon { color: #28a745; }
+        .card.guests { border-top-color: #28a745;
+        }
+        .card.guests .card-icon { color: #28a745;
+        }
 
-        .card.admin { border-top-color: #007bff; }
-        .card.admin .card-icon { color: #007bff; }
+        .card.admin { border-top-color: #007bff;
+        }
+        .card.admin .card-icon { color: #007bff;
+        }
 
-        .card.events { border-top-color: #6f42c1; }
-        .card.events .card-icon { color: #6f42c1; }
+        .card.events { border-top-color: #6f42c1;
+        }
+        .card.events .card-icon { color: #6f42c1;
+        }
 
-        .card.retail { border-top-color: #fd7e14; }
-        .card.retail .card-icon { color: #fd7e14; }
+        .card.retail { border-top-color: #fd7e14;
+        }
+        .card.retail .card-icon { color: #fd7e14;
+        }
 
-        .card.hr { border-top-color: #17a2b8; }
-        .card.hr .card-icon { color: #17a2b8; }
+        .card.hr { border-top-color: #17a2b8;
+        }
+        .card.hr .card-icon { color: #17a2b8;
+        }
         
         /* --- NEW: Reports Card Color (Indigo) --- */
-        .card.reports { border-top-color: #6610f2; }
-        .card.reports .card-icon { color: #6610f2; }
+        .card.reports { border-top-color: #6610f2;
+        }
+        .card.reports .card-icon { color: #6610f2;
+        }
 
         /* Highlight Special Links */
         .important-link {
-            color: #d39e00 !important; font-weight: bold !important;
+            color: #d39e00 !important;
+            font-weight: bold !important;
+        }
+        
+        /* Notification Note Style */
+        .notification-note {
+            margin-top: 15px; 
+            padding: 12px; 
+            background-color: #fff3cd; 
+            border-left: 4px solid #ffc107; 
+            border-radius: 4px; 
+            color: #856404;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -119,7 +164,8 @@
 
         <% if (user) { %>
             <p class="welcome-message">
-                Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>! You are logged in as <strong><%= user.role %></strong>.
+                Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
+                You are logged in as <strong><%= user.role %></strong>.
             </p>
 
             <% if ((user.role === 'Staff' || user.role === 'Location Manager') && user.locationName) { %>
@@ -161,7 +207,16 @@
                     </div>
                     <div class="card-body">
                         <a href="/rides"><i class="fa-solid fa-list"></i> View Rides</a>
-                 
+
+                        <%# --- NEW: Maintenance Notification --- %>
+                        <% if (user.role === 'Maintenance' && typeof maintenanceCount !== 'undefined' && maintenanceCount > 0) { %>
+                            <div class="notification-note">
+                                <i class="fa-solid fa-triangle-exclamation"></i> 
+                                <strong>Action Required:</strong> You have <strong><%= maintenanceCount %></strong> active work order<%= maintenanceCount === 1 ? '' : 's' %>.
+                                <div style="margin-top:5px;"><small>Check the rides list for broken items assigned to you.</small></div>
+                            </div>
+                        <% } %>
+
                         <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                             <% 
                                 // Logic: If approvals exist, turn text/icon RED. Otherwise, leave empty (default grey).
@@ -188,7 +243,7 @@
                                     
                                     <% if (typeof newApprovalCount !== 'undefined' && newApprovalCount > 0) { %>
                                         <span style="
-                                            background-color: #ffc107; 
+                                            background-color: #ffc107;
                                             color: #333; 
                                             font-size: 0.65em; 
                                             font-weight: 800; 
@@ -275,7 +330,6 @@
                         <a href="/reports/attendance"><i class="fa-solid fa-users-line"></i> Attendance Report</a>
                         <a href="/reports/ride-popularity"><i class="fa-solid fa-star"></i> Ride Popularity</a>
                         <a href="/reports/closure-impact"><i class="fa-solid fa-cloud-showers-heavy"></i> Closure Impact</a>
-                        <%# --- NEW LINK ADDED HERE --- %>
                         <a href="/reports/maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Report</a>
                     </div>
                 </div>
