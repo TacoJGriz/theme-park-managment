@@ -4,82 +4,191 @@
     <meta charset="UTF-8">
     <title>Manage Membership Types</title>
     <style>
-        body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
-            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-        }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
-        }
-        th { background-color: #17a2b8; color: white;
-        }
-        tr:nth-child(even) { background-color: #f9f9f9;
-        }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
-            color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        
-        .action-link { text-decoration: none;
-            color: #007bff; font-weight: bold; }
-
-        /* --- MODIFIED: Removed the conflicting .toggle-form button styles --- */
-        .toggle-form { 
-            display: block; 
-            width: 100%; 
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
             margin: 0; 
-        }
-        
-        .status-active { color: #28a745;
-            font-weight: bold; }
-        .status-inactive { color: #dc3545; font-weight: bold;
+            background-color: #f4f4f9; 
+            color: #333; 
         }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1em; font-weight: bold;
-        }
-        .error { color: #d9534f; background-color: #f2dede;
-        }
-        .success { color: #155724; background-color: #d4edda;
+        /* Main Container */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
 
-        /* --- ACTION BUTTON STYLES --- */
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* Alerts */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+
+        /* --- ADD BUTTON --- */
+        .add-button { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            padding: 12px 25px; 
+            background-color: #28a745;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Status Indicators */
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-inactive { color: #dc3545; font-weight: bold; }
+
+        /* --- ACTION BUTTONS --- */
         .btn-action {
             display: block;
             width: 100%;
             box-sizing: border-box;
-            padding: 5px 10px;
+            padding: 6px 12px;
             margin-bottom: 5px;
-            border-radius: 4px;
+            border-radius: 8px;
             text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.85em;
-            border: 1px solid transparent;
+            border: 1px solid #ced4da;
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
-            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0;
+        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { transform: translateY(-1px); }
+
+        /* Button Variants */
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
+        .btn-deactivate { color: #dc3545; border-color: #dc3545; }
+        .btn-deactivate:hover { background-color: #dc3545; color: white; }
+
+        .btn-activate { color: #28a745; border-color: #28a745; }
+        .btn-activate:hover { background-color: #28a745; color: white; }
+
+        /* Toggle Form Reset */
+        .toggle-form { display: block; margin: 0; width: 100%; }
+
+        /* --- MODAL STYLES (New) --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent dark background */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease-out;
         }
 
-        .btn-edit { color: #007bff; border-color: #007bff;
-        }
-        .btn-edit:hover { background-color: #007bff; color: white;
-        }
-
-        .btn-deactivate { color: #dc3545; border-color: #dc3545;
-        }
-        .btn-deactivate:hover { background-color: #dc3545; color: white;
-        }
-
-        .btn-activate { color: #28a745; border-color: #28a745;
-        }
-        .btn-activate:hover { background-color: #28a745; color: white;
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: scaleUp 0.2s ease-out;
         }
 
+        .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.4em;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 2em;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .modal-btn:hover { opacity: 0.9; }
+
+        .modal-cancel { background-color: #e9ecef; color: #333; }
+        .modal-confirm { background-color: #007bff; color: white; }
+        
+        /* Dynamic colors for confirm button */
+        .confirm-activate { background-color: #28a745; }
+        .confirm-deactivate { background-color: #dc3545; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.95); } to { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -87,8 +196,8 @@
     <div class="container">
         <h1>Manage Membership Types</h1>
 
-        <% if (typeof error !== 'undefined' && error) { %><p class="message error"><%= error %></p><% } %>
-        <% if (typeof success !== 'undefined' && success) { %><p class="message success"><%= success %></p><% } %>
+        <% if (typeof error !== 'undefined' && error) { %><div class="message error"><%= error %></div><% } %>
+        <% if (typeof success !== 'undefined' && success) { %><div class="message success"><%= success %></div><% } %>
 
         <a href="/memberships/types/new" class="add-button">Add New Type</a>
         
@@ -101,13 +210,13 @@
                     <th>Base Members</th>
                     <th>Add-on Price</th>
                     <th>Status</th>
-                    <th style="min-width: 120px;">Actions</th>
+                    <th style="min-width: 140px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% types.forEach(type => { %>
                     <tr>
-                        <td><%= type.public_type_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= type.public_type_id.substring(0, 8).toUpperCase() %></strong></td>
                         <td><%= type.type_name %></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
                         <td><%= type.base_members %></td>
@@ -115,7 +224,7 @@
                             <% if (type.additional_member_price) { %>
                                 $<%= parseFloat(type.additional_member_price).toFixed(2) %>
                             <% } else { %>
-                                N/A
+                                <span style="color: #999;">N/A</span>
                             <% } %>
                         </td>
 
@@ -129,12 +238,26 @@
                         <td>
                             <a href="/memberships/types/edit/<%= type.public_type_id %>" class="btn-action btn-edit">Edit</a>
                             
-                            <%# MODIFIED: Form class updated to use standard block styling %>
-                            <form class="toggle-form" action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST" onsubmit="return confirm('Are you sure?');">
+                            <%# 
+                                CHANGED:
+                                1. Removed onsubmit="return confirm()"
+                                2. Changed button type to "button" (prevents auto-submit)
+                                3. Added onclick handler to open modal 
+                                4. Added unique ID to form for targeting
+                            %>
+                            <form id="form-<%= type.public_type_id %>" class="toggle-form" action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST">
                                 <% if (type.is_active) { %>
-                                    <button type="submit" class="btn-action btn-deactivate">Deactivate</button>
+                                    <button type="button" 
+                                            class="btn-action btn-deactivate" 
+                                            onclick="confirmAction('form-<%= type.public_type_id %>', '<%= type.type_name %>', 'deactivate')">
+                                        Deactivate
+                                    </button>
                                 <% } else { %>
-                                    <button type="submit" class="btn-action btn-activate">Activate</button>
+                                    <button type="button" 
+                                            class="btn-action btn-activate" 
+                                            onclick="confirmAction('form-<%= type.public_type_id %>', '<%= type.type_name %>', 'activate')">
+                                        Activate
+                                    </button>
                                 <% } %>
                             </form>
                         </td>
@@ -143,5 +266,67 @@
             </tbody>
         </table>
     </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure you want to modify this membership?</p>
+            
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+                <button type="button" id="modalConfirmBtn" class="modal-btn modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let formToSubmit = null; // Stores the form ID pending submission
+        const modal = document.getElementById('confirmModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+
+        // Triggered by the Deactivate/Activate buttons
+        function confirmAction(formId, typeName, action) {
+            formToSubmit = document.getElementById(formId);
+            
+            // Customize modal content based on action
+            if (action === 'deactivate') {
+                modalTitle.textContent = 'Deactivate Membership?';
+                modalTitle.style.color = '#dc3545'; // Red title
+                modalMessage.innerHTML = `Are you sure you want to deactivate <strong>${typeName}</strong>?<br>New members will no longer be able to purchase this type.`;
+                confirmBtn.className = 'modal-btn modal-confirm confirm-deactivate';
+                confirmBtn.textContent = 'Deactivate';
+            } else {
+                modalTitle.textContent = 'Activate Membership?';
+                modalTitle.style.color = '#28a745'; // Green title
+                modalMessage.innerHTML = `Are you sure you want to activate <strong>${typeName}</strong>?<br>This will make it available for purchase immediately.`;
+                confirmBtn.className = 'modal-btn modal-confirm confirm-activate';
+                confirmBtn.textContent = 'Activate';
+            }
+
+            // Show modal
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            formToSubmit = null;
+        }
+
+        // Perform the actual submit when user clicks "Confirm"
+        confirmBtn.addEventListener('click', () => {
+            if (formToSubmit) {
+                formToSubmit.submit();
+            }
+        });
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

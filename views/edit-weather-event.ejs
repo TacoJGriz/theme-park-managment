@@ -4,89 +4,183 @@
     <meta charset="UTF-8">
     <title>Edit Weather Event</title>
     <style>
-        body { font-family: sans-serif;
-        margin: 0; background-color: #f4f4f9; }
-        form { max-width: 500px; margin: 2em auto;
-        background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
         }
-        h1 { color: #444; text-align: center; margin-top: 0;
+
+        /* Main Container */
+        .container { 
+            max-width: 800px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
-        div { margin-bottom: 15px;
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
         }
-        label { display: block; margin-bottom: 5px; font-weight: bold;
+
+        /* Form Layout */
+        div.form-group { margin-bottom: 1.5em; }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
         }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
-        border: 1px solid #ccc; }
-        .checkbox-label { display: flex; align-items: center;
-        padding: 10px 0; }
-        input[type="checkbox"] { width: auto; margin-right: 10px;
+
+        /* Inputs & Selects */
+        input[type="datetime-local"], 
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
-        cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #0056b3;
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        .delete-btn { float: right; background-color: #dc3545;
+        
+        /* Checkbox container */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 1em;
+            color: #856404;
+            font-weight: 600;
         }
-        .delete-btn:hover { background-color: #c82333;
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.2);
         }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold;
+        .checkbox-group label {
+            margin: 0;
+            display: inline;
+            color: #856404;
+        }
+
+        /* Buttons */
+        button { 
+            padding: 12px 25px; 
+            background-color: #007bff; /* Blue for Edit/Update */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            background-color: #dc3545;
+            margin-top: 1em;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Cancel Link */
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .cancel-link:hover { 
+            color: #343a40; 
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     
-    <form action="/weather/edit/<%= event.weather_id %>" method="POST">
-        <h1>Edit Weather Event</h1>
-        <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
+    <div class="container">
+        <form action="/weather/edit/<%= event.weather_id %>" method="POST">
+            <h1>Edit Weather Event</h1>
+            <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
+    
+            <% 
+               const toLocalISO = (d) => {
+                   if (!d) return '';
+                   const offset = d.getTimezoneOffset() * 60000;
+                   return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+               }
+               
+               const now = new Date();
+               const offset = now.getTimezoneOffset() * 60000;
+               const maxDateTime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
+            %>
+    
+            <div class="form-group">
+                <label for="event_date">Start Date & Time:</label>
+                <input type="datetime-local" id="event_date" name="event_date" step="60" value="<%= toLocalISO(new Date(event.event_date)) %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="end_time">End Date & Time (optional):</label>
+                 <input type="datetime-local" id="end_time" name="end_time" step="60" value="<%= event.end_time ? toLocalISO(new Date(event.end_time)) : '' %>" max="<%= maxDateTime %>">
+            </div>
+            
+            <div class="form-group">
+                <label for="weather_type">Weather Type:</label>
+                <select id="weather_type" name="weather_type" required>
+                    <% ['Rain', 'Thunderstorm', 'Tornado Warning', 'Heatwave', 'Other'].forEach(type => { %>
+                        <option value="<%= type %>" <%= event.weather_type === type ? 'selected' : '' %>><%= type %></option>
+                    <% }); %>
+                </select>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="park_closure" name="park_closure" value="1" <%= event.park_closure ? 'checked' : '' %>>
+                <label for="park_closure">Did this cause a park closure?</label>
+            </div>
+            
+            <br>
+            <button type="submit">Update Event</button>
+            
+            <button type="submit" formaction="/weather/delete/<%= event.weather_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this log? This cannot be undone.')">Delete Event</button>
 
-        <% 
-           // Format dates for datetime-local input (YYYY-MM-DDTHH:MM)
-           const toLocalISO = (d) => {
-             if (!d) return '';
-               const offset = d.getTimezoneOffset() * 60000;
-               return new Date(d.getTime() - offset).toISOString().slice(0, 16);
-           }
-           
-           // NEW: Calculate current time string for max attribute
-           const now = new Date();
-           const offset = now.getTimezoneOffset() * 60000;
-           const maxDateTime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
-        %>
-
-        <div>
-            <label for="event_date">Start Date & Time:</label>
-            <input type="datetime-local" id="event_date" name="event_date" value="<%= toLocalISO(new Date(event.event_date)) %>" required>
-        </div>
-        <div>
-            <label for="end_time">End Date & Time (optional):</label>
-            <%# --- ADDED MAX ATTRIBUTE --- %>
-            <input type="datetime-local" id="end_time" 
-                name="end_time" 
-                value="<%= event.end_time ? toLocalISO(new Date(event.end_time)) : '' %>"
-                max="<%= maxDateTime %>">
-        </div>
-        <div>
-            <label for="weather_type">Weather Type:</label>
-            <select id="weather_type" name="weather_type" required>
-                <% ['Rain', 'Thunderstorm', 'Tornado Warning', 'Heatwave', 'Other'].forEach(type => { %>
-                    <option value="<%= type %>" <%= event.weather_type === type ? 'selected' : '' %>><%= type %></option>
-                <% }); %>
-            </select>
-        </div>
-        <div>
-            <label class="checkbox-label">
-                <input type="checkbox" name="park_closure" value="1" <%= event.park_closure ?
-'checked' : '' %>>
-                Did this cause a park closure?
-            </label>
-        </div>
-        <br>
-        <button type="submit">Update Event</button>
-        <a href="/weather<%= returnQuery ? '?'
-+ returnQuery : '' %>" class="cancel-link">Cancel</a>
-
-        <button type="submit" formaction="/weather/delete/<%= event.weather_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this log? This cannot be undone.')">Delete</button>
-    </form>
+            <a href="/weather<%= returnQuery ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

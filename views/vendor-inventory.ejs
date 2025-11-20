@@ -4,27 +4,171 @@
     <meta charset="UTF-8">
     <title><%= vendor.vendor_name %> - Inventory</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        h1 small { display: block; font-size: 0.6em; color: #007bff; margin-top: 5px; }
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #343a40; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        /* Main Container */
+        .container { 
+            max-width: 1200px;
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
 
-        .button-bar { display: flex; justify-content: space-between; margin-bottom: 1.5em; }
-        .add-btn { padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .back-btn { padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
         
-        .restock-link { display: inline-block; padding: 5px 10px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
-        .destock-link { display: inline-block; padding: 5px 10px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-left: 5px; }
-        .deshelf-btn { background: none; border: none; color: #6c757d; font-weight: bold; cursor: pointer; text-decoration: underline; font-size: 0.9em; margin-left: 10px; }
+        h1 small { 
+            display: block; 
+            font-size: 0.6em; 
+            color: #777; 
+            font-weight: normal; 
+            margin-top: 5px; 
+            line-height: 1.4;
+        }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; border: 1px solid transparent; }
-        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        /* Button Bar */
+        .button-bar { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 1.5em; 
+            align-items: center;
+        }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 1.5em;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Status Indicators */
+        .status-pending { color: #d39e00; font-weight: bold; }
+        .status-low { color: #dc3545; font-weight: bold; }
+        .status-ok { color: #28a745; font-weight: bold; }
+
+        /* --- ACTION BUTTONS --- */
+        /* Shared style for Links (a) and Buttons (button) */
+        .action-btn {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-right: 5px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif; /* Ensure font matches */
+            line-height: normal;
+        }
+
+        /* 1. Primary Action: Blue Outline */
+        .btn-restock {
+            color: #007bff;
+            border-color: #007bff;
+            background: white;
+        }
+        .btn-restock:hover { background-color: #007bff; color: white; }
+
+        /* 2. Secondary Action: Red Outline */
+        .btn-destock {
+            color: #dc3545;
+            border-color: #dc3545;
+            background: white;
+        }
+        .btn-destock:hover { background-color: #dc3545; color: white; }
+        
+        /* 3. Destructive Action: Solid Red (Standardized) */
+        .btn-delete {
+            color: white;
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-delete:hover { background-color: #c82333; }
+
+        /* Disabled State */
+        .btn-disabled {
+            color: #999;
+            border-color: #eee;
+            pointer-events: none;
+            background: #f9f9f9;
+        }
+
+        /* Form positioning for Deshelf button */
+        .deshelf-form { display: inline-block; }
+
+        /* Main Page Buttons */
+        .add-btn { 
+            display: inline-block;
+            padding: 10px 20px; 
+            background-color: #28a745; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-btn:hover { background-color: #218838; transform: translateY(-1px); }
+
+        .back-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #e9ecef;
+            color: #007bff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background-color: #dee2e6; color: #0056b3; }
+
+        /* Alerts */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body>
@@ -38,13 +182,18 @@
             <div class="message error"><%= error %></div>
         <% } %>
 
-        <h1>Inventory Management <small><%= vendor.vendor_name %></small></h1>
+        <h1>
+            Inventory Management 
+            <small><%= vendor.vendor_name %></small>
+        </h1>
         
         <div class="button-bar">
             <a href="<%= backLink %>" class="back-btn">&laquo; <%= backText %></a>
             
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                <a href="/inventory/add?preselected_vendor=<%= vendor.public_vendor_id %>" class="add-btn">Add Item to Shelf</a>
+                <a href="/inventory/add?preselected_vendor=<%= vendor.public_vendor_id %>" class="add-btn">
+                    <i class="fa-solid fa-plus"></i> Add Item to Shelf
+                </a>
             <% } %>
         </div>
 
@@ -54,40 +203,41 @@
                     <th>Item Name</th>
                     <th>Current Stock</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th style="min-width: 220px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (inventory.length === 0) { %>
-                    <tr><td colspan="4" style="text-align: center; padding: 2em;">This vendor has no items on the shelf.</td></tr>
+                    <tr><td colspan="4" style="text-align: center; padding: 2em; color: #777; font-style: italic;">This vendor has no items on the shelf.</td></tr>
                 <% } %>
                 <% inventory.forEach(item => { %>
                     <tr>
-                        <td><%= item.item_name %></td>
+                        <td><strong><%= item.item_name %></strong></td>
                         <td><%= item.current_count %></td>
                         <td>
                             <% if (item.pending_count) { %>
-                                <span style="color: #d39e00; font-weight: bold;">Restock Pending (<%= item.pending_count %>)</span>
+                                <span class="status-pending">Restock Pending (<%= item.pending_count %>)</span>
                             <% } else if (item.current_count < 10) { %>
-                                <span style="color: #dc3545; font-weight: bold;">Low Stock</span>
+                                <span class="status-low">Low Stock</span>
                             <% } else { %>
-                                <span style="color: #28a745;">OK</span>
+                                <span class="status-ok">OK</span>
                             <% } %>
                         </td>
                         <td>
-                            <%# Restock %>
+                            <%# Restock Button %>
                             <% if (item.pending_count) { %>
-                                <span style="color: #999; font-size: 0.9em;">Request Sent</span>
+                                <span class="action-btn btn-disabled">Request Sent</span>
                             <% } else { %>
-                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="restock-link">Restock</a>
+                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="action-btn btn-restock">Restock</a>
                             <% } %>
 
                             <%# Destock/Deshelf (Managers Only) %>
                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="destock-link">Destock</a>
+                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>" class="action-btn btn-destock">Destock</a>
                                 
-                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>" method="POST" style="display: inline-block;" onsubmit="return confirm('Remove <%= item.item_name %> from this vendor?');">
-                                    <button type="submit" class="deshelf-btn">Deshelf</button>
+                                <%# MODIFIED: Deshelf is now a solid red button to match standard 'Remove' action %>
+                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>" method="POST" class="deshelf-form" onsubmit="return confirm('Remove <%= item.item_name %> from this vendor?');">
+                                    <button type="submit" class="action-btn btn-delete">Deshelf</button>
                                 </form>
                             <% } %>
                         </td>

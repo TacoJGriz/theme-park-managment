@@ -4,95 +4,197 @@
     <meta charset="UTF-8">
     <title>Edit Member Profile</title>
     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em;
- }
-        h1 small { color: #17a2b8; font-size: 0.7em; display: block; font-weight: normal;
- }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em;
- border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid;
- grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px;
- }
-        label { display: block; margin-bottom: 5px; font-weight: bold;
- }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
- border: 1px solid #ccc; }
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* Main Container */
+        .container { 
+            max-width: 800px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        h1 small { 
+            display: block; 
+            font-size: 0.6em; 
+            color: #777; 
+            font-weight: normal; 
+            margin-top: 5px; 
+            line-height: 1.4;
+        }
+
+        /* Form Layout */
+        .form-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5em; 
+        }
+        .full-width { grid-column: 1 / -1; }
+        
+        div.form-group { margin-bottom: 0; }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        /* Inputs */
+        input[type="text"], 
+        input[type="email"], 
+        input[type="tel"], 
+        input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Read-only State (for Sub-members) */
         input[readonly] {
             background-color: #e9ecef;
- /* Light grey background */
+            color: #6c757d;
             cursor: not-allowed;
- }
-        button { padding: 12px 20px; background-color: #17a2b8;
-            color: white; border: none;
- cursor: pointer; border-radius: 4px; font-size: 1em;
+            border-color: #dee2e6;
         }
-        .error { color: red; font-weight: bold;
- background-color: #f2dede; padding: 1em; border-radius: 4px; }
-        .full-width { grid-column: 1 / -1;}
+
+        /* Explanatory Text */
+        .help-text {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Error Message */
+        .error { 
+            color: #721c24; 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb;
+            padding: 1em; 
+            border-radius: 8px;
+            margin-bottom: 1.5em; 
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        button { 
+            padding: 12px 25px; 
+            background-color: #007bff; /* Primary Blue for Edit/Save */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Cancel Link */
         .cancel-link {
-            display: inline-block;
- margin-left: 15px;
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
             text-decoration: none;
             color: #6c757d;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
         }
-        .cancel-link:hover { text-decoration: underline;
- }
+        .cancel-link:hover { 
+            color: #343a40; 
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <% const isSubMember = member.primary_member_id;
- %>
-    <h1>Edit Member Profile
-        <%# Show clean 8-char public ID %>
-        <small>For: <%= member.first_name %> <%= member.last_name %> (ID: <%= member.public_membership_id.substring(0, 8).toUpperCase() %>)</small>
-    </h1>
     
-    <% if (typeof error !== 'undefined' && error) { %>
-        <p class="error"><%= error %></p>
-    <% } %>
+    <% const isSubMember = member.primary_member_id; %>
     
-    <%# CHANGED: Action now uses public_membership_id %>
-    <form action="/members/edit/<%= member.public_membership_id %>" method="POST">
-        <div class="form-grid">
-            <div>
-                 <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
-            </div>
-            <div>
-                <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" value="<%= member.last_name 
- %>" required>
+    <div class="container">
+        <h1>
+            Edit Member Profile
+            <small>For: <%= member.first_name %> <%= member.last_name %> (ID: <%= member.public_membership_id.substring(0, 8).toUpperCase() %>)</small>
+        </h1>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+        
+        <form action="/members/edit/<%= member.public_membership_id %>" method="POST">
+            <div class="form-grid">
+                <div class="form-group">
+                     <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
+                </div>
+                
+                <div class="form-group full-width">
+                     <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="<%= member.email %>" <%= isSubMember ? 'readonly' : '' %> required>
+                    <% if (isSubMember) { %>
+                        <div class="help-text"><i class="fa-solid fa-lock"></i> Email and phone for sub-members are managed by the primary account holder.</div>
+                    <% } %>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone_number">Phone Number:</label>
+                    <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>" <%= isSubMember ? 'readonly' : '' %>>
+                </div>
+       
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth:</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
+                </div>
             </div>
             
-            <div class="full-width">
-                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="<%= member.email %>" <%= isSubMember ?
- 'readonly' : '' %> required>
-                <% if (isSubMember) { %>
-                    <small style="color: #555; font-style: italic;">Email and phone for sub-members are managed by the primary account holder.</small>
-                <% } %>
-            </div>
+            <br>
             
-            <div>
-                <label for="phone_number">Phone Number:</label>
-                <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>" <%= isSubMember ?
- 'readonly' : '' %>>
-            </div>
-   
-            <div>
-                <label for="date_of_birth">Date of Birth:</label>
-                <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
-            </div>
-        </div>
-         <br>
-        <button type="submit">Save Changes</button>
-        <a href="/members<%= currentQueryString ? '?'
- + currentQueryString : '' %>" class="cancel-link">Cancel</a>
-    </form>
+            <button type="submit">Save Changes</button>
+            
+            <%# Smart Cancel Link %>
+            <a href="/members<%= (typeof currentQueryString !== 'undefined' && currentQueryString) ? '?' + currentQueryString : '' %>" class="cancel-link">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

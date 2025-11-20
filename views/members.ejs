@@ -4,102 +4,75 @@
     <meta charset="UTF-8">
     <title>Park Members</title>
     <style>
-        body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
-        
-        /* --- Wider Layout --- */
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* Main Container - Ultra Wide for Data Table */
         .container { 
-            max-width: 95%; 
+            max-width: 1600px; 
             margin: 2em auto; 
             background: white; 
-            padding: 2em; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
-        }
-        
-        /* --- Single Line Cells --- */
-        th, td { 
-            padding: 12px 8px; 
-            text-align: left; 
-            border-bottom: 1px solid #ddd;
-            white-space: nowrap; 
-        }
-        
-        /* --- Smart Email Truncation --- */
-        .cell-email {
-            max-width: 250px; 
-            overflow: hidden;
-            text-overflow: ellipsis; 
-        }
-        
-        th { background-color: #17a2b8;
-            color: white;
-        }
-        tr:nth-child(even) { background-color: #f9f9f9;
-        }
-        tr:hover { background-color: #f1f1f1;
-        }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745;
-            color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .add-button:hover { background-color: #218838;
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
 
-        /* --- Sortable Header Styles --- */
-        th.sortable a { 
-            text-decoration: none;
-            color: white; 
-            display: flex; 
-            justify-content: space-between; /* Default: Spread text and arrow */
-            align-items: center; 
-        }
-        th.sortable a:hover { text-decoration: underline;
-        }
-        
-        /* --- NEW: Centered Header Style for Numeric Columns --- */
-        th.sortable a.flex-center {
-            justify-content: center; /* Center text and arrow together */
-            gap: 5px; /* Small gap between text and arrow */
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
         }
 
-        .sort-indicator { font-size: 1.2em; margin-left: 5px;
-        }
-
-        /* --- Stats Bar Styles --- */
+        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1em;
-            margin-bottom: 1.5em;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5em;
+            margin-bottom: 2em;
         }
         .stat-card {
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+            border: 1px solid #e9ecef;
             padding: 1.5em;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s;
         }
-        .stat-card h3 {
-            margin: 0 0 0.25em 0;
+        .stat-card:hover { transform: translateY(-2px); }
+        
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
             font-size: 2.5em;
-            color: #007bff; 
+            font-weight: 700;
         }
-        .stat-card h3.active { color: #28a745;
-        }
-        .stat-card h3.expired { color: #dc3545;
-        }
-        .stat-card p {
-            margin: 0;
-            font-weight: bold;
-            color: #6c757d;
+        .stat-card h3.total { color: #007bff; }
+        .stat-card h3.active { color: #28a745; }
+        .stat-card h3.expired { color: #dc3545; }
+        
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.9em;
+            text-transform: uppercase;
         }
 
-        /* --- Filter Bar Styles --- */
-        .filter-bar { background-color: #f8f9fa;
-            border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
+        /* --- FILTER BAR --- */
+        .filter-bar { 
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
         }
         .filter-controls {
             display: grid;
@@ -107,87 +80,162 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold;
-            display: block; margin-bottom: 5px; font-size: 0.9em; }
-        .filter-controls input[type="search"],
-        .filter-controls select { width: 100%;
-            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+        .filter-controls label { 
+            font-weight: 600;
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.9em;
+            color: #495057;
         }
-        .filter-buttons { display: flex; gap: 10px;
-        }
-        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none;
-            border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box;
-        }
-        .btn-filter { background-color: #007bff;
-        }
-        .btn-clear { background-color: #6c757d;
-        }
-
-        /* --- Status Styles --- */
-        .status-Active { color: #28a745;
-            font-weight: bold; }
-        .status-Expired { color: #dc3545; font-weight: bold;
-        }
-        
-        /* --- Flash Message Styles --- */
-        .message {
-            padding: 1em;
-            border-radius: 4px;
-            margin-bottom: 1.5em;
-            font-weight: bold;
-            border: 1px solid transparent;
-        }
-        .success {
-            color: #155724;
-            background-color: #d4edda; 
-            border-color: #c3e6cb;
-        }
-        .error {
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-
-        /* --- ACTION BUTTON STYLES --- */
-        .btn-action {
-            display: inline-block; 
+        .filter-controls input,
+        .filter-controls select { 
+            width: 100%;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
             box-sizing: border-box;
-            padding: 4px 8px; 
-            margin-right: 4px;
-            border-radius: 4px;
+            font-family: 'Poppins', sans-serif;
+        }
+        .filter-buttons { display: flex; gap: 10px; }
+        
+        .filter-btn { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            text-align: center; 
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover { transform: translateY(-1px); }
+        
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
+
+        /* --- ADD BUTTON --- */
+        .add-button { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            padding: 12px 25px; 
+            background-color: #28a745;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.9em; /* Slightly compacted for data density */
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 12px 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td { 
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Sortable Links */
+        th.sortable a { 
+            text-decoration: none;
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        th.sortable a.flex-center { justify-content: center; gap: 5px; }
+        th.sortable a:hover { opacity: 0.9; }
+
+        /* --- STATUS INDICATORS --- */
+        .status-Active { color: #28a745; font-weight: bold; }
+        .status-Expired { color: #dc3545; font-weight: bold; }
+
+        /* --- SMART EMAIL CELL --- */
+        .cell-email {
+            max-width: 220px; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+        }
+
+        /* --- ACTION BUTTONS --- */
+        .actions-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 140px;
+        }
+
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 10px;
+            border-radius: 6px;
             text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.8em;
-            border: 1px solid transparent;
+            border: 1px solid #ced4da;
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-right: 0;
-        }
+        .btn-action:hover { transform: translateY(-1px); }
 
-        .btn-history {
-            color: #17a2b8;
-            border-color: #17a2b8;
-        }
-        .btn-history:hover { background-color: #17a2b8; color: white;
-        }
+        /* Variants */
+        .btn-history { color: #17a2b8; border-color: #17a2b8; }
+        .btn-history:hover { background-color: #17a2b8; color: white; }
 
-        .btn-edit {
-            color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-edit:hover { background-color: #007bff; color: white;
-        }
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
 
-        .btn-reset {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-        .btn-reset:hover { background-color: #dc3545; color: white;
-        }
+        .btn-reset { color: #dc3545; border-color: #dc3545; }
+        .btn-reset:hover { background-color: #dc3545; color: white; }
 
+        /* Alerts */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body>
@@ -201,67 +249,55 @@
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="message error"><%= error %></div>
         <% } %>
+
         <div class="stats-bar">
             <div class="stat-card">
-                <h3 class="total"><%= counts.totalMembers ||
-                    0 %></h3>
-                <p>Total Members (Current View)</p>
+                <h3 class="total"><%= counts.totalMembers || 0 %></h3>
+                <p>Total Members</p>
             </div>
             <div class="stat-card">
-                <h3 class="active"><%= counts.activeMembers ||
-                    0 %></h3>
-                <p>Active Members</p>
+                <h3 class="active"><%= counts.activeMembers || 0 %></h3>
+                <p>Active</p>
             </div>
             <div class="stat-card">
-                <h3 class="expired"><%= counts.expiredMembers ||
-                    0 %></h3>
-                <p>Expired Members</p>
+                <h3 class="expired"><%= counts.expiredMembers || 0 %></h3>
+                <p>Expired</p>
             </div>
         </div>
-
 
         <div class="filter-bar">
             <form action="/members" method="GET">
                 <div class="filter-controls">
-                    
                     <div>
                         <label for="search">Search Member</label>
                         <input type="search" id="search" name="search" 
                                placeholder="ID, Name, Email, Phone..." 
                                value="<%= search %>">
                     </div>
-                    
                     <div>
                         <label for="filter_type">Membership Type</label>
                         <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                             <% types.forEach(type => { %>
-                                <option value="<%= type.type_id %>" 
-                                        <%= String(filters.type) === String(type.type_id) ?
-                                        'selected' : '' %>>
+                                <option value="<%= type.type_id %>" <%= String(filters.type) === String(type.type_id) ? 'selected' : '' %>>
                                     <%= type.type_name %>
                                 </option>
                             <% }); %>
                         </select>
                     </div>
-
                     <div>
                         <label for="filter_status">Status</label>
                         <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
-                            <option value="active" <%= filters.status === 'active' ?
-                                'selected' : '' %>>Active</option>
-                            <option value="expired" <%= filters.status === 'expired' ?
-                                'selected' : '' %>>Expired</option>
+                            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="expired" <%= filters.status === 'expired' ? 'selected' : '' %>>Expired</option>
                         </select>
                     </div>
-
                     <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
                         <a href="/members" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-                
                 <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
@@ -269,14 +305,12 @@
             </form>
         </div>
 
-
         <a href="/members/new" class="add-button">Add New Member</a>
 
         <% 
             const getSortState = (column) => {
                 let nextDir = 'asc';
                 let indicator = '';
-
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
@@ -286,23 +320,11 @@
                         indicator = '▼';
                     }
                 }
-                
                 let href = `/members?search=${encodeURIComponent(search)}`;
-                if (filters.type) {
-                    href += `&filter_type=${encodeURIComponent(filters.type)}`;
-                }
-                if (filters.status) {
-                    href += `&filter_status=${encodeURIComponent(filters.status)}`;
-                }
-                
-                if (nextDir !== 'none') {
-                    href += `&sort=${column}&dir=${nextDir}`;
-                }
-
-                return {
-                    href: href,
-                    indicator: indicator
-                };
+                if (filters.type) href += `&filter_type=${encodeURIComponent(filters.type)}`;
+                if (filters.status) href += `&filter_status=${encodeURIComponent(filters.status)}`;
+                if (nextDir !== 'none') href += `&sort=${column}&dir=${nextDir}`;
+                return { href: href, indicator: indicator };
             };
             
             const idSort = getSortState('id');
@@ -321,68 +343,56 @@
                 <tr>
                     <th class="sortable">
                         <a href="<%= idSort.href %>">
-                            <span>ID</span>
-                            <span class="sort-indicator"><%= idSort.indicator %></span>
+                            <span>ID</span> <span class="sort-indicator"><%= idSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= nameSort.href %>">
-                            <span>Name</span>
-                            <span class="sort-indicator"><%= nameSort.indicator %></span>
+                            <span>Name</span> <span class="sort-indicator"><%= nameSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= emailSort.href %>">
-                            <span>Email</span>
-                            <span class="sort-indicator"><%= emailSort.indicator %></span>
+                            <span>Email</span> <span class="sort-indicator"><%= emailSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= phoneSort.href %>">
-                            <span>Phone</span>
-                            <span class="sort-indicator"><%= phoneSort.indicator %></span>
+                            <span>Phone</span> <span class="sort-indicator"><%= phoneSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= typeSort.href %>">
-                            <span>Type</span>
-                            <span class="sort-indicator"><%= typeSort.indicator %></span>
+                            <span>Type</span> <span class="sort-indicator"><%= typeSort.indicator %></span>
                         </a>
                     </th>
-                    
-                    <%# --- MODIFIED: Added .flex-center class to Visits Header --- %>
                     <th class="sortable" style="text-align: center;">
                         <a href="<%= visitsSort.href %>" class="flex-center">
-                            <span>Visits</span>
-                            <span class="sort-indicator"><%= visitsSort.indicator %></span>
+                            <span>Visits</span> <span class="sort-indicator"><%= visitsSort.indicator %></span>
                         </a>
                     </th>
-
                     <th class="sortable">
                         <a href="<%= startDateSort.href %>">
-                            <span>Start</span>
-                            <span class="sort-indicator"><%= startDateSort.indicator %></span>
+                            <span>Start</span> <span class="sort-indicator"><%= startDateSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= endDateSort.href %>">
-                            <span>End</span>
-                            <span class="sort-indicator"><%= endDateSort.indicator %></span>
+                            <span>End</span> <span class="sort-indicator"><%= endDateSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
                         <a href="<%= statusSort.href %>">
-                            <span>Status</span>
-                            <span class="sort-indicator"><%= statusSort.indicator %></span>
+                            <span>Status</span> <span class="sort-indicator"><%= statusSort.indicator %></span>
                         </a>
                     </th>
-                    <th style="min-width: 210px;">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                <% if (members.length === 0) { %>
                     <tr>
-                        <td colspan="10" style="text-align: center;">No members found matching criteria.</td>
+                        <td colspan="10" style="text-align: center; padding: 2em; color: #777;">No members found matching criteria.</td>
                     </tr>
                 <% } %>
 
@@ -391,26 +401,28 @@
                 <% members.forEach(member => { %>
                     <tr>
                         <td><%= member.public_membership_id.substring(0, 8).toUpperCase() %></td>
-                        <td><%= member.first_name %> <%= member.last_name %></td>
+                        <td><strong><%= member.first_name %> <%= member.last_name %></strong></td>
                         <td class="cell-email" title="<%= member.email %>"><%= member.email %></td>
                         <td><%= member.phone_number %></td>
                         <td><%= member.type_name || 'N/A' %></td>
                         
-                        <%# --- Visit Count Cell --- %>
-                        <td style="text-align: center; font-weight: bold;">
+                        <td style="text-align: center; font-weight: bold; color: #007bff;">
                             <%= member.visit_count %>
                         </td>
 
                         <td><%= member.start_date_formatted %></td>
                         <td><%= member.end_date_formatted %></td>
                         <td class="status-<%= member.member_status %>"><%= member.member_status %></td>
+                        
                         <td>
-                            <a href="/members/history/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-history">History</a>
-                            <a href="/members/edit/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-edit">Edit</a>
-                            
-                            <% if (!member.primary_member_id) { %>
-                                <a href="/members/reset-password/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-reset" onclick="return confirm('Are you sure you want to reset this member\'s password?');">Reset</a>
-                            <% } %>
+                            <div class="actions-cell">
+                                <a href="/members/history/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-history">View History</a>
+                                <a href="/members/edit/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-edit">Edit Profile</a>
+                                
+                                <% if (!member.primary_member_id) { %>
+                                    <a href="/members/reset-password/<%= member.public_membership_id %><%= queryStringWithPrefix %>" class="btn-action btn-reset">Reset Password</a>
+                                <% } %>
+                            </div>
                         </td>
                     </tr>
                 <% }); %>

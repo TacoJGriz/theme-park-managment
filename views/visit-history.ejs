@@ -4,33 +4,112 @@
     <meta charset="UTF-8">
     <title>Visit History</title>
     
-    <%# --- CONDITIONAL FONTS & STYLES --- %>
+    <%# --- CONDITIONAL STYLES --- %>
     <% if (user) { %>
-        <%# --- EMPLOYEE VIEW (Standard Admin) --- %>
+        <%# --- EMPLOYEE VIEW (Standard Admin Theme) --- %>
         <style>
-            body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-            .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; font-size: 2em; }
-            table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-            th { background-color: #17a2b8; color: white; padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-            td { padding: 12px; border-bottom: 1px solid #ddd; color: #333; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; padding: 8px 15px; background-color: #e9ecef; border-radius: 4px; }
+            /* Standardized Admin Styles */
+            body { 
+                font-family: 'Poppins', sans-serif;
+                margin: 0; 
+                background-color: #f4f4f9; 
+                color: #333; 
+            }
+
+            .container { 
+                max-width: 1200px; 
+                margin: 2em auto; 
+                background: white; 
+                padding: 2.5em; 
+                border-radius: 12px; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            }
+
+            h1 { 
+                color: #2c3e50;
+                border-bottom: 2px solid #f0f0f0; 
+                padding-bottom: 0.5em; 
+                margin-bottom: 1.5em;
+                font-size: 2.2em;
+                font-weight: 700;
+            }
+            h1 small { font-size: 0.6em; color: #777; font-weight: normal; margin-left: 10px; }
+
+            /* Standard Table */
+            table { 
+                width: 100%;
+                border-collapse: separate; 
+                border-spacing: 0;
+                font-size: 0.95em;
+                background: white;
+                border-radius: 12px; 
+                overflow: hidden;
+                box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+                margin-top: 1em;
+            }
+            th { 
+                background-color: #007bff; /* Admin Blue */
+                color: white; 
+                padding: 15px;
+                text-align: left; 
+                font-weight: 600;
+                border: none;
+                text-transform: uppercase;
+                font-size: 0.85em;
+                letter-spacing: 0.5px;
+            }
+            td { 
+                padding: 15px;
+                border-bottom: 1px solid #f1f1f1;
+                vertical-align: middle;
+                color: #555;
+            }
+            tr:last-child td { border-bottom: none; }
+            tr:nth-child(even) { background-color: #f8f9fa; }
+            tr:hover { background-color: #f1f5f9; }
+
+            /* Action Button (View Receipt) */
+            .btn-action {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.85em;
+                color: #007bff;
+                border: 1px solid #007bff;
+                background-color: white;
+                transition: all 0.2s;
+            }
+            .btn-action:hover { background-color: #007bff; color: white; }
+
+            /* Back Link */
+            .back-link {
+                display: inline-block;
+                margin-bottom: 1.5em;
+                text-decoration: none;
+                color: #007bff;
+                font-weight: 600;
+                padding: 8px 15px;
+                background-color: #e9ecef;
+                border-radius: 8px;
+                transition: background-color 0.2s;
+            }
             .back-link:hover { background-color: #dee2e6; color: #0056b3; }
-            .action-link { color: #007bff; font-weight: bold; text-decoration: none; }
-            .action-link:hover { text-decoration: underline; }
+            
+            /* Helper for the card wrapper in member view, essentially invisible here */
+            .table-card { display: block; }
         </style>
     <% } else { %>
-        <%# --- MEMBER VIEW (Magical Theme) --- %>
+        <%# --- MEMBER VIEW (Magical Customer Theme) --- %>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
         
         <style>
-            /* --- STANDARDIZED VARIABLES --- */
             :root {
                 --primary: #6f42c1;
-                --accent: #17a2b8; /* Member Theme */
+                --accent: #17a2b8;
                 --dark: #343a40;
                 --light: #f8f9fa;
                 --white: #ffffff;
@@ -49,13 +128,13 @@
             }
             h1 small { font-family: 'Poppins', sans-serif; color: var(--gray); font-size: 0.5em; font-weight: 400; display: block; margin-top: 5px; }
 
-            /* --- Magic Card & Table --- */
+            /* Magical Table Card */
             .table-card {
                 background: var(--white);
                 border-radius: var(--radius);
                 box-shadow: var(--shadow-lg);
                 overflow: hidden;
-                border-top: 5px solid var(--accent); /* Theme Accent */
+                border-top: 5px solid var(--accent);
             }
             
             table { width: 100%; border-collapse: collapse; }
@@ -67,7 +146,7 @@
             td { padding: 1.2em; border-bottom: 1px solid #f0f0f0; color: #555; }
             tr:hover { background-color: #f9f9f9; }
 
-            /* --- Buttons --- */
+            /* Member Buttons */
             .btn-back { 
                 display: inline-block; margin-bottom: 2em; 
                 text-decoration: none; color: var(--gray); font-weight: 600; 
@@ -75,14 +154,15 @@
             }
             .btn-back:hover { color: var(--accent); transform: translateX(-5px); }
 
-            .btn-view {
+            .btn-action {
                 display: inline-block; padding: 6px 15px;
                 background-color: var(--accent); color: var(--white);
                 border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.85em;
                 transition: var(--transition);
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                border: none;
             }
-            .btn-view:hover { background-color: #138496; transform: translateY(-2px); }
+            .btn-action:hover { background-color: #138496; transform: translateY(-2px); }
             
             .badge-group { background: #e2e6ea; color: var(--dark); padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; }
         </style>
@@ -125,16 +205,22 @@
                         <tr>
                             <td>
                                 <strong><%= new Date(visit.visit_date).toLocaleDateString() %></strong><br>
-                                <span style="font-size: 0.85em; color: var(--gray);"><%= new Date(visit.visit_date).toLocaleTimeString() %></span>
+                                <span style="font-size: 0.85em; color: #999;"><%= new Date(visit.visit_date).toLocaleTimeString() %></span>
                             </td>
                             <td><%= visit.type_name %></td>
-                            <td><span class="badge-group"><%= visit.group_size %> Guest<%= visit.group_size > 1 ? 's' : '' %></span></td>
-                            <td style="font-weight: bold; color: var(--dark);">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
                             <td>
                                 <% if (user) { %>
-                                    <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="action-link" target="_blank">View Receipt</a>
+                                    <%= visit.group_size %> Guest<%= visit.group_size > 1 ? 's' : '' %>
                                 <% } else { %>
-                                    <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="btn-view">View Receipt</a>
+                                    <span class="badge-group"><%= visit.group_size %> Guest<%= visit.group_size > 1 ? 's' : '' %></span>
+                                <% } %>
+                            </td>
+                            <td style="font-weight: bold;">$<%= parseFloat(visit.total_paid).toFixed(2) %></td>
+                            <td>
+                                <% if (user) { %>
+                                    <a href="/visits/receipt-group/<%= visit.visit_group_id %>" class="btn-action" target="_blank">View Receipt</a>
+                                <% } else { %>
+                                    <a href="/member/history/receipt-group/<%= visit.visit_group_id %>" class="btn-action">View Receipt</a>
                                 <% } %>
                             </td>
                         </tr>

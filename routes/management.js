@@ -102,24 +102,57 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
 });
 
 // Path is '/locations/new'
-router.get('/locations/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
-    res.render('add-location', { error: null });
+router.get('/locations/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    try {
+        // Fetch active Location Managers to populate the dropdown
+        const [managers] = await pool.query(
+            "SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = 'Location Manager' AND is_active = TRUE ORDER BY last_name, first_name"
+        );
+        res.render('add-location', { managers: managers, error: null });
+    } catch (error) {
+        console.error("Error loading add location page:", error);
+        res.status(500).send("Error loading page");
+    }
 });
 
 // Path is '/locations'
 router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { location_name, summary } = req.body;
+    const { location_name, summary, manager_id, manager_start } = req.body;
+
     let connection;
     try {
         connection = await pool.getConnection();
-        const publicLocationId = crypto.randomUUID(); // ADDED
-        // ADDED public_location_id
-        const sql = "INSERT INTO location (public_location_id, location_name, summary) VALUES (?, ?, ?)";
-        await connection.query(sql, [publicLocationId, location_name, summary || null]); // ADDED
+        const publicLocationId = crypto.randomUUID();
+
+        // Handle optional manager assignment
+        const assignedManagerId = manager_id ? parseInt(manager_id) : null;
+        const assignedManagerStart = (assignedManagerId && manager_start) ? manager_start : null;
+
+        const sql = `
+            INSERT INTO location (public_location_id, location_name, summary, manager_id, manager_start) 
+            VALUES (?, ?, ?, ?, ?)
+        `;
+
+        await connection.query(sql, [
+            publicLocationId,
+            location_name,
+            summary || null,
+            assignedManagerId,
+            assignedManagerStart
+        ]);
+
+        req.session.success = "Location added successfully.";
         res.redirect('/locations');
+
     } catch (error) {
-        console.error(error);
-        res.render('add-location', { error: "Database error adding location. Name might be duplicate." });
+        console.error("Error adding location:", error);
+        // Re-fetch managers to render the form again with error
+        const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = 'Location Manager' AND is_active = TRUE");
+
+        res.render('add-location', {
+            managers: managers,
+            error: "Database error adding location. Name might be duplicate."
+        });
     } finally {
         if (connection) connection.release();
     }
@@ -725,6 +758,48 @@ router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAd
     } catch (error) {
         console.error("Error toggling ticket status:", error);
         req.session.error = "Database error toggling status.";
+        res.redirect('/ticket-types');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// POST /ticket-types/delete/:public_ticket_type_id
+router.post('/ticket-types/delete/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
+    const { public_ticket_type_id } = req.params;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Check if ticket type exists and if it is a system type
+        const [type] = await connection.query('SELECT type_name, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
+
+        if (type.length === 0) {
+            req.session.error = "Ticket type not found.";
+            return res.redirect('/ticket-types');
+        }
+
+        if (type[0].is_member_type) {
+            req.session.error = "Cannot delete the system 'Member' ticket type.";
+            return res.redirect('/ticket-types');
+        }
+
+        // 2. Attempt Delete
+        await connection.query('DELETE FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
+
+        req.session.success = `Ticket type "${type[0].type_name}" deleted successfully.`;
+        res.redirect('/ticket-types');
+
+    } catch (error) {
+        console.error("Error deleting ticket type:", error);
+
+        // Handle Foreign Key Constraint (if tickets have already been sold)
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            req.session.error = "Cannot delete this ticket type because it has already been used for sales. Please deactivate it instead.";
+        } else {
+            req.session.error = "Database error deleting ticket type.";
+        }
         res.redirect('/ticket-types');
     } finally {
         if (connection) connection.release();

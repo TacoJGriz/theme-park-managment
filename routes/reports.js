@@ -405,12 +405,11 @@ router.get('/weather-log/:id', isAuthenticated, canViewReports, async (req, res)
 });
 
 // --- NEW: MAINTENANCE REPORT ROUTES (MERGED) ---
-
 // GET /reports/maintenance
 router.get('/maintenance', isAuthenticated, canViewReports, async (req, res) => {
-    // Default to last 90 days for a better trend view
-    const defaultStart = new Date();
-    defaultStart.setDate(defaultStart.getDate() - 90);
+    // MODIFIED: Default to the beginning of the current year (Jan 1st)
+    const currentYear = new Date().getFullYear();
+    const defaultStartString = `${currentYear}-01-01`;
 
     const { d1, d2, loc, type } = req.query;
 
@@ -422,7 +421,8 @@ router.get('/maintenance', isAuthenticated, canViewReports, async (req, res) => 
         const [rideTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
 
         // 2. Set Filters
-        let selected_date1 = d1 || defaultStart.toISOString().substring(0, 10);
+        // Use the new defaultStartString if d1 is not provided
+        let selected_date1 = d1 || defaultStartString;
         let selected_date2 = d2 || new Date().toISOString().substring(0, 10);
         let locations_selected = loc || 'all';
         let type_selected = type || 'all';

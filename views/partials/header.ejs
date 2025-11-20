@@ -34,8 +34,8 @@
 
         body {
             font-family: var(--font-body);
-            margin: 0; /* ADDED: FIXES FLOATING HEADER by overriding browser default margin */
-            padding: 0; /* ADDED: Good practice reset */
+            margin: 0; 
+            padding: 0; 
             background-color: var(--light);
             color: #333;
         }
@@ -117,17 +117,17 @@
             z-index: 1100;
             padding: 8px 0;
             border: 1px solid rgba(0,0,0,0.05);
-            margin-top: 0; /* Kept 0 to reduce visual gap */
+            margin-top: 0; 
         }
 
-        /* HOVER FIX: Invisible bridge prevents mouse form losing focus */
+        /* HOVER FIX */
         .nav-dropdown::after {
             content: '';
             position: absolute;
             top: 100%;
             left: 0;
             width: 100%;
-            height: 10px; /* Invisible hit area bridging header and menu */
+            height: 10px; 
         }
 
         .nav-dropdown:hover .dropdown-menu { 
@@ -181,10 +181,6 @@
             gap: 8px;
         }
         
-        /* Highlight specific links (Pending Requests) */
-        .special-link i { color: var(--danger) !important; }
-        .special-link { color: var(--danger) !important; font-weight: 600; }
-
     <% } else { %>
         /* --- VISITOR THEME (Magical) --- */
         :root {
@@ -252,11 +248,32 @@
 
                 <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                 <div class="nav-dropdown">
-                    <div class="dropdown-trigger">Management <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i></div>
+                    <div class="dropdown-trigger">
+                        Management 
+                        <%# Red dot indicator on parent menu %>
+                        <% if (typeof approvalCount !== 'undefined' && approvalCount > 0) { %>
+                            <span style="height: 8px; width: 8px; background-color: var(--danger); border-radius: 50%; display: inline-block; margin-left: 6px;"></span>
+                        <% } %>
+                        <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i>
+                    </div>
                     <div class="dropdown-menu">
                         <a href="/users" class="dropdown-item"><i class="fa-solid fa-users-viewfinder"></i> Employees</a>
                         
-                        <a href="/approvals" class="dropdown-item special-link"><i class="fa-solid fa-clipboard-check"></i> Pending Requests</a>
+                        <%# MODIFIED: Dynamic Styling for Pending Requests Link %>
+                        <% 
+                            const hasPending = (typeof approvalCount !== 'undefined' && approvalCount > 0);
+                            const linkStyle = hasPending ? 'color: var(--danger); font-weight: 700;' : '';
+                            const iconStyle = hasPending ? 'color: var(--danger);' : '';
+                        %>
+                        <a href="/approvals" class="dropdown-item" style="<%= linkStyle %>">
+                            <i class="fa-solid fa-clipboard-check" style="<%= iconStyle %>"></i> 
+                            Pending Requests
+                            <% if (hasPending) { %>
+                                <span style="margin-left: auto; background-color: var(--danger); color: var(--white); padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">
+                                    <%= approvalCount %>
+                                </span>
+                            <% } %>
+                        </a>
                         
                         <div class="dropdown-divider"></div>
                         
@@ -321,8 +338,6 @@
                     </div>
                 </div>
                 <% } %>
-
-                <a href="/style-guide" class="nav-item" style="opacity: 0.7; font-size: 0.85em;"><i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Styles</a>
             </div>
         </div>
 
@@ -350,11 +365,15 @@
 <% } else { %>
     <nav class="navbar">
         <a href="/" class="nav-brand">Primus Park</a>
-        <div class="nav-links">
-            <a href="/" class="nav-link">Home</a>
-            <a href="/purchase-tickets" class="nav-link">Tickets</a>
-            <a href="/member/login" class="nav-link">Member Portal</a>
-            <a href="/login" class="nav-link btn-login-nav">Staff Login</a>
-        </div>
+        
+        <%# --- CONDITIONAL: Hide nav links if 'simpleNav' is true (Checkout Mode) --- %>
+        <% if (typeof simpleNav === 'undefined' || !simpleNav) { %>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/purchase-tickets" class="nav-link">Tickets</a>
+                <a href="/member/login" class="nav-link">Member Portal</a>
+                <a href="/login" class="nav-link btn-login-nav">Staff Login</a>
+            </div>
+        <% } %>
     </nav>
 <% } %>

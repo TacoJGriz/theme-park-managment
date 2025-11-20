@@ -59,6 +59,9 @@ app.use((req, res, next) => {
     next();
 });
 
+const { countPendingApprovals } = require('./middleware/auth');
+app.use(countPendingApprovals);
+
 // --- ROUTE DEFINITIONS ---
 const indexRoutes = require('./routes/index');
 app.use('/', indexRoutes);

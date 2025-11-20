@@ -6,46 +6,230 @@
     <%# Link to Chart.js library %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1400px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        
-        /* Form Styling */
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
-        .form-grid input, .form-grid select { width: 100%; padding: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; }
-        button:hover { background-color: #c82333; }
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
 
-        /* Metrics Section */
-        .metrics-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5em; margin-bottom: 2em; }
-        .metric-card { background: #fff; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5em; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #6c757d; }
-        .metric-card h3 { margin: 0; font-size: 2em; color: #333; }
-        .metric-card p { margin: 5px 0 0 0; color: #666; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
-        .metric-card.highlight { border-top-color: #dc3545; background-color: #fff5f5; }
+        /* Main Container */
+        .container { 
+            max-width: 1400px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* Form & Controls */
+        .report-controls {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 12px;
+            margin-bottom: 2em;
+        }
+
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            align-items: end; 
+        }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        input[type="date"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Buttons */
+        button { 
+            padding: 11px 25px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* --- Metrics Section --- */
+        .metrics-bar { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            margin-bottom: 2.5em; 
+        }
+        .metric-card { 
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-2px); }
+
+        .metric-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #333;
+        }
+        .metric-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        
+        /* Highlight Card (Red for Alerts) */
+        .metric-card.highlight {
+            background-color: #fff5f5;
+            border-color: #f5c6cb;
+        }
         .metric-card.highlight h3 { color: #dc3545; }
+        .metric-card.highlight p { color: #a71d2a; }
 
-        /* Charts Section */
-        .charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 2em; margin-bottom: 3em; }
-        .chart-wrapper { background: white; padding: 1em; border: 1px solid #eee; border-radius: 8px; height: 300px; position: relative; }
-        .chart-wrapper h4 { margin-top: 0; text-align: center; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        /* --- Charts Section --- */
+        .charts-container { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 2em; 
+            margin-bottom: 3em; 
+        }
+        .chart-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .chart-card h4 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.1em;
+            color: #495057;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px; 
+            width: 100%;
+        }
 
-        /* Table Styling */
-        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        .report-table th, .report-table td { padding: 12px 10px; border-bottom: 1px solid #ddd; text-align: left; white-space: nowrap; }
-        .report-table th { background-color: #6c757d; color: white; font-weight: 600; }
-        .report-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        .report-table tbody tr:hover { background-color: #f1f1f1; }
+        /* --- Table Styles --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 1.5em;
+            font-size: 0.9em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff; /* Standard Blue Header */
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
+            color: #555;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
         
-        .ride-id { font-family: monospace; color: #666; font-weight: bold; font-size: 1em; }
+        /* Data Styles */
+        .ride-id { font-family: monospace; color: #6c757d; font-weight: bold; }
         
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 0.8em; }
+        .status-badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 0.8em; 
+        }
         .status-open { background-color: #ffeeba; color: #856404; }
         .status-complete { background-color: #d4edda; color: #155724; }
         
-        .btn-view { text-decoration: none; color: #007bff; font-weight: bold; padding: 2px 6px; border: 1px solid #007bff; border-radius: 4px; font-size: 0.85em; transition: background 0.2s; }
-        .btn-view:hover { background-color: #007bff; color: white; }
+        /* Action Button */
+        .btn-view { 
+            display: inline-block;
+            text-decoration: none; 
+            color: #17a2b8; /* Teal */
+            font-weight: 600; 
+            padding: 6px 12px; 
+            border: 1px solid #17a2b8; 
+            border-radius: 6px; 
+            font-size: 0.85em; 
+            transition: all 0.2s;
+            background: white;
+        }
+        .btn-view:hover { 
+            background-color: #17a2b8; 
+            color: white; 
+        }
     </style>
 </head>
 <body>
@@ -53,42 +237,44 @@
     <div class="container">
         <h1>Maintenance Report</h1>
 
-        <form action="/reports/maintenance" method="POST">
-            <div class="form-grid">
-                <div>
-                    <label>Start Date:</label>
-                    <input type="date" name="selected_date1" value="<%= selected_date1 %>" required>
+        <div class="report-controls">
+            <form action="/reports/maintenance" method="POST">
+                <div class="form-grid">
+                    <div>
+                        <label>Start Date:</label>
+                        <input type="date" name="selected_date1" value="<%= selected_date1 %>" required>
+                    </div>
+                    <div>
+                        <label>End Date:</label>
+                        <input type="date" name="selected_date2" value="<%= selected_date2 %>" required>
+                    </div>
+                    <div>
+                        <label>Location:</label>
+                        <select name="locations_selected">
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.location_id %>" <%= String(loc.location_id) === String(locations_selected) ? 'selected' : '' %>>
+                                    <%= loc.location_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Ride Type:</label>
+                        <select name="type_selected">
+                            <option value="all">All Types</option>
+                            <% rideTypes.forEach(t => { %>
+                                <option value="<%= t.ride_type %>" <%= t.ride_type === type_selected ? 'selected' : '' %>>
+                                    <%= t.ride_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit">Update Report</button>
+                    </div>
                 </div>
-                <div>
-                    <label>End Date:</label>
-                    <input type="date" name="selected_date2" value="<%= selected_date2 %>" required>
-                </div>
-                <div>
-                    <label>Location:</label>
-                    <select name="locations_selected">
-                        <% locations.forEach(loc => { %>
-                            <option value="<%= loc.location_id %>" <%= String(loc.location_id) === String(locations_selected) ? 'selected' : '' %>>
-                                <%= loc.location_name %>
-                            </option>
-                        <% }); %>
-                    </select>
-                </div>
-                <div>
-                    <label>Ride Type:</label>
-                    <select name="type_selected">
-                        <option value="all">All Types</option>
-                        <% rideTypes.forEach(t => { %>
-                            <option value="<%= t.ride_type %>" <%= t.ride_type === type_selected ? 'selected' : '' %>>
-                                <%= t.ride_type %>
-                            </option>
-                        <% }); %>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit">Update Report</button>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
 
         <% if (data && data.length > 0) { %>
             
@@ -112,13 +298,17 @@
             </div>
 
             <div class="charts-container">
-                <div class="chart-wrapper">
+                <div class="chart-card">
                     <h4>Maintenance Trend (Incidents)</h4>
-                    <canvas id="timelineChart"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
                 </div>
-                <div class="chart-wrapper">
+                <div class="chart-card">
                     <h4>Breakdowns by Ride Type</h4>
-                    <canvas id="typeChart"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="typeChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -131,7 +321,7 @@
                 const backQuery = backParams.toString();
             %>
 
-            <table class="report-table">
+            <table>
                 <thead>
                     <tr>
                         <th>Ride ID</th>
@@ -214,7 +404,10 @@
             </script>
 
         <% } else if (data && data.length === 0) { %>
-            <p style="text-align: center; padding: 3em; font-style: italic;">No maintenance records found for the selected criteria.</p>
+            <div style="text-align: center; padding: 3em; background: #f8f9fa; border-radius: 12px; border: 1px dashed #dee2e6; margin-top: 2em;">
+                <h3 style="color: #6c757d; margin-top: 0;">No Data Available</h3>
+                <p style="color: #999;">No maintenance records found for the selected criteria.</p>
+            </div>
         <% } %>
     </div>
 </body>

@@ -381,11 +381,11 @@ router.post('/deshelf/:public_vendor_id/:public_item_id', isAuthenticated, canMa
 // GET /inventory/request/edit/:public_request_id
 router.get('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { public_request_id } = req.params;
-    const { id: actorId } = req.session.user;
+    const { id: userId, role, locationId } = req.session.user;
 
     try {
         const [reqResult] = await pool.query(`
-            SELECT ir.*, it.item_name, v.vendor_name
+            SELECT ir.*, it.item_name, v.vendor_name, v.location_id
             FROM inventory_requests ir
             JOIN item it ON ir.item_id = it.item_id
             JOIN vendors v ON ir.vendor_id = v.vendor_id
@@ -395,12 +395,32 @@ router.get('/request/edit/:public_request_id', isAuthenticated, canManageInvento
         if (reqResult.length === 0) return res.status(404).send('Request not found.');
         const request = reqResult[0];
 
-        if (request.requested_by_id !== actorId) return res.status(403).send('Forbidden: You can only edit your own requests.');
+        // --- PERMISSION CHECK ---
+        let canEdit = false;
+
+        // 1. Admin / Park Manager: Global Access
+        if (role === 'Admin' || role === 'Park Manager') {
+            canEdit = true;
+        }
+        // 2. Location Manager: Access if vendor is in their location
+        else if (role === 'Location Manager' && request.location_id === locationId) {
+            canEdit = true;
+        }
+        // 3. Original Requester: Always access (if they can see it)
+        else if (request.requested_by_id === userId) {
+            canEdit = true;
+        }
+
+        if (!canEdit) {
+            return res.status(403).send('Forbidden: You do not have permission to edit this request.');
+        }
+
         if (request.status !== 'Pending') return res.status(400).send('Request already processed.');
 
         res.render('inventory-request-edit', { request: request, error: null });
 
     } catch (error) {
+        console.error(error);
         res.status(500).send("Error loading page.");
     }
 });
@@ -409,11 +429,54 @@ router.get('/request/edit/:public_request_id', isAuthenticated, canManageInvento
 router.post('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
     const { public_request_id } = req.params;
     const { requested_count } = req.body;
+    const { id: userId, role, locationId } = req.session.user;
 
     try {
-        await pool.query('UPDATE inventory_requests SET requested_count = ? WHERE public_request_id = ? AND status = "Pending"', [requested_count, public_request_id]);
+        // 1. Fetch Request Details for Permission Check
+        const [reqResult] = await pool.query(`
+            SELECT ir.request_id, ir.requested_by_id, ir.status, v.location_id
+            FROM inventory_requests ir
+            JOIN vendors v ON ir.vendor_id = v.vendor_id
+            WHERE ir.public_request_id = ?
+        `, [public_request_id]);
+
+        if (reqResult.length === 0) return res.status(404).send('Request not found.');
+        const request = reqResult[0];
+
+        // 2. Permission Check (Same as GET)
+        let canEdit = false;
+        if (role === 'Admin' || role === 'Park Manager') {
+            canEdit = true;
+        } else if (role === 'Location Manager' && request.location_id === locationId) {
+            canEdit = true;
+        } else if (request.requested_by_id === userId) {
+            canEdit = true;
+        }
+
+        if (!canEdit) {
+            return res.status(403).send('Forbidden: You do not have permission to edit this request.');
+        }
+
+        // 3. Validation
+        if (request.status !== 'Pending') {
+            return res.status(400).send('Cannot edit a request that has already been processed.');
+        }
+
+        const newCount = parseInt(requested_count, 10);
+        if (isNaN(newCount) || newCount < 1) {
+            return res.status(400).send('Invalid quantity.');
+        }
+
+        // 4. Perform Update
+        await pool.query(
+            'UPDATE inventory_requests SET requested_count = ? WHERE request_id = ?',
+            [newCount, request.request_id]
+        );
+
         res.redirect('/inventory/requests');
+
     } catch (error) {
+        console.error("Error updating request:", error);
         res.status(500).send("Error updating request.");
     }
 });

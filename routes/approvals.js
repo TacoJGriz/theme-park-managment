@@ -76,6 +76,8 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
             inventoryRequests = invResults;
         }
 
+        req.session.lastApprovalCheckCount = rateChanges.length + reassignments.length + inventoryRequests.length;
+
         res.render('approvals', { rateChanges, reassignments, inventoryRequests });
     } catch (error) {
         console.error("Error fetching approvals:", error);

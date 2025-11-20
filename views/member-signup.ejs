@@ -4,7 +4,25 @@
     <meta charset="UTF-8">
     <title>Purchase Membership | Primus Park</title>
     <style>
-        /* --- STANDARDIZED THEME --- */
+        /* --- STANDARDIZED VARIABLES --- */
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;        /* Member Theme */
+            --secondary: #ffc107;
+            --success: #28a745;       /* Green */
+            --danger: #dc3545;        /* Red */
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.15);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
         body { 
             font-family: 'Poppins', sans-serif;
             margin: 0; 
@@ -191,7 +209,7 @@
             padding: 15px;
             font-size: 1.3em;
             border-radius: 30px;
-            background-color: var(--success);
+            background-color: var(--success); /* Ensures green background */
             color: white;
             border: none;
             font-weight: 700;
@@ -219,7 +237,8 @@
     </style>
 </head>
 <body>
-    <%- include('partials/header') %> 
+    <%# Pass simpleNav: true to hide menu buttons during checkout %>
+    <%- include('partials/header', { simpleNav: true }) %>
     
     <div class="container">
         <div class="page-header">
@@ -373,90 +392,4 @@
             const subMemberSection = document.getElementById('subMemberSection');
             const subMemberIntro = document.getElementById('subMemberIntro');
             const subMemberContainer = document.getElementById('subMemberContainer');
-            const addMemberBtn = document.getElementById('addMemberBtn');
-            let subMemberCount = 0;
-
-            // Payment Elements
-            const cardRadio = document.getElementById('payWithCard');
-            const bankRadio = document.getElementById('payWithBank');
-            const cardGroup = document.getElementById('cardPaymentGroup');
-            const bankGroup = document.getElementById('bankPaymentGroup');
-
-            // Pricing Logic
-            function updatePriceAndText() {
-                const totalMembers = 1 + subMemberCount;
-                const additionalMembers = Math.max(0, totalMembers - membershipType.base_members);
-                const totalCost = membershipType.base_price + (additionalMembers * membershipType.additional_member_price);
-
-                planPriceEl.textContent = `$${totalCost.toFixed(2)}`;
-                
-                if (membershipType.base_members > 1) {
-                    if (additionalMembers > 0) {
-                        subMemberIntro.textContent = `Pass includes ${membershipType.base_members} members. You added ${additionalMembers} extra ($${membershipType.additional_member_price.toFixed(2)} each).`;
-                    } else {
-                        const remaining = membershipType.base_members - totalMembers;
-                        subMemberIntro.textContent = `Pass includes ${membershipType.base_members} members. You can add ${remaining} more for free.`;
-                    }
-                }
-            }
-
-            function createSubMemberForm() {
-                subMemberCount++;
-                const idx = subMemberCount;
-                const div = document.createElement('div');
-                div.className = 'sub-member-card';
-                div.innerHTML = `
-                    <div class="sub-member-header">
-                        <h4>Member ${idx + 1}</h4>
-                        <button type="button" class="btn-remove">Remove</button>
-                    </div>
-                    <div class="form-grid">
-                        <div><label>First Name</label><input type="text" name="sub_first_name[]" required></div>
-                        <div><label>Last Name</label><input type="text" name="sub_last_name[]" required></div>
-                        <div class="full-width"><label>Date of Birth</label><input type="date" name="sub_dob[]" required></div>
-                    </div>
-                `;
-                div.querySelector('.btn-remove').addEventListener('click', () => {
-                    div.remove();
-                    subMemberCount--;
-                    updatePriceAndText();
-                });
-                subMemberContainer.appendChild(div);
-                updatePriceAndText();
-            }
-
-            if (membershipType.base_members > 1) {
-                subMemberSection.style.display = 'block';
-                addMemberBtn.addEventListener('click', createSubMemberForm);
-                updatePriceAndText();
-            }
-
-            // Payment Toggles
-            cardRadio.addEventListener('change', () => { if(cardRadio.checked){ cardGroup.style.display='block'; bankGroup.style.display='none'; } });
-            bankRadio.addEventListener('change', () => { if(bankRadio.checked){ cardGroup.style.display='none'; bankGroup.style.display='block'; } });
-
-            // Simple Validation Visuals
-            function showError(input, msg) {
-                input.classList.add('input-error');
-                // In real app, append msg span
-            }
-            function clearErrors() {
-                document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-            }
-            
-            signupForm.addEventListener('submit', (e) => {
-                clearErrors();
-                let valid = true;
-                // Basic check for required fields
-                signupForm.querySelectorAll('input[required]').forEach(input => {
-                    if(!input.value.trim()) {
-                        valid = false;
-                        input.classList.add('input-error');
-                    }
-                });
-                if(!valid) e.preventDefault();
-            });
-        });
-    </script>
-</body>
-</html>
+            const addMemberBtn = document.getElementById('add

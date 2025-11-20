@@ -4,95 +4,216 @@
     <meta charset="UTF-8">
     <title>Event Promotions</title>
     <style>
-        body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px;
-            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
-        
-        /* Stats Bar */
-        .stats-bar { display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1em; margin-bottom: 1.5em; }
-        .stat-card { background-color: #f8f9fa;
-            border: 1px solid #dee2e6; padding: 1.5em; border-radius: 8px; text-align: center;
-        }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #6f42c1;
-        } /* Purple for promos */
-        .stat-card h3.active { color: #28a745;
-        }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
-        }
-
-        /* Filter Bar */
-        .filter-bar { background-color: #f8f9fa;
-            border: 1px solid #dee2e6; padding: 1em; border-radius: 8px; margin-bottom: 1.5em;
-        }
-        .filter-controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1em;
-            align-items: flex-end; }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
-            font-size: 0.9em; }
-        .filter-controls input, .filter-controls select { width: 100%; padding: 10px;
-            border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .filter-btn { width: 100%;
-            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; display: inline-block;
-        }
-        .btn-filter { background-color: #007bff;
-        }
-        .btn-clear { background-color: #6c757d;
-        }
-
-        /* Table */
-        table { width: 100%;
-            border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left;
-            border-bottom: 1px solid #ddd; }
-        th { background-color: #6f42c1; color: white;
-        }
-        th.sortable a { text-decoration: none; color: white; display: flex; justify-content: space-between;
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
         }
         
-        /* --- NEW ACTION BUTTON STYLES --- */
+        /* Main Container */
+        .container { 
+            max-width: 1200px;
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* --- STATS BAR --- */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1em;
+            margin-bottom: 2em;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.2em;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        /* --- FILTER BAR --- */
+        .filter-bar { 
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1em;
+            align-items: flex-end;
+        }
+        .filter-controls label { 
+            font-weight: 600;
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .filter-controls input,
+        .filter-controls select { 
+            width: 100%;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .filter-buttons { display: flex; gap: 10px; }
+        
+        .filter-btn { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            text-align: center; 
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover { transform: translateY(-1px); }
+        
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
+
+        /* --- ADD BUTTON --- */
+        .add-button { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            padding: 12px 25px; 
+            background-color: #28a745;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff; /* Standard Blue Header */
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        th.sortable a { 
+            text-decoration: none;
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
+        
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* --- ACTION BUTTONS --- */
         .btn-action {
             display: block;
             width: 100%;
             box-sizing: border-box;
-            padding: 5px 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            border-radius: 8px;
             text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.85em;
-            border: 1px solid transparent;
+            border: 1px solid #ced4da;
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
 
-        .btn-edit {
-            color: #007bff;
-            border-color: #007bff;
-        }
+        .btn-edit { color: #007bff; border-color: #007bff; }
         .btn-edit:hover { background-color: #007bff; color: white; }
 
-        /* Top "Create" Button Style */
-        .action-btn { padding: 6px 12px; background-color: #007bff; color: white; text-decoration: none;
-            border-radius: 4px; font-weight: bold; font-size: 0.9em; }
-        .action-btn:hover { background-color: #0056b3;
-        }
+        /* Alerts & Badges */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
         
-        .message { padding: 1em;
-            border-radius: 4px; margin-bottom: 1em; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724;
-        }
-        .error { background-color: #f8d7da; color: #721c24;
-        }
-        
-        .active-badge { color: #28a745;
-            font-weight: bold; font-size: 0.9em; border: 1px solid #28a745; padding: 2px 6px; border-radius: 4px;
+        .active-badge { 
+            color: #28a745;
+            font-weight: 700; 
+            font-size: 0.75em; 
+            border: 1px solid #28a745; 
+            padding: 2px 6px; 
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -106,11 +227,11 @@
 
         <div class="stats-bar">
             <div class="stat-card">
-                <h3><%= counts.total || 0 %></h3>
+                <h3 style="color: #6f42c1;"><%= counts.total || 0 %></h3>
                 <p>Total Promotions</p>
             </div>
             <div class="stat-card">
-                <h3 class="active"><%= counts.remaining_count || 0 %></h3>
+                <h3 style="color: #28a745;"><%= counts.remaining_count || 0 %></h3>
                 <p>Remaining in <%= currentYear %></p>
             </div>
         </div>
@@ -140,7 +261,7 @@
                             <option value="past" <%= filters.status === 'past' ? 'selected' : '' %>>Past</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
                         <a href="/promotions" class="filter-btn btn-clear">Clear</a>
                     </div>
@@ -152,7 +273,7 @@
             </form>
         </div>
 
-        <a href="/promotions/new" class="action-btn" style="background-color: #28a745; display: inline-block; margin-bottom: 10px;">Create New Promotion</a>
+        <a href="/promotions/new" class="add-button">Create New Promotion</a>
 
         <% 
             const getSortLink = (col) => {
@@ -189,15 +310,14 @@
                 %>
                     <tr>
                         <td>
-                            <%= promo.event_name %>
+                            <strong><%= promo.event_name %></strong>
                             <% if (isActive) { %><br><span class="active-badge">ACTIVE</span><% } %>
                         </td>
                         <td><%= promo.event_type %></td>
                         <td><%= promo.start_date.toISOString().substring(0, 10) %></td>
                         <td><%= promo.end_date.toISOString().substring(0, 10) %></td>
-                        <td><%= parseFloat(promo.discount_percent).toFixed(2) %>%</td>
+                        <td style="font-weight: bold; color: #28a745;"><%= parseFloat(promo.discount_percent).toFixed(2) %>%</td>
                         <td>
-                            <%# CHANGED: New button style %>
                             <a href="/promotions/edit/<%= promo.event_id %>?returnQuery=<%= encodeURIComponent(currentQueryString) %>" class="btn-action btn-edit">Edit</a>
                         </td>
                     </tr>

@@ -2,106 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rides</title>
+    <title>Park Rides</title>
     <style>
-        /* INHERITED: Poppins font, 0 margin, and contrasting background from header.ejs */
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+        
+        /* Main Container */
         .container { 
             max-width: 1200px;
             margin: 2em auto; 
             background: white; 
-            padding: 2.5em; /* Standardized Padding */
+            padding: 2.5em; 
             border-radius: 12px;
-            /* Standardized Radius */
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            /* Standardized Shadow */
         }
-        h1 { color: #444;
-            border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
-        
-        /* --- Standardized Table Styles (from style-guide.ejs) --- */
-        table { 
-            width: 100%;
-            border-collapse: separate; /* Key for rounded corners */
-            border-spacing: 0;
-            margin-top: 1.5em;
-            font-size: 0.95em;
-            background: white;
-            border-radius: 12px; /* Rounded corners */
-            overflow: hidden;
-            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
-        }
-        th { 
-            background-color: #007bff;
-            /* Primary Blue */
-            color: white; 
-            padding: 15px;
-            /* Standardized padding */
-            text-align: left; 
-            font-weight: 600;
-            border: none;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 0.5px;
-        }
-        td { 
-            padding: 15px;
-            /* Standardized padding */
-            border-bottom: 1px solid #f1f1f1;
-            vertical-align: middle;
-            color: #555;
-        }
-        tr:last-child td { border-bottom: none;
-        }
-        tr:nth-child(even) { background-color: #f8f9fa;
-        }
-        tr:hover { background-color: #f1f5f9;
-        }
-        /* END Table Styles */
 
-        /* Overrides to adapt existing table-related styles to the new table structure */
-        th.sortable a { text-decoration: none;
-            color: white; display: flex; justify-content: space-between; align-items: center; }
-        th.sortable a:hover { text-decoration: underline;
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
         }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px;
-        }
-        /* End Overrides */
-        
-        /* Stats Bar Styles (Keeping original good style) */
+
+        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 0.75em;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1em;
             margin-bottom: 1em;
         }
         .stat-card {
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 1em;
+            border: 1px solid #e9ecef;
+            padding: 1.2em;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 1.75em;
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d; font-size: 0.9em;
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* Colors for stats */
-        .stat-total { color: #007bff;
-        }
-        .stat-open { color: #28a745;
-        }
-        .stat-closed { color: #fd7e14;
-        }
-        .stat-broken { color: #dc3545;
-        }
-        .stat-type { color: #6f42c1;
-        }
+        /* Stat Colors */
+        .stat-total { color: #007bff; }
+        .stat-open { color: #28a745; }
+        .stat-closed { color: #fd7e14; }
+        .stat-broken { color: #dc3545; }
+        .stat-type { color: #6f42c1; }
 
-        /* Filter Bar Styles (Keeping original good style) */
-        .filter-bar { background-color: #f8f9fa;
-            border: 1px solid #dee2e6; padding: 1em; border-radius: 12px; /* Standardized */ margin-bottom: 1.5em;
+        /* --- FILTER BAR --- */
+        .filter-bar { 
+            background-color: #f1f3f5;
+            border: 1px solid #dee2e6; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
         }
         .filter-controls {
             display: grid;
@@ -109,149 +86,192 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: 600;
-            /* Standardized */
-        display: block; margin-bottom: 6px; /* Standardized */ font-size: 0.9em;
+        .filter-controls label { 
+            font-weight: 600;
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.9em;
+            color: #495057;
         }
         .filter-controls input[type="search"],
-        .filter-controls select { width: 100%;
-            padding: 10px; border: 1px solid #ccc; border-radius: 8px; /* Standardized */ font-size: 0.95em; box-sizing: border-box;
+        .filter-controls select { 
+            width: 100%;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
-        .filter-buttons { display: flex; gap: 10px;
+        .filter-controls input:focus,
+        .filter-controls select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        .filter-btn { flex-grow: 1; padding: 10px 15px; color: white; border: none;
-            border-radius: 8px; /* Standardized */ cursor: pointer; font-size: 0.95em; font-weight: 600; /* Standardized */ text-decoration: none; text-align: center; display: inline-block;
+
+        .filter-buttons { display: flex; gap: 10px; }
+        
+        .filter-btn { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            text-align: center; 
+            display: inline-block;
+            transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .btn-filter { background-color: #007bff;
-        }
-        .btn-clear { background-color: #6c757d;
-        }
+        .filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
 
-        /* Keep existing odd/even row styles */
-        tr:nth-child(even) { background-color: #f9f9f9;
-        }
-        tr:hover { background-color: #f1f1f1;
-        }
-
-        /* Standardize ADD Button */
+        /* --- ADD BUTTON --- */
         .add-button { 
             display: inline-block;
             margin-bottom: 1.5em; 
-            padding: 12px 20px; 
+            padding: 12px 25px; 
             background-color: #28a745;
             color: white; 
             text-decoration: none; 
             border-radius: 8px;
-            /* Standardized */
             font-weight: 600;
-            /* Standardized */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
         }
-        .add-button:hover { background-color: #218838;
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        th.sortable a { 
+            text-decoration: none;
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
         
-        /* --- FIX FOR UPDATE STATUS COLUMN SPACING --- */
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Status Badges (Text-based for now, could be badges) */
+        .status-OPEN { color: #28a745; font-weight: bold; }
+        .status-CLOSED { color: #fd7e14; font-weight: bold; }
+        .status-BROKEN { color: #dc3545; font-weight: bold; }
+        [class*="status-WEATHER"] { color: #6610f2; font-weight: bold; }
+
+        /* Update Status Form */
         .status-form { 
             display: flex;
             align-items: center; 
-            gap: 5px;
+            gap: 8px;
         }
         .status-form select { 
-            padding: 5px;
-            border-radius: 4px;
-            min-width: 80px; /* Ensures space */
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            min-width: 90px; 
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9em;
         }
         .status-form button { 
-            padding: 5px 10px;
-            margin-left: 0; 
+            padding: 6px 12px;
             cursor: pointer;
             font-weight: 600; 
-            background-color: #007bff; /* Primary Blue */
+            background-color: #007bff; 
             color: white;
             border: none;
-            border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            font-size: 0.85em;
+            transition: background-color 0.2s;
         }
-        /* END FIX */
-        
-        .status-OPEN { color: #28a745;
-            font-weight: bold;
-        }
-        .status-CLOSED { color: #fd7e14; font-weight: bold;
-        }
-        .status-BROKEN { color: #dc3545; font-weight: bold;
-        }
+        .status-form button:hover { background-color: #0056b3; }
 
-        /* --- ACTION BUTTONS (Standardized) --- */
+        /* --- ACTION BUTTONS --- */
         .btn-action {
             display: block;
             width: 100%;
             box-sizing: border-box;
-            padding: 5px 10px;
-            margin-bottom: 5px;
+            padding: 6px 12px;
+            margin-bottom: 4px;
             border-radius: 8px;
-            /* Standardized */
             text-align: center;
             text-decoration: none;
             font-weight: 600;
-            /* Standardized */
             font-size: 0.85em;
             border: 1px solid #ced4da;
-            /* Standard Border */
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Standardized */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0;
-        }
-        .btn-action:hover { background-color: #f8f9fa;
-        } /* Default hover */
+        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
 
+        /* Action Variants */
+        .btn-maintenance { color: #17a2b8; border-color: #17a2b8; }
+        .btn-maintenance:hover { background-color: #17a2b8; color: white; }
 
-        /* Button Variants */
-        .btn-maintenance {
-            color: #17a2b8;
-            border-color: #17a2b8;
-        }
-        .btn-maintenance:hover { background-color: #17a2b8; color: white;
-        }
+        .btn-history { color: #6f42c1; border-color: #6f42c1; }
+        .btn-history:hover { background-color: #6f42c1; color: white; }
 
-        .btn-history {
-            color: #6f42c1;
-            border-color: #6f42c1;
-        }
-        .btn-history:hover { background-color: #6f42c1; color: white;
-        }
+        .btn-report { color: #dc3545; border-color: #dc3545; }
+        .btn-report:hover { background-color: #dc3545; color: white; }
 
-        .btn-report {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-        .btn-report:hover { background-color: #dc3545; color: white;
-        }
+        .btn-edit { color: #d39e00; border-color: #ffc107; }
+        .btn-edit:hover { background-color: #ffc107; color: #212529; }
 
-        .btn-edit {
-            color: #d39e00;
-            border-color: #ffc107;
-        }
-        .btn-edit:hover { background-color: #ffc107; color: #212529;
-        }
-
-        .btn-log {
-            color: #28a745;
-            border-color: #28a745;
-        }
-        .btn-log:hover { background-color: #28a745; color: white;
-        }
+        .btn-log { color: #28a745; border-color: #28a745; }
+        .btn-log:hover { background-color: #28a745; color: white; }
         
         .btn-disabled {
-            color: #6c757d;
-            border-color: #ccc;
-            background-color: #e9ecef;
+            color: #adb5bd;
+            border-color: #dee2e6;
+            background-color: #f8f9fa;
             cursor: not-allowed;
             pointer-events: none;
+            box-shadow: none;
         }
     </style>
 </head>
@@ -262,51 +282,42 @@
         
         <div class="stats-bar">
             <div class="stat-card">
-                <h3 class="stat-total"><%= counts.totalRides ||
- 0 %></h3>
-                <p>Total Rides (View)</p>
+                <h3 class="stat-total"><%= counts.totalRides || 0 %></h3>
+                <p>Total Rides</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-open"><%= counts.countOpen ||
- 0 %></h3>
+                <h3 class="stat-open"><%= counts.countOpen || 0 %></h3>
                 <p>Open</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-closed"><%= counts.countClosed ||
- 0 %></h3>
+                <h3 class="stat-closed"><%= counts.countClosed || 0 %></h3>
                 <p>Closed</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-broken"><%= counts.countBroken ||
- 0 %></h3>
+                <h3 class="stat-broken"><%= counts.countBroken || 0 %></h3>
                 <p>Broken</p>
             </div>
         </div>
         
-        <div class="stats-bar" style="margin-top: -0.25em;">
+        <div class="stats-bar">
             <div class="stat-card">
-                 <h3 class="stat-type"><%= counts.countRollercoaster ||
- 0 %></h3>
+                 <h3 class="stat-type"><%= counts.countRollercoaster || 0 %></h3>
                 <p>Rollercoasters</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countWaterRide ||
- 0 %></h3>
+                <h3 class="stat-type"><%= counts.countWaterRide || 0 %></h3>
                 <p>Water Rides</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countFlatRide ||
- 0 %></h3>
+                <h3 class="stat-type"><%= counts.countFlatRide || 0 %></h3>
                 <p>Flat Rides</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countShow ||
- 0 %></h3>
+                <h3 class="stat-type"><%= counts.countShow || 0 %></h3>
                 <p>Shows</p>
             </div>
             <div class="stat-card">
-                <h3 class="stat-type"><%= counts.countOther ||
- 0 %></h3>
+                <h3 class="stat-type"><%= counts.countOther || 0 %></h3>
                 <p>Other</p>
             </div>
         </div>
@@ -315,72 +326,55 @@
             <form action="/rides" method="GET">
                 <div class="filter-controls">
                     <div>
-   
                      <label for="search">General Search</label>
                         <input type="search" id="search" name="search" placeholder="Name, Location, Status, Type..." value="<%= search %>">
                     </div>
                     <div>
-   
                      <label for="filter_location">Location</label>
                         <select id="filter_location" name="filter_location">
                             <option value="">All Locations</option>
-                      
-       <% locations.forEach(loc => { %>
+                           <% locations.forEach(loc => { %>
                                 <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
                                     <%= loc.location_name %>
-       
-                         </option>
-                            <% });
-%>
+                                 </option>
+                            <% }); %>
                         </select>
                     </div>
                     <div>
                         <label for="filter_type">Type</label>
-           
-              <select id="filter_type" name="filter_type">
+                        <select id="filter_type" name="filter_type">
                             <option value="">All Types</option>
                             <% types.forEach(type => { %>
-                      
-          <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
+                                <option value="<%= type.ride_type %>" <%= filters.type === type.ride_type ? 'selected' : '' %>>
                                     <%= type.ride_type %>
                                 </option>
-       
-                    <% });
-%>
+                            <% }); %>
                         </select>
                     </div>
                     <div>
                         <label for="filter_status">Status</label>
-           
-              <select id="filter_status" name="filter_status">
+                        <select id="filter_status" name="filter_status">
                             <option value="">All Statuses</option>
                             <% statuses.forEach(status => { %>
-                      
-          <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
+                                <option value="<%= status.ride_status %>" <%= filters.status === status.ride_status ? 'selected' : '' %>>
                                     <%= status.ride_status %>
                                 </option>
-       
-                    <% });
-%>
+                            <% }); %>
                         </select>
                     </div>
                 </div>
                 <div class="filter-controls" style="margin-top: 1em;">
-                    <div 
- 
- style="grid-column: 1 / 4;"></div> <div class="filter-buttons">
+                    <div style="grid-column: 1 / 4;"></div> <div class="filter-buttons">
                         <button type="submit" class="filter-btn btn-filter">Filter</button>
                         <a href="/rides" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-    
-            <% if (currentSort && currentDir) { %>
+                <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
                 <% } %>
             </form>
- 
-      </div>
+        </div>
 
         <% 
             // 1. Get the current query string for passing to action links
@@ -393,154 +387,120 @@
         
         <% 
             const getSortState = (column) => {
-                
- let nextDir = 'asc';
+                let nextDir = 'asc';
                 let indicator = '';
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
- indicator = '▲'; 
+                        indicator = '▲'; 
                     } else if (currentDir === 'desc') {
                         nextDir = 'none';
- indicator = '▼';
+                        indicator = '▼';
                     }
                 }
                 let href = `/rides?search=${encodeURIComponent(search)}`;
- if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
-                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`;
- }
-                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`;
- }
-                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`;
- }
+                if (filters.type) { href += `&filter_type=${encodeURIComponent(filters.type)}`; }
+                if (filters.status) { href += `&filter_status=${encodeURIComponent(filters.status)}`; }
+                if (filters.location) { href += `&filter_location=${encodeURIComponent(filters.location)}`; }
+                if (nextDir !== 'none') { href += `&sort=${column}&dir=${nextDir}`; }
                 return { href: href, indicator: indicator };
- };
+            };
             const nameSort = getSortState('name');
             const typeSort = getSortState('type');
             const locationSort = getSortState('location');
             const statusSort = getSortState('status');
- %>
+        %>
 
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
                     <th class="sortable">
-                       
-  <a href="<%= nameSort.href %>">
+                        <a href="<%= nameSort.href %>">
                             <span>Name</span>
                             <span class="sort-indicator"><%= nameSort.indicator %></span>
                         </a>
-            
-        </th>
+                    </th>
                     <th class="sortable">
                         <a href="<%= typeSort.href %>">
                             <span>Type</span>
-               
-            <span class="sort-indicator"><%= typeSort.indicator %></span>
+                            <span class="sort-indicator"><%= typeSort.indicator %></span>
                         </a>
                     </th>
                     <th class="sortable">
-                  
-    <a href="<%= locationSort.href %>">
+                        <a href="<%= locationSort.href %>">
                             <span>Location</span>
                             <span class="sort-indicator"><%= locationSort.indicator %></span>
                         </a>
-       
-          </th>
+                    </th>
                     <th class="sortable">
                         <a href="<%= statusSort.href %>">
                             <span>Status</span>
-          
-              <span class="sort-indicator"><%= statusSort.indicator %></span>
+                            <span class="sort-indicator"><%= statusSort.indicator %></span>
                         </a>
                     </th>
                     <th style="min-width: 140px;">Update Status</th>
-           
-          <th style="min-width: 160px;">Actions</th>
+                    <th style="min-width: 160px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% rides.forEach(ride => { %>
                     <tr>
-        
-          
-        <td><%= ride.public_ride_id.substring(0, 8).toUpperCase() %></td>
-                        <td><%= ride.ride_name %></td>
+                        <td><%= ride.public_ride_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= ride.ride_name %></strong></td>
                         <td><%= ride.ride_type %></td>
                         <td><%= ride.location_name %></td>
-  
-           
-             <td>
+                        <td>
                             <span class="status-<%= ride.ride_status %>"><%= ride.ride_status %></span>
                         </td>
-                    
-        <td>
-       
-                      <% if (user.role === 'Admin' ||
- user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                        <td>
+                              <% if (user.role === 'Admin' ||
+                                user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                                 <form class="status-form" action="/rides/status/<%= ride.public_ride_id %>" method="POST">
                                     <select name="ride_status">
-                
-                         <option value="OPEN" <% if(ride.ride_status === 'OPEN') { %>selected<% } %>>Open</option>
-                                        <option value="CLOSED" <% if(ride.ride_status === 'CLOSED') { %>selected<% } %>>Closed</option>
-                 
-                       <option value="BROKEN" <% if(ride.ride_status === 'BROKEN') { %>selected<% } %>>Broken</option>
+                                        <% statuses.forEach(statusObj => { %>
+                                            <option value="<%= statusObj.ride_status %>" <%= ride.ride_status === statusObj.ride_status ? 'selected' : '' %>>
+                                                <%= statusObj.ride_status %>
+                                            </option>
+                                        <% }); %>
                                     </select>
-                               
-    <button type="submit">Set</button>
+                                    <button type="submit">Set</button>
                                     <%# PASS THE CURRENT QUERY STRING FOR REDIRECT AFTER STATUS CHANGE %>
                                     <input type="hidden" name="returnQuery" value="<%= currentQueryString %>">
                                 </form>
                             <% } else { %>
-                             
- <span>No Access</span>
+                                <span style="color:#999;">No Access</span>
                             <% } %>
                         </td>
                         <td>
-                 
-     
-        <% if (user.role === 'Admin' ||
- user.role === 'Park Manager' ||
- user.role === 'Location Manager' ||
- user.role === 'Maintenance') { %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance') { %>
                                 <a href="/maintenance/ride/<%= ride.public_ride_id %><%= currentQueryStringWithPrefix %>" class="btn-action btn-maintenance">View Maintenance</a>
                             <% } %>
 
-                       
-     
- <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                                 <a href="/rides/history/<%= ride.public_ride_id %>" class="btn-action btn-history">View Run History</a>
                             <% } %>
       
-    
                              <a href="/maintenance/new/<%= ride.public_ride_id %><%= currentQueryStringWithPrefix %>" class="btn-action btn-report">Report Issue</a>
 
                             <%# --- Edit Ride Button (Admin/Park Manager) --- %>
-      
-   
-                     <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                                 <a href="/rides/edit/<%= ride.public_ride_id %><%= currentQueryStringWithPrefix %>" class="btn-action btn-edit">Edit Ride</a>
-                            <% 
- } 
-%>
+                            <% } %>
                             
                             <%# --- Log Ride Run Link --- %>
                             <% if (user.role === 'Admin' ||
- user.role === 'Park Manager' || user.role === 'Location Manager' ||
- user.role === 'Staff') { %>
-                                <% if (ride.ride_status === 'BROKEN' || ride.ride_status === 'CLOSED') { %>
+                                user.role === 'Park Manager' || user.role === 'Location Manager' ||
+                                user.role === 'Staff') { %>
+                                <% if (ride.ride_status === 'BROKEN' || ride.ride_status === 'CLOSED' || ride.ride_status === 'WEATHER CLOSURE') { %>
                                     <span class="btn-action btn-disabled">Log Run</span>
-               
-                  <% } else { %> 
+                                <% } else { %> 
                                     <a href="/rides/log/<%= ride.public_ride_id %><%= currentQueryStringWithPrefix %>" class="btn-action btn-log">Log Run</a>
                                 <% } %>
- 
                            <% } %>
                          </td>
                     </tr>
-                <% });
-%>
+                <% }); %>
             </tbody>
         </table>
     </div>

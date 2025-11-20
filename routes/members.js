@@ -228,16 +228,14 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
 
 // POST /members
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    // --- MODIFIED: Get primary member data ---
     const { first_name, last_name, email, date_of_birth, type_id } = req.body;
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
-    // --- NEW: Get sub-member data arrays ---
+    // Handle sub-member arrays (ensure they are arrays even if only 1 sub-member)
     const subFirstNames = [].concat(req.body.sub_first_name || []);
     const subLastNames = [].concat(req.body.sub_last_name || []);
     const subDobs = [].concat(req.body.sub_dob || []);
 
-    // --- MODIFIED: Generate dates on server ---
     const purchaseTime = new Date();
     const serverStartDate = new Date(purchaseTime);
     const serverEndDate = new Date(purchaseTime);
@@ -245,86 +243,92 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     serverEndDate.setDate(serverStartDate.getDate() - 1);
 
     let connection;
-    let type; // For catch block
+    let type;
 
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // 1. Get Membership Type details
+        // 1. Get Membership Type
         const [typeResult] = await connection.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
-        if (typeResult.length === 0) {
-            throw new Error("Invalid membership type selected.");
-        }
-        type = typeResult[0]; // Set type for catch block
+        if (typeResult.length === 0) throw new Error("Invalid membership type selected.");
+        type = typeResult[0];
 
-        // 2. NEW: Calculate dynamic price
+        // 2. Calculate Price
         const totalMembers = 1 + subFirstNames.length;
         const additionalMembers = Math.max(0, totalMembers - type.base_members);
-        const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0)); // FIXED string math
+        const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
 
-        // 3. Create the PRIMARY membership record
-        const publicMemberId = crypto.randomUUID(); // ADDED
+        // 3. Create PRIMARY member
+        const publicMemberId = crypto.randomUUID();
         const primarySql = `
             INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-        `; // ADDED public_membership_id
+        `;
         const [memResult] = await connection.query(primarySql, [
-            publicMemberId, // ADDED
+            publicMemberId,
             first_name, last_name, email,
             formattedPhoneNumber,
             date_of_birth, type_id, serverStartDate, serverEndDate
         ]);
-
         const newPrimaryMemberId = memResult.insertId;
 
-        // 4. NEW: Create SUB-MEMBER records
+        // 4. Create SUB-MEMBER records AND Capture Data
+        const createdSubMembers = []; // <--- Array to store sub-members for the receipt
+
         const subMemberSql = `
             INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
             VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?)
-        `; // ADDED public_membership_id
+        `;
+
         for (let i = 0; i < subFirstNames.length; i++) {
-            const publicSubMemberId = crypto.randomUUID(); // ADDED
+            const publicSubMemberId = crypto.randomUUID();
+
             await connection.query(subMemberSql, [
-                publicSubMemberId, // ADDED
+                publicSubMemberId,
                 subFirstNames[i],
                 subLastNames[i],
                 subDobs[i],
                 type_id,
                 serverStartDate,
                 serverEndDate,
-                newPrimaryMemberId // Link to the primary member
+                newPrimaryMemberId
             ]);
+
+            // Add to array for the view
+            createdSubMembers.push({
+                first_name: subFirstNames[i],
+                last_name: subLastNames[i],
+                public_membership_id: publicSubMemberId
+            });
         }
 
-        // 5. Log this in-park purchase in the history table
-        const publicPurchaseId = crypto.randomUUID(); // ADDED
+        // 5. Log Purchase History
+        const publicPurchaseId = crypto.randomUUID();
         const historySql = `
             INSERT INTO membership_purchase_history 
                 (public_purchase_id, membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
-        `; // ADDED public_purchase_id
-        const [historyResult] = await connection.query(historySql, [
-            publicPurchaseId, // ADDED
-            newPrimaryMemberId, // Purchase is tied to primary member
+        `;
+        await connection.query(historySql, [
+            publicPurchaseId,
+            newPrimaryMemberId,
             type.type_id,
             purchaseTime,
-            finalPrice, // Use dynamically calculated price
+            finalPrice,
             serverStartDate,
             serverEndDate,
             type.type_name,
-            null // No payment method ID for in-park sales
+            null
         ]);
 
-        const newPurchaseId = historyResult.insertId;
-
-        // 6. Commit transaction
         await connection.commit();
 
-        // 7. Build the receipt object to render
+        // 7. Build Receipt Data
+        // IMPORTANT: Property names here must match the EJS view variables exactly!
         const receiptData = {
-            purchase_id: publicPurchaseId, // CHANGED to public ID
-            membership_id: publicMemberId, // CHANGED to public ID
+            public_purchase_id: publicPurchaseId,
+            public_membership_id: publicMemberId,
             first_name: first_name,
             last_name: last_name,
             purchase_date: purchaseTime,
@@ -332,10 +336,10 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             purchased_start_date: serverStartDate,
             purchased_end_date: serverEndDate,
             price_paid: finalPrice,
-            payment_method_name: 'In-Park Transaction'
+            payment_method_name: 'In-Park Transaction',
+            subMembers: createdSubMembers // <--- Passing the array we built
         };
 
-        // 8. Render the receipt
         res.render('member-purchase-receipt-detail', {
             purchase: receiptData,
             fromEmployee: true
@@ -343,15 +347,11 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
     } catch (error) {
         if (connection) await connection.rollback();
-
-        console.error(error);
-        const [types] = await pool.query(
-            'SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
-        );
+        console.error("Error adding member:", error);
+        const [types] = await pool.query('SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name');
         res.render('add-member', {
             error: "Database error adding member. Email might be duplicate.",
             types: types,
-            // Pass back submitted data on error
             member: req.body,
             subMembers: { subFirstNames, subLastNames, subDobs }
         });

@@ -4,44 +4,75 @@
     <meta charset="UTF-8">
     <title>Park Inventory</title>
     <style>
-        body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1100px;
-            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
         }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+
+        /* Main Container */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
-        
-        /* Stats Bar Styles */
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1em;
-            margin-bottom: 1.5em;
+            margin-bottom: 2em;
         }
         .stat-card {
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 1.5em;
+            border: 1px solid #e9ecef;
+            padding: 1.2em;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s;
         }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2em; color: #007bff;
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 1.8em;
+            font-weight: 700;
         }
-        .stat-card h3.critical { color: #dc3545;
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.85em;
+            text-transform: uppercase;
         }
-        .stat-card h3.pending { color: #d39e00;
-        }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
-        }
+        
+        /* Stat Colors */
+        .stat-total { color: #007bff; }
+        .stat-critical { color: #dc3545; } /* Red for Out of Stock */
+        .stat-pending { color: #d39e00; } /* Dark Yellow for Pending */
 
-        /* Filter Bar Styles */
-        .filter-bar {
+        /* --- FILTER BAR --- */
+        .filter-bar { 
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 1.5em;
-            border-radius: 8px;
-            margin-bottom: 1.5em;
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
         }
         .filter-controls {
             display: grid;
@@ -49,104 +80,164 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
-            font-size: 0.9em; }
-        .filter-controls input, .filter-controls select {
+        .filter-controls label { 
+            font-weight: 600;
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .filter-controls input,
+        .filter-controls select { 
             width: 100%;
-            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
-        }
-        .filter-buttons { display: flex; gap: 10px;
-        }
-        .filter-btn {
-            flex-grow: 1;
-            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
-        }
-        .btn-filter { background-color: #007bff;
-        }
-        .btn-filter:hover { background-color: #0056b3;
-        }
-        .btn-clear { background-color: #6c757d;
-        }
-        .btn-clear:hover { background-color: #5a6268;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
 
-        table { width: 100%;
-            border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left;
-            border-bottom: 1px solid #ddd; }
-        th { background-color: #343a40; color: white;
-        }
+        .filter-buttons { display: flex; gap: 10px; }
         
-        /* Sortable Header Links */
-        th.sortable a {
-            text-decoration: none;
-            color: white; display: flex; justify-content: space-between; align-items: center;
+        .filter-btn { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            text-align: center; 
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        th.sortable a:hover { text-decoration: underline;
-        }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px;
-        }
+        .filter-btn:hover { transform: translateY(-1px); }
+        
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
 
-        tr:nth-child(even) { background-color: #f9f9f9;
+        /* Top Action Buttons */
+        .button-bar { 
+            display: flex;
+            justify-content: flex-end; 
+            gap: 10px;
+            margin-bottom: 1.5em; 
         }
-        tr:hover { background-color: #f1f1f1;
-        }
-        
-        .button-bar { display: flex;
-            justify-content: flex-end; margin-bottom: 1.5em; }
         .action-button { 
-            padding: 12px 20px;
-            background-color: #007bff; color: white; 
-            text-decoration: none; border-radius: 4px; font-weight: bold;
+            padding: 10px 20px;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
         }
-        .action-button:hover { background-color: #0056b3;
+        .action-button:hover { transform: translateY(-1px); }
+        
+        .btn-add { background-color: #28a745; }
+        .btn-add:hover { background-color: #218838; }
+        
+        .btn-view-req { background-color: #007bff; }
+        .btn-view-req:hover { background-color: #0056b3; }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        th.sortable a { 
+            text-decoration: none;
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
+        
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* --- TABLE ACTION BUTTONS --- */
+        .actions-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
-        /* --- ACTION BUTTON STYLES --- */
         .btn-action {
             display: block;
             width: 100%;
             box-sizing: border-box;
             padding: 5px 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            border-radius: 6px;
             text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.85em;
-            border: 1px solid transparent;
+            border: 1px solid #ced4da;
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
-            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { transform: translateY(-1px); }
 
-        .btn-restock {
-            color: #007bff;
-            border-color: #007bff;
-        }
+        /* Button Variants */
+        .btn-restock { color: #007bff; border-color: #007bff; }
         .btn-restock:hover { background-color: #007bff; color: white; }
         
-        .btn-destock {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
+        .btn-destock { color: #dc3545; border-color: #dc3545; }
         .btn-destock:hover { background-color: #dc3545; color: white; }
         
-        .btn-deshelf {
-            color: #6c757d;
-            border-color: #6c757d;
+        .btn-deshelf { 
+            color: white; 
+            background-color: #dc3545; 
+            border-color: #dc3545; 
         }
-        .btn-deshelf:hover { background-color: #6c757d; color: white; }
+        .btn-deshelf:hover { 
+            background-color: #c82333; 
+        }
 
         .btn-pending {
             background-color: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeeba;
+            border-color: #ffeeba;
             cursor: not-allowed;
             pointer-events: none;
+            box-shadow: none;
         }
+        .btn-pending:hover { transform: none; }
     </style>
 </head>
 <body>
@@ -157,15 +248,15 @@
         <%# --- STATS BAR --- %>
         <div class="stats-bar">
             <div class="stat-card">
-                <h3><%= counts.total_records || 0 %></h3>
+                <h3 class="stat-total"><%= counts.total_records || 0 %></h3>
                 <p>Total Records</p>
             </div>
             <div class="stat-card">
-                <h3 class="critical"><%= counts.out_of_stock_count || 0 %></h3>
+                <h3 class="stat-critical"><%= counts.out_of_stock_count || 0 %></h3>
                 <p>Out of Stock</p>
             </div>
             <div class="stat-card">
-                <h3 class="pending"><%= counts.pending_count || 0 %></h3>
+                <h3 class="stat-pending"><%= counts.pending_count || 0 %></h3>
                 <p>Pending Requests</p>
             </div>
         </div>
@@ -214,9 +305,9 @@
 
         <div class="button-bar">
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                <a href="/inventory/add" class="action-button" style="background-color: #28a745; margin-right: 10px;">Add Item to Shelf</a>
+                <a href="/inventory/add" class="action-button btn-add"><i class="fa-solid fa-plus"></i> Add Item to Shelf</a>
             <% } %>
-            <a href="/inventory/requests" class="action-button">View All Restock Requests</a>
+            <a href="/inventory/requests" class="action-button btn-view-req"><i class="fa-solid fa-list-check"></i> Restock Requests</a>
         </div>
 
         <% 
@@ -260,36 +351,42 @@
                             <span>Current Count</span> <span class="sort-indicator"><%= getSortState('count').indicator %></span>
                         </a>
                     </th>
-                    <th>Actions</th> 
+                    <th style="min-width: 140px;">Actions</th> 
                 </tr>
             </thead>
             <tbody>
                 <% if (inventory.length === 0) { %>
-                    <tr><td colspan="4" style="text-align: center; padding: 2em;">No inventory records found.</td></tr>
+                    <tr><td colspan="4" style="text-align: center; padding: 2em; color: #777;">No inventory records found.</td></tr>
                 <% } %>
          
                <% inventory.forEach(item => { %>
                     <tr>
-                        <td><%= item.vendor_name %></td>
+                        <td><strong><%= item.vendor_name %></strong></td>
                         <td><%= item.item_name %></td>
-                        <td><%= item.current_count %></td>
+                        
+                        <%# Status Color Logic for Count %>
+                        <td style="<%= item.current_count < 10 ? 'color: #dc3545; font-weight: bold;' : '' %>">
+                            <%= item.current_count %>
+                        </td>
                         
                         <td>
-                            <%# --- 1. RESTOCK (Visible to All) --- %>
-                            <% if (item.pending_count) { %>
-                                <span class="btn-action btn-pending">Restock Pending</span>
-                            <% } else { %>
-                                <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-restock">Restock</a>
-                            <% } %>
+                            <div class="actions-cell">
+                                <%# --- 1. RESTOCK (Visible to All) --- %>
+                                <% if (item.pending_count) { %>
+                                    <span class="btn-action btn-pending">Restock Pending</span>
+                                <% } else { %>
+                                    <a href="/inventory/request/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-restock">Restock</a>
+                                <% } %>
 
-                            <%# --- 2. DESTOCK & DESHELF (Managers Only) --- %>
-                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-                                <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-destock">Destock</a>
-        
-                                <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to remove this item from the shelf?');">
-                                    <button type="submit" class="btn-action btn-deshelf">Deshelf</button>
-                                </form>
-                            <% } %>
+                                <%# --- 2. DESTOCK & DESHELF (Managers Only) --- %>
+                                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                    <a href="/inventory/destock/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" class="btn-action btn-destock">Destock</a>
+            
+                                    <form action="/inventory/deshelf/<%= item.public_vendor_id %>/<%= item.public_item_id %>?returnTo=inventory" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to remove this item from the shelf?');">
+                                        <button type="submit" class="btn-action btn-deshelf">Deshelf</button>
+                                    </form>
+                                <% } %>
+                            </div>
                         </td>
                     </tr>
                 <% }); %>

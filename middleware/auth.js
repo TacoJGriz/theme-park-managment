@@ -1,3 +1,5 @@
+const pool = require('../db');
+
 const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
         return next();
@@ -10,14 +12,11 @@ const isAdmin = (req, res, next) => {
     res.status(403).send('Forbidden: Admins only');
 };
 
-// REMOVED: isHR function
-
 const isParkManager = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'Park Manager') { return next(); }
     res.status(403).send('Forbidden: Park Managers only');
 };
 
-// UPDATED: Only Admin can add employees now
 const canAddEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin') { return next(); }
@@ -30,7 +29,6 @@ const isAdminOrParkManager = (req, res, next) => {
     res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
 
-// UPDATED: Removed HR roles
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
@@ -242,6 +240,57 @@ const isGuest = (req, res, next) => {
     return next();
 };
 
+const countPendingApprovals = async (req, res, next) => {
+    if (!req.session || !req.session.user) {
+        res.locals.approvalCount = 0;
+        res.locals.newApprovalCount = 0;
+        return next();
+    }
+
+    const { role, locationId } = req.session.user;
+    let count = 0;
+
+    try {
+        // 1. Maintenance Reassignments (Admin & Park Manager only)
+        if (role === 'Admin' || role === 'Park Manager') {
+            const [mResult] = await pool.query(
+                'SELECT COUNT(*) as count FROM maintenance WHERE pending_employee_id IS NOT NULL AND end_date IS NULL'
+            );
+            count += mResult[0].count;
+        }
+
+        // 2. Inventory Requests (Admin, Park Manager, Location Manager)
+        if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
+            let sql = `
+                SELECT COUNT(*) as count 
+                FROM inventory_requests ir 
+                JOIN vendors v ON ir.vendor_id = v.vendor_id 
+                WHERE ir.status = 'Pending'
+            `;
+            let params = [];
+
+            if (role === 'Location Manager') {
+                sql += " AND v.location_id = ?";
+                params.push(locationId);
+            }
+
+            const [iResult] = await pool.query(sql, params);
+            count += iResult[0].count;
+        }
+
+        res.locals.approvalCount = count;
+
+        // Calculate "New" since last check
+        const lastCheck = req.session.lastApprovalCheckCount || 0;
+        res.locals.newApprovalCount = Math.max(0, count - lastCheck);
+
+    } catch (error) {
+        console.error("Error counting approvals:", error);
+        res.locals.approvalCount = 0;
+    }
+    next();
+};
+
 module.exports = {
     isAuthenticated,
     isAdmin,
@@ -267,5 +316,6 @@ module.exports = {
     formatReceiptDate,
     censorPhone,
     isMemberAuthenticated,
-    isGuest
+    isGuest,
+    countPendingApprovals
 };

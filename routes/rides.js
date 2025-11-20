@@ -35,7 +35,27 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
         // --- 2. Fetch data for filters ---
         const [allLocations] = await pool.query('SELECT location_id, public_location_id, location_name FROM location ORDER BY location_name');
         const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
-        const [allStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
+
+        // MODIFIED: Fetch all defined ENUM values from the schema to include unused statuses (like WEATHER CLOSURE)
+        const [schemaResult] = await pool.query(
+            `SELECT COLUMN_TYPE 
+             FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_NAME = 'rides' AND COLUMN_NAME = 'ride_status' AND TABLE_SCHEMA = DATABASE()`
+        );
+
+        let allStatuses = [];
+        if (schemaResult.length > 0) {
+            // Parse string format: enum('OPEN','CLOSED','BROKEN','WEATHER CLOSURE')
+            const enumString = schemaResult[0].COLUMN_TYPE;
+            // Remove "enum(" and ")" and single quotes, then split into array
+            const values = enumString.substring(5, enumString.length - 1).replace(/'/g, '').split(',');
+            // Map to object structure expected by EJS
+            allStatuses = values.map(status => ({ ride_status: status }));
+        } else {
+            // Fallback if schema query fails
+            const [distinctStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
+            allStatuses = distinctStatuses;
+        }
 
         // --- 3. Handle Location Manager Scope ---
         if (role === 'Location Manager' || role === 'Staff') {
@@ -195,9 +215,23 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
     const { ride_status, returnQuery } = req.body;
     const { role, locationId } = req.session.user;
 
-    if (!['OPEN', 'CLOSED', 'BROKEN'].includes(ride_status)) {
+    const [schemaResult] = await pool.query(
+        `SELECT COLUMN_TYPE 
+         FROM INFORMATION_SCHEMA.COLUMNS 
+         WHERE TABLE_NAME = 'rides' AND COLUMN_NAME = 'ride_status' AND TABLE_SCHEMA = DATABASE()`
+    );
+
+    let validStatuses = [];
+    if (schemaResult.length > 0) {
+        const enumString = schemaResult[0].COLUMN_TYPE;
+        // Parse string "enum('A','B','C')" -> ["A", "B", "C"]
+        validStatuses = enumString.substring(5, enumString.length - 1).replace(/'/g, '').split(',');
+    }
+
+    if (!validStatuses.includes(ride_status)) {
         return res.status(400).send('Invalid ride status provided.');
     }
+
     let connection;
     try {
         connection = await pool.getConnection();
@@ -344,6 +378,7 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
 // Path changed to /history/:public_ride_id
 router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, async (req, res) => {
     const { public_ride_id } = req.params; // CHANGED
+    const { returnQuery } = req.query; // CAPTURE returnQuery
     const { role, locationId } = req.session.user;
     const today = new Date().toISOString().substring(0, 10);
     let ride;
@@ -387,7 +422,8 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
             ride: ride,
             todayStats: todayStats,
             allTimeStats: allTimeStats,
-            dailyHistory: dailyHistory
+            dailyHistory: dailyHistory,
+            returnQuery: returnQuery || '' 
         });
 
     } catch (error) {

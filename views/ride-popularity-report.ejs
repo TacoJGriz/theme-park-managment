@@ -6,93 +6,194 @@
     <%# Link to Chart.js library %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px;
-margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-}
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px;
-background-color: #fafafa; }
-        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em;
-align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold;
-}
-        .form-grid input[type="month"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
-border: 1px solid #ccc; }
-        button { padding: 10px 20px; background-color: #007bff;
-color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold;
-}
-        button:hover { background-color: #0056b3;
-}
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* Main Container */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* Filter/Form Bar */
+        .filter-bar { 
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
+        }
         
-        /* UPDATED: Removed fixed min-height, added transition */
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            align-items: end; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        input[type="month"], select { 
+            width: 100%;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Buttons */
+        button { 
+            padding: 12px 25px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        /* Chart Container */
         .chart-container { 
             margin-top: 2em;
-border: 1px solid #ddd; 
+            border: 1px solid #e9ecef; 
             padding: 1.5em; 
             background: #fff;
-            border-radius: 8px; 
+            border-radius: 12px; 
             position: relative;
-/* Height will be set dynamically by JS */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         
-        .error { color: #d9534f;
-font-weight: bold;
-            background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px;
-}
+        /* Error Message */
+        .error { 
+            color: #721c24; 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb;
+            padding: 1em; 
+            border-radius: 8px; 
+            margin-bottom: 1.5em; 
+            font-weight: 600;
+        }
 
-        /* Table Styles */
+        /* --- TABLE STYLES --- */
         .data-table {
             width: 100%;
-border-collapse: collapse;
+            border-collapse: separate; 
+            border-spacing: 0;
             margin-top: 2em;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-        .data-table th, .data-table td {
-            padding: 12px 15px;
-border: 1px solid #ddd;
-            text-align: left;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
-        .data-table th {
-            background-color: #343a40;
-color: white;
-            font-weight: bold;
+        .data-table th { 
+            background-color: #007bff; /* Standard Blue */
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
         }
-        .data-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-}
+        .data-table td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:nth-child(even) { background-color: #f8f9fa; }
 
+        /* Summary Row */
         .summary-row {
             background-color: #e9ecef !important;
-font-weight: bold;
+            font-weight: 700;
             border-top: 2px solid #dee2e6;
-            font-size: 1.1em;
+            font-size: 1.05em;
+            color: #2c3e50;
         }
 
         /* Top Performer Highlighting */
         .top-performer-row {
-            background-color: #fff5f5 !important;
-/* Light Red Tint */
-            border-left: 5px solid #dc3545;
-/* Bold Red Border */
+            background-color: #fff5f5 !important; /* Light Red Tint */
         }
+        /* Add a thick left border to the first cell of top performers */
+        .top-performer-row td:first-child {
+            border-left: 4px solid #dc3545;
+        }
+        
         .top-performer-row td {
             font-weight: 600;
-color: #333;
+            color: #333;
         }
+        
         .rank-badge {
             display: inline-block;
-background-color: #dc3545;
+            background-color: #dc3545;
             color: white;
             font-size: 0.75em;
             padding: 2px 6px;
             border-radius: 4px;
             margin-right: 8px;
-            font-weight: bold;
-}
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3em;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #dee2e6;
+            color: #6c757d;
+            margin-top: 2em;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -104,14 +205,14 @@ background-color: #dc3545;
             <p class="error"><%= error %></p>
         <% } %>
 
-        <form action="/reports/ride-popularity" method="POST">
+        <form action="/reports/ride-popularity" method="POST" class="filter-bar">
             <div class="form-grid">
                 <div>
                     <label for="selected_date">Select Month:</label>
                     <input type="month" id="selected_date" name="selected_date" value="<%= selected_date.substring(0, 7) %>" required>
                 </div>
                 
-                <%# --- NEW FILTER 1: LOCATION --- %>
+                <%# --- FILTER 1: LOCATION --- %>
                 <div>
                     <label for="filter_location">Filter by Location:</label>
                     <select id="filter_location" name="filter_location">
@@ -124,7 +225,7 @@ background-color: #dc3545;
                     </select>
                 </div>
 
-                <%# --- NEW FILTER 2: RIDE TYPE --- %>
+                <%# --- FILTER 2: RIDE TYPE --- %>
                 <div>
                     <label for="filter_type">Filter by Ride Type:</label>
                     <select id="filter_type" name="filter_type">
@@ -138,7 +239,7 @@ background-color: #dc3545;
                 </div>
                 
                 <%# --- SUBMIT BUTTON --- %>
-                <div style="align-self: end;">
+                <div>
                     <button type="submit">Generate Report</button>
                 </div>
             </div>
@@ -147,83 +248,67 @@ background-color: #dc3545;
         <% if (report_data && report_data.length > 0) { %>
             <div class="chart-container" id="chartContainer">
                 <canvas id="ridePopularityChart"></canvas>
-     
-        </div>
+            </div>
 
             <% 
                 let grandTotal = 0;
-report_data.forEach(row => grandTotal += parseInt(row.total_riders));
+                report_data.forEach(row => grandTotal += parseInt(row.total_riders));
             %>
 
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                      
-   <th>Ride Name</th>
+                        <th>Ride Name</th>
                         <th>Type</th>
                         <th>Location</th>
                         <th>Total Riders</th>
-                        
- <th>% of Total</th>
+                        <th>% of Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% report_data.forEach((row, index) => { %>
-                     
-    <tr class="<%= index < 5 ? 'top-performer-row' : '' %>">
+                        <tr class="<%= index < 5 ? 'top-performer-row' : '' %>">
                             <td>
                                 <%= row.public_ride_id.substring(0, 8).toUpperCase() %>
-                         
-    </td>
+                            </td>
                             <td>
                                 <% if (index < 5) { %>
-                               
-      <span class="rank-badge">#<%= index + 1 %></span>
+                                    <span class="rank-badge">#<%= index + 1 %></span>
                                 <% } %>
                                 <%= row.ride_name %>
-                      
-       </td>
+                            </td>
                             <td><%= row.ride_type %></td>
                             <td><%= row.location_name %></td>
                             <td><%= row.total_riders.toLocaleString() %></td>
-    
-                         <td>
-                                <% const percent = (row.total_riders / grandTotal) * 100;
-%>
+                            <td>
+                                <% const percent = (row.total_riders / grandTotal) * 100; %>
                                 <%= percent.toFixed(1) %>%
                             </td>
                         </tr>
-              
-       <% }); %>
+                    <% }); %>
                 </tbody>
                 <tfoot>
                     <tr class="summary-row">
-                        <td colspan="4" style="text-align: right;"><strong>GRAND TOTAL:</strong></td>
-           
-              <td><strong><%= grandTotal.toLocaleString() %></strong></td>
-                        <td><strong>100.0%</strong></td>
+                        <td colspan="4" style="text-align: right;">GRAND TOTAL:</td>
+                        <td><%= grandTotal.toLocaleString() %></td>
+                        <td>100.0%</td>
                     </tr>
                 </tfoot>
             </table>
 
             <script>
-                // Wrap in DOMContentLoaded to ensure elements are fully loaded before script execution
                 document.addEventListener('DOMContentLoaded', () => {
-                    // Pass EJS data to JavaScript
                     const reportData = <%- JSON.stringify(report_data) %>;
                     const labels = reportData.map(item => `${item.ride_name} (${item.location_name})`);
                     const counts = reportData.map(item => item.total_riders);
                     
-                    // --- 1. Dynamic Height Adjustment ---
+                    // --- Dynamic Height Adjustment ---
                     const container = document.getElementById('chartContainer');
-                    // Calculate height: Base padding (100px) + (40px per bar)
-                    // This formula ensures every bar has room
                     const calculatedHeight = 100 + (reportData.length * 40);
                     container.style.height = `${calculatedHeight}px`;
 
-                    // --- 2. Chart Creation ---
-                    // Color Logic: Red for Top 5, Grey for the rest
+                    // --- Chart Creation ---
                     const backgroundColors = reportData.map((_, index) => 
                         index < 5 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(108, 117, 125, 0.5)'
                     );
@@ -245,9 +330,9 @@ report_data.forEach(row => grandTotal += parseInt(row.total_riders));
                             }]
                         },
                         options: {
-                            indexAxis: 'y', // Horizontal Bar Chart
+                            indexAxis: 'y', 
                             responsive: true,
-                            maintainAspectRatio: false, // Important for custom height
+                            maintainAspectRatio: false,
                             scales: {
                                 x: { 
                                     beginAtZero: true, 
@@ -255,13 +340,11 @@ report_data.forEach(row => grandTotal += parseInt(row.total_riders));
                                 },
                                 y: { 
                                     title: { display: true, text: 'Ride Name (Location)' },
-                                    ticks: {
-                                        autoSkip: false // Force all labels to show
-                                    }
+                                    ticks: { autoSkip: false }
                                 }
                             },
                             plugins: {
-                                title: { display: true, text: '<%= chartTitle %>', font: { size: 18 } },
+                                title: { display: true, text: '<%= chartTitle %>', font: { size: 18, family: 'Poppins' } },
                                 legend: { display: false },
                                 tooltip: { 
                                     callbacks: { 
@@ -274,9 +357,12 @@ report_data.forEach(row => grandTotal += parseInt(row.total_riders));
                         }
                     });
                 });
- </script>
+            </script>
         <% } else if (report_data && report_data.length === 0) { %>
-            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No ride data found for the selected month.</p>
+            <div class="empty-state">
+                <i class="fa-solid fa-chart-bar" style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;"></i>
+                <p>No ride data found for the selected month and filters.</p>
+            </div>
         <% } %>
     </div>
 </body>

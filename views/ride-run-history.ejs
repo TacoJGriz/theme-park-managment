@@ -4,62 +4,120 @@
     <meta charset="UTF-8">
     <title>Ride Run History</title>
      <style>
-        /* INHERITED: Poppins font, 0 margin, and contrasting background from header.ejs */
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* Main Container - Wider for tables */
         .container { 
-            max-width: 900px;
+            max-width: 1200px;
             margin: 2em auto; 
             background: white; 
-            padding: 2.5em; /* Standardized Padding */
-            border-radius: 12px; /* Standardized Radius */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Standardized Shadow */
-        }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
-        }
-        h1 small { color: #007bff; font-weight: bold;
-        }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-top: 2em;
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
         
-        /* --- Stats Bar Styles (Keeping original good style) --- */
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        /* Ride Name on new line */
+        h1 small { 
+            display: block; 
+            font-size: 0.6em;
+            color: #777; 
+            font-weight: normal; 
+            margin-top: 5px; 
+            line-height: 1.4;
+        }
+
+        h2 { 
+            color: #2c3e50;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+        }
+
+        /* Back Link */
+        .back-link { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            text-decoration: none; 
+            color: #007bff;
+            font-weight: 600;
+            padding: 8px 15px; 
+            background-color: #e9ecef;
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .back-link:hover { 
+            background-color: #dee2e6;
+            color: #0056b3;
+        }
+
+        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1em;
             margin: 1.5em 0;
         }
         .stat-card {
             background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
+            border: 1px solid #e9ecef;
             padding: 1.5em;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         .stat-card h3 {
             margin: 0 0 0.25em 0;
-        font-size: 2.5em;
+            font-size: 2.5em;
             color: #007bff;
         }
-        .stat-card h3.today { color: #28a745;
-        }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+        .stat-card h3.today { color: #28a745; }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
         }
 
-        /* --- Standardized Table Styles (from style-guide.ejs) --- */
+        /* --- TABLE STYLES --- */
         table { 
             width: 100%;
-            border-collapse: separate; /* Key for rounded corners */
+            border-collapse: separate; 
             border-spacing: 0;
-            margin-top: 1.5em;
+            margin-top: 1em;
             font-size: 0.95em;
             background: white;
-            border-radius: 12px; /* Rounded corners */
+            border-radius: 12px; 
             overflow: hidden;
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
         th { 
-            background-color: #007bff; /* Primary Blue */
+            background-color: #007bff;
             color: white; 
-            padding: 15px; /* Standardized padding */
+            padding: 15px;
             text-align: left; 
             font-weight: 600;
             border: none;
@@ -68,7 +126,7 @@
             letter-spacing: 0.5px;
         }
         td { 
-            padding: 15px; /* Standardized padding */
+            padding: 15px;
             border-bottom: 1px solid #f1f1f1; 
             vertical-align: middle;
             color: #555;
@@ -76,93 +134,73 @@
         tr:last-child td { border-bottom: none; }
         tr:nth-child(even) { background-color: #f8f9fa; }
         tr:hover { background-color: #f1f5f9; }
-        /* END Table Styles */
-        
-        /* Standardize Back Link */
-        .back-link {
-            display: inline-block;
-            margin-bottom: 1.5em;
-            text-decoration: none;
-            color: #007bff; /* Primary Blue - Standard */
-            font-weight: 600; /* Standardized */
-            padding: 8px 15px; 
-            background-color: #e9ecef; 
-            border-radius: 8px; /* Standardized */ 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .back-link:hover { text-decoration: none; background-color: #dee2e6; color: #0056b3;
-        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
-        <h1>Run History for <br><small><%= ride.ride_name %> (Max Capacity: <%= ride.capacity %>)</small></h1>
         
-        <a href="/rides" class="back-link">&laquo;
- Back to Rides List</a>
+        <%# --- SMART RECALL BUTTON --- %>
+        <% const backLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/rides?' + returnQuery : '/rides'; %>
+        <a href="<%= backLink %>" class="back-link">&laquo; Back to Rides List</a>
 
-        <h2>Ride Statistics</h2>
+        <h1>
+            Run History
+            <small>Ride: <%= ride.ride_name %> (Capacity: <%= ride.capacity %>)</small>
+        </h1>
+        
+        <h2>Statistics Overview</h2>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3 class="today"><%= todayStats.today_runs %></h3>
-                <p>Total Runs (Today)</p>
+                <p>Runs Today</p>
             </div>
             <div class="stat-card">
-    
-             <h3 class="today"><%= todayStats.today_riders %></h3>
-                <p>Total Riders (Today)</p>
+                 <h3 class="today"><%= todayStats.today_riders %></h3>
+                <p>Riders Today</p>
             </div>
             <div class="stat-card">
                 <h3><%= allTimeStats.total_runs %></h3>
-                <p>Total Runs (All Time)</p>
-     
-        </div>
+                <p>Runs All Time</p>
+            </div>
             <div class="stat-card">
                 <h3><%= allTimeStats.total_riders %></h3>
-                <p>Total Riders (All Time)</p>
+                <p>Riders All Time</p>
             </div>
         </div>
 
-        <h2>Daily Run Log</h2>
+        <h2>Daily Logs</h2>
         <table>
-     
-        <thead>
+             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Total Runs</th>
                     <th>Total Estimated Riders</th>
-              
-       <th>Average Riders per Run</th>
+                    <th>Average Riders per Run</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (dailyHistory.length === 0) { %>
                     <tr>
-         
-                <td colspan="4" style="text-align: center;">No ride run data has been logged for this ride.</td>
+                        <td colspan="4" style="text-align: center; padding: 2em;">No ride run data has been logged for this ride.</td>
                     </tr>
                 <% } %>
                 <% dailyHistory.forEach(day => { %>
-               
-      <tr>
+                    <tr>
                         <td><%= day.dat_date.toISOString().substring(0, 10) %></td>
-                        <td><%= day.run_count %></td>
+                        <td><strong><%= day.run_count %></strong></td>
                         <td><%= day.ride_count %></td>
-                
-         <td>
+                        <td>
                             <% if (day.run_count > 0) { %>
-                                <%# Calculate average riders per run %>
-                    
-             <%= (day.ride_count / day.run_count).toFixed(1) %>
+                                <span style="font-family: monospace; font-weight: bold;">
+                                    <%= (day.ride_count / day.run_count).toFixed(1) %>
+                                </span>
                             <% } else { %>
                                 0.0
-                    
-         <% } %>
+                            <% } %>
                         </td>
                     </tr>
-                <% });
- %>
+                <% }); %>
             </tbody>
         </table>
     </div>

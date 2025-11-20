@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Destock Item</title>
-    <style>
+    <title>Reopen Work Order</title>
+     <style>
         /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
             font-family: 'Poppins', sans-serif;
@@ -32,28 +32,23 @@
             font-weight: 700;
         }
         
+        /* Ride Name on new line */
         h1 small { 
             display: block; 
-            font-size: 0.6em; 
+            font-size: 0.6em;
             color: #777; 
             font-weight: normal; 
             margin-top: 5px; 
             line-height: 1.4;
         }
 
-        /* Info Box */
-        .info-box {
-            background-color: #e2e3e5;
-            border-left: 5px solid #6c757d;
-            padding: 1.2em;
-            margin-bottom: 2em;
-            border-radius: 8px;
-            color: #383d41;
-            font-weight: 600;
+        /* Form Layout */
+        .form-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5em; 
         }
-
-        /* Form Elements */
-        div.form-group { margin-bottom: 1.5em; }
+        div.form-group { margin-bottom: 0; } 
         
         label { 
             display: block;
@@ -63,7 +58,8 @@
             color: #495057;
         }
 
-        input[type="number"] {
+        /* Inputs & Textareas */
+        input[type="number"], input[type="text"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
@@ -73,27 +69,29 @@
             font-size: 0.95em;
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-        input:focus {
-            border-color: #dc3545; /* Red focus for removing stock */
+        input:focus, textarea:focus {
+            border-color: #dc3545; /* Red focus for reopening */
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
         }
+        
+        /* Read-only inputs */
+        input:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
 
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
-            border-color: #f5c6cb;
-            padding: 1em; 
-            border-radius: 8px;
-            margin-bottom: 1.5em; 
-            font-weight: 600;
+        textarea { 
+            grid-column: 1 / -1; 
+            resize: vertical; 
+            min-height: 120px; 
         }
 
         /* Buttons */
         button { 
             padding: 12px 25px; 
-            background-color: #dc3545; /* Red for Destock */
+            background-color: #dc3545; /* Red for "Reopen" action */
             color: white; 
             border: none; 
             border-radius: 8px; 
@@ -132,29 +130,46 @@
     
     <div class="container">
         <h1>
-            Destock Item
-            <small><%= item.item_name %> at <%= item.vendor_name %></small>
+            Reopen Work Order
+            <small>for <%= log.ride_name %></small>
         </h1>
-
-        <% if (typeof error !== 'undefined' && error) { %>
-            <div class="error"><%= error %></div>
-        <% } %>
-
-        <div class="info-box">
-            Current Stock: <%= item.current_count %>
-        </div>
-
-        <form action="<%= formAction %>" method="POST">
-            <div class="form-group">
-                <label for="remove_count">Quantity to Remove:</label>
-                <input type="number" id="remove_count" name="remove_count" min="1" max="<%= item.current_count %>" required placeholder="Enter amount to remove...">
+        
+        <form action="/maintenance/reopen/<%= log.public_maintenance_id %>" method="POST">
+            <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
+            
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="summary">Reason for Reopening / Updated Notes:</label>
+                    <textarea name="summary" id="summary" required><%= log.summary %></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cost">Cost to Date ($):</label>
+                    <input 
+                        type="number" 
+                        id="cost" 
+                        name="cost" 
+                        step="0.01" 
+                        min="0" 
+                        value="<%= log.cost ? parseFloat(log.cost).toFixed(2) : '0.00' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label>New Ride Status:</label>
+                    <input 
+                        type="text" 
+                        value="BROKEN" 
+                        disabled 
+                        style="color: #dc3545; font-weight: bold; border-color: #dc3545; background-color: #fff5f5;">
+                </div>
             </div>
             
             <br>
             
-            <button type="submit">Confirm Removal</button>
+            <button type="submit">Confirm Reopen</button>
             
-            <a href="<%= typeof cancelLink !== 'undefined' ? cancelLink : '/inventory' %>" class="cancel-link">Cancel</a>
+            <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/rides?' + returnQuery : '/rides'; %>
+            <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
         </form>
     </div>
 </body>

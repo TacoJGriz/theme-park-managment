@@ -4,136 +4,234 @@
     <meta charset="UTF-8">
     <title>Park Employees</title>
     <style>
-        body { font-family: sans-serif;
-            margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px;
-            margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
         }
         
-        /* --- Stats Bar Styles --- */
+        /* Main Container */
+        .container { 
+            max-width: 1200px;
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Changed from 4 to 3 columns */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
             gap: 1em;
-            margin-bottom: 1.5em;
+            margin-bottom: 2em;
         }
         .stat-card {
             background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+            border: 1px solid #e9ecef;
             padding: 1.5em;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .stat-card h3 { margin: 0 0 0.25em 0; font-size: 2.5em; color: #007bff;
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        .stat-card h3.active { color: #28a745;
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #007bff;
         }
-        .stat-card h3.inactive { color: #dc3545;
-        }
-        .stat-card p { margin: 0; font-weight: bold; color: #6c757d;
+        .stat-card h3.active { color: #28a745; }
+        .stat-card h3.inactive { color: #dc3545; }
+        
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* --- Filter Bar Styles --- */
-        .filter-bar {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 1.5em;
-            border-radius: 8px;
-            margin-bottom: 1.5em;
+        /* --- FILTER BAR --- */
+        .filter-bar { 
+            background-color: #f1f3f5;
+            border: 1px solid #dee2e6; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
         }
         .filter-controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { font-weight: bold; display: block; margin-bottom: 5px;
-            font-size: 0.9em; }
-        .filter-controls input, .filter-controls select {
+        .filter-controls label { 
+            font-weight: 600;
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .filter-controls input,
+        .filter-controls select { 
             width: 100%;
-            padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box;
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; 
+            font-size: 0.95em; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
-        .filter-buttons { display: flex; gap: 10px;
-        }
-        .filter-btn {
-            flex-grow: 1;
-            padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none;
-        }
-        .btn-filter { background-color: #007bff;
-        }
-        .btn-filter:hover { background-color: #0056b3;
-        }
-        .btn-clear { background-color: #6c757d;
-        }
-        .btn-clear:hover { background-color: #5a6268;
+        .filter-controls input:focus,
+        .filter-controls select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
 
-        /* --- Table Styles --- */
-        table { width: 100%;
-            border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left;
-            border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white;
+        .filter-buttons { display: flex; gap: 10px; }
+        
+        .filter-btn { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            text-align: center; 
+            display: inline-block;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
+
+        /* --- ADD BUTTON --- */
+        .add-button { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            padding: 12px 25px; 
+            background-color: #28a745;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Messages */
+        .message { 
+            padding: 1em; 
+            border-radius: 8px; 
+            margin-bottom: 1.5em; 
+            font-weight: 600; 
+            border: 1px solid transparent; 
+        }
+        .success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border-color: #f5c6cb; }
+
+        /* --- TABLE STYLES --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+            margin-top: 0; /* Removed margin since header handles spacing */
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
         }
         
         /* Sortable Header Links */
         th.sortable a {
             text-decoration: none;
-            color: white; display: flex; justify-content: space-between; align-items: center;
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
         }
-        th.sortable a:hover { text-decoration: underline;
-        }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px;
-        }
+        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
+        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
 
-        tr:nth-child(even) { background-color: #f9f9f9;
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
         }
-        tr:hover { background-color: #f1f1f1;}
-        
-        .add-button { display: inline-block;
-            margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;
-        }
-        .add-button:hover { background-color: #218838;
-        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
 
-        .message { padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold;
-            border: 1px solid transparent; }
-        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb;
-        }
-        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
-        }
-
-        /* --- ACTION BUTTON STYLES --- */
+        /* --- ACTION BUTTONS --- */
         .btn-action {
             display: block;
             width: 100%;
             box-sizing: border-box;
-            padding: 5px 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            margin-bottom: 4px;
+            border-radius: 8px;
             text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.85em;
-            border: 1px solid transparent;
+            border: 1px solid #ced4da;
             cursor: pointer;
             background-color: white;
             transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
 
-        .btn-edit {
-            color: #007bff;
-            border-color: #007bff;
-        }
+        .btn-edit { color: #007bff; border-color: #007bff; }
         .btn-edit:hover { background-color: #007bff; color: white; }
 
-        .btn-reset {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
+        .btn-reset { color: #dc3545; border-color: #dc3545; }
         .btn-reset:hover { background-color: #dc3545; color: white; }
 
     </style>
@@ -151,7 +249,7 @@
 
         <h1>Park Employees</h1>
 
-        <%# --- STATS BAR (Removed Pending Stat) --- %>
+        <%# --- STATS BAR --- %>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3><%= counts.total || 0 %></h3>
@@ -167,11 +265,10 @@
             </div>
         </div>
 
-        <%# --- FILTER BAR (Removed Pending Filter Option) --- %>
+        <%# --- FILTER BAR --- %>
         <div class="filter-bar">
             <form action="" method="GET">
                 <div class="filter-controls">
-                    
                     <div>
                         <label for="search">Search</label>
                         <input type="text" id="search" name="search" placeholder="Name, ID, Email..." value="<%= search %>">
@@ -207,7 +304,6 @@
                             <option value="">All Statuses</option>
                             <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
                             <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-                            <%# Removed pending filter option %>
                         </select>
                     </div>
 
@@ -290,7 +386,7 @@
                     <th style="min-width: 160px;">Actions</th>
                 </tr>
             </thead>
-           <tbody>
+            <tbody>
                 <% if (users.length === 0) { %>
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 2em;">No employees found matching criteria.</td>
@@ -299,22 +395,21 @@
                 <% users.forEach(targetUser => { %>
                    <tr>
                         <td><%= targetUser.public_employee_id.substring(0, 8).toUpperCase() %></td>
-                        <td><%= targetUser.first_name %> <%= targetUser.last_name %></td>
+                        <td><strong><%= targetUser.first_name %> <%= targetUser.last_name %></strong></td>
                         <td><%= targetUser.email %></td>
                         <td><%= targetUser.employee_type %></td>
                         <td>
                             <% if (['Admin', 'Park Manager', 'Maintenance'].includes(targetUser.employee_type)) { %>
-                                <span style="font-style: italic; color: #555;">Park-wide</span>
+                                <span style="font-style: italic; color: #6c757d;">Park-wide</span>
                             <% } else { %>
                                 <%= targetUser.location_name || 'Unassigned' %>
                             <% } %>
                         </td>
                         <td>
-                            <%# Simplified Status Check (Removed is_pending_approval) %>
                             <% if (targetUser.is_active) { %>
-                                <span style="color: green;">Active</span>
+                                <span style="color: #28a745; font-weight: 600;">Active</span>
                             <% } else { %>
-                                <span style="color: #dc3545;">Inactive</span>
+                                <span style="color: #dc3545; font-weight: 600;">Inactive</span>
                             <% } %>
                         </td>
                         <td>

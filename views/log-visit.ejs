@@ -4,103 +4,218 @@
     <meta charset="UTF-8">
     <title>Log Park Entry</title>
     <style>
-        /* --- STANDARDIZED THEME --- */
-        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--light); color: var(--dark); }
-        .container { max-width: 600px; margin: 2em auto; padding: 0 1em; }
-
-        :root {
-            --primary: #6f42c1; --secondary: #ffc107; --accent: #17a2b8;
-            --dark: #343a40; --light: #f8f9fa; --white: #ffffff; --gray: #6c757d;
-            --success: #28a745; --danger: #dc3545;
-            --radius: 12px; --shadow-md: 0 4px 15px rgba(0,0,0,0.1); --transition: 0.3s;
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
         }
 
+        /* Main Container */
+        .container { 
+            max-width: 800px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
         h1 { 
-            font-family: 'Lobster', cursive; color: var(--dark); text-align: center; 
-            font-size: 2.5em; margin-bottom: 0.5em; text-shadow: 1px 1px 0 rgba(0,0,0,0.05);
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+            text-align: center;
         }
 
-        /* --- Magic Card --- */
-        .card {
-            background: var(--white); padding: 2em; border-radius: var(--radius);
-            box-shadow: var(--shadow-md); border-top: 5px solid var(--success);
+        /* --- TABS --- */
+        .tab-container { 
+            display: flex; 
+            border-bottom: 2px solid #e9ecef; 
+            margin-bottom: 2em; 
+            gap: 5px;
         }
-
-        /* --- Tabs --- */
-        .tab-container { display: flex; border-bottom: 2px solid #eee; margin-bottom: 2em; }
         .tab-btn {
-            flex: 1; padding: 1em; text-align: center; cursor: pointer; font-weight: 700;
-            color: var(--gray); transition: var(--transition); border-bottom: 3px solid transparent;
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            cursor: pointer; 
+            font-weight: 600;
+            color: #6c757d; 
+            transition: all 0.2s; 
+            border-bottom: 3px solid transparent;
+            border-radius: 6px 6px 0 0;
         }
-        .tab-btn:hover { background-color: #f8f9fa; color: var(--primary); }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: #f0f0ff; }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-btn:hover { 
+            background-color: #f8f9fa; 
+            color: #007bff; 
+        }
+        .tab-btn.active { 
+            color: #007bff; 
+            border-bottom-color: #007bff; 
+            background: #e7f5ff; 
+        }
+        .tab-content { display: none; animation: fadeIn 0.2s ease-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
 
-        /* --- Forms --- */
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); font-size: 0.9em; }
-        input, select {
-            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px;
-            font-family: 'Poppins', sans-serif; font-size: 1em; transition: var(--transition);
-            box-sizing: border-box;
+        /* --- FORMS --- */
+        div.form-group { margin-bottom: 1.5em; }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
         }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1); }
+
+        input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
 
         /* Search Grid */
-        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 1.5em; }
-        
-        /* Member Checklist */
+        .search-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            background-color: #f8f9fa;
+            padding: 1.5em;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5em;
+        }
+
+        /* Member Selection Area */
         #memberSelectionArea {
-            background: #f8f9fa; border: 1px solid #eee; border-radius: 8px;
-            max-height: 300px; overflow-y: auto; padding: 10px; margin-top: 10px;
+            background: white; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px;
+            max-height: 300px; 
+            overflow-y: auto; 
+            padding: 10px; 
+            margin-top: 10px;
         }
         .member-row {
-            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee;
-            transition: background 0.2s; cursor: pointer; border-radius: 6px;
+            display: flex; 
+            align-items: center; 
+            padding: 10px; 
+            border-bottom: 1px solid #f1f1f1;
+            transition: background 0.2s; 
+            cursor: pointer; 
+            border-radius: 6px;
         }
-        .member-row:hover { background-color: #e9ecef; }
+        .member-row:hover { background-color: #f8f9fa; }
+        .member-row:last-child { border-bottom: none; }
         
         /* Checkbox styling */
         .member-row input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); }
-        
-        /* NEW: Quantity Input Styling */
+
+        /* Quantity Input */
         .qty-input {
-            width: 60px !important; padding: 5px !important; margin-right: 15px;
-            text-align: center; font-weight: bold; border-color: var(--accent);
+            width: 70px !important; 
+            padding: 5px !important; 
+            margin-right: 15px; 
+            text-align: center; 
+            font-weight: bold;
         }
-        
+
         .member-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .member-name { font-weight: 700; color: var(--dark); }
-        .member-meta { font-size: 0.8em; color: var(--gray); }
+        .member-name { font-weight: 600; color: #333; }
+        .member-meta { font-size: 0.85em; color: #6c757d; }
 
-        /* Guest Pass Badges */
+        /* Badges */
         .badge-pass { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700; text-transform: uppercase; }
-        .badge-pass.ok { background: #d4edda; color: var(--success); border: 1px solid #c3e6cb; }
-        .badge-pass.none { background: #f8d7da; color: var(--danger); border: 1px solid #f5c6cb; }
+        .badge-pass.ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-pass.none { background: #f8d7da; color: #842029; border: 1px solid #f5c6cb; }
 
-        /* Price Display */
+        /* Price Box */
         .price-box {
-            background: #f0fdf4; border: 1px solid #c3e6cb; padding: 1.5em; border-radius: 8px;
-            margin-top: 1.5em; text-align: center;
+            background-color: #e7f5ff; /* Info Blue */
+            border-left: 5px solid #007bff;
+            padding: 1.5em; 
+            border-radius: 8px;
+            margin-top: 1.5em; 
+            text-align: center;
+            color: #004085;
         }
-        .price-final { font-size: 2em; font-weight: 800; color: var(--success); font-family: 'Lobster', cursive; margin-top: 5px; }
+        .price-final { 
+            font-size: 2.5em; 
+            font-weight: 700; 
+            color: #28a745; 
+            margin-top: 10px;
+            line-height: 1;
+        }
 
         /* Buttons */
-        .btn { display: block; width: 100%; padding: 12px; border-radius: 30px; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-size: 1.1em; }
-        .btn-primary { background-color: var(--success); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
-        .btn-primary:hover { background-color: #218838; transform: translateY(-2px); }
-        .btn-search { background-color: var(--primary); color: white; width: auto; padding: 10px 20px; }
-        
-        /* Ticket Lookup Table */
-        .lookup-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
-        .lookup-table th { text-align: left; padding: 8px; background: #eee; color: #555; }
-        .lookup-table td { padding: 8px; border-bottom: 1px solid #eee; }
-        .btn-select { background: var(--accent); color: white; border: none; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+        button { 
+            padding: 12px 25px; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #218838; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
 
-        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; text-align: center; font-weight: bold; }
-        .error { background: #f8d7da; color: #721c24; }
-        .success { background: #d4edda; color: #155724; }
+        .btn-search { 
+            background-color: #007bff; 
+            width: auto; 
+            padding: 10px 20px; 
+            font-size: 0.95em;
+            margin-top: 0;
+        }
+        .btn-search:hover { background-color: #0056b3; }
+        
+        /* Lookup Table */
+        .lookup-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
+        .lookup-table th { text-align: left; padding: 10px; background: #f8f9fa; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; }
+        .lookup-table td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+        
+        .btn-select { 
+            background: #17a2b8; 
+            color: white; 
+            border: none; 
+            padding: 4px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 0.85em; 
+            font-weight: 600; 
+            width: auto;
+            box-shadow: none;
+        }
+        .btn-select:hover { background: #138496; transform: none; }
+
+        /* Alerts */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; text-align: center; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
     </style>
 </head>
 <body>
@@ -112,98 +227,100 @@
         <% if (typeof error !== 'undefined' && error) { %><div class="message error"><%= error %></div><% } %>
         <% if (typeof success !== 'undefined' && success) { %><div class="message success"><%= success %></div><% } %>
 
-        <div class="card">
-            <div class="tab-container">
-                <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>" data-tab="standard">Standard / Member</div>
-                <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>" data-tab="redeem">Redeem E-Ticket</div>
-            </div>
+        <div class="tab-container">
+            <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>" data-tab="standard">Standard / Member</div>
+            <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>" data-tab="redeem">Redeem E-Ticket</div>
+        </div>
 
-            <div id="tab-standard" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>">
-                <form action="/visits" method="POST" id="logVisitForm">
-                    <div>
-                        <label>Select Ticket Type</label>
-                        <select id="ticket_type_id" name="ticket_type_id" required>
-                            <option value="" selected disabled>-- Choose Ticket --</option>
-                            <% ticketTypes.forEach(type => { %>
-                                <option
-                                    value="<%= type.ticket_type_id %>"
-                                    data-price="<%= type.base_price %>"
-                                    data-is-member="<%= type.is_member_type %>"
-                                    data-name="<%= type.type_name %>"
-                                >
-                                    <%= type.type_name %>
-                                </option>
-                            <% }); %>
-                        </select>
-                    </div>
-
-                    <div id="memberSelectBlock" style="display: none; margin-top: 1.5em;">
-                        <div class="search-grid">
-                            <div><label>Search ID</label><input type="text" id="memberSearchID" placeholder="Public ID..."></div>
-                            <div><label>Search Phone</label><input type="tel" id="memberSearchPhone" placeholder="Phone..."></div>
-                            <div><label>Search Name</label><input type="text" id="memberSearchName" placeholder="Name..."></div>
-                            <div><label>Search Email</label><input type="email" id="memberSearchEmail" placeholder="Email..."></div>
-                        </div>
-                        
-                        <label id="memberSelectLabel">Select Members to Check In:</label>
-                        <div id="memberSelectionArea">
-                            <p style="text-align: center; color: var(--gray); padding: 1em;"><i>Start typing to find members...</i></p>
-                        </div>
-                    </div>
-
-                    <div class="price-box">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <span>Base Price:</span> <span id="priceBase">$0.00</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #c3e6cb; padding-bottom: 5px;">
-                            <span>Discount:</span> <span id="priceDiscount">$0.00</span>
-                        </div>
-                        <div class="price-final" id="priceFinal">$0.00</div>
-                    </div>
-
-                    <br>
-                    <button type="submit" class="btn btn-primary">Confirm Entry</button>
-                </form>
-            </div>
-
-            <div id="tab-redeem" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>">
-                <form action="/visits/redeem" method="POST">
-                    <label>Scan or Enter Ticket UUID</label>
-                    <input type="text" id="ticket_code" name="ticket_code" required placeholder="e.g., 550e8400-e29b...">
-                    <button type="submit" class="btn btn-primary" style="margin-top: 1em; background-color: var(--accent);">Redeem Ticket</button>
-                </form>
-
-                <div style="margin-top: 2em; border-top: 2px dashed #eee; padding-top: 1.5em;">
-                    <h3 style="margin: 0 0 10px 0; color: var(--dark); font-size: 1.2em;">Lost Ticket Lookup</h3>
-                    
-                    <form action="/visits/new" method="GET" style="display: flex; gap: 10px;">
-                        <input type="hidden" name="active_tab" value="redeem">
-                        <input type="text" name="ticket_search" placeholder="Search by Email or Phone..." value="<%= ticketSearchTerm %>" style="flex-grow:1;">
-                        <button type="submit" class="btn btn-search">Search</button>
-                    </form>
-
-                    <% if (foundTickets && foundTickets.length > 0) { %>
-                        <div style="max-height: 200px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 8px;">
-                            <table class="lookup-table">
-                                <thead><tr><th>Date</th><th>Type</th><th>Guest</th><th>Action</th></tr></thead>
-                                <tbody>
-                                    <% foundTickets.forEach(t => { %>
-                                        <tr>
-                                            <td><%= new Date(t.purchase_date).toLocaleDateString() %></td>
-                                            <td><strong><%= t.type_name %></strong></td>
-                                            <td><%= t.email || t.phone_number %></td>
-                                            <td style="text-align: right;">
-                                                <button type="button" class="btn-select" onclick="selectTicket('<%= t.ticket_code %>')">Select</button>
-                                            </td>
-                                        </tr>
-                                    <% }); %>
-                                </tbody>
-                            </table>
-                        </div>
-                    <% } else if (ticketSearchTerm) { %>
-                        <p style="color: var(--danger); text-align: center; margin-top: 10px;">No unredeemed tickets found.</p>
-                    <% } %>
+        <div id="tab-standard" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>">
+            <form action="/visits" method="POST" id="logVisitForm">
+                <div class="form-group">
+                    <label for="ticket_type_id">Select Ticket Type</label>
+                    <select id="ticket_type_id" name="ticket_type_id" required>
+                        <option value="" selected disabled>-- Choose Ticket --</option>
+                        <% ticketTypes.forEach(type => { %>
+                            <option
+                                value="<%= type.ticket_type_id %>"
+                                data-price="<%= type.base_price %>"
+                                data-is-member="<%= type.is_member_type %>"
+                                data-name="<%= type.type_name %>"
+                            >
+                                <%= type.type_name %>
+                            </option>
+                        <% }); %>
+                    </select>
                 </div>
+
+                <div id="memberSelectBlock" style="display: none;">
+                    <div class="search-grid">
+                        <div><label>Search ID</label><input type="text" id="memberSearchID" placeholder="Public ID..."></div>
+                        <div><label>Search Phone</label><input type="tel" id="memberSearchPhone" placeholder="Phone..."></div>
+                        <div><label>Search Name</label><input type="text" id="memberSearchName" placeholder="Name..."></div>
+                        <div><label>Search Email</label><input type="email" id="memberSearchEmail" placeholder="Email..."></div>
+                    </div>
+                    
+                    <label id="memberSelectLabel">Select Members to Check In:</label>
+                    <div id="memberSelectionArea">
+                        <p style="text-align: center; color: #6c757d; padding: 1em;"><i>Start typing to find members...</i></p>
+                    </div>
+                </div>
+
+                <div class="price-box">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Base Price:</span> <span id="priceBase">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
+                        <span>Discount:</span> <span id="priceDiscount">$0.00</span>
+                    </div>
+                    <div class="price-final" id="priceFinal">$0.00</div>
+                </div>
+
+                <br>
+                <button type="submit">Confirm Entry</button>
+            </form>
+        </div>
+
+        <div id="tab-redeem" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>">
+            <form action="/visits/redeem" method="POST">
+                <div class="form-group">
+                    <label for="ticket_code">Scan or Enter Ticket UUID</label>
+                    <input type="text" id="ticket_code" name="ticket_code" required placeholder="e.g., 550e8400-e29b...">
+                </div>
+                <button type="submit" style="background-color: #007bff;">Redeem Ticket</button>
+            </form>
+
+            <div style="margin-top: 3em; padding-top: 1.5em; border-top: 2px dashed #dee2e6;">
+                <h3 style="margin: 0 0 15px 0; color: #343a40; font-size: 1.2em;">Ticket Lookup</h3>
+                
+                <form action="/visits/new" method="GET" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <input type="hidden" name="active_tab" value="redeem">
+                    <div style="flex-grow:1; margin-bottom: 0;">
+                        <input type="text" name="ticket_search" placeholder="Search by Email or Phone..." value="<%= ticketSearchTerm %>">
+                    </div>
+                    <button type="submit" class="btn-search">Search</button>
+                </form>
+
+                <% if (foundTickets && foundTickets.length > 0) { %>
+                    <div style="max-height: 250px; overflow-y: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 8px;">
+                        <table class="lookup-table">
+                            <thead><tr><th>Date</th><th>Type</th><th>Guest</th><th>Action</th></tr></thead>
+                            <tbody>
+                                <% foundTickets.forEach(t => { %>
+                                    <tr>
+                                        <td><%= new Date(t.purchase_date).toLocaleDateString() %></td>
+                                        <td><strong><%= t.type_name %></strong></td>
+                                        <td><%= t.email || t.phone_number %></td>
+                                        <td style="text-align: right;">
+                                            <button type="button" class="btn-select" onclick="selectTicket('<%= t.ticket_code %>')">Select</button>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else if (ticketSearchTerm) { %>
+                    <p style="color: #dc3545; text-align: center; margin-top: 15px; background: #f8d7da; padding: 10px; border-radius: 6px;">No unredeemed tickets found.</p>
+                <% } %>
             </div>
         </div>
     </div>
@@ -273,7 +390,7 @@
             const nameTerm = document.getElementById('memberSearchName').value.trim().toLowerCase();
 
             if (!idTerm && !phoneTerm && !emailTerm && !nameTerm) {
-                memberSelectionArea.innerHTML = '<p style="text-align: center; color: var(--gray); padding:1em;"><i>Start typing to find members...</i></p>';
+                memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d; padding:1em;"><i>Start typing to find members...</i></p>';
                 return;
             }
 
@@ -304,7 +421,7 @@
         function buildMemberChecklist(group) {
             memberSelectionArea.innerHTML = '';
             if (!group.length) {
-                memberSelectionArea.innerHTML = '<p style="text-align: center; color: var(--danger);"><i>No members found.</i></p>';
+                memberSelectionArea.innerHTML = '<p style="text-align: center; color: #dc3545;"><i>No members found.</i></p>';
                 return;
             }
 
@@ -316,19 +433,15 @@
                 const label = document.createElement('label');
                 label.className = 'member-row';
                 
-                // Validation logic for Guest Passes
                 const isDisabled = isGuestPassMode && member.guest_passes_remaining < 1;
-                const disabledAttr = isDisabled ? 'disabled' : '';
                 if(isDisabled) label.style.opacity = '0.5';
 
                 let inputHtml = '';
                 let badge = '';
 
-                // --- GUEST PASS MODE: Quantity Input ---
                 if (isGuestPassMode) {
                     if (member.guest_passes_remaining > 0) {
                         badge = `<span class="badge-pass ok">(${member.guest_passes_remaining} Available)</span>`;
-                        // Number Input + Hidden Checkbox to maintain logic compatibility
                         inputHtml = `
                             <input type="checkbox" name="member_ids[]" value="${member.membership_id}" id="cb_${member.membership_id}" style="display:none;">
                             <input type="number" class="qty-input" 
@@ -338,11 +451,9 @@
                         `;
                     } else {
                         badge = `<span class="badge-pass none">(0 Passes)</span>`;
-                        inputHtml = `<span style="margin-right:15px; font-weight:bold; color:var(--gray);">0</span>`;
+                        inputHtml = `<span style="margin-right:15px; font-weight:bold; color:#6c757d;">0</span>`;
                     }
-                } 
-                // --- STANDARD MEMBER MODE: Checkbox ---
-                else {
+                } else {
                     inputHtml = `<input type="checkbox" name="member_ids[]" value="${member.membership_id}">`;
                 }
 
@@ -357,7 +468,6 @@
             });
         }
 
-        // Helper to link quantity input to hidden checkbox
         window.toggleCheckbox = function(input, id) {
             const cb = document.getElementById('cb_' + id);
             const val = parseInt(input.value);

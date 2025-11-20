@@ -4,116 +4,222 @@
     <meta charset="UTF-8">
     <title>Complete Work Order</title>
      <style>
-        body { font-family: sans-serif;
-margin: 0; background-color: #f4f4f9; color: #333; }
-        h1 { color: #444; text-align: center;
-margin-top: 1em; }
-        h1 small { color: #28a745; font-weight: bold;
-}
-        .initial-report { background-color: #fff3cd; padding: 1em; border-left: 5px solid #ffeeba; margin-bottom: 1.5em;
-border-radius: 4px; }
-        form { max-width: 600px; margin: 2em auto; background: white;
-padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid;
-grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px;
-}
-        label { display: block; margin-bottom: 5px; font-weight: bold;
-}
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+        
+        /* Main Container */
+        .container { 
+            max-width: 800px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+            /* MODIFIED: Removed flex to allow block-level wrapping */
+        }
+        
+        h1 small { 
+            /* MODIFIED: Display block forces it to a new line */
+            display: block; 
+            font-size: 0.6em;
+            color: #777; 
+            font-weight: normal; 
+            /* MODIFIED: Changed margin-left to margin-top for vertical spacing */
+            margin-top: 5px; 
+            line-height: 1.4; /* Adds readability if the name wraps to a 3rd line */
+        }
+
+        /* Info Box */
+        .initial-report { 
+            background-color: #fff3cd; 
+            padding: 1.2em;
+            border-left: 5px solid #ffc107; 
+            margin-bottom: 2em;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 0.95em;
+        }
+        .initial-report strong { display: block; margin-bottom: 5px; }
+
+        /* Form Layout */
+        .form-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5em; 
+        }
+        div.form-group { margin-bottom: 0; } 
+        
+        /* Labels */
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        /* Inputs & Textareas */
         input[type="date"], input[type="number"], select, textarea {
             width: 100%;
-padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;
-}
-        textarea { grid-column: 1 / -1; resize: vertical; min-height: 80px;
-}
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px;
-margin-bottom: 15px; }
-        button { padding: 12px 20px; background-color: #28a745; color: white;
-border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #218838;
-}
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        textarea { 
+            grid-column: 1 / -1; 
+            resize: vertical; 
+            min-height: 100px; 
+        }
+
+        /* Buttons */
+        button { 
+            padding: 12px 25px; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #218838; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Cancel Link */
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .cancel-link:hover { 
+            color: #343a40; 
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>
-        <% if (log.end_date) { %>
-            Edit Completion Details for:
-        <% } else { %>
-            Complete Work Order for:
-        <% } %>
-        <small><%= log.ride_name %></small>
-    </h1>
     
-    <%# Form action URL remains the same, as the POST route handles both initial completion and editing via UPDATE %>
-    <form action="/maintenance/complete/<%= log.public_maintenance_id %>" method="POST">
-        <input type="hidden" name="ride_id" value="<%= log.ride_id %>">
+    <div class="container">
+        <h1>
+            <% if (log.end_date) { %>
+                Edit Completion
+            <% } else { %>
+                Complete Work Order
+            <% } %>
+            <small>for <%= log.ride_name %></small>
+        </h1>
         
-        <div class="initial-report">
-            <strong>Initial Report on <%= log.report_date.toISOString().substring(0, 10) %>:</strong>
-            <p><em><%= log.summary %></em></p>
-      </div>
+        <form action="/maintenance/complete/<%= log.public_maintenance_id %>" method="POST">
+            <input type="hidden" name="ride_id" value="<%= log.ride_id %>">
+            <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+            
+            <div class="initial-report">
+                <strong>Initial Report (<%= log.report_date.toISOString().substring(0, 10) %>):</strong>
+                <em>"<%= log.summary %>"</em>
+            </div>
 
-        <div class="form-grid">
-            <div>
-                <label for="start_date">Work Started On:</label>
-                <%# PRE-FILL: Use existing start_date if available %>
-                <input 
-                    type="date" 
-                    id="start_date" 
-                    name="start_date" 
-                    value="<%= log.start_date ? log.start_date.toISOString().substring(0, 10) : '' %>" 
-                    required>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="start_date">Work Started On:</label>
+                    <input 
+                        type="date" 
+                        id="start_date" 
+                        name="start_date" 
+                        value="<%= log.start_date ? log.start_date.toISOString().substring(0, 10) : '' %>" 
+                        required>
+                </div>
+                <div class="form-group">
+                  <label for="end_date">Work Completed On:</label>
+                   <input 
+                        type="date" 
+                        id="end_date" 
+                        name="end_date" 
+                        value="<%= log.end_date ? log.end_date.toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10) %>" 
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="cost">Total Cost ($):</label>
+                   <input 
+                        type="number" 
+                        id="cost" 
+                        name="cost" 
+                        step="0.01" 
+                        min="0"
+                        placeholder="0.00"
+                        value="<%= log.cost ? parseFloat(log.cost).toFixed(2) : '' %>">
+               </div>
+                <div class="form-group">
+                     <label for="ride_status">Set Ride Status To:</label>
+                     <select id="ride_status" name="ride_status" required>
+                        <option 
+                            value="OPEN" 
+                            <%= (log.ride_status === 'OPEN' || !log.end_date) ? 'selected' : '' %>>
+                            Open (Operational)
+                        </option>
+                        <option 
+                            value="CLOSED" 
+                            <%= log.ride_status === 'CLOSED' ? 'selected' : '' %>>
+                            Closed (Testing/Seasonal)
+                        </option>
+                   </select>
+                </div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="summary">Completion Notes:</label>
+                    <textarea 
+                        name="summary" 
+                        id="summary"
+                        placeholder="Enter details about the fix, parts used, or testing results..."
+                    ><%= log.summary %></textarea>
+                </div>
             </div>
-            <div>
-              <label for="end_date">Work Completed On:</label>
-                <%# PRE-FILL: Use existing end_date or default to today %>
-                <input 
-                    type="date" 
-                    id="end_date" 
-                    name="end_date" 
-                    value="<%= log.end_date ? log.end_date.toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10) %>" 
-                    required>
-            </div>
-            <div>
-                <label for="cost">Total Cost ($):</label>
-                <%# PRE-FILL: Use existing cost %>
-                <input 
-                    type="number" 
-                    id="cost" 
-                    name="cost" 
-                    step="0.01" 
-                    min="0"
-                    value="<%= log.cost ? parseFloat(log.cost).toFixed(2) : '' %>">
-           </div>
-            <div>
-                 <label for="ride_status">Set Ride Status To:</label>
-                 <select id="ride_status" name="ride_status" required>
-                    <%# PRE-SELECT: Use existing ride_status. If non-completed, default to OPEN %>
-                    <option 
-                        value="OPEN" 
-                        <%= (log.ride_status === 'OPEN' || !log.end_date) ? 'selected' : '' %>>
-                        Open
-                    </option>
-                    <option 
-                        value="CLOSED" 
-                        <%= log.ride_status === 'CLOSED' ? 'selected' : '' %>>
-                        Closed (Testing)
-                    </option>
-               </select>
-            </div>
-            <%# PRE-FILL: Use the current summary (which should be the original report + any prior completion notes) %>
-             <textarea 
-                 name="summary" 
-                 placeholder="Enter completion summary and notes here..."
-             ><%= log.summary %></textarea>
-        </div>
-        <br>
-        <% if (log.end_date) { %>
-            <button type="submit">Update Completion Details</button>
-        <% } else { %>
-            <button type="submit">Complete Order</button>
-        <% } %>
-    </form>
+            
+            <br>
+            
+            <% if (log.end_date) { %>
+                 <button type="submit">Update Details</button>
+            <% } else { %>
+                <button type="submit">Complete Work Order</button>
+            <% } %>
+            
+            <a href="/maintenance/ride/<%= log.public_ride_id %><%= (typeof returnQuery !== 'undefined' && returnQuery) ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

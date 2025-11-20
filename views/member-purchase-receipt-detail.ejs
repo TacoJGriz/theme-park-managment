@@ -185,7 +185,8 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Member ID</span>
-                    <span class="value id"><%= purchase.membership_id_display.substring(0, 8).toUpperCase() %></span>
+                    <%# FIXED: Matches route data exactly now %>
+                    <span class="value id"><%= purchase.public_membership_id.substring(0, 8).toUpperCase() %></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Valid Term</span>
@@ -195,6 +196,7 @@
                     </span>
                 </div>
 
+                <%# --- Sub Members Section --- %>
                 <% if (purchase.subMembers && purchase.subMembers.length > 0) { %>
                     <div class="sub-list">
                         <div style="font-weight:bold; font-size:0.75em; color:var(--gray); text-transform:uppercase; margin-bottom:0.5em;">

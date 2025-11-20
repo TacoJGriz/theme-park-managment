@@ -4,74 +4,240 @@
     <meta charset="UTF-8">
     <title>Edit Promotion</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 12px 20px; background-color: #6f42c1; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        .full-width { grid-column: 1 / -1; }
-        .error { color: red; font-weight: bold; }
-        .cancel-link { display: inline-block; margin-left: 15px; text-decoration: none; color: #6c757d; font-weight: bold; }
-        .delete-btn { float: right; background-color: #dc3545; }
-        .delete-btn:hover { background-color: #c82333; }
+        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* Main Container */
+        .container { 
+            max-width: 800px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* Headings */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        h1 small { 
+            display: block; 
+            font-size: 0.6em;
+            color: #777; 
+            font-weight: normal; 
+            margin-top: 5px; 
+            line-height: 1.4;
+        }
+
+        /* Form Layout */
+        .form-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5em; 
+        }
+        div.form-group { margin-bottom: 0; } 
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        /* Inputs & Selects */
+        input[type="text"], 
+        input[type="date"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        textarea { 
+            grid-column: 1 / -1; 
+            resize: vertical; 
+            min-height: 100px; 
+        }
+
+        /* Checkbox Styling */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            height: 100%; /* Match height of other inputs */
+            box-sizing: border-box;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Error Message */
+        .error { 
+            color: #721c24; 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb;
+            padding: 1em; 
+            border-radius: 8px;
+            margin-bottom: 1.5em; 
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        button { 
+            padding: 12px 25px; 
+            background-color: #28a745; /* Green for Save */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #218838; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Delete Button */
+        .btn-delete {
+            background-color: #dc3545;
+            margin-top: 1.5em;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+
+        /* Cancel Link */
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .cancel-link:hover { 
+            color: #343a40; 
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>Edit Promotion</h1>
-    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
-    <form action="/promotions/edit/<%= promotion.event_id %>" method="POST">
-        <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
-        
-        <div class="form-grid">
-            <div class="full-width">
-                <label for="event_name">Event Name:</label>
-                <input type="text" id="event_name" name="event_name" value="<%= promotion.event_name %>" required>
-            </div>
-            <div>
-                <label for="event_type">Event Type:</label>
-                <select id="event_type" name="event_type" required>
-                    <% ['Holiday', 'Seasonal', 'Special', 'Weekend'].forEach(type => { %>
-                        <option value="<%= type %>" <%= promotion.event_type === type ? 'selected' : '' %>><%= type %></option>
-                    <% }); %>
-                </select>
-            </div>
-            <div>
-                <label for="discount_percent">Discount (%):</label>
-                <input type="number" id="discount_percent" name="discount_percent" step="0.01" min="0" max="100" value="<%= parseFloat(promotion.discount_percent).toFixed(2) %>" required>
-            </div>
-            <div>
-                <label for="start_date">Start Date:</label>
-                <input type="date" id="start_date" name="start_date" value="<%= promotion.start_date.toISOString().substring(0, 10) %>" required>
-            </div>
-            <div>
-                <label for="end_date">End Date:</label>
-                <input type="date" id="end_date" name="end_date" value="<%= promotion.end_date.toISOString().substring(0, 10) %>" required>
-            </div>
-            <div class="full-width">
-                <label for="summary">Summary:</label>
-                <textarea id="summary" name="summary"><%= promotion.summary %></textarea>
-            </div>
+    
+    <div class="container">
+        <h1>
+            Edit Promotion
+            <small>for <%= promotion.event_name %></small>
+        </h1>
 
-            <div class="full-width" style="margin-top: 10px; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-                <label style="display: flex; align-items: center; font-weight: bold; cursor: pointer;">
-                    <input type="checkbox" name="is_recurring" value="1" style="width: auto; margin-right: 10px; cursor: pointer;" 
-                        <%= promotion.is_recurring ? 'checked' : '' %>>
-                    Auto-Renew Annually?
-                </label>
-                <div style="margin-left: 25px; font-size: 0.9em; color: #666;">
-                    If checked, the dates will automatically advance by 1 year when this promotion expires.
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+
+        <form action="/promotions/edit/<%= promotion.event_id %>" method="POST">
+            <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="event_name">Event / Promotion Name:</label>
+                    <input type="text" id="event_name" name="event_name" value="<%= promotion.event_name %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event_type">Type:</label>
+                    <select id="event_type" name="event_type" required>
+                        <option value="Holiday" <%= promotion.event_type === 'Holiday' ? 'selected' : '' %>>Holiday</option>
+                        <option value="Seasonal" <%= promotion.event_type === 'Seasonal' ? 'selected' : '' %>>Seasonal</option>
+                        <option value="Special" <%= promotion.event_type === 'Special' ? 'selected' : '' %>>Special Event</option>
+                        <option value="Weekend" <%= promotion.event_type === 'Weekend' ? 'selected' : '' %>>Weekend Deal</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="<%= promotion.start_date.toISOString().split('T')[0] %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="<%= promotion.end_date.toISOString().split('T')[0] %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="discount_percent">Discount (%):</label>
+                    <input type="number" id="discount_percent" name="discount_percent" min="0" max="100" step="0.01" value="<%= promotion.discount_percent %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Options:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="is_recurring" name="is_recurring" value="1" <%= promotion.is_recurring ? 'checked' : '' %>>
+                        <label for="is_recurring">Auto-renew Annually</label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="summary">Description / Terms:</label>
+                    <textarea id="summary" name="summary"><%= promotion.summary %></textarea>
                 </div>
             </div>
-        </div>
-        <br>
-        <button type="submit">Update Promotion</button>
-        <a href="/promotions<%= returnQuery ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
+            
+            <br>
+            
+            <button type="submit">Update Promotion</button>
+            
+            <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/promotions?' + returnQuery : '/promotions'; %>
+            <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
 
-        <button type="submit" formaction="/promotions/delete/<%= promotion.event_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this promotion?')">Delete</button>
-    </form>
+            <button type="submit" 
+                formaction="/promotions/delete/<%= promotion.event_id %>" 
+                class="btn-delete" 
+                onclick="return confirm('Are you sure you want to delete this promotion?');">
+                Delete Promotion
+            </button>
+        </form>
+    </div>
 </body>
 </html>

@@ -5,6 +5,24 @@
     <title>Purchase Day Tickets | Primus Park</title>
     <style>
         /* --- STANDARDIZED VARIABLES & LAYOUT --- */
+        :root {
+            --primary: #6f42c1;       /* Magical Purple */
+            --primary-dark: #5a32a3;
+            --secondary: #ffc107;     /* Gold */
+            --accent: #17a2b8;        /* Cyan */
+            --success: #28a745;       /* Green */
+            --danger: #dc3545;        /* Red */
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
         body { 
             font-family: 'Poppins', sans-serif;
             margin: 0; 
@@ -186,7 +204,7 @@
             padding: 15px;
             font-size: 1.3em;
             border-radius: 30px;
-            background-color: var(--success);
+            background-color: var(--success); /* Ensures green background */
             color: white;
             border: none;
             font-weight: 700;
@@ -220,7 +238,8 @@
     </style>
 </head>
 <body>
-    <%- include('partials/header') %> 
+    <%# Pass simpleNav: true to hide menu buttons during checkout %>
+    <%- include('partials/header', { simpleNav: true }) %>
     
     <div class="container">
         <div class="page-header">
@@ -271,7 +290,7 @@
                 <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
                 <small>Please enter at least one contact method for ticket delivery.</small>
             </div> 
- 
+
             <h3 class="section-title">3. Payment Details</h3>
             
             <div class="payment-choice">
@@ -331,7 +350,7 @@
     </div>
 
     <script>
-        // --- FORM LOGIC (Unchanged functionality, just standardized UI interaction) ---
+        // --- FORM LOGIC ---
         const form = document.getElementById('purchaseForm');
         const priceDisplay = document.getElementById('totalPrice');
         let total = 0;
