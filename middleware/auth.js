@@ -302,6 +302,14 @@ const countPendingApprovals = async (req, res, next) => {
     next();
 };
 
+const canManageMaintenance = (req, res, next) => {
+    const role = req.session.user ? req.session.user.role : null;
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
+        return next();
+    }
+    res.status(403).send('Forbidden: Maintenance management access required.');
+};
+
 module.exports = {
     isAuthenticated,
     isAdmin,
@@ -310,6 +318,7 @@ module.exports = {
     isAdminOrParkManager,
     canViewUsers,
     isMaintenanceOrHigher,
+    canManageMaintenance,
     canManageMembersVisits,
     canViewRides,
     canManageRetail,

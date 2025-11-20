@@ -14,12 +14,12 @@
 
         /* Main Container */
         .container { 
-            max-width: 1200px; 
+            max-width: 1200px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         
         /* Headings */
@@ -133,17 +133,25 @@
         }
         
         /* Button Variants */
-        .btn-complete { color: #28a745; border-color: #28a745; } 
-        .btn-complete:hover { background-color: #28a745; color: white; }
+        .btn-complete { color: #28a745;
+        border-color: #28a745; } 
+        .btn-complete:hover { background-color: #28a745; color: white;
+        }
 
-        .btn-assign { color: #007bff; border-color: #007bff; } 
-        .btn-assign:hover { background-color: #007bff; color: white; }
+        .btn-assign { color: #007bff; border-color: #007bff;
+        } 
+        .btn-assign:hover { background-color: #007bff; color: white;
+        }
         
-        .btn-edit { color: #d39e00; border-color: #ffc107; } 
-        .btn-edit:hover { background-color: #ffc107; color: #212529; }
+        .btn-edit { color: #d39e00;
+        border-color: #ffc107; } 
+        .btn-edit:hover { background-color: #ffc107; color: #212529;
+        }
         
-        .btn-reopen { color: #dc3545; border-color: #dc3545; } 
-        .btn-reopen:hover { background-color: #dc3545; color: white; }
+        .btn-reopen { color: #dc3545;
+        border-color: #dc3545; } 
+        .btn-reopen:hover { background-color: #dc3545; color: white;
+        }
     </style>
 </head>
 <body>
@@ -167,20 +175,20 @@
         <table>
             <thead>
              <tr>
-                <th>Report Date</th>
+                 <th>Report Date</th>
                 <th>Assigned To</th>
                 <th>Completion</th>
                 <th>Cost</th>
                 <th>Status</th>
                 <th style="min-width: 120px;">Actions</th>
-            </tr>
+             </tr>
             </thead>
             <tbody>
                 <% if (maintenance_logs.length === 0) { %>
                     <tr><td colspan="6" style="text-align: center; padding: 2em;">No maintenance records found.</td></tr>
                 <% } %>
 
-                <% maintenance_logs.forEach(log => { %>
+                 <% maintenance_logs.forEach(log => { %>
                 <tr>
                     <td><%= new Date(log.report_date).toLocaleDateString() %></td>
                     <td>
@@ -188,12 +196,12 @@
                         <% if (log.pending_employee_name) { %>
                             <br><small style="color: #e0a800;">(Pending transfer to: <%= log.pending_employee_name %>)</small>
                         <% } %>
-                    </td>
+                     </td>
                     <td><%= log.end_date ? new Date(log.end_date).toLocaleDateString() : '---' %></td>
                     <td>
                         <% if (log.cost) { %>
                             <span class="cost">$<%= parseFloat(log.cost).toFixed(2) %></span>
-                           <% } else { %>
+                        <% } else { %>
                             -
                         <% } %>
                     </td>
@@ -206,11 +214,15 @@
                         <% } %>
                     </td>
 
-                    <td>
+                   <td>
                         <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
                             <% if (!log.end_date) { %>
                                 <%# Open Entries %>
-                                <a href="/maintenance/complete/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-complete">Complete</a>
+                                <%# Hide Complete button for Location Managers %>
+                                <% if (user.role !== 'Location Manager') { %>
+                                    <a href="/maintenance/complete/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-complete">Complete</a>
+                                <% } %>
+                                
                                 <a href="/maintenance/reassign/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-assign">Reassign</a>
                                 <a href="/maintenance/edit/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-edit">Edit Report</a>
                             <% } else { %>

@@ -5,6 +5,7 @@ const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
     isMaintenanceOrHigher,
+    canManageMaintenance,
     isAdminOrParkManager // ADDED for editing/reopening permission check
 } = require('../middleware/auth'); // Adjust path to auth.js
 
@@ -337,9 +338,9 @@ router.post('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOr
 
 // GET /maintenance/edit-completion/:public_maintenance_id
 // Loads the completion form pre-filled for editing a completed log
-router.get('/edit-completion/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+router.get('/edit-completion/:public_maintenance_id', isAuthenticated, canManageMaintenance, async (req, res) => {
     const { public_maintenance_id } = req.params;
-    const { returnQuery } = req.query; // <-- CAPTURE returnQuery
+    const { returnQuery } = req.query;
     try {
         const query = `
             SELECT m.*, r.ride_name, r.public_ride_id, r.ride_status
@@ -361,7 +362,7 @@ router.get('/edit-completion/:public_maintenance_id', isAuthenticated, isMainten
         res.render('complete-maintenance', {
             log: log,
             error: null,
-            returnQuery: returnQuery || '' // <-- PASS
+            returnQuery: returnQuery || ''
         });
 
     } catch (error) {
@@ -372,11 +373,10 @@ router.get('/edit-completion/:public_maintenance_id', isAuthenticated, isMainten
 
 // GET /maintenance/edit/:public_maintenance_id
 // Loads the form to edit an existing open ticket
-router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+router.get('/edit/:public_maintenance_id', isAuthenticated, canManageMaintenance, async (req, res) => {
     const { public_maintenance_id } = req.params;
     const { returnQuery } = req.query;
     try {
-        // Updated query to get Employee Name
         const [logResult] = await pool.query(
             `SELECT m.*, r.ride_name, r.public_ride_id,
                     CONCAT(e.first_name, ' ', e.last_name) as employee_name
@@ -393,9 +393,9 @@ router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHighe
 
         res.render('add-maintenance', {
             ride: { ride_name: log.ride_name, public_ride_id: log.public_ride_id },
-            maintenance: log, // Pass the full log object
+            maintenance: log,
             error: null,
-            isEdit: true,     // Flag to toggle view mode
+            isEdit: true,
             returnQuery: returnQuery || ''
         });
     } catch (error) {
@@ -406,12 +406,11 @@ router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHighe
 
 // POST /maintenance/edit/:public_maintenance_id
 // Updates an existing ticket (Summary only)
-router.post('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+router.post('/edit/:public_maintenance_id', isAuthenticated, canManageMaintenance, async (req, res) => {
     const { public_maintenance_id } = req.params;
     const { summary, returnQuery } = req.body;
 
     try {
-        // 1. Get the public_ride_id for redirect
         const [ticket] = await pool.query(`
             SELECT r.public_ride_id 
             FROM maintenance m 
@@ -421,10 +420,8 @@ router.post('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigh
 
         if (ticket.length === 0) return res.status(404).send("Ticket not found");
 
-        // 2. Update the summary
         await pool.query('UPDATE maintenance SET summary = ? WHERE public_maintenance_id = ?', [summary, public_maintenance_id]);
 
-        // 3. Redirect
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : `/maintenance/ride/${ticket[0].public_ride_id}`;
         res.redirect(redirectUrl);
 
@@ -557,7 +554,7 @@ router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next
 
 // GET /maintenance/reopen/:public_maintenance_id
 // Renders the form to reopen a ticket
-router.get('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+router.get('/reopen/:public_maintenance_id', isAuthenticated, canManageMaintenance, async (req, res) => {
     const { public_maintenance_id } = req.params;
     const { returnQuery } = req.query;
 
@@ -586,7 +583,7 @@ router.get('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHig
 
 // POST /maintenance/reopen/:public_maintenance_id
 // Processes the reopen form
-router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+router.post('/reopen/:public_maintenance_id', isAuthenticated, canManageMaintenance, async (req, res) => {
     const { public_maintenance_id } = req.params;
     const { summary, cost, returnQuery } = req.body;
     const { role, locationId } = req.session.user;
@@ -596,7 +593,6 @@ router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHi
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // 1. Get Ticket & Ride Info
         const [ticket] = await connection.query(`
             SELECT m.maintenance_id, m.ride_id, r.location_id, r.public_ride_id
             FROM maintenance m
@@ -611,7 +607,6 @@ router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHi
             throw new Error("Forbidden: You cannot manage tickets for other locations.");
         }
 
-        // 2. Find Maintenance Staff with Fewest Active Assignments
         const [bestStaff] = await connection.query(`
             SELECT e.employee_id
             FROM employee_demographics e
@@ -624,14 +619,12 @@ router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHi
 
         const newAssigneeId = (bestStaff.length > 0) ? bestStaff[0].employee_id : null;
 
-        // 3. Reopen Ticket: Update Summary, Cost, Clear End Date, Assign Staff
         await connection.query(`
             UPDATE maintenance 
             SET end_date = NULL, employee_id = ?, summary = ?, cost = ?
             WHERE maintenance_id = ?
         `, [newAssigneeId, summary, cost || null, maintenance_id]);
 
-        // 4. Set Ride Status to BROKEN
         await connection.query(`
             UPDATE rides SET ride_status = 'BROKEN' WHERE ride_id = ?
         `, [ride_id]);
