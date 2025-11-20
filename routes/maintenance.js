@@ -21,8 +21,9 @@ router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
 }, async (req, res) => {
     const { public_ride_id } = req.params;
     const { role, locationId } = req.session.user;
-    const { back_query } = req.query; // --- CAPTURE QUERY PARAM ---
 
+    // Capture the returnQuery passed from the rides.ejs link
+    const ridesListQuery = req.query.returnQuery || '';
     let ride;
 
     try {
@@ -31,7 +32,7 @@ router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
             return res.status(404).send('Ride not found');
         }
         ride = rideResult[0];
-        const internalRideId = ride.ride_id;
+        const internalRideId = ride.ride_id; // <-- FIX: Define internalRideId here
 
         if (role === 'Location Manager' && ride.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only view maintenance for rides in your location.');
@@ -51,7 +52,7 @@ router.get('/ride/:public_ride_id', isAuthenticated, (req, res, next) => {
         res.render('maintenance-history', {
             ride: ride,
             maintenance_logs: maintenance_logs,
-            back_query: back_query // --- PASS TO VIEW ---
+            ridesListQuery: ridesListQuery
         });
     } catch (error) {
         console.error(error);
@@ -97,11 +98,12 @@ router.post('/', isAuthenticated, async (req, res) => {
     // Note: ride_id is the INTERNAL ID from the hidden form field
     const { ride_id, summary } = req.body;
     const employee_id = req.body.employee_id ? req.body.employee_id : null;
+    const { returnQuery } = req.body; // <-- CAPTURE returnQuery from hidden input
 
     const { role, locationId } = req.session.user;
 
     let connection;
-    let publicRideId; // To store for the redirect
+    let publicRideId;
     try {
         // Fetch ride info (including public_ride_id) based on internal ride_id
         const [rideResult] = await pool.query('SELECT location_id, public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
@@ -127,14 +129,12 @@ router.post('/', isAuthenticated, async (req, res) => {
         await connection.query(maintSql, [publicMaintenanceId, ride_id, summary, employee_id]);
 
         const rideSql = "UPDATE rides SET ride_status = 'BROKEN' WHERE ride_id = ?";
-        await connection.query(rideSql, [ride_id]); // Use internal ID
+        await connection.query(rideSql, [ride_id]);
 
         await connection.commit();
-        if (['Admin', 'Park Manager', 'Location Manager', 'Maintenance'].includes(req.session.user.role)) {
-            res.redirect(`/maintenance/ride/${publicRideId}`); // CHANGED to public ID
-        } else {
-            res.redirect('/rides');
-        }
+        // Redirect back to the rides list if returnQuery is present, otherwise to the ride's maintenance log
+        const redirectUrl = returnQuery ? `/rides?${returnQuery}` : `/maintenance/ride/${publicRideId}`;
+        res.redirect(redirectUrl);
 
     } catch (error) {
         if (connection) await connection.rollback();
@@ -150,7 +150,8 @@ router.post('/', isAuthenticated, async (req, res) => {
             res.render('add-maintenance', {
                 ride: ride,
                 employees: employees,
-                error: "Database error submitting report."
+                error: "Database error submitting report.",
+                returnQuery: returnQuery || ''
             });
         } catch (fetchError) {
             console.error("Error fetching data for add maintenance error page:", fetchError);
@@ -163,30 +164,65 @@ router.post('/', isAuthenticated, async (req, res) => {
 
 // GET /maintenance/complete/:public_maintenance_id
 // Path changed to /complete/:public_maintenance_id
-router.get('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
-    const { public_maintenance_id } = req.params; // CHANGED
+router.post('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params;
+    // ride_id is the INTERNAL ID from the hidden form field
+    const { ride_id, start_date, end_date, cost, ride_status, summary, returnQuery } = req.body; // <-- CAPTURE returnQuery
+
+    if (!['OPEN', 'CLOSED'].includes(ride_status)) {
+        return res.status(400).send('Invalid final ride status provided. Must be OPEN or CLOSED.');
+    }
+
+    let connection;
     try {
-        const query = `
-            SELECT m.*, r.ride_name, r.public_ride_id
-            FROM maintenance m
-            JOIN rides r ON m.ride_id = r.ride_id
-            WHERE m.public_maintenance_id = ? -- CHANGED
+        // Fetch the public_ride_id for the redirect
+        const [rideResult] = await pool.query('SELECT public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
+        if (rideResult.length === 0) {
+            return res.status(404).send('Associated ride not found.');
+        }
+        const publicRideId = rideResult[0].public_ride_id;
+
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        const maintSql = `
+            UPDATE maintenance
+            SET start_date = ?, end_date = ?, cost = ?, summary = ?
+            WHERE public_maintenance_id = ?
         `;
-        const [logResult] = await pool.query(query, [public_maintenance_id]); // CHANGED
-        if (logResult.length === 0) {
-            return res.status(404).send('Maintenance log not found');
-        }
-        const log = logResult[0];
+        const costValue = cost === '' ? null : cost;
+        await connection.query(maintSql, [start_date, end_date, costValue, summary, public_maintenance_id]);
 
-        if (log.end_date) {
-            // Prevent completing an already completed entry
-            return res.redirect(`/maintenance/ride/${log.public_ride_id}`); // CHANGED
-        }
+        const rideSql = "UPDATE rides SET ride_status = ? WHERE ride_id = ?";
+        await connection.query(rideSql, [ride_status, ride_id]);
 
-        res.render('complete-maintenance', { log: log, error: null });
+        await connection.commit();
+        const redirectQuery = returnQuery ? `?returnQuery=${returnQuery}` : '';
+        res.redirect(`/maintenance/ride/${publicRideId}${redirectQuery}`);
+
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error loading complete work order page');
+        if (connection) await connection.rollback();
+        console.error("Error completing maintenance:", error);
+        try {
+            const query = `
+                SELECT m.*, r.ride_name, r.public_ride_id
+                FROM maintenance m
+                JOIN rides r ON m.ride_id = r.ride_id
+                WHERE m.public_maintenance_id = ?
+            `;
+            const [logResult] = await pool.query(query, [public_maintenance_id]);
+            const log = logResult.length > 0 ? logResult[0] : {};
+            res.render('complete-maintenance', {
+                log: log,
+                error: "Database error completing work order.",
+                returnQuery: returnQuery || ''
+            });
+        } catch (fetchError) {
+            console.error("Error fetching data for complete maintenance error page:", fetchError);
+            res.status(500).send("An error occurred while completing the work order and reloading the page.");
+        }
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -252,9 +288,45 @@ router.post('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOr
     }
 });
 
+// GET /maintenance/edit-completion/:public_maintenance_id
+// Loads the completion form pre-filled for editing a completed log
+router.get('/edit-completion/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params;
+    const { returnQuery } = req.query; // <-- CAPTURE returnQuery
+    try {
+        const query = `
+            SELECT m.*, r.ride_name, r.public_ride_id, r.ride_status
+            FROM maintenance m
+            JOIN rides r ON m.ride_id = r.ride_id
+            WHERE m.public_maintenance_id = ?
+        `;
+        const [logResult] = await pool.query(query, [public_maintenance_id]);
+        if (logResult.length === 0) {
+            return res.status(404).send('Maintenance log not found');
+        }
+        const log = logResult[0];
+
+        // If it's not completed, send them back to the history page
+        if (!log.end_date) {
+            return res.redirect(`/maintenance/ride/${log.public_ride_id}`);
+        }
+
+        res.render('complete-maintenance', {
+            log: log,
+            error: null,
+            returnQuery: returnQuery || '' // <-- PASS
+        });
+
+    } catch (error) {
+        console.error("Error loading edit completion page:", error);
+        res.status(500).send('Error loading edit completion work order page');
+    }
+});
+
 // GET /maintenance/edit/:public_maintenance_id (NEW ROUTE FOR EDITING UNCOMPLETED ENTRY)
 router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
     const { public_maintenance_id } = req.params;
+    const { returnQuery } = req.query; // <-- CAPTURE returnQuery
     try {
         const [logResult] = await pool.query(
             `SELECT m.*, r.ride_name, r.public_ride_id
@@ -274,74 +346,18 @@ router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHighe
             WHERE employee_type IN ('Maintenance', 'Location Manager', 'Park Manager', 'Admin') AND is_active = TRUE
         `);
 
-        // Render a new EJS file (maintenance-edit.ejs - implied based on context)
-        // For now, reuse reassign-maintenance form fields until a dedicated edit form is created
         res.render('add-maintenance', {
             ride: { ride_name: log.ride_name, public_ride_id: log.public_ride_id },
             employees: employees,
             error: null,
-            isEdit: true, // Flag for potential future form distinction
+            isEdit: true,
             initialSummary: log.summary,
-            initialEmployeeId: log.employee_id
+            initialEmployeeId: log.employee_id,
+            returnQuery: returnQuery || '' // <-- PASS
         });
     } catch (error) {
         console.error("Error loading edit work order page:", error);
         res.status(500).send('Error loading edit work order page');
-    }
-});
-
-// POST /maintenance/reopen/:public_maintenance_id (NEW ROUTE)
-router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
-    const { public_maintenance_id } = req.params;
-    const { role, locationId } = req.session.user;
-    let connection;
-
-    try {
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-
-        // 1. Fetch maintenance and ride info
-        const [logResult] = await connection.query(
-            `SELECT m.ride_id, r.public_ride_id, r.location_id
-             FROM maintenance m
-             JOIN rides r ON m.ride_id = r.ride_id
-             WHERE m.public_maintenance_id = ?`,
-            [public_maintenance_id]
-        );
-
-        if (logResult.length === 0) {
-            throw new Error("Maintenance entry not found.");
-        }
-        const { ride_id, public_ride_id, location_id } = logResult[0];
-
-        // 2. Permission Check (Location Manager only for their location)
-        if (role === 'Location Manager' && location_id !== locationId) {
-            return res.status(403).send('Forbidden: You cannot reopen work for rides outside your location.');
-        }
-
-        // 3. Update maintenance entry (Reopen: clear completion data)
-        const updateMaintSql = `
-            UPDATE maintenance
-            SET end_date = NULL, start_date = NULL, cost = NULL
-            WHERE public_maintenance_id = ?
-        `;
-        await connection.query(updateMaintSql, [public_maintenance_id]);
-
-        // 4. Update ride status (Set back to BROKEN)
-        const updateRideSql = "UPDATE rides SET ride_status = 'BROKEN' WHERE ride_id = ?";
-        await connection.query(updateRideSql, [ride_id]);
-
-        await connection.commit();
-
-        // 5. Redirect back to the history page
-        res.redirect(`/maintenance/ride/${public_ride_id}`);
-
-    } catch (error) {
-        if (connection) await connection.rollback();
-        console.error("Error reopening maintenance entry:", error);
-        res.status(500).send(`Error processing reopen request: ${error.message}`);
-    } finally {
-        if (connection) connection.release();
     }
 });
 
@@ -356,15 +372,16 @@ router.get('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next)
     res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
 }, async (req, res) => {
     try {
-        const { public_maintenance_id } = req.params; // CHANGED
+        const { public_maintenance_id } = req.params;
         const { role, locationId } = req.session.user;
+        const { returnQuery } = req.query; // <-- CAPTURE returnQuery
 
         const [logResult] = await pool.query(
             `SELECT m.*, r.ride_name, r.location_id, r.public_ride_id
              FROM maintenance m 
              JOIN rides r ON m.ride_id = r.ride_id 
-             WHERE m.public_maintenance_id = ?`, // CHANGED
-            [public_maintenance_id] // CHANGED
+             WHERE m.public_maintenance_id = ?`,
+            [public_maintenance_id]
         );
 
         if (logResult.length === 0) {
@@ -385,7 +402,8 @@ router.get('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next)
         res.render('reassign-maintenance', {
             log: log,
             employees: employees,
-            error: null
+            error: null,
+            returnQuery: returnQuery || '' // <-- PASS
         });
 
     } catch (error) {
@@ -395,7 +413,6 @@ router.get('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next)
 });
 
 // POST /maintenance/reassign/:public_maintenance_id
-// Path changed to /reassign/:public_maintenance_id
 router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {
@@ -403,12 +420,12 @@ router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next
     }
     res.status(403).send('Forbidden: You do not have permission to reassign work orders.');
 }, async (req, res) => {
-    const { public_maintenance_id } = req.params; // CHANGED
+    const { public_maintenance_id } = req.params;
     // ride_id is the INTERNAL ID from the hidden form field
-    const { new_employee_id, ride_id } = req.body;
+    const { new_employee_id, ride_id, returnQuery } = req.body; // <-- CAPTURE returnQuery
     const { role, id: actorId, locationId } = req.session.user;
 
-    let publicRideId; // For redirect
+    let publicRideId;
     try {
         // Fetch ride info for permission check and redirect
         const [rideResult] = await pool.query('SELECT location_id, public_ride_id FROM rides WHERE ride_id = ?', [ride_id]);
@@ -426,17 +443,18 @@ router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next
 
         if (role === 'Maintenance') {
             await pool.query(
-                'UPDATE maintenance SET pending_employee_id = ?, assignment_requested_by = ? WHERE public_maintenance_id = ?', // CHANGED
-                [new_employee_id, actorId, public_maintenance_id] // CHANGED
+                'UPDATE maintenance SET pending_employee_id = ?, assignment_requested_by = ? WHERE public_maintenance_id = ?',
+                [new_employee_id, actorId, public_maintenance_id]
             );
         } else {
             await pool.query(
-                'UPDATE maintenance SET employee_id = ?, pending_employee_id = NULL, assignment_requested_by = NULL WHERE public_maintenance_id = ?', // CHANGED
-                [new_employee_id, public_maintenance_id] // CHANGED
+                'UPDATE maintenance SET employee_id = ?, pending_employee_id = NULL, assignment_requested_by = NULL WHERE public_maintenance_id = ?',
+                [new_employee_id, public_maintenance_id]
             );
         }
 
-        res.redirect(`/maintenance/ride/${publicRideId}`); // CHANGED
+        const redirectQuery = returnQuery ? `?returnQuery=${returnQuery}` : '';
+        res.redirect(`/maintenance/ride/${publicRideId}${redirectQuery}`);
 
     } catch (error) {
         console.error("Error reassigning maintenance:", error);
@@ -445,8 +463,8 @@ router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next
                 `SELECT m.*, r.ride_name, r.public_ride_id 
                  FROM maintenance m 
                  JOIN rides r ON m.ride_id = r.ride_id 
-                 WHERE m.public_maintenance_id = ?`, // CHANGED
-                [public_maintenance_id] // CHANGED
+                 WHERE m.public_maintenance_id = ?`,
+                [public_maintenance_id]
             );
             const [employees] = await pool.query(
                 `SELECT employee_id, first_name, last_name 
@@ -456,7 +474,8 @@ router.post('/reassign/:public_maintenance_id', isAuthenticated, (req, res, next
             res.render('reassign-maintenance', {
                 log: logResult[0] || { ride_id: ride_id, ride_name: 'Unknown', summary: 'Error', public_ride_id: publicRideId },
                 employees: employees,
-                error: "Error submitting reassignment."
+                error: "Error submitting reassignment.",
+                returnQuery: returnQuery || ''
             });
         } catch (fetchError) {
             res.status(500).send("An error occurred while reassigning the work order.");
