@@ -488,7 +488,7 @@ router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, asyn
 });
 
 // POST /delete/:public_ride_id
-// UPDATED to handle dependencies
+// UPDATED: Deletes dependencies first to prevent Foreign Key Errors
 router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     const { public_ride_id } = req.params;
     const { returnQuery } = req.body;
@@ -522,6 +522,7 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
         // 5. Commit
         await connection.commit();
 
+        // Set Success Message for the "Custom Alert"
         req.session.success = `Ride "${ride[0].ride_name}" and its history were deleted successfully.`;
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
@@ -531,6 +532,7 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
         if (connection) await connection.rollback();
         console.error("Error deleting ride:", error);
 
+        // Set Error Message for the "Custom Alert"
         req.session.error = "Error deleting ride. Database constraint error.";
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
@@ -539,5 +541,4 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
         if (connection) connection.release();
     }
 });
-
 module.exports = router;
