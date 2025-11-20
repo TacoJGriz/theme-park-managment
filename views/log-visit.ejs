@@ -14,12 +14,12 @@
 
         /* Main Container */
         .container { 
-            max-width: 800px; 
+            max-width: 800px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Headings */
@@ -35,13 +35,13 @@
 
         /* --- TABS --- */
         .tab-container { 
-            display: flex; 
+            display: flex;
             border-bottom: 2px solid #e9ecef; 
             margin-bottom: 2em; 
             gap: 5px;
         }
         .tab-btn {
-            flex: 1; 
+            flex: 1;
             padding: 12px; 
             text-align: center; 
             cursor: pointer; 
@@ -52,20 +52,24 @@
             border-radius: 6px 6px 0 0;
         }
         .tab-btn:hover { 
-            background-color: #f8f9fa; 
+            background-color: #f8f9fa;
             color: #007bff; 
         }
         .tab-btn.active { 
-            color: #007bff; 
+            color: #007bff;
             border-bottom-color: #007bff; 
             background: #e7f5ff; 
         }
-        .tab-content { display: none; animation: fadeIn 0.2s ease-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
+        .tab-content { display: none; animation: fadeIn 0.2s ease-out;
+        }
+        .tab-content.active { display: block;
+        }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1;
+            transform: translateY(0); } }
 
         /* --- FORMS --- */
-        div.form-group { margin-bottom: 1.5em; }
+        div.form-group { margin-bottom: 1.5em;
+        }
         
         label { 
             display: block;
@@ -93,7 +97,7 @@
 
         /* Search Grid */
         .search-grid { 
-            display: grid; 
+            display: grid;
             grid-template-columns: 1fr 1fr; 
             gap: 15px; 
             background-color: #f8f9fa;
@@ -105,7 +109,7 @@
 
         /* Member Selection Area */
         #memberSelectionArea {
-            background: white; 
+            background: white;
             border: 1px solid #ced4da; 
             border-radius: 8px;
             max-height: 300px; 
@@ -114,7 +118,7 @@
             margin-top: 10px;
         }
         .member-row {
-            display: flex; 
+            display: flex;
             align-items: center; 
             padding: 10px; 
             border-bottom: 1px solid #f1f1f1;
@@ -122,33 +126,44 @@
             cursor: pointer; 
             border-radius: 6px;
         }
-        .member-row:hover { background-color: #f8f9fa; }
-        .member-row:last-child { border-bottom: none; }
+        .member-row:hover { background-color: #f8f9fa;
+        }
+        .member-row:last-child { border-bottom: none;
+        }
         
         /* Checkbox styling */
-        .member-row input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); }
+        .member-row input[type="checkbox"] { width: auto;
+            margin-right: 15px; transform: scale(1.2); }
 
         /* Quantity Input */
         .qty-input {
-            width: 70px !important; 
+            width: 70px !important;
             padding: 5px !important; 
             margin-right: 15px; 
             text-align: center; 
             font-weight: bold;
         }
 
-        .member-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .member-name { font-weight: 600; color: #333; }
-        .member-meta { font-size: 0.85em; color: #6c757d; }
+        .member-info { display: flex;
+            flex-direction: column; flex-grow: 1; }
+        .member-name { font-weight: 600; color: #333;
+        }
+        .member-meta { font-size: 0.85em; color: #6c757d;
+        }
 
         /* Badges */
-        .badge-pass { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700; text-transform: uppercase; }
-        .badge-pass.ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .badge-pass.none { background: #f8d7da; color: #842029; border: 1px solid #f5c6cb; }
+        .badge-pass { font-size: 0.75em;
+            padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700; text-transform: uppercase;
+        }
+        .badge-pass.ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+        }
+        .badge-pass.none { background: #f8d7da; color: #842029; border: 1px solid #f5c6cb;
+        }
 
         /* Price Box */
         .price-box {
-            background-color: #e7f5ff; /* Info Blue */
+            background-color: #e7f5ff;
+            /* Info Blue */
             border-left: 5px solid #007bff;
             padding: 1.5em; 
             border-radius: 8px;
@@ -157,7 +172,7 @@
             color: #004085;
         }
         .price-final { 
-            font-size: 2.5em; 
+            font-size: 2.5em;
             font-weight: 700; 
             color: #28a745; 
             margin-top: 10px;
@@ -166,7 +181,7 @@
 
         /* Buttons */
         button { 
-            padding: 12px 25px; 
+            padding: 12px 25px;
             background-color: #28a745; 
             color: white; 
             border: none; 
@@ -179,27 +194,32 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         button:hover { 
-            background-color: #218838; 
+            background-color: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
         .btn-search { 
-            background-color: #007bff; 
+            background-color: #007bff;
             width: auto; 
             padding: 10px 20px; 
             font-size: 0.95em;
             margin-top: 0;
         }
-        .btn-search:hover { background-color: #0056b3; }
+        .btn-search:hover { background-color: #0056b3;
+        }
         
         /* Lookup Table */
-        .lookup-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
-        .lookup-table th { text-align: left; padding: 10px; background: #f8f9fa; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; }
-        .lookup-table td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+        .lookup-table { width: 100%;
+            border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
+        .lookup-table th { text-align: left;
+            padding: 10px; background: #f8f9fa; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6;
+        }
+        .lookup-table td { padding: 10px; border-bottom: 1px solid #dee2e6;
+        }
         
         .btn-select { 
-            background: #17a2b8; 
+            background: #17a2b8;
             color: white; 
             border: none; 
             padding: 4px 12px; 
@@ -210,12 +230,16 @@
             width: auto;
             box-shadow: none;
         }
-        .btn-select:hover { background: #138496; transform: none; }
+        .btn-select:hover { background: #138496; transform: none;
+        }
 
         /* Alerts */
-        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; text-align: center; }
-        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c6cb; }
-        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .message { padding: 1em;
+            border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; text-align: center; }
+        .error { color: #842029;
+            background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .success { color: #0f5132; background-color: #d1e7dd;
+            border: 1px solid #badbcc; }
     </style>
 </head>
 <body>
@@ -228,16 +252,19 @@
         <% if (typeof success !== 'undefined' && success) { %><div class="message success"><%= success %></div><% } %>
 
         <div class="tab-container">
-            <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>" data-tab="standard">Standard / Member</div>
-            <div class="tab-btn <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>" data-tab="redeem">Redeem E-Ticket</div>
+            <div class="tab-btn <%= activeTab === 'standard' ? 'active' : '' %>" data-tab="standard">Standard / Member</div>
+            <div class="tab-btn <%= activeTab === 'redeem' ? 'active' : '' %>" data-tab="redeem">Redeem E-Ticket</div>
         </div>
 
-        <div id="tab-standard" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? '' : 'active' %>">
+        <div id="tab-standard" class="tab-content <%= activeTab === 'standard' ? 'active' : '' %>">
             <form action="/visits" method="POST" id="logVisitForm">
+                <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+                
                 <div class="form-group">
                     <label for="ticket_type_id">Select Ticket Type</label>
                     <select id="ticket_type_id" name="ticket_type_id" required>
                         <option value="" selected disabled>-- Choose Ticket --</option>
+                       
                         <% ticketTypes.forEach(type => { %>
                             <option
                                 value="<%= type.ticket_type_id %>"
@@ -245,81 +272,105 @@
                                 data-is-member="<%= type.is_member_type %>"
                                 data-name="<%= type.type_name %>"
                             >
+   
                                 <%= type.type_name %>
                             </option>
-                        <% }); %>
+                        <% });
+%>
                     </select>
                 </div>
 
                 <div id="memberSelectBlock" style="display: none;">
                     <div class="search-grid">
+                        
                         <div><label>Search ID</label><input type="text" id="memberSearchID" placeholder="Public ID..."></div>
                         <div><label>Search Phone</label><input type="tel" id="memberSearchPhone" placeholder="Phone..."></div>
                         <div><label>Search Name</label><input type="text" id="memberSearchName" placeholder="Name..."></div>
                         <div><label>Search Email</label><input type="email" id="memberSearchEmail" placeholder="Email..."></div>
+           
                     </div>
                     
                     <label id="memberSelectLabel">Select Members to Check In:</label>
                     <div id="memberSelectionArea">
-                        <p style="text-align: center; color: #6c757d; padding: 1em;"><i>Start typing to find members...</i></p>
+                        <p 
+style="text-align: center; color: #6c757d; padding: 1em;"><i>Start typing to find members...</i></p>
                     </div>
                 </div>
 
                 <div class="price-box">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <div style="display: flex;
+justify-content: space-between; margin-bottom: 5px;">
                         <span>Base Price:</span> <span id="priceBase">$0.00</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
+                    <div style="display: flex;
+justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
                         <span>Discount:</span> <span id="priceDiscount">$0.00</span>
                     </div>
                     <div class="price-final" id="priceFinal">$0.00</div>
                 </div>
 
+         
                 <br>
                 <button type="submit">Confirm Entry</button>
             </form>
         </div>
 
-        <div id="tab-redeem" class="tab-content <%= (typeof ticketSearchTerm !== 'undefined' && ticketSearchTerm) ? 'active' : '' %>">
+        <div id="tab-redeem" class="tab-content <%= activeTab === 'redeem' ? 'active' : '' %>">
             <form action="/visits/redeem" method="POST">
+                <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+                
                 <div class="form-group">
                     <label for="ticket_code">Scan or Enter Ticket UUID</label>
                     <input type="text" id="ticket_code" name="ticket_code" required placeholder="e.g., 550e8400-e29b...">
-                </div>
+               
+                 </div>
                 <button type="submit" style="background-color: #007bff;">Redeem Ticket</button>
             </form>
 
-            <div style="margin-top: 3em; padding-top: 1.5em; border-top: 2px dashed #dee2e6;">
-                <h3 style="margin: 0 0 15px 0; color: #343a40; font-size: 1.2em;">Ticket Lookup</h3>
+            <div style="margin-top: 3em;
+padding-top: 1.5em; border-top: 2px dashed #dee2e6;">
+                <h3 style="margin: 0 0 15px 0;
+color: #343a40; font-size: 1.2em;">Ticket Lookup</h3>
                 
-                <form action="/visits/new" method="GET" style="display: flex; gap: 10px; align-items: flex-end;">
+                <form action="/visits/new" method="GET" style="display: flex;
+gap: 10px; align-items: flex-end;">
                     <input type="hidden" name="active_tab" value="redeem">
-                    <div style="flex-grow:1; margin-bottom: 0;">
+                    <div style="flex-grow:1;
+margin-bottom: 0;">
                         <input type="text" name="ticket_search" placeholder="Search by Email or Phone..." value="<%= ticketSearchTerm %>">
                     </div>
                     <button type="submit" class="btn-search">Search</button>
                 </form>
 
+       
                 <% if (foundTickets && foundTickets.length > 0) { %>
-                    <div style="max-height: 250px; overflow-y: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 8px;">
+                    <div style="max-height: 250px;
+overflow-y: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 8px;">
                         <table class="lookup-table">
                             <thead><tr><th>Date</th><th>Type</th><th>Guest</th><th>Action</th></tr></thead>
                             <tbody>
+          
                                 <% foundTickets.forEach(t => { %>
                                     <tr>
+                                      
                                         <td><%= new Date(t.purchase_date).toLocaleDateString() %></td>
                                         <td><strong><%= t.type_name %></strong></td>
                                         <td><%= t.email || t.phone_number %></td>
-                                        <td style="text-align: right;">
+         
+                                         <td style="text-align: right;">
                                             <button type="button" class="btn-select" onclick="selectTicket('<%= t.ticket_code %>')">Select</button>
+                  
                                         </td>
                                     </tr>
                                 <% }); %>
+        
                             </tbody>
                         </table>
                     </div>
                 <% } else if (ticketSearchTerm) { %>
-                    <p style="color: #dc3545; text-align: center; margin-top: 15px; background: #f8d7da; padding: 10px; border-radius: 6px;">No unredeemed tickets found.</p>
+              
+                <p style="color: #dc3545; text-align: center; margin-top: 15px; background: #f8d7da; padding: 10px;
+border-radius: 6px;">No unredeemed tickets found.</p>
                 <% } %>
             </div>
         </div>
@@ -329,6 +380,7 @@
         const ticketTypeData = new Map();
         <% ticketTypes.forEach(type => { %>
             ticketTypeData.set('<%= type.ticket_type_id %>', {
+           
                 price: parseFloat('<%= type.base_price %>'),
                 isMember: Boolean(<%= type.is_member_type %>),
                 name: '<%= type.type_name %>'
@@ -345,7 +397,8 @@
         allActiveMembers.forEach(member => {
             memberDataMap.set(member.membership_id, member);
             const primaryId = member.primary_member_id || member.membership_id;
-            if (!memberGroupMap.has(primaryId)) { memberGroupMap.set(primaryId, []); }
+            if (!memberGroupMap.has(primaryId)) { memberGroupMap.set(primaryId, 
+[]); }
             memberGroupMap.get(primaryId).push(member);
         });
 
@@ -353,7 +406,6 @@
         const memberSelectBlock = document.getElementById('memberSelectBlock');
         const memberSelectionArea = document.getElementById('memberSelectionArea');
         const memberSelectLabel = document.getElementById('memberSelectLabel');
-        
         // --- Ticket Selection Logic ---
         ticketSelect.addEventListener('change', function() {
             const selectedTypeId = this.value;
@@ -361,16 +413,18 @@
             
             if (ticket && ticket.isMember) {
                 memberSelectBlock.style.display = 'block';
-                
+         
                 // Update Label based on mode
                 if (ticket.name === 'Guest Pass') {
                     memberSelectLabel.textContent = "Select Member Using Guest Pass (Enter Quantity):";
                 } else {
+     
                     memberSelectLabel.textContent = "Select Members to Check In:";
                 }
                 
                 updatePriceDisplay(0, 0, 0);
                 performSearch(); 
+            
             } else {
                 memberSelectBlock.style.display = 'none';
                 const basePrice = ticket ? ticket.price : 0;
@@ -382,13 +436,11 @@
         ['memberSearchID', 'memberSearchPhone', 'memberSearchEmail', 'memberSearchName'].forEach(id => {
             document.getElementById(id).addEventListener('input', performSearch);
         });
-
         function performSearch() {
             const idTerm = document.getElementById('memberSearchID').value.trim().toLowerCase();
             const phoneTerm = normalizePhone(document.getElementById('memberSearchPhone').value);
             const emailTerm = document.getElementById('memberSearchEmail').value.trim().toLowerCase();
             const nameTerm = document.getElementById('memberSearchName').value.trim().toLowerCase();
-
             if (!idTerm && !phoneTerm && !emailTerm && !nameTerm) {
                 memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d; padding:1em;"><i>Start typing to find members...</i></p>';
                 return;
@@ -401,20 +453,20 @@
                 const mEmail = (member.email || '').toLowerCase();
                 const mName = `${member.first_name} ${member.last_name}`.toLowerCase();
 
-                if ((idTerm && mID.startsWith(idTerm)) || 
+                if 
+                    ((idTerm && mID.startsWith(idTerm)) || 
                     (phoneTerm && mPhone.startsWith(phoneTerm)) || 
                     (emailTerm && mEmail.startsWith(emailTerm)) || 
                     (nameTerm && mName.includes(nameTerm))) {
                     matchedGroupIds.add(member.primary_member_id || member.membership_id);
+   
                 }
             });
-
             const results = [];
             matchedGroupIds.forEach(pid => {
                 const group = memberGroupMap.get(pid);
                 if(group) results.push(...group);
             });
-            
             buildMemberChecklist(results);
         }
 
@@ -428,7 +480,6 @@
             const selectedTypeId = ticketSelect.value;
             const ticketData = ticketTypeData.get(selectedTypeId);
             const isGuestPassMode = ticketData && ticketData.name === 'Guest Pass';
-
             group.forEach(member => {
                 const label = document.createElement('label');
                 label.className = 'member-row';
@@ -436,17 +487,21 @@
                 const isDisabled = isGuestPassMode && member.guest_passes_remaining < 1;
                 if(isDisabled) label.style.opacity = '0.5';
 
+   
                 let inputHtml = '';
                 let badge = '';
 
                 if (isGuestPassMode) {
                     if (member.guest_passes_remaining > 0) {
+                       
                         badge = `<span class="badge-pass ok">(${member.guest_passes_remaining} Available)</span>`;
                         inputHtml = `
                             <input type="checkbox" name="member_ids[]" value="${member.membership_id}" id="cb_${member.membership_id}" style="display:none;">
                             <input type="number" class="qty-input" 
+    
                                    name="guest_qty_${member.membership_id}" 
                                    value="0" min="0" max="${member.guest_passes_remaining}"
+                               
                                    onchange="toggleCheckbox(this, '${member.membership_id}')">
                         `;
                     } else {
@@ -461,6 +516,7 @@
                     ${inputHtml}
                     <div class="member-info">
                         <span class="member-name">${member.first_name} ${member.last_name} ${badge}</span>
+              
                         <span class="member-meta">ID: ${member.public_membership_id.substring(0, 8).toUpperCase()}</span>
                     </div>
                 `;
@@ -495,6 +551,7 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+   
             });
         });
     </script>
