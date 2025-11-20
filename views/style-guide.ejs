@@ -1,301 +1,396 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Primus Park | Design System</title>
+    <title>Employee Portal Style Guide</title>
+    
+    <%# --- Import Poppins Font Only (Professional yet Friendly) --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            background-color: var(--light);
-            color: var(--dark);
+        /* --- 1. CORE RESET & TYPOGRAPHY --- */
+        body { 
+            font-family: 'Poppins', sans-serif; /* UPDATED FONT */
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
             line-height: 1.6;
+            font-weight: 400;
         }
 
-        /* --- LAYOUT --- */
-        .container {
-            max-width: 1100px;
-            margin: 2em auto;
-            padding: 0 2em;
-        }
-        
-        section {
-            background: var(--white);
-            padding: 3em;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 3em;
+        /* --- 2. LAYOUT CONTAINERS --- */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; /* Softer corners */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Softer shadow */
         }
 
-        .section-title {
-            font-family: 'Poppins', sans-serif;
+        /* --- 3. HEADINGS --- */
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gray);
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
         }
-
-        /* --- TYPOGRAPHY --- */
-        h1, h2, h3, h4 { margin-top: 0; color: var(--dark); }
-        
-        .font-display { font-family: 'Lobster', cursive; }
-        .font-body { font-family: 'Poppins', sans-serif; }
-
-        .text-magical {
-            background: linear-gradient(45deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: inline-block;
-        }
-
-        /* --- COLOR SWATCHES --- */
-        .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
-        .swatch {
-            height: 100px;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: flex-end;
-            padding: 10px;
-            color: white;
-            font-weight: bold;
-            font-size: 0.9em;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* --- BUTTONS --- */
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            border-radius: 30px; /* Pill shape for friendlier look */
+        h2 {
+            color: #444;
+            font-size: 1.6em;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            border-left: 5px solid #007bff;
+            padding-left: 15px;
             font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 1em;
-            text-align: center;
         }
-        
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-dark); }
-
-        .btn-secondary { background-color: var(--secondary); color: var(--dark); }
-        .btn-secondary:hover { background-color: #e0a800; }
-
-        .btn-accent { background-color: var(--accent); color: white; }
-        .btn-accent:hover { background-color: #138496; }
-
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-        .btn-outline:hover { background: var(--primary); color: white; }
-
-        /* --- CARDS --- */
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        
-        .card-magic {
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-md);
-            border-top: 5px solid var(--primary); /* Brand accent */
-            overflow: hidden;
-            transition: var(--transition);
-            display: flex; flex-direction: column;
-        }
-        .card-magic:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-        .card-body { padding: 2em; }
-        .card-footer { background: var(--light); padding: 1em 2em; border-top: 1px solid #eee; font-size: 0.9em; color: var(--gray); }
-
-        /* --- FORMS --- */
-        .form-group { margin-bottom: 1.5em; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
-        
-        input[type="text"], input[type="email"], select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #eee;
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1em;
-            transition: var(--transition);
-            box-sizing: border-box;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
-        }
-
-        /* --- TABLES --- */
-        .table-magic {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--white);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-        .table-magic th {
-            background-color: var(--dark);
-            color: var(--white);
-            padding: 15px;
-            text-align: left;
+        h3 {
+            font-size: 1.25em;
+            color: #666;
+            margin-bottom: 0.75em;
             font-weight: 600;
+        }
+
+        /* --- 4. COLOR PALETTE (Utility Classes) --- */
+        .text-primary { color: #007bff; }
+        .text-success { color: #28a745; }
+        .text-danger  { color: #dc3545; }
+        .text-warning { color: #ffc107; }
+        .text-info    { color: #17a2b8; }
+        .text-muted   { color: #6c757d; }
+
+        /* --- 5. STATS BAR --- */
+        .stats-bar { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            margin-bottom: 2.5em; 
+        }
+        .stat-card { 
+            background-color: #ffffff; 
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 2.2em; 
+            color: #007bff; 
+            font-weight: 700;
+        }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
             text-transform: uppercase;
             font-size: 0.85em;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        .table-magic td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
+
+        /* --- 6. FILTER BARS --- */
+        .filter-bar { 
+            background-color: #ffffff; 
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .filter-controls { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.2em; 
+            align-items: flex-end; 
+        }
+        
+        /* --- 7. FORMS & INPUTS --- */
+        label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; /* Softer inputs */
+            box-sizing: border-box; 
+            font-size: 0.95em;
+            font-family: 'Poppins', sans-serif; /* Ensure inputs use Poppins */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* --- 8. BUTTONS --- */
+        .btn { 
+            display: inline-block;
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 8px; /* Softer buttons */
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        
+        .btn-outline {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+        .btn-outline:hover { background-color: #f8f9fa; color: #007bff; border-color: #007bff; }
+
+        /* --- 9. TABLES (Rounded & Modern) --- */
+        table { 
+            width: 100%; 
+            border-collapse: separate; /* Required for border-radius on table */
+            border-spacing: 0; 
+            margin-bottom: 1.5em; 
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; /* Nice rounded corners */
+            overflow: hidden;    /* Clips the header corners */
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff; 
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
             color: #555;
         }
-        .table-magic tr:hover { background-color: #f9f9f9; }
+        tr:last-child td {
+            border-bottom: none; /* Remove bottom border on last row */
+        }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
 
-        /* --- BADGES --- */
+        /* --- 10. ALERTS --- */
+        .alert { 
+            padding: 1em 1.2em; 
+            border-radius: 8px; 
+            margin-bottom: 1.5em; 
+            font-weight: 600; 
+            display: flex;
+            align-items: center;
+        }
+        .alert-success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .alert-error   { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+        .alert-info    { color: #055160; background-color: #cff4fc; border: 1px solid #b6effb; }
+
+        /* --- 11. BADGES --- */
         .badge {
-            padding: 5px 10px;
-            border-radius: 20px;
+            display: inline-block;
+            padding: 0.35em 0.65em;
             font-size: 0.75em;
             font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 50rem;
             text-transform: uppercase;
         }
-        .badge-active { background: #d4edda; color: var(--success); }
-        .badge-expired { background: #f8d7da; color: var(--danger); }
-        .badge-info { background: #cce5ff; color: #004085; }
+        .badge-success { color: #fff; background-color: #28a745; }
+        .badge-danger { color: #fff; background-color: #dc3545; }
+        .badge-warning { color: #212529; background-color: #ffc107; }
+        .badge-secondary { color: #fff; background-color: #6c757d; }
 
+        .guide-section {
+            margin-bottom: 4em;
+            padding-bottom: 2em;
+            border-bottom: 1px dashed #ddd;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-
+    
     <div class="container">
-        <div style="text-align: center; margin-bottom: 4em;">
-            <h1 class="font-display" style="font-size: 3.5em; color: var(--primary);">Style Guide</h1>
-            <p style="font-size: 1.2em; color: var(--gray);">Standardized Design System for Member & Visitor Views</p>
+        <h1>Employee Portal Style Guide</h1>
+        <p class="text-muted">A comprehensive guide for standardizing the look and feel of all employee-facing management pages. Uses <strong>Poppins</strong> for a clean, modern, and friendly professional look.</p>
+
+        <div class="guide-section">
+            <h2>1. Color Palette</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 1em;">
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #007bff; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Primary</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #28a745; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Success</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #dc3545; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Danger</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #ffc107; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Warning</strong>
+                </div>
+            </div>
         </div>
 
-        <section>
-            <div class="section-title">Color Palette</div>
-            <div class="swatch-grid">
-                <div class="swatch" style="background: var(--primary);">Primary<br>#6f42c1</div>
-                <div class="swatch" style="background: var(--secondary); color: #333;">Secondary (Gold)<br>#ffc107</div>
-                <div class="swatch" style="background: var(--accent);">Accent (Teal)<br>#17a2b8</div>
-                <div class="swatch" style="background: var(--dark);">Dark<br>#343a40</div>
-                <div class="swatch" style="background: var(--success);">Success<br>#28a745</div>
-                <div class="swatch" style="background: var(--danger);">Danger<br>#dc3545</div>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">Typography</div>
-            <h1 class="font-display">Heading 1 (Lobster) - Magical Titles</h1>
-            <h2>Heading 2 (Poppins) - Section Headers</h2>
-            <h3>Heading 3 (Poppins) - Card Titles</h3>
-            <p>This is standard body text. It is legible, clean, and uses the 'Poppins' font family. We use this for descriptions, summaries, and general information. <span class="text-magical" style="font-weight:700;">Gradient Text is available for emphasis!</span></p>
-            <p style="color: var(--gray); font-size: 0.9em;">This is muted small text used for metadata or hints.</p>
-        </section>
-
-        <section>
-            <div class="section-title">Buttons & Actions</div>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div class="guide-section">
+            <h2>2. Buttons</h2>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
                 <button class="btn btn-primary">Primary Action</button>
-                <button class="btn btn-secondary">Secondary Action</button>
-                <button class="btn btn-accent">Accent Button</button>
-                <button class="btn btn-outline">Outline Button</button>
-                <button class="btn btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">Disabled</button>
+                <button class="btn btn-success">Confirm / Save</button>
+                <button class="btn btn-danger">Delete</button>
+                <button class="btn btn-secondary">Cancel</button>
             </div>
-        </section>
+            <h3>Table Actions</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                <a href="#" class="btn btn-sm btn-outline" style="color: #28a745; border-color: #28a745;">View</a>
+                <a href="#" class="btn btn-sm btn-danger">Remove</a>
+            </div>
+        </div>
 
-        <section>
-            <div class="section-title">Magic Cards</div>
-            <div class="card-grid">
-                <div class="card-magic">
-                    <div class="card-body">
-                        <span class="badge badge-active" style="margin-bottom: 10px; display:inline-block;">Active</span>
-                        <h3>Standard Card</h3>
-                        <p style="color: #666;">Cards have a colored top border, subtle shadow, and a "lift" effect on hover. Use these for promotions, items, or dashboard widgets.</p>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;">View Details</button>
-                    </div>
+        <div class="guide-section">
+            <h2>3. Dashboards & Filters</h2>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <h3>1,240</h3>
+                    <p>Total Employees</p>
                 </div>
-
-                <div class="card-magic" style="text-align: center; border-top-color: var(--secondary);">
-                    <div class="card-body">
-                        <h3 style="color: #666; font-size: 1em; text-transform: uppercase;">Total Visits</h3>
-                        <div style="font-size: 3.5em; font-weight: 700; color: var(--primary); line-height: 1;">24</div>
-                        <p style="color: var(--success); font-weight: bold; margin-top: 5px;">+2 this month</p>
-                    </div>
-                    <div class="card-footer">Updated just now</div>
+                <div class="stat-card">
+                    <h3 class="text-success">98%</h3>
+                    <p>Active Status</p>
+                </div>
+                <div class="stat-card">
+                    <h3 class="text-danger">3</h3>
+                    <p>Pending Approval</p>
                 </div>
             </div>
-        </section>
 
-        <section>
-            <div class="section-title">Form Elements</div>
-            <form>
-                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label>Input Field</label>
-                        <input type="text" placeholder="Enter some text...">
+            <div class="filter-bar">
+                <div class="filter-controls">
+                    <div>
+                        <label>Search Records</label>
+                        <input type="text" placeholder="Name, ID, or Email...">
                     </div>
-                    <div class="form-group">
-                        <label>Select Dropdown</label>
+                    <div>
+                        <label>Filter by Role</label>
                         <select>
-                            <option>Option 1</option>
-                            <option>Option 2</option>
+                            <option>All Roles</option>
+                            <option>Admin</option>
+                            <option>Staff</option>
                         </select>
                     </div>
+                    <div>
+                        <button class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Text Area</label>
-                    <textarea rows="3" placeholder="Type a description..."></textarea>
-                </div>
-            </form>
-        </section>
+            </div>
+        </div>
 
-        <section>
-            <div class="section-title">Data Tables</div>
-            <table class="table-magic">
+        <div class="guide-section">
+            <h2>4. Modern Data Tables</h2>
+            <p>Rounded corners, soft borders, and clean spacing.</p>
+            
+            <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Activity</th>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
                         <th>Status</th>
-                        <th style="text-align: right;">Amount</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Oct 24, 2025</td>
-                        <td>Park Visit - Main Entrance</td>
-                        <td><span class="badge badge-active">Completed</span></td>
-                        <td style="text-align: right; font-weight: bold;">$0.00</td>
+                        <td><strong>EMP-001</strong></td>
+                        <td>Walt Disney</td>
+                        <td>Admin</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
                     </tr>
                     <tr>
-                        <td>Sep 12, 2025</td>
-                        <td>Annual Renewal (Gold)</td>
-                        <td><span class="badge badge-active">Processed</span></td>
-                        <td style="text-align: right; font-weight: bold;">$599.00</td>
+                        <td><strong>EMP-002</strong></td>
+                        <td>Minnie Mouse</td>
+                        <td>Park Manager</td>
+                        <td><span class="badge badge-warning">On Leave</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
                     </tr>
                     <tr>
-                        <td>Jan 01, 2024</td>
-                        <td>Old Membership</td>
-                        <td><span class="badge badge-expired">Expired</span></td>
-                        <td style="text-align: right; font-weight: bold;">-</td>
+                        <td><strong>EMP-003</strong></td>
+                        <td>Donald Duck</td>
+                        <td>Maintenance</td>
+                        <td><span class="badge badge-danger">Terminated</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
                     </tr>
                 </tbody>
             </table>
-        </section>
+        </div>
+
+        <div class="guide-section" style="border-bottom: none;">
+            <h2>5. Feedback Messages</h2>
+            <div class="alert alert-success">✔ Operation completed successfully.</div>
+            <div class="alert alert-info">ℹ System maintenance scheduled for 2:00 AM.</div>
+            <div class="alert alert-error">⚠ Error: Could not save changes to the database.</div>
+        </div>
 
     </div>
-    <%- include('partials/footer') %>
 </body>
 </html>

@@ -1,228 +1,357 @@
-<%# --- Import Fonts (Ensures they are available on every page including the header) --- %>
+<%# --- Import Fonts --- %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-		<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<%# Import Lobster (Magical) and Poppins (Professional) %>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<%# Import FontAwesome for Icons %>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-			<style>
-				/* --- GLOBAL THEME VARIABLES (Standardized) --- */
-				:root {
-				/* Brand Colors */
-				--primary: #6f42c1;       /* Magical Purple */
-				--primary-dark: #5a32a3;  /* Deep Purple */
-				--secondary: #ffc107;     /* Gold */
-				--accent: #17a2b8;        /* Cyan/Teal */
+<style>
+    /* =========================================
+       THEME SWITCHER LOGIC
+       ========================================= */
+    <% if (user) { %>
+        /* --- EMPLOYEE THEME (Professional, Dark Header) --- */
+        :root {
+            --primary: #007bff;       /* Admin Blue */
+            --secondary: #6c757d;     /* Neutral Gray */
+            --success: #28a745;       /* Standard Green */
+            --danger: #dc3545;        /* Standard Red */
+            --warning: #ffc107;       /* Standard Yellow */
+            --info: #17a2b8;          /* Standard Teal */
+            
+            --dark: #343a40;          /* Header BG */
+            --light: #f8f9fa;         /* Page BG */
+            --white: #ffffff;
+            
+            --font-head: 'Poppins', sans-serif; 
+            --font-body: 'Poppins', sans-serif;
+            
+            --radius: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --transition: all 0.2s ease-in-out;
+        }
 
-				/* Neutrals */
-				--dark: #343a40;          /* Charcoal */
-				--light: #f8f9fa;         /* Off-white background */
-				--white: #ffffff;
-				--gray: #6c757d;
+        body {
+            font-family: var(--font-body);
+            background-color: var(--light);
+            color: #333;
+        }
 
-				/* Status Colors */
-				--success: #28a745;
-				--danger: #dc3545;
-				--warning: #ffc107;
+        /* Navbar Container */
+        .navbar {
+            background-color: var(--dark);
+            padding: 0 30px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-				/* Effects */
-				--shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-				--shadow-md: 0 4px 15px rgba(0,0,0,0.1);
-				--shadow-lg: 0 10px 30px rgba(111, 66, 193, 0.2); /* Purple glow */
-				--radius: 12px;
-				--transition: all 0.3s ease;
-				}
+        /* Logo Area */
+        .nav-brand {
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0.95;
+        }
+        .nav-brand:hover { opacity: 1; color: var(--white); }
+        .brand-icon { font-size: 1.2em; color: var(--primary); }
 
-				/* --- Header Styles --- */
-				.navbar {
-				background-color: var(--dark);
-				padding: 0 20px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				color: var(--white);
-				margin-bottom: 1em;
-				min-height: 50px;
-				position: sticky;
-				top: 0;
-				z-index: 1000;
-				box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-				font-family: 'Poppins', sans-serif;
-				}
+        .nav-menu { display: flex; gap: 10px; height: 100%; align-items: center; }
 
-				.nav-links {
-				display: flex;
-				height: 100%;
-				}
+        /* Nav Links */
+        .nav-item, .dropdown-trigger {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 1px solid transparent;
+            position: relative; 
+            height: 100%; 
+            box-sizing: border-box;
+        }
 
-				.nav-links a, .dropdown .dropbtn {
-				color: #f8f9fa;
-				text-decoration: none;
-				padding: 15px 12px;
-				transition: background-color 0.2s;
-				margin-right: 5px;
-				display: flex;
-				align-items: center;
-				height: 100%;
-				box-sizing: border-box;
-				background-color: transparent;
-				border: none;
-				font-family: inherit;
-				font-size: 0.95em;
-				font-weight: 600;
-				cursor: pointer;
-				}
+        .nav-item:hover, .dropdown-trigger:hover, .nav-item.active {
+            color: var(--white);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
 
-				.nav-links a:hover, .dropdown:hover .dropbtn {
-				background-color: rgba(255,255,255,0.1);
-				color: var(--secondary);
-				}
+        /* --- DROPDOWN STYLING --- */
+        .nav-dropdown {
+            position: relative;
+            height: 100%; 
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%; 
+            left: 0;
+            
+            background: var(--white);
+            min-width: 240px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 0 0 6px 6px;
+            z-index: 1100;
+            padding: 8px 0;
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-top: 0; /* Kept 0 to reduce visual gap */
+        }
 
-				.user-info {
-				font-weight: 600;
-				font-size: 0.9em;
-				}
-				.user-info span {
-				color: #eee;
-				}
-				.user-info a {
-				color: var(--secondary);
-				font-weight: 700;
-				margin-left: 20px;
-				text-decoration: none;
-				transition: opacity 0.2s;
-				}
-				.user-info a:hover {
-				text-decoration: underline;
-				opacity: 0.9;
-				}
+        /* HOVER FIX: Invisible bridge prevents mouse form losing focus */
+        .nav-dropdown::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 10px; /* Invisible hit area bridging header and menu */
+        }
 
-				/* --- Dropdown Styles --- */
-				.dropdown {
-				position: relative;
-				display: inline-block;
-				height: 100%;
-				}
+        .nav-dropdown:hover .dropdown-menu { 
+            display: block; 
+            animation: fadeIn 0.15s ease-out;
+        }
 
-				.dropdown-content {
-				display: none;
-				position: absolute;
-				background-color: var(--white);
-				min-width: 200px;
-				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-				z-index: 1000;
-				border-radius: 0 0 4px 4px;
-				top: 100%;
-				}
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(-5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-				.dropdown-content a {
-				color: var(--dark);
-				padding: 12px 16px;
-				text-decoration: none;
-				display: block;
-				height: auto;
-				line-height: 1.5;
-				font-weight: normal;
-				}
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: #444;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.1s;
+            gap: 12px; 
+        }
+        
+        .dropdown-item i {
+            color: var(--secondary); 
+            width: 20px; 
+            text-align: center;
+            transition: color 0.1s;
+        }
 
-				.dropdown-content a:hover {
-				background-color: var(--light);
-				color: var(--primary);
-				}
+        .dropdown-item:hover { 
+            background-color: #f4f4f9; 
+            color: var(--primary); 
+        }
+        .dropdown-item:hover i {
+            color: var(--primary); 
+        }
+        
+        .dropdown-divider { border-top: 1px solid #eee; margin: 6px 0; }
 
-				.dropdown:hover .dropdown-content {
-				display: block;
-				}
+        /* User Badge */
+        .user-badge {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Highlight specific links (Pending Requests) */
+        .special-link i { color: var(--danger) !important; }
+        .special-link { color: var(--danger) !important; font-weight: 600; }
 
-				.special-link {
-				color: var(--danger) !important;
-				font-weight: bold !important;
-				}
-			</style>
+    <% } else { %>
+        /* --- VISITOR THEME (Magical) --- */
+        :root {
+            --primary: #6f42c1;
+            --secondary: #ffc107;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --font-head: 'Lobster', cursive;
+            --font-body: 'Poppins', sans-serif;
+        }
 
-			<% if (user) { %>
-			<nav class="navbar">
-				<div class="nav-links">
-					<a href="/dashboard">Dashboard</a>
+        .navbar {
+            background-color: rgba(52, 58, 64, 0.95);
+            padding: 0 2em;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .nav-brand {
+            font-family: var(--font-head);
+            font-size: 1.8em;
+            color: var(--secondary);
+            text-decoration: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .nav-links { display: flex; height: 100%; align-items: center; gap: 20px; }
+        .nav-link {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--secondary); }
+        .btn-login-nav {
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 5px 15px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .btn-login-nav:hover { background: white; color: var(--dark); border-color: white; }
+    <% } %>
+</style>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
-					<a href="/rides">Rides</a>
-					<% } %>
+<% if (user) { %>
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 30px; height: 100%;">
+            <a href="/dashboard" class="nav-brand">
+                <i class="fa-solid fa-archway brand-icon"></i>
+                Primus Park <span style="font-weight: 300; opacity: 0.7; font-size: 0.9em; margin-left: 5px;">| Manager</span>
+            </a>
+            
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-chart-line" style="margin-right: 8px;"></i> Dashboard</a>
+                
+                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
+                    <a href="/rides" class="nav-item"><i class="fa-solid fa-list" style="margin-right: 8px;"></i> Rides</a>
+                <% } %>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-					<div class="dropdown">
-						<button class="dropbtn">Management ▼</button>
-						<div class="dropdown-content">
-							<a href="/users">Employees</a>
-							<a href="/approvals" class="special-link">Pending Requests</a>
-							<hr style="margin: 5px 0; border: 0; border-top: 1px solid #ddd;">
-								<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-								<a href="/locations">Locations</a>
-								<% } %>
-								<a href="/map">Interactive Map</a>
-								<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-								<a href="/promotions">Promotions</a>
-								<a href="/weather">Weather</a>
-								<% } %>
-						</div>
-					</div>
-					<% } %>
+                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                <div class="nav-dropdown">
+                    <div class="dropdown-trigger">Management <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i></div>
+                    <div class="dropdown-menu">
+                        <a href="/users" class="dropdown-item"><i class="fa-solid fa-users-viewfinder"></i> Employees</a>
+                        
+                        <a href="/approvals" class="dropdown-item special-link"><i class="fa-solid fa-clipboard-check"></i> Pending Requests</a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                            <a href="/locations" class="dropdown-item"><i class="fa-solid fa-map-location"></i> Locations</a>
+                        <% } %>
+                        
+                        <a href="/map" class="dropdown-item"><i class="fa-solid fa-map"></i> Interactive Map</a>
+                        
+                        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                            <a href="/promotions" class="dropdown-item"><i class="fa-solid fa-bullhorn"></i> Promotions</a>
+                            <a href="/weather" class="dropdown-item"><i class="fa-solid fa-cloud-bolt"></i> Weather</a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-					<div class="dropdown">
-						<button class="dropbtn">Retail ▼</button>
-						<div class="dropdown-content">
-							<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
-							<a href="/items">Items</a>
-							<% } %>
-							<a href="/vendors">Vendors</a>
-							<a href="/inventory">Inventory</a>
-						</div>
-					</div>
-					<% } %>
+                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                <div class="nav-dropdown">
+                    <div class="dropdown-trigger">Retail <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i></div>
+                    <div class="dropdown-menu">
+                        <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                            <a href="/items" class="dropdown-item"><i class="fa-solid fa-barcode"></i> Items</a>
+                        <% } %>
+                        
+                        <a href="/vendors" class="dropdown-item"><i class="fa-solid fa-shop"></i> Vendors</a>
+                        
+                        <a href="/inventory" class="dropdown-item"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a>
+                    </div>
+                </div>
+                <% } %>
+                
+                <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
+                <div class="nav-dropdown">
+                    <div class="dropdown-trigger">Guests <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i></div>
+                    <div class="dropdown-menu">
+                        <a href="/visits/new" class="dropdown-item"><i class="fa-solid fa-ticket"></i> Log Park Entry</a>
+                        
+                        <a href="/members" class="dropdown-item"><i class="fa-solid fa-address-card"></i> Manage Members</a>
+                        
+                        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                            <div class="dropdown-divider"></div>
+                            <a href="/memberships/types" class="dropdown-item"><i class="fa-solid fa-id-badge"></i> Membership Types</a>
+                            
+                            <a href="/ticket-types" class="dropdown-item"><i class="fa-solid fa-tags"></i> Ticket Types</a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
-					<div class="dropdown">
-						<button class="dropbtn">Guests ▼</button>
-						<div class="dropdown-content">
-							<a href="/visits/new">Log Park Entry</a>
-							<a href="/members">Manage Members</a>
-							<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-							<a href="/memberships/types">Membership Types</a>
-							<a href="/ticket-types">Ticket Types</a>
-							<% } %>
-						</div>
-					</div>
-					<% } %>
+                <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+                <div class="nav-dropdown">
+                    <div class="dropdown-trigger">Reports <i class="fa-solid fa-chevron-down" style="font-size: 0.7em; margin-left: 6px;"></i></div>
+                    <div class="dropdown-menu" style="right: 0; left: auto;">
+                        <a href="/reports/attendance" class="dropdown-item"><i class="fa-solid fa-users-line"></i> Attendance Report</a>
+                        
+                        <a href="/reports/ride-popularity" class="dropdown-item"><i class="fa-solid fa-star"></i> Ride Popularity</a>
+                        
+                        <a href="/reports/closure-impact" class="dropdown-item"><i class="fa-solid fa-cloud-showers-heavy"></i> Closure Impact</a>
+                        
+                        <a href="/reports/maintenance" class="dropdown-item"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Report</a>
+                    </div>
+                </div>
+                <% } %>
 
-					<% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
-					<div class="dropdown">
-						<button class="dropbtn">Reports ▼</button>
-						<div class="dropdown-content">
-							<a href="/reports/attendance">Attendance Report</a>
-							<a href="/reports/ride-popularity">Ride Popularity Report</a>
-							<a href="/reports/closure-impact">Closure Impact Report</a>
-							<a href="/reports/maintenance">Maintenance Report</a>
-						</div>
-					</div>
-					<% } %>
+                <a href="/style-guide" class="nav-item" style="opacity: 0.7; font-size: 0.85em;"><i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Styles</a>
+            </div>
+        </div>
 
-					<a href="/style-guide" style="color: #adb5bd; font-size: 0.8em; margin-left: 10px;">🎨 Styles</a>
-				</div>
+        <div class="nav-dropdown">
+            <div class="dropdown-trigger">
+                <span class="user-badge">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <%= user.firstName %>
+                </span>
+                <span style="margin-left: 5px;">▾</span>
+            </div>
+            <div class="dropdown-menu" style="right: 0; left: auto; width: 200px;">
+                <div style="padding: 10px 20px; font-size: 0.8em; color: #999; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                    <%= user.role %>
+                </div>
+                <a href="/change-password" class="dropdown-item">Change Password</a>
+                <div class="dropdown-divider"></div>
+                <a href="/employee/logout" class="dropdown-item" style="color: var(--danger);">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </a>
+            </div>
+        </div>
+    </nav>
 
-				<div class="user-info">
-					<span>
-						Welcome, <%= user.firstName %> (<%= user.role %>)
-					</span>
-					<a href="/change-password" style="color: var(--secondary);">Change Password</a>
-					<a href="/employee/logout">Logout</a>
-				</div>
-			</nav>
-			<% } else { %>
-			<nav class="navbar">
-				<div class="nav-links">
-					<a href="/">Home</a>
-					<a href="/purchase-tickets">Tickets</a>
-					<a href="/login">Login</a>
-					<a href="/style-guide" style="color: #adb5bd; font-size: 0.8em; margin-left: 10px;">🎨 Styles</a>
-				</div>
-			</nav>
-			<% } %>
+<% } else { %>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">Primus Park</a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/purchase-tickets" class="nav-link">Tickets</a>
+            <a href="/member/login" class="nav-link">Member Portal</a>
+            <a href="/login" class="nav-link btn-login-nav">Staff Login</a>
+        </div>
+    </nav>
+<% } %>
