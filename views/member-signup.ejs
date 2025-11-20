@@ -31,7 +31,7 @@
         }
         
         .container { 
-            max-width: 800px; 
+            max-width: 800px;
             margin: 2em auto; 
             padding: 0 1em;
         }
@@ -78,7 +78,7 @@
         .plan-summary p { margin: 0; }
         .plan-name { font-size: 1.5em; font-weight: 800; color: var(--dark); }
         .plan-price { 
-            font-size: 2.5em; 
+            font-size: 2.5em;
             font-weight: 700; 
             color: var(--success); 
             font-family: 'Lobster', cursive; 
@@ -104,7 +104,7 @@
         .full-width { grid-column: 1 / -1; }
 
         label { 
-            display: block; 
+            display: block;
             margin-bottom: 8px; 
             font-weight: 600; 
             color: var(--dark); 
@@ -124,7 +124,7 @@
             transition: var(--transition);
         }
         input:focus, select:focus { 
-            outline: none; 
+            outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
         }
@@ -150,13 +150,15 @@
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .sub-member-header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex;
+            justify-content: space-between; align-items: center;
             margin-bottom: 1em; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;
         }
         .sub-member-header h4 { margin: 0; color: var(--primary); }
 
         .btn-remove {
-            background: #ffebee; color: var(--danger); border: none;
+            background: #ffebee;
+            color: var(--danger); border: none;
             padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; cursor: pointer;
         }
         .btn-remove:hover { background: var(--danger); color: white; }
@@ -180,11 +182,13 @@
 
         /* --- Payment Options --- */
         .payment-choice {
-            display: flex; gap: 20px; justify-content: center;
+            display: flex;
+            gap: 20px; justify-content: center;
             background: var(--light); padding: 10px; border-radius: 30px; margin-bottom: 1.5em;
         }
         .payment-choice label {
-            display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;
+            display: flex;
+            align-items: center; gap: 8px; margin: 0; cursor: pointer;
             padding: 8px 15px; border-radius: 20px; transition: background 0.2s;
         }
         .payment-choice label:hover { background: rgba(0,0,0,0.05); }
@@ -198,7 +202,8 @@
         }
 
         .checkbox-wrapper {
-            display: flex; align-items: center; gap: 10px; margin-top: 1em;
+            display: flex;
+            align-items: center; gap: 10px; margin-top: 1em;
             font-size: 0.9em; color: var(--gray);
         }
         .checkbox-wrapper input { width: auto; }
@@ -219,13 +224,14 @@
             box-shadow: var(--shadow-md);
         }
         .btn-purchase:hover { 
-            background-color: #218838; 
+            background-color: #218838;
             transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
         
         .btn-cancel {
-            display: block; text-align: center; margin-top: 1.5em;
+            display: block;
+            text-align: center; margin-top: 1.5em;
             color: var(--gray); text-decoration: none; font-weight: 600;
         }
         .btn-cancel:hover { color: var(--danger); text-decoration: underline; }
@@ -246,6 +252,7 @@
             <p>Unlock a year of magic with your new membership.</p>
         </div>
 
+        
         <form action="/signup" method="POST" id="signupForm" class="signup-card" novalidate>
 
             <% if (typeof error !== 'undefined' && error) { %>
@@ -303,11 +310,11 @@
                 <div id="subMemberContainer"></div>
                 
                 <button type="button" id="addMemberBtn" class="btn-add-member">
-                    <i class="fa-solid fa-plus"></i> Add Another Member
+                     <i class="fa-solid fa-plus"></i> Add Another Member
                 </button>
             </div>
 
-            <div class="form-section-title">4. Payment Method</div>
+            <div class="form-section-title" id="paymentSectionTitle">4. Payment Method</div>
             
             <div class="payment-choice">
                 <label>
@@ -377,7 +384,6 @@
     </div>
 
     <script>
-        // --- Logic from Original File (Preserved) ---
         const membershipType = {
             base_price: parseFloat('<%= type.base_price %>'),
             base_members: parseInt('<%= type.base_members %>', 10),
@@ -385,11 +391,103 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            const signupForm = document.getElementById('signupForm');
             const planPriceEl = document.getElementById('planPrice');
-            
-            // Sub-member elements
             const subMemberSection = document.getElementById('subMemberSection');
             const subMemberIntro = document.getElementById('subMemberIntro');
             const subMemberContainer = document.getElementById('subMemberContainer');
-            const addMemberBtn = document.getElementById('add
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            const paymentSectionTitle = document.getElementById('paymentSectionTitle');
+            let subMemberCount = 0;
+
+            // --- 1. Define updatePrice FIRST to prevent ReferenceErrors ---
+            window.updatePrice = function() {
+                const currentSubMembers = document.querySelectorAll('.sub-member-card').length;
+                const totalMembers = 1 + currentSubMembers; // 1 is primary
+                
+                // Calculate Cost
+                const includedSubMembers = Math.max(0, membershipType.base_members - 1);
+                const paidMembers = Math.max(0, currentSubMembers - includedSubMembers);
+                const total = membershipType.base_price + (paidMembers * membershipType.additional_member_price);
+                
+                planPriceEl.textContent = '$' + total.toFixed(2);
+
+                // Update Info Text
+                if (membershipType.base_members > 1) {
+                    if (paidMembers > 0) {
+                         subMemberIntro.innerHTML = `Pass includes <b>${membershipType.base_members}</b> members. You have added <b>${paidMembers}</b> extra member(s) at <b>$${membershipType.additional_member_price.toFixed(2)}</b> each.`;
+                    } else {
+                        const remainingFree = (membershipType.base_members - totalMembers);
+                        subMemberIntro.innerHTML = `Pass includes <b>${membershipType.base_members}</b> members. You can add <b>${remainingFree}</b> more member(s) at no extra cost.`;
+                    }
+                }
+            };
+
+            // --- 2. SUB-MEMBER LOGIC ---
+            if (membershipType.base_members > 1) {
+                // Show Family Section
+                subMemberSection.style.display = 'block';
+                // Fix Numbering: Payment is section 4
+                paymentSectionTitle.textContent = '4. Payment Method';
+                updatePrice();
+            } else {
+                // Hide Family Section
+                subMemberSection.style.display = 'none';
+                // Fix Numbering: Payment is section 3
+                paymentSectionTitle.textContent = '3. Payment Method';
+            }
+
+            addMemberBtn.addEventListener('click', () => {
+                subMemberCount++;
+                const div = document.createElement('div');
+                div.className = 'sub-member-card';
+                div.innerHTML = `
+                    <div class="sub-member-header">
+                        <h4>Family Member #${subMemberCount}</h4>
+                        <button type="button" class="btn-remove" onclick="this.closest('.sub-member-card').remove(); updatePrice();">Remove</button>
+                    </div>
+                    <div class="form-grid">
+                        <div><label>First Name</label><input type="text" name="sub_first_name[]" required></div>
+                        <div><label>Last Name</label><input type="text" name="sub_last_name[]" required></div>
+                        <div><label>Date of Birth</label><input type="date" name="sub_dob[]" required></div>
+                    </div>
+                `;
+                subMemberContainer.appendChild(div);
+                updatePrice();
+            });
+
+            // --- 3. PAYMENT TOGGLE LOGIC ---
+            const cardRadio = document.getElementById('payWithCard');
+            const bankRadio = document.getElementById('payWithBank');
+            const cardGroup = document.getElementById('cardPaymentGroup');
+            const bankGroup = document.getElementById('bankPaymentGroup');
+
+            function togglePayment() {
+                if (cardRadio.checked) {
+                    cardGroup.style.display = 'block';
+                    bankGroup.style.display = 'none';
+                    enableInputs(cardGroup);
+                    disableInputs(bankGroup);
+                } else {
+                    cardGroup.style.display = 'none';
+                    bankGroup.style.display = 'block';
+                    enableInputs(bankGroup);
+                    disableInputs(cardGroup);
+                }
+            }
+
+            function disableInputs(el) {
+                el.querySelectorAll('input, select').forEach(i => i.disabled = true);
+            }
+            function enableInputs(el) {
+                el.querySelectorAll('input, select').forEach(i => i.disabled = false);
+            }
+
+            cardRadio.addEventListener('change', togglePayment);
+            bankRadio.addEventListener('change', togglePayment);
+
+            // Initialize payment state
+            togglePayment();
+        });
+    </script>
+</body>
+</html>

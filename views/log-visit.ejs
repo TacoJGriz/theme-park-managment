@@ -4,242 +4,59 @@
     <meta charset="UTF-8">
     <title>Log Park Entry</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
-            font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
-        }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px;
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        /* Headings */
-        h1 { 
-            color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
-            margin-bottom: 1.5em;
-            font-size: 2.2em;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        /* --- TABS --- */
-        .tab-container { 
-            display: flex;
-            border-bottom: 2px solid #e9ecef; 
-            margin-bottom: 2em; 
-            gap: 5px;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 12px; 
-            text-align: center; 
-            cursor: pointer; 
-            font-weight: 600;
-            color: #6c757d; 
-            transition: all 0.2s; 
-            border-bottom: 3px solid transparent;
-            border-radius: 6px 6px 0 0;
-        }
-        .tab-btn:hover { 
-            background-color: #f8f9fa;
-            color: #007bff; 
-        }
-        .tab-btn.active { 
-            color: #007bff;
-            border-bottom-color: #007bff; 
-            background: #e7f5ff; 
-        }
-        .tab-content { display: none; animation: fadeIn 0.2s ease-out;
-        }
-        .tab-content.active { display: block;
-        }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1;
-            transform: translateY(0); } }
-
-        /* --- FORMS --- */
-        div.form-group { margin-bottom: 1.5em;
-        }
+        /* --- STANDARDIZED STYLES (Matches your style guide) --- */
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: 2em auto; background: white; padding: 2.5em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #f0f0f0; padding-bottom: 0.5em; margin-bottom: 1.5em; font-size: 2.2em; font-weight: 700; text-align: center; }
         
-        label { 
-            display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
-            color: #495057;
-        }
+        /* Tabs */
+        .tab-container { display: flex; border-bottom: 2px solid #e9ecef; margin-bottom: 2em; gap: 5px; }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: 600; color: #6c757d; border-bottom: 3px solid transparent; border-radius: 6px 6px 0 0; }
+        .tab-btn:hover { background-color: #f8f9fa; color: #007bff; }
+        .tab-btn.active { color: #007bff; border-bottom-color: #007bff; background: #e7f5ff; }
+        .tab-content { display: none; animation: fadeIn 0.2s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
 
-        input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 8px; 
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.95em;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        input:focus, select:focus {
-            border-color: #80bdff;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
+        /* Forms */
+        div.form-group { margin-bottom: 1.5em; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057; }
+        input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box; font-family: 'Poppins', sans-serif; font-size: 0.95em; }
+        input:focus, select:focus { border-color: #80bdff; outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
 
         /* Search Grid */
-        .search-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            background-color: #f8f9fa;
-            padding: 1.5em;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            margin-bottom: 1.5em;
-        }
-
-        /* Member Selection Area */
-        #memberSelectionArea {
-            background: white;
-            border: 1px solid #ced4da; 
-            border-radius: 8px;
-            max-height: 300px; 
-            overflow-y: auto; 
-            padding: 10px; 
-            margin-top: 10px;
-        }
-        .member-row {
-            display: flex;
-            align-items: center; 
-            padding: 10px; 
-            border-bottom: 1px solid #f1f1f1;
-            transition: background 0.2s; 
-            cursor: pointer; 
-            border-radius: 6px;
-        }
-        .member-row:hover { background-color: #f8f9fa;
-        }
-        .member-row:last-child { border-bottom: none;
-        }
+        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background-color: #f8f9fa; padding: 1.5em; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 1.5em; }
         
-        /* Checkbox styling */
-        .member-row input[type="checkbox"] { width: auto;
-            margin-right: 15px; transform: scale(1.2); }
-
-        /* Quantity Input */
-        .qty-input {
-            width: 70px !important;
-            padding: 5px !important; 
-            margin-right: 15px; 
-            text-align: center; 
-            font-weight: bold;
-        }
-
-        .member-info { display: flex;
-            flex-direction: column; flex-grow: 1; }
-        .member-name { font-weight: 600; color: #333;
-        }
-        .member-meta { font-size: 0.85em; color: #6c757d;
-        }
-
-        /* Badges */
-        .badge-pass { font-size: 0.75em;
-            padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700; text-transform: uppercase;
-        }
-        .badge-pass.ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
-        }
-        .badge-pass.none { background: #f8d7da; color: #842029; border: 1px solid #f5c6cb;
-        }
+        /* Member Selection */
+        #memberSelectionArea { background: white; border: 1px solid #ced4da; border-radius: 8px; max-height: 300px; overflow-y: auto; padding: 10px; margin-top: 10px; }
+        .member-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f1f1f1; cursor: pointer; border-radius: 6px; }
+        .member-row:hover { background-color: #f8f9fa; }
+        .member-row input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); }
+        .qty-input { width: 70px !important; padding: 5px !important; margin-right: 15px; text-align: center; font-weight: bold; }
+        .member-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .member-name { font-weight: 600; color: #333; }
+        .member-meta { font-size: 0.85em; color: #6c757d; }
+        .badge-pass { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700; text-transform: uppercase; }
+        .badge-pass.ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-pass.none { background: #f8d7da; color: #842029; border: 1px solid #f5c6cb; }
 
         /* Price Box */
-        .price-box {
-            background-color: #e7f5ff;
-            /* Info Blue */
-            border-left: 5px solid #007bff;
-            padding: 1.5em; 
-            border-radius: 8px;
-            margin-top: 1.5em; 
-            text-align: center;
-            color: #004085;
-        }
-        .price-final { 
-            font-size: 2.5em;
-            font-weight: 700; 
-            color: #28a745; 
-            margin-top: 10px;
-            line-height: 1;
-        }
+        .price-box { background-color: #e7f5ff; border-left: 5px solid #007bff; padding: 1.5em; border-radius: 8px; margin-top: 1.5em; text-align: center; color: #004085; }
+        .price-final { font-size: 2.5em; font-weight: 700; color: #28a745; margin-top: 10px; line-height: 1; }
 
-        /* Buttons */
-        button { 
-            padding: 12px 25px;
-            background-color: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1.1em; 
-            font-weight: 600;
-            width: 100%;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        button:hover { 
-            background-color: #218838;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-        }
-
-        .btn-search { 
-            background-color: #007bff;
-            width: auto; 
-            padding: 10px 20px; 
-            font-size: 0.95em;
-            margin-top: 0;
-        }
-        .btn-search:hover { background-color: #0056b3;
-        }
-        
-        /* Lookup Table */
-        .lookup-table { width: 100%;
-            border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
-        .lookup-table th { text-align: left;
-            padding: 10px; background: #f8f9fa; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6;
-        }
-        .lookup-table td { padding: 10px; border-bottom: 1px solid #dee2e6;
-        }
-        
-        .btn-select { 
-            background: #17a2b8;
-            color: white; 
-            border: none; 
-            padding: 4px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.85em; 
-            font-weight: 600; 
-            width: auto;
-            box-shadow: none;
-        }
-        .btn-select:hover { background: #138496; transform: none;
-        }
+        /* Buttons & Table */
+        button { padding: 12px 25px; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: 600; width: 100%; transition: all 0.2s; }
+        button:hover { background-color: #218838; transform: translateY(-1px); }
+        .btn-search { background-color: #007bff; width: auto; padding: 10px 20px; font-size: 0.95em; margin-top: 0; }
+        .btn-select { background: #17a2b8; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; width: auto; }
+        .lookup-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 1em; }
+        .lookup-table th { text-align: left; padding: 10px; background: #f8f9fa; font-weight: 600; border-bottom: 2px solid #dee2e6; }
+        .lookup-table td { padding: 10px; border-bottom: 1px solid #dee2e6; }
 
         /* Alerts */
-        .message { padding: 1em;
-            border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; text-align: center; }
-        .error { color: #842029;
-            background-color: #f8d7da; border: 1px solid #f5c6cb; }
-        .success { color: #0f5132; background-color: #d1e7dd;
-            border: 1px solid #badbcc; }
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; text-align: center; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
     </style>
 </head>
 <body>
@@ -260,56 +77,81 @@
             <form action="/visits" method="POST" id="logVisitForm">
                 <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
                 
-                <div class="form-group">
-                    <label for="ticket_type_id">Select Ticket Type</label>
-                    <select id="ticket_type_id" name="ticket_type_id" required>
-                        <option value="" selected disabled>-- Choose Ticket --</option>
-                       
-                        <% ticketTypes.forEach(type => { %>
-                            <option
-                                value="<%= type.ticket_type_id %>"
-                                data-price="<%= type.base_price %>"
-                                data-is-member="<%= type.is_member_type %>"
-                                data-name="<%= type.type_name %>"
-                            >
-   
-                                <%= type.type_name %>
-                            </option>
-                        <% });
-%>
-                    </select>
+                <div style="margin-bottom: 1.5em; text-align: center; background: #e9ecef; padding: 10px; border-radius: 8px;">
+                    <label style="display: inline-block; margin-right: 20px; cursor: pointer;">
+                        <input type="radio" name="visit_mode" value="standard" checked onchange="toggleMode()"> 
+                        <strong>Purchase Tickets</strong> (Standard)
+                    </label>
+                    <label style="display: inline-block; cursor: pointer;">
+                        <input type="radio" name="visit_mode" value="member" onchange="toggleMode()"> 
+                        <strong>Member Check-In</strong>
+                    </label>
                 </div>
 
-                <div id="memberSelectBlock" style="display: none;">
-                    <div class="search-grid">
-                        
-                        <div><label>Search ID</label><input type="text" id="memberSearchID" placeholder="Public ID..."></div>
-                        <div><label>Search Phone</label><input type="tel" id="memberSearchPhone" placeholder="Phone..."></div>
-                        <div><label>Search Name</label><input type="text" id="memberSearchName" placeholder="Name..."></div>
-                        <div><label>Search Email</label><input type="email" id="memberSearchEmail" placeholder="Email..."></div>
-           
+                <div id="section-standard">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">Select Tickets</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <% 
+                        // Ensure consistent order with backend (by Base Price)
+                        const standardTickets = ticketTypes.filter(t => !t.is_member_type);
+                        standardTickets.forEach(type => { 
+                        %>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <strong style="font-size: 1.1em; color: #333;"><%= type.type_name %></strong>
+                                    <div style="font-size: 0.9em; color: #6c757d;">$<%= type.base_price %> ea.</div>
+                                </div>
+                                
+                                <input type="number" 
+                                       name="quantities[]" 
+                                       class="qty-input standard-qty" 
+                                       value="0" 
+                                       min="0" 
+                                       data-price="<%= type.base_price %>"
+                                       placeholder="0">
+                            </div>
+                        <% }); %>
                     </div>
-                    
-                    <label id="memberSelectLabel">Select Members to Check In:</label>
-                    <div id="memberSelectionArea">
-                        <p 
-style="text-align: center; color: #6c757d; padding: 1em;"><i>Start typing to find members...</i></p>
+                </div>
+
+                <div id="section-member" style="display: none;">
+                    <div class="form-group">
+                        <label for="member_ticket_type">Select Member Action / Guest Pass</label>
+                        <select id="member_ticket_type" name="member_ticket_type_id">
+                            <option value="" selected disabled>-- Choose Action --</option>
+                            <% ticketTypes.filter(t => t.is_member_type).forEach(type => { %>
+                                <option value="<%= type.ticket_type_id %>" data-name="<%= type.type_name %>">
+                                    <%= type.type_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div id="memberSelectBlock" style="display: none;">
+                        <div class="search-grid">
+                            <div><label>Search ID</label><input type="text" id="memberSearchID" placeholder="Public ID..."></div>
+                            <div><label>Search Phone</label><input type="tel" id="memberSearchPhone" placeholder="Phone..."></div>
+                            <div><label>Search Name</label><input type="text" id="memberSearchName" placeholder="Name..."></div>
+                            <div><label>Search Email</label><input type="email" id="memberSearchEmail" placeholder="Email..."></div>
+                        </div>
+                        
+                        <label id="memberSelectLabel">Select Members to Check In:</label>
+                        <div id="memberSelectionArea">
+                            <p style="text-align: center; color: #6c757d; padding: 1em;"><i>Start typing to find members...</i></p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="price-box">
-                    <div style="display: flex;
-justify-content: space-between; margin-bottom: 5px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span>Base Price:</span> <span id="priceBase">$0.00</span>
                     </div>
-                    <div style="display: flex;
-justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
-                        <span>Discount:</span> <span id="priceDiscount">$0.00</span>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
+                        <span>Discount (<%= currentDiscount %>%):</span> <span id="priceDiscount">$0.00</span>
                     </div>
                     <div class="price-final" id="priceFinal">$0.00</div>
                 </div>
 
-         
                 <br>
                 <button type="submit">Confirm Entry</button>
             </form>
@@ -318,131 +160,134 @@ justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.1); paddin
         <div id="tab-redeem" class="tab-content <%= activeTab === 'redeem' ? 'active' : '' %>">
             <form action="/visits/redeem" method="POST">
                 <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
-                
                 <div class="form-group">
                     <label for="ticket_code">Scan or Enter Ticket UUID</label>
                     <input type="text" id="ticket_code" name="ticket_code" required placeholder="e.g., 550e8400-e29b...">
-               
-                 </div>
+                </div>
                 <button type="submit" style="background-color: #007bff;">Redeem Ticket</button>
             </form>
-
-            <div style="margin-top: 3em;
-padding-top: 1.5em; border-top: 2px dashed #dee2e6;">
-                <h3 style="margin: 0 0 15px 0;
-color: #343a40; font-size: 1.2em;">Ticket Lookup</h3>
-                
-                <form action="/visits/new" method="GET" style="display: flex;
-gap: 10px; align-items: flex-end;">
+            <div style="margin-top: 3em; padding-top: 1.5em; border-top: 2px dashed #dee2e6;">
+                <h3 style="margin: 0 0 15px 0; color: #343a40; font-size: 1.2em;">Ticket Lookup</h3>
+                <form action="/visits/new" method="GET" style="display: flex; gap: 10px; align-items: flex-end;">
                     <input type="hidden" name="active_tab" value="redeem">
-                    <div style="flex-grow:1;
-margin-bottom: 0;">
+                    <div style="flex-grow:1; margin-bottom: 0;">
                         <input type="text" name="ticket_search" placeholder="Search by Email or Phone..." value="<%= ticketSearchTerm %>">
                     </div>
                     <button type="submit" class="btn-search">Search</button>
                 </form>
-
-       
                 <% if (foundTickets && foundTickets.length > 0) { %>
-                    <div style="max-height: 250px;
-overflow-y: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 8px;">
+                    <div style="max-height: 250px; overflow-y: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 8px;">
                         <table class="lookup-table">
                             <thead><tr><th>Date</th><th>Type</th><th>Guest</th><th>Action</th></tr></thead>
                             <tbody>
-          
                                 <% foundTickets.forEach(t => { %>
                                     <tr>
-                                      
                                         <td><%= new Date(t.purchase_date).toLocaleDateString() %></td>
                                         <td><strong><%= t.type_name %></strong></td>
                                         <td><%= t.email || t.phone_number %></td>
-         
-                                         <td style="text-align: right;">
-                                            <button type="button" class="btn-select" onclick="selectTicket('<%= t.ticket_code %>')">Select</button>
-                  
-                                        </td>
+                                        <td style="text-align: right;"><button type="button" class="btn-select" onclick="selectTicket('<%= t.ticket_code %>')">Select</button></td>
                                     </tr>
                                 <% }); %>
-        
                             </tbody>
                         </table>
                     </div>
                 <% } else if (ticketSearchTerm) { %>
-              
-                <p style="color: #dc3545; text-align: center; margin-top: 15px; background: #f8d7da; padding: 10px;
-border-radius: 6px;">No unredeemed tickets found.</p>
+                <p style="color: #dc3545; text-align: center; margin-top: 15px; background: #f8d7da; padding: 10px; border-radius: 6px;">No unredeemed tickets found.</p>
                 <% } %>
             </div>
         </div>
     </div>
 
     <script>
-        const ticketTypeData = new Map();
-        <% ticketTypes.forEach(type => { %>
-            ticketTypeData.set('<%= type.ticket_type_id %>', {
-           
-                price: parseFloat('<%= type.base_price %>'),
-                isMember: Boolean(<%= type.is_member_type %>),
-                name: '<%= type.type_name %>'
-            });
-        <% }); %>
-        
         const currentDiscountPercent = parseFloat('<%= currentDiscount %>') || 0;
+        const sectionStandard = document.getElementById('section-standard');
+        const sectionMember = document.getElementById('section-member');
+        const standardInputs = document.querySelectorAll('.standard-qty');
+        const memberSelect = document.getElementById('member_ticket_type');
+        const memberSelectBlock = document.getElementById('memberSelectBlock');
+        const memberSelectLabel = document.getElementById('memberSelectLabel');
+
+        // --- 1. Toggle Modes ---
+        function toggleMode() {
+            const mode = document.querySelector('input[name="visit_mode"]:checked').value;
+            if (mode === 'standard') {
+                sectionStandard.style.display = 'block';
+                sectionMember.style.display = 'none';
+                memberSelect.removeAttribute('required');
+                memberSelect.value = ""; 
+                memberSelectBlock.style.display = 'none'; 
+                calculateTotal(); 
+            } else {
+                sectionStandard.style.display = 'none';
+                sectionMember.style.display = 'block';
+                memberSelect.setAttribute('required', 'true');
+                standardInputs.forEach(input => input.value = 0); // Reset standard inputs
+                updatePriceDisplay(0, 0, 0);
+            }
+        }
+
+        // --- 2. Standard Price Calculation ---
+        standardInputs.forEach(input => {
+            input.addEventListener('input', calculateTotal);
+            input.addEventListener('change', calculateTotal);
+        });
+
+        function calculateTotal() {
+            let totalBase = 0;
+            standardInputs.forEach(input => {
+                const qty = parseInt(input.value) || 0;
+                const price = parseFloat(input.dataset.price) || 0;
+                totalBase += (qty * price);
+            });
+            const discount = totalBase * (currentDiscountPercent / 100);
+            updatePriceDisplay(totalBase, discount, totalBase - discount);
+        }
+
+        function updatePriceDisplay(base, discount, final) {
+            document.getElementById('priceBase').textContent = `$${base.toFixed(2)}`;
+            document.getElementById('priceDiscount').textContent = `- $${discount.toFixed(2)}`;
+            document.getElementById('priceFinal').textContent = `$${final.toFixed(2)}`;
+        }
+
+        // --- 3. Member Logic ---
         const allActiveMembers = <%- JSON.stringify(activeMembers) %>;
         const normalizePhone = (phone) => (phone || "").replace(/\D/g, '');
-
         const memberDataMap = new Map();
         const memberGroupMap = new Map();
 
         allActiveMembers.forEach(member => {
             memberDataMap.set(member.membership_id, member);
             const primaryId = member.primary_member_id || member.membership_id;
-            if (!memberGroupMap.has(primaryId)) { memberGroupMap.set(primaryId, 
-[]); }
+            if (!memberGroupMap.has(primaryId)) { memberGroupMap.set(primaryId, []); }
             memberGroupMap.get(primaryId).push(member);
         });
 
-        const ticketSelect = document.getElementById('ticket_type_id');
-        const memberSelectBlock = document.getElementById('memberSelectBlock');
-        const memberSelectionArea = document.getElementById('memberSelectionArea');
-        const memberSelectLabel = document.getElementById('memberSelectLabel');
-        // --- Ticket Selection Logic ---
-        ticketSelect.addEventListener('change', function() {
-            const selectedTypeId = this.value;
-            const ticket = ticketTypeData.get(selectedTypeId);
-            
-            if (ticket && ticket.isMember) {
+        memberSelect.addEventListener('change', function() {
+            if (this.value) {
                 memberSelectBlock.style.display = 'block';
-         
-                // Update Label based on mode
-                if (ticket.name === 'Guest Pass') {
+                const name = this.options[this.selectedIndex].getAttribute('data-name');
+                if (name === 'Guest Pass') {
                     memberSelectLabel.textContent = "Select Member Using Guest Pass (Enter Quantity):";
                 } else {
-     
                     memberSelectLabel.textContent = "Select Members to Check In:";
                 }
-                
-                updatePriceDisplay(0, 0, 0);
-                performSearch(); 
-            
-            } else {
-                memberSelectBlock.style.display = 'none';
-                const basePrice = ticket ? ticket.price : 0;
-                const discount = basePrice * (currentDiscountPercent / 100);
-                updatePriceDisplay(basePrice, discount, basePrice - discount);
+                performSearch();
             }
         });
 
         ['memberSearchID', 'memberSearchPhone', 'memberSearchEmail', 'memberSearchName'].forEach(id => {
             document.getElementById(id).addEventListener('input', performSearch);
         });
+
         function performSearch() {
             const idTerm = document.getElementById('memberSearchID').value.trim().toLowerCase();
             const phoneTerm = normalizePhone(document.getElementById('memberSearchPhone').value);
             const emailTerm = document.getElementById('memberSearchEmail').value.trim().toLowerCase();
             const nameTerm = document.getElementById('memberSearchName').value.trim().toLowerCase();
+            const area = document.getElementById('memberSelectionArea');
+
             if (!idTerm && !phoneTerm && !emailTerm && !nameTerm) {
-                memberSelectionArea.innerHTML = '<p style="text-align: center; color: #6c757d; padding:1em;"><i>Start typing to find members...</i></p>';
+                area.innerHTML = '<p style="text-align: center; color: #6c757d; padding:1em;"><i>Start typing to find members...</i></p>';
                 return;
             }
 
@@ -452,16 +297,12 @@ border-radius: 6px;">No unredeemed tickets found.</p>
                 const mPhone = normalizePhone(member.phone_number);
                 const mEmail = (member.email || '').toLowerCase();
                 const mName = `${member.first_name} ${member.last_name}`.toLowerCase();
-
-                if 
-                    ((idTerm && mID.startsWith(idTerm)) || 
-                    (phoneTerm && mPhone.startsWith(phoneTerm)) || 
-                    (emailTerm && mEmail.startsWith(emailTerm)) || 
-                    (nameTerm && mName.includes(nameTerm))) {
+                if ((idTerm && mID.startsWith(idTerm)) || (phoneTerm && mPhone.startsWith(phoneTerm)) || 
+                    (emailTerm && mEmail.startsWith(emailTerm)) || (nameTerm && mName.includes(nameTerm))) {
                     matchedGroupIds.add(member.primary_member_id || member.membership_id);
-   
                 }
             });
+
             const results = [];
             matchedGroupIds.forEach(pid => {
                 const group = memberGroupMap.get(pid);
@@ -471,39 +312,29 @@ border-radius: 6px;">No unredeemed tickets found.</p>
         }
 
         function buildMemberChecklist(group) {
-            memberSelectionArea.innerHTML = '';
+            const area = document.getElementById('memberSelectionArea');
+            area.innerHTML = '';
             if (!group.length) {
-                memberSelectionArea.innerHTML = '<p style="text-align: center; color: #dc3545;"><i>No members found.</i></p>';
+                area.innerHTML = '<p style="text-align: center; color: #dc3545;"><i>No members found.</i></p>';
                 return;
             }
 
-            const selectedTypeId = ticketSelect.value;
-            const ticketData = ticketTypeData.get(selectedTypeId);
-            const isGuestPassMode = ticketData && ticketData.name === 'Guest Pass';
+            const selectedOpt = memberSelect.options[memberSelect.selectedIndex];
+            const isGuestPassMode = selectedOpt && selectedOpt.getAttribute('data-name') === 'Guest Pass';
+
             group.forEach(member => {
                 const label = document.createElement('label');
                 label.className = 'member-row';
-                
                 const isDisabled = isGuestPassMode && member.guest_passes_remaining < 1;
                 if(isDisabled) label.style.opacity = '0.5';
 
-   
                 let inputHtml = '';
                 let badge = '';
-
                 if (isGuestPassMode) {
                     if (member.guest_passes_remaining > 0) {
-                       
                         badge = `<span class="badge-pass ok">(${member.guest_passes_remaining} Available)</span>`;
-                        inputHtml = `
-                            <input type="checkbox" name="member_ids[]" value="${member.membership_id}" id="cb_${member.membership_id}" style="display:none;">
-                            <input type="number" class="qty-input" 
-    
-                                   name="guest_qty_${member.membership_id}" 
-                                   value="0" min="0" max="${member.guest_passes_remaining}"
-                               
-                                   onchange="toggleCheckbox(this, '${member.membership_id}')">
-                        `;
+                        inputHtml = `<input type="checkbox" name="member_ids[]" value="${member.membership_id}" id="cb_${member.membership_id}" style="display:none;">
+                                     <input type="number" class="qty-input" name="guest_qty_${member.membership_id}" value="0" min="0" max="${member.guest_passes_remaining}" onchange="toggleCheckbox(this, '${member.membership_id}')">`;
                     } else {
                         badge = `<span class="badge-pass none">(0 Passes)</span>`;
                         inputHtml = `<span style="margin-right:15px; font-weight:bold; color:#6c757d;">0</span>`;
@@ -512,33 +343,15 @@ border-radius: 6px;">No unredeemed tickets found.</p>
                     inputHtml = `<input type="checkbox" name="member_ids[]" value="${member.membership_id}">`;
                 }
 
-                label.innerHTML = `
-                    ${inputHtml}
-                    <div class="member-info">
-                        <span class="member-name">${member.first_name} ${member.last_name} ${badge}</span>
-              
-                        <span class="member-meta">ID: ${member.public_membership_id.substring(0, 8).toUpperCase()}</span>
-                    </div>
-                `;
-                memberSelectionArea.appendChild(label);
+                label.innerHTML = `${inputHtml}<div class="member-info"><span class="member-name">${member.first_name} ${member.last_name} ${badge}</span><span class="member-meta">ID: ${member.public_membership_id.substring(0, 8).toUpperCase()}</span></div>`;
+                area.appendChild(label);
             });
         }
 
         window.toggleCheckbox = function(input, id) {
             const cb = document.getElementById('cb_' + id);
-            const val = parseInt(input.value);
-            if (val > 0) {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = parseInt(input.value) > 0;
         };
-
-        function updatePriceDisplay(base, discount, final) {
-            document.getElementById('priceBase').textContent = `$${base.toFixed(2)}`;
-            document.getElementById('priceDiscount').textContent = `- $${discount.toFixed(2)}`;
-            document.getElementById('priceFinal').textContent = `$${final.toFixed(2)}`;
-        }
 
         function selectTicket(code) {
             document.getElementById('ticket_code').value = code;
@@ -551,7 +364,6 @@ border-radius: 6px;">No unredeemed tickets found.</p>
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-   
             });
         });
     </script>
