@@ -4,7 +4,8 @@ const pool = require('../db'); // Adjust path to db.js
 const crypto = require('crypto'); // ADDED
 const {
     isAuthenticated,
-    isMaintenanceOrHigher
+    isMaintenanceOrHigher,
+    isAdminOrParkManager // ADDED for editing/reopening permission check
 } = require('../middleware/auth'); // Adjust path to auth.js
 
 // --- MAINTENANCE ROUTES ---
@@ -79,7 +80,7 @@ router.get('/new/:public_ride_id', isAuthenticated, async (req, res) => {
         const [employees] = await pool.query(`
             SELECT employee_id, first_name, last_name, employee_type
             FROM employee_demographics
-            WHERE employee_type IN ('Maintenance', 'Manager', 'Admin') AND is_active = TRUE
+            WHERE employee_type IN ('Maintenance', 'Location Manager', 'Park Manager', 'Admin') AND is_active = TRUE
         `);
 
         // Pass ride object (with internal ride_id) to the view for the hidden form field
@@ -144,7 +145,7 @@ router.post('/', isAuthenticated, async (req, res) => {
             const [employees] = await pool.query(`
                 SELECT employee_id, first_name, last_name, employee_type
                 FROM employee_demographics
-                WHERE employee_type IN ('Maintenance', 'Manager', 'Admin') AND is_active = TRUE
+                WHERE employee_type IN ('Maintenance', 'Location Manager', 'Park Manager', 'Admin') AND is_active = TRUE
             `);
             res.render('add-maintenance', {
                 ride: ride,
@@ -178,6 +179,7 @@ router.get('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOrH
         const log = logResult[0];
 
         if (log.end_date) {
+            // Prevent completing an already completed entry
             return res.redirect(`/maintenance/ride/${log.public_ride_id}`); // CHANGED
         }
 
@@ -249,6 +251,100 @@ router.post('/complete/:public_maintenance_id', isAuthenticated, isMaintenanceOr
         if (connection) connection.release();
     }
 });
+
+// GET /maintenance/edit/:public_maintenance_id (NEW ROUTE FOR EDITING UNCOMPLETED ENTRY)
+router.get('/edit/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params;
+    try {
+        const [logResult] = await pool.query(
+            `SELECT m.*, r.ride_name, r.public_ride_id
+             FROM maintenance m
+             JOIN rides r ON m.ride_id = r.ride_id
+             WHERE m.public_maintenance_id = ?`,
+            [public_maintenance_id]
+        );
+        if (logResult.length === 0) {
+            return res.status(404).send('Maintenance log not found');
+        }
+        const log = logResult[0];
+
+        const [employees] = await pool.query(`
+            SELECT employee_id, first_name, last_name, employee_type
+            FROM employee_demographics
+            WHERE employee_type IN ('Maintenance', 'Location Manager', 'Park Manager', 'Admin') AND is_active = TRUE
+        `);
+
+        // Render a new EJS file (maintenance-edit.ejs - implied based on context)
+        // For now, reuse reassign-maintenance form fields until a dedicated edit form is created
+        res.render('add-maintenance', {
+            ride: { ride_name: log.ride_name, public_ride_id: log.public_ride_id },
+            employees: employees,
+            error: null,
+            isEdit: true, // Flag for potential future form distinction
+            initialSummary: log.summary,
+            initialEmployeeId: log.employee_id
+        });
+    } catch (error) {
+        console.error("Error loading edit work order page:", error);
+        res.status(500).send('Error loading edit work order page');
+    }
+});
+
+// POST /maintenance/reopen/:public_maintenance_id (NEW ROUTE)
+router.post('/reopen/:public_maintenance_id', isAuthenticated, isMaintenanceOrHigher, async (req, res) => {
+    const { public_maintenance_id } = req.params;
+    const { role, locationId } = req.session.user;
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Fetch maintenance and ride info
+        const [logResult] = await connection.query(
+            `SELECT m.ride_id, r.public_ride_id, r.location_id
+             FROM maintenance m
+             JOIN rides r ON m.ride_id = r.ride_id
+             WHERE m.public_maintenance_id = ?`,
+            [public_maintenance_id]
+        );
+
+        if (logResult.length === 0) {
+            throw new Error("Maintenance entry not found.");
+        }
+        const { ride_id, public_ride_id, location_id } = logResult[0];
+
+        // 2. Permission Check (Location Manager only for their location)
+        if (role === 'Location Manager' && location_id !== locationId) {
+            return res.status(403).send('Forbidden: You cannot reopen work for rides outside your location.');
+        }
+
+        // 3. Update maintenance entry (Reopen: clear completion data)
+        const updateMaintSql = `
+            UPDATE maintenance
+            SET end_date = NULL, start_date = NULL, cost = NULL
+            WHERE public_maintenance_id = ?
+        `;
+        await connection.query(updateMaintSql, [public_maintenance_id]);
+
+        // 4. Update ride status (Set back to BROKEN)
+        const updateRideSql = "UPDATE rides SET ride_status = 'BROKEN' WHERE ride_id = ?";
+        await connection.query(updateRideSql, [ride_id]);
+
+        await connection.commit();
+
+        // 5. Redirect back to the history page
+        res.redirect(`/maintenance/ride/${public_ride_id}`);
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error reopening maintenance entry:", error);
+        res.status(500).send(`Error processing reopen request: ${error.message}`);
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 
 // GET /maintenance/reassign/:public_maintenance_id
 // Path changed to /reassign/:public_maintenance_id

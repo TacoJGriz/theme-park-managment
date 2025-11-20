@@ -4,42 +4,139 @@
     <meta charset="UTF-8">
     <title>Maintenance History</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        /* INHERITED: Poppins font, 0 margin, and contrasting background from header.ejs */
+        .container { 
+            max-width: 1200px;
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; /* Standardized Padding */
+            border-radius: 12px; /* Standardized Radius */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Standardized Shadow */
+        }
         
         /* Header Styling */
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; display: flex; justify-content: space-between; align-items: center; }
-        h1 small { font-size: 0.6em; color: #777; font-weight: normal; margin-left: 10px; }
+        h1 { color: #444;
+        border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; display: flex; justify-content: space-between; align-items: center;
+        }
+        h1 small { font-size: 0.6em; color: #777; font-weight: normal; margin-left: 10px;
+        }
 
-        /* Buttons */
-        .btn-report { background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
-        .btn-report:hover { background-color: #218838; }
+        /* Buttons - Standardized */
+        .btn-report { 
+            background-color: #28a745; /* Green - Standard Success */
+            color: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 8px; /* Standardized */ 
+            font-weight: 600; /* Standardized */ 
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-report:hover { background-color: #218838;
+        }
 
-        .back-link { display: inline-block; margin-bottom: 1.5em; text-decoration: none; color: #007bff; font-weight: bold; padding: 8px 15px; background-color: #e9ecef; border-radius: 4px; }
-        .back-link:hover { background-color: #dee2e6; color: #0056b3; }
+        .back-link { 
+            display: inline-block; 
+            margin-bottom: 1.5em; 
+            text-decoration: none; 
+            color: #007bff; /* Primary Blue - Standard */
+            font-weight: 600; /* Standardized */
+            padding: 8px 15px; 
+            background-color: #e9ecef; 
+            border-radius: 8px; /* Standardized */ 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .back-link:hover { background-color: #dee2e6;
+        color: #0056b3; }
 
-        /* Table Styling */
-        table { width: 100%; border-collapse: collapse; margin-top: 1em; }
-        th { background-color: #17a2b8; color: white; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #ddd; vertical-align: top; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        /* --- Standardized Table Styles (from style-guide.ejs) --- */
+        table { 
+            width: 100%;
+            border-collapse: separate; /* Key for rounded corners */
+            border-spacing: 0;
+            margin-top: 1em;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; /* Rounded corners */
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff; /* Primary Blue (Overriding old #17a2b8) */
+            color: white; 
+            padding: 15px; /* Standardized padding */
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px; /* Standardized padding */
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+        /* END Table Styles */
 
-        /* Status Badges */
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase; }
-        .status-open { background-color: #ffeeba; color: #856404; }
-        .status-complete { background-color: #d4edda; color: #155724; }
-        .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        /* Status Badges (Kept for visual design, colors are fine) */
+        .status-badge { display: inline-block;
+        padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase;
+        }
+        .status-open { background-color: #ffeeba; color: #856404;
+        }
+        .status-complete { background-color: #d4edda; color: #155724;
+        }
+        .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+        }
 
-        /* Action Buttons */
-        .btn-action { display: inline-block; padding: 5px 10px; font-size: 0.85em; font-weight: bold; text-decoration: none; border-radius: 4px; border: 1px solid transparent; margin-right: 5px; }
+        .action-cell {
+            /* Reduce horizontal padding to eliminate excess space */
+            padding: 5px 8px !important; 
+        }
+
+        .btn-action { 
+            display: block; 
+            width: 100%; 
+            padding: 4px 8px; 
+            font-size: 0.8em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            border: 1px solid #ced4da; 
+            margin-bottom: 0; 
+            margin-right: 0; 
+            transition: all 0.2s; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-action:hover { background-color: #f8f9fa; }
         
-        .btn-complete { color: #28a745; border-color: #28a745; background: white; }
-        .btn-complete:hover { background-color: #28a745; color: white; }
+        .btn-complete { color: #28a745;
+        border-color: #28a745; background: white; }
+        .btn-complete:hover { background-color: #28a745; color: white;
+        }
 
-        .btn-assign { color: #ffc107; border-color: #ffc107; background: white; color: #333; }
-        .btn-assign:hover { background-color: #ffc107; color: #333; }
+        .btn-assign { color: #007bff; /* Primary Blue for assignment */ border-color: #007bff; background: white; 
+        }
+        .btn-assign:hover { background-color: #007bff; color: white;
+        }
+        
+        .btn-edit { color: #d39e00; border-color: #ffc107; background: white; }
+        .btn-edit:hover { background-color: #ffc107; color: #333; }
+        
+        .btn-reopen { color: #dc3545; border-color: #dc3545; background: white; }
+        .btn-reopen:hover { background-color: #dc3545; color: white; }
 
-        .cost { font-family: monospace; font-weight: bold; color: #555; }
+        .action-form {
+            display: block;
+        }
+
+        .cost { font-family: monospace; font-weight: bold; color: #555;
+        }
     </style>
 </head>
 <body>
@@ -49,74 +146,95 @@
         <%# --- SMART RECALL BUTTON --- %>
         <% if (typeof back_query !== 'undefined' && back_query) { %>
             <%# Decode the query string to ensure it renders correctly %>
-            <a href="/reports/maintenance?<%= decodeURIComponent(back_query) %>" class="back-link">&laquo; Back to Maintenance Report</a>
+            <a href="/reports/maintenance?<%= decodeURIComponent(back_query) %>" class="back-link">&laquo;
+ Back to Maintenance Report</a>
         <% } else { %>
-            <a href="/rides" class="back-link">&laquo; Back to Rides List</a>
+            <a href="/rides" class="back-link">&laquo;
+ Back to Rides List</a>
         <% } %>
 
         <h1>
             Maintenance History
             <small>Ride: <%= ride.ride_name %></small>
-            <a href="/maintenance/new/<%= ride.public_ride_id %>" class="btn-report">+ Report New Issue</a>
         </h1>
 
         <table>
             <thead>
-                <tr>
+    
+             <tr>
                     <th>Report Date</th>
-                    <th style="width: 30%;">Issue Summary</th>
+                    <%# REMOVED: Issue Summary Column %>
                     <th>Assigned To</th>
                     <th>Completion</th>
                     <th>Cost</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th style="width: 110px;">Actions</th> <%# Fixed width to prevent overflow %>
                 </tr>
             </thead>
             <tbody>
-                <% if (maintenance_logs.length === 0) { %>
-                    <tr><td colspan="7" style="text-align: center; padding: 2em;">No maintenance records found.</td></tr>
+   
+              <% if (maintenance_logs.length === 0) { %>
+                    <tr><td colspan="6" style="text-align: center; padding: 2em;">No maintenance records found.</td></tr>
                 <% } %>
 
                 <% maintenance_logs.forEach(log => { %>
-                    <tr>
+               
+      <tr>
                         <td><%= new Date(log.report_date).toLocaleDateString() %></td>
-                        <td><%= log.summary %></td>
                         <td>
-                            <%= log.employee_name || 'Unassigned' %>
+                  
+           <%= log.employee_name ||
+ 'Unassigned' %>
                             <% if (log.pending_employee_name) { %>
                                 <br><small style="color: #e0a800;">(Pending transfer to: <%= log.pending_employee_name %>)</small>
-                            <% } %>
+                            
+ <% } %>
                         </td>
-                        <td><%= log.end_date ? new Date(log.end_date).toLocaleDateString() : '---' %></td>
+                        <td><%= log.end_date ?
+ new Date(log.end_date).toLocaleDateString() : '---' %></td>
                         <td>
                             <% if (log.cost) { %>
                                 <span class="cost">$<%= parseFloat(log.cost).toFixed(2) %></span>
-                            <% } else { %>
+     
+                        <% } else { %>
                                 -
                             <% } %>
-                        </td>
+           
+              </td>
                         
                         <%# --- COLUMN 1: STATUS --- %>
                         <td>
-                            <% if (log.end_date) { %>
+         
+                    <% if (log.end_date) { %>
                                 <span class="status-badge status-complete">Complete</span>
                             <% } else { %>
-                                <span class="status-badge status-open">Open</span>
+           
+                      <span class="status-badge status-open">Open</span>
                             <% } %>
                         </td>
 
-                        <%# --- COLUMN 2: ACTIONS --- %>
+                       
+  <%# --- COLUMN 2: ACTIONS (REOPEN LOGIC ADDED) --- %>
                         <td>
-                            <% if (!log.end_date) { %>
-                                <a href="/maintenance/complete/<%= log.public_maintenance_id %>" class="btn-action btn-complete">Complete</a>
-                                <a href="/maintenance/reassign/<%= log.public_maintenance_id %>" class="btn-action btn-assign">Reassign</a>
-                            <% } else { %>
-                                <span style="color: #aaa; font-size: 0.9em;">Closed</span>
-                            <% } %>
+                            <div style="display: flex; flex-direction: column; gap: 3px;"> <%# DIRECT FLEX WRAPPER %>
+                                <% if (!log.end_date) { %>
+                                    <%# ACTIONS FOR OPEN/IN PROGRESS ENTRIES %>
+                                    <a href="/maintenance/complete/<%= log.public_maintenance_id %>" class="btn-action btn-complete">Complete</a>
+                                    <a href="/maintenance/reassign/<%= log.public_maintenance_id %>" class="btn-action btn-assign">Reassign</a>
+                                    <a href="/maintenance/edit/<%= log.public_maintenance_id %>" class="btn-action btn-edit">Edit Report</a>
+                                <% } else { %>
+                                    <%# ACTIONS FOR COMPLETED ENTRIES %>
+                                    <a href="/maintenance/edit/<%= log.public_maintenance_id %>" class="btn-action btn-edit">Edit Completion</a>
+                                    <form action="/maintenance/reopen/<%= log.public_maintenance_id %>" method="POST" class="action-form">
+                                        <button type="submit" class="btn-action btn-reopen" onsubmit="return confirm('WARNING: Are you sure you want to REOPEN this maintenance entry? The ride status will be set back to BROKEN.');">Reopen</button>
+                                    </form>
+                                <% } %>
+                            </div> <%# END DIRECT FLEX WRAPPER %>
                         </td>
                     </tr>
                 <% }); %>
-            </tbody>
+   
+          </tbody>
         </table>
     </div>
 </body>

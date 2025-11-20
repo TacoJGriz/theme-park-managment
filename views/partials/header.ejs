@@ -21,7 +21,7 @@
             --info: #17a2b8;          /* Standard Teal */
             
             --dark: #343a40;          /* Header BG */
-            --light: #f8f9fa;         /* Page BG */
+            --light: #e9ecef;         /* Page BG */
             --white: #ffffff;
             
             --font-head: 'Poppins', sans-serif; 
@@ -34,6 +34,8 @@
 
         body {
             font-family: var(--font-body);
+            margin: 0; /* ADDED: FIXES FLOATING HEADER by overriding browser default margin */
+            padding: 0; /* ADDED: Good practice reset */
             background-color: var(--light);
             color: #333;
         }
@@ -90,6 +92,7 @@
 
         .nav-item:hover, .dropdown-trigger:hover, .nav-item.active {
             color: var(--white);
+            vertical-align: top;
             background-color: rgba(255, 255, 255, 0.1);
         }
 
