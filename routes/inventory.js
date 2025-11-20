@@ -564,11 +564,12 @@ router.get('/requests', isAuthenticated, canManageInventory, async (req, res) =>
 
         // FIXED BUG: Use single quotes in ORDER BY clause
         let query = `
-            SELECT ir.*, it.item_name, v.vendor_name, CONCAT(e.first_name, ' ', e.last_name) as requester_name
+            SELECT ir.*, it.item_name, v.vendor_name, 
+                   COALESCE(CONCAT(e.first_name, ' ', e.last_name), 'System Auto-Restock') as requester_name
             FROM inventory_requests ir
             JOIN item it ON ir.item_id = it.item_id
             JOIN vendors v ON ir.vendor_id = v.vendor_id
-            JOIN employee_demographics e ON ir.requested_by_id = e.employee_id
+            LEFT JOIN employee_demographics e ON ir.requested_by_id = e.employee_id -- CHANGED TO LEFT JOIN
             ${locationFilter}
             ORDER BY CASE WHEN ir.status = 'Pending' THEN 1 ELSE 2 END, ir.request_date DESC
         `;

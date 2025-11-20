@@ -14,12 +14,12 @@
 
         /* Main Container - Expanded width for single-line data */
         .container { 
-            max-width: 1600px; 
+            max-width: 1600px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Headings */
@@ -85,9 +85,12 @@
             color: #555;
             white-space: nowrap; /* Force data to stay on one line */
         }
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
-        tr:hover { background-color: #f1f5f9; }
+        tr:last-child td { border-bottom: none;
+        }
+        tr:nth-child(even) { background-color: #f8f9fa;
+        }
+        tr:hover { background-color: #f1f5f9;
+        }
 
         /* --- ACTION BUTTONS --- */
         .btn-action {
@@ -121,7 +124,7 @@
             border-color: #28a745;
         }
         .btn-approve:hover { 
-            background-color: #28a745; 
+            background-color: #28a745;
             color: white; 
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
@@ -132,7 +135,7 @@
             border-color: #dc3545;
         }
         .btn-reject:hover { 
-            background-color: #dc3545; 
+            background-color: #dc3545;
             color: white; 
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
@@ -147,6 +150,12 @@
             font-size: 0.9em;
             color: #495057;
             border: 1px solid #dee2e6;
+        }
+        /* System Badge Variant */
+        .id-badge.system {
+            background-color: #343a40;
+            color: #fff;
+            border-color: #343a40;
         }
     </style>
 </head>
@@ -163,7 +172,7 @@
                 <div style="overflow-x: auto;"> <%# Scroll wrapper for small screens %>
                     <table>
                         <thead>
-                            <tr>
+                           <tr>
                                 <th>Ride ID</th>
                                 <th>Ride</th>
                                 <th>Currently Assigned</th>
@@ -233,7 +242,16 @@
                                     <td><%= req.item_name %></td>
                                     <td><%= req.current_count %></td>
                                     <td style="color: #007bff; font-weight: bold;">+<%= req.requested_count %></td>
-                                    <td><span class="id-badge"><%= req.requester_public_id.substring(0, 8).toUpperCase() %></span></td>
+                                    
+                                    <%# --- FIXED: Handle System Requests (NULL IDs) --- %>
+                                    <td>
+                                        <% if (req.requester_public_id) { %>
+                                            <span class="id-badge"><%= req.requester_public_id.substring(0, 8).toUpperCase() %></span>
+                                        <% } else { %>
+                                            <span class="id-badge system">SYSTEM</span>
+                                        <% } %>
+                                    </td>
+                                    
                                     <td><%= req.requester_name %></td>
                                     <td>
                                         <div class="actions-cell">

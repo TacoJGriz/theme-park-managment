@@ -54,14 +54,14 @@ router.get('/', isAuthenticated, canViewApprovals, async (req, res) => {
                     v.vendor_name,
                     v.public_vendor_id, -- ADDED
                     i.item_name,
-                    i.public_item_id, -- ADDED
-                    CONCAT(e.first_name, ' ', e.last_name) as requester_name,
-                    e.public_employee_id as requester_public_id, -- ADDED
+                    i.public_item_id,
+                    COALESCE(CONCAT(e.first_name, ' ', e.last_name), 'System Auto-Restock') as requester_name, -- UPDATED
+                    e.public_employee_id as requester_public_id,
                     COALESCE(inv.count, 0) as current_count
                 FROM inventory_requests ir
                 JOIN vendors v ON ir.vendor_id = v.vendor_id
                 JOIN item i ON ir.item_id = i.item_id
-                JOIN employee_demographics e ON ir.requested_by_id = e.employee_id
+                LEFT JOIN employee_demographics e ON ir.requested_by_id = e.employee_id -- CHANGED TO LEFT JOIN
                 LEFT JOIN inventory inv ON ir.vendor_id = inv.vendor_id AND ir.item_id = inv.item_id
                 WHERE ir.status = 'Pending'
             `;
