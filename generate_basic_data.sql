@@ -1,38 +1,34 @@
--- 1. LOCATION
--- Inserting 8 Locations first.
--- ADDED public_location_id and UUID()
+-- Section 1: Insert 8 Park Locations
 INSERT INTO location (public_location_id, location_name, summary, manager_id, manager_start) VALUES
-(UUID(), 'Frontierland', 'Wild West themed area with rugged terrain.', NULL, NULL),      -- ID 1
-(UUID(), 'Tomorrowland', 'A view of the future and sci-fi adventures.', NULL, NULL),      -- ID 2
-(UUID(), 'Fantasyland', 'Where classic fairytales come to life.', NULL, NULL),            -- ID 3
-(UUID(), 'Main Entrance', 'The grand entry plaza and guest services.', NULL, NULL),       -- ID 4 (Renamed)
-(UUID(), 'Adventureland', 'Exotic jungles and swashbuckling pirates.', NULL, NULL),       -- ID 5
-(UUID(), 'Liberty Square', 'Colonial America history and haunts.', NULL, NULL),           -- ID 6
-(UUID(), 'Mickeys Toontown', 'The wacky home of cartoon stars.', NULL, NULL),            -- ID 7
-(UUID(), 'Galaxys Edge', 'Remote outpost on the edge of space.', NULL, NULL);            -- ID 8
+(UUID(), 'Frontierland', 'Wild West themed area with rugged terrain.', NULL, NULL),
+(UUID(), 'Tomorrowland', 'A view of the future and sci-fi adventures.', NULL, NULL),
+(UUID(), 'Fantasyland', 'Where classic fairytales come to life.', NULL, NULL),
+(UUID(), 'Main Entrance', 'The grand entry plaza and guest services.', NULL, NULL),
+(UUID(), 'Adventureland', 'Exotic jungles and swashbuckling pirates.', NULL, NULL),
+(UUID(), 'Liberty Square', 'Colonial America history and haunts.', NULL, NULL),
+(UUID(), 'Mickeys Toontown', 'The wacky home of cartoon stars.', NULL, NULL),
+(UUID(), 'Galaxys Edge', 'Remote outpost on the edge of space.', NULL, NULL);
 
--- 2. EMPLOYEE_DEMOGRAPHICS
--- Total: 55 Employees
 
--- A. Admin & Park Manager (IDs 1-2)
+-- Section 2: Insert 55 Employee Demographics Records
+
+-- Insert Admin (ID 1) and Park Manager (ID 2)
 INSERT INTO employee_demographics (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code, birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active) VALUES
 (UUID(), 'Walt', 'Disney', 'Male', '(407) 555-0100', 'walt@park.com', '1 Dream Way', 'Orlando', 'FL', '32830', '1901-12-05', '1971-10-01', 'Admin', 4, NULL, 100.00, TRUE),
 (UUID(), 'Minnie', 'Mouse', 'Female', '(407) 555-0101', 'minnie@park.com', '2 Bow Lane', 'Orlando', 'FL', '32830', '1928-11-18', '2020-01-01', 'Park Manager', 4, 1, 65.00, TRUE);
 
--- B. Location Managers (IDs 3-10)
--- One for each location ID 1-8. Supervisor is Park Manager (ID 2).
+-- Insert 8 Location Managers (IDs 3-10) for each location, reporting to Park Manager (ID 2)
 INSERT INTO employee_demographics (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code, birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active) VALUES
-(UUID(), 'Woody', 'Pride', 'Male', '(407) 555-0111', 'woody@park.com', '1 Toy Box', 'Orlando', 'FL', '32830', '1995-11-22', '2021-03-15', 'Location Manager', 1, 2, 45.00, TRUE), -- Frontierland
-(UUID(), 'Buzz', 'Lightyear', 'Male', '(407) 555-0112', 'buzz@park.com', '1 Star Command', 'Orlando', 'FL', '32830', '1995-11-22', '2021-03-15', 'Location Manager', 2, 2, 45.00, TRUE), -- Tomorrowland
-(UUID(), 'Cinderella', 'Charming', 'Female', '(407) 555-0113', 'cindy@park.com', '1 Castle Dr', 'Orlando', 'FL', '32830', '1950-02-15', '2019-06-01', 'Location Manager', 3, 2, 48.00, TRUE), -- Fantasyland
-(UUID(), 'Mickey', 'Mouse', 'Male', '(407) 555-0114', 'mickey@park.com', '1 Main St', 'Orlando', 'FL', '32830', '1928-11-18', '2018-01-01', 'Location Manager', 4, 2, 55.00, TRUE), -- Main Entrance
-(UUID(), 'Jack', 'Sparrow', 'Male', '(407) 555-0115', 'jack@park.com', '1 Black Pearl', 'Orlando', 'FL', '32830', '2003-07-09', '2022-05-20', 'Location Manager', 5, 2, 42.00, TRUE), -- Adventureland
-(UUID(), 'Ichabod', 'Crane', 'Male', '(407) 555-0116', 'ichabod@park.com', '1 Hollow Rd', 'Orlando', 'FL', '32830', '1949-10-05', '2020-10-31', 'Location Manager', 6, 2, 40.00, TRUE), -- Liberty Square
-(UUID(), 'Roger', 'Rabbit', 'Male', '(407) 555-0117', 'roger@park.com', '1 Toon Sq', 'Orlando', 'FL', '32830', '1988-06-22', '2023-01-15', 'Location Manager', 7, 2, 38.00, TRUE), -- Toontown
-(UUID(), 'Leia', 'Organa', 'Female', '(407) 555-0118', 'leia@park.com', '1 Rebel Base', 'Orlando', 'FL', '32830', '1977-05-25', '2019-12-20', 'Location Manager', 8, 2, 50.00, TRUE); -- Galaxys Edge
+(UUID(), 'Woody', 'Pride', 'Male', '(407) 555-0111', 'woody@park.com', '1 Toy Box', 'Orlando', 'FL', '32830', '1995-11-22', '2021-03-15', 'Location Manager', 1, 2, 45.00, TRUE),
+(UUID(), 'Buzz', 'Lightyear', 'Male', '(407) 555-0112', 'buzz@park.com', '1 Star Command', 'Orlando', 'FL', '32830', '1995-11-22', '2021-03-15', 'Location Manager', 2, 2, 45.00, TRUE),
+(UUID(), 'Cinderella', 'Charming', 'Female', '(407) 555-0113', 'cindy@park.com', '1 Castle Dr', 'Orlando', 'FL', '32830', '1950-02-15', '2019-06-01', 'Location Manager', 3, 2, 48.00, TRUE),
+(UUID(), 'Mickey', 'Mouse', 'Male', '(407) 555-0114', 'mickey@park.com', '1 Main St', 'Orlando', 'FL', '32830', '1928-11-18', '2018-01-01', 'Location Manager', 4, 2, 55.00, TRUE),
+(UUID(), 'Jack', 'Sparrow', 'Male', '(407) 555-0115', 'jack@park.com', '1 Black Pearl', 'Orlando', 'FL', '32830', '2003-07-09', '2022-05-20', 'Location Manager', 5, 2, 42.00, TRUE),
+(UUID(), 'Ichabod', 'Crane', 'Male', '(407) 555-0116', 'ichabod@park.com', '1 Hollow Rd', 'Orlando', 'FL', '32830', '1949-10-05', '2020-10-31', 'Location Manager', 6, 2, 40.00, TRUE),
+(UUID(), 'Roger', 'Rabbit', 'Male', '(407) 555-0117', 'roger@park.com', '1 Toon Sq', 'Orlando', 'FL', '32830', '1988-06-22', '2023-01-15', 'Location Manager', 7, 2, 38.00, TRUE),
+(UUID(), 'Leia', 'Organa', 'Female', '(407) 555-0118', 'leia@park.com', '1 Rebel Base', 'Orlando', 'FL', '32830', '1977-05-25', '2019-12-20', 'Location Manager', 8, 2, 50.00, TRUE);
 
--- C. Maintenance Staff (IDs 11-15)
--- Park-wide jurisdiction, Supervisor is Park Manager (ID 2).
+-- Insert 5 Maintenance Staff (IDs 11-15), reporting to Park Manager (ID 2)
 INSERT INTO employee_demographics (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code, birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active) VALUES
 (UUID(), 'Goofy', 'Goof', 'Male', '(407) 555-0201', 'goofy@park.com', '123 Fixit Ln', 'Orlando', 'FL', '32830', '1932-05-25', '2015-04-01', 'Maintenance', 4, 2, 30.00, TRUE),
 (UUID(), 'Felix', 'Fixit', 'Male', '(407) 555-0202', 'felix@park.com', '8 Bit Ave', 'Orlando', 'FL', '32830', '1990-11-02', '2018-08-15', 'Maintenance', 4, 2, 28.00, TRUE),
@@ -40,88 +36,83 @@ INSERT INTO employee_demographics (public_employee_id, first_name, last_name, ge
 (UUID(), 'Bob', 'Builder', 'Male', '(407) 555-0204', 'bob@park.com', '5 Construct Rd', 'Orlando', 'FL', '32830', '1998-11-28', '2022-11-05', 'Maintenance', 4, 2, 26.50, TRUE),
 (UUID(), 'Doc', 'McStuffins', 'Female', '(407) 555-0205', 'doc@park.com', '9 Clinic Dr', 'Orlando', 'FL', '32830', '1995-03-23', '2023-06-01', 'Maintenance', 4, 2, 29.00, TRUE);
 
--- D. Staff (IDs 16-55)
--- 5 Staff per location. Assigned to their Location Manager (IDs 3-10).
+-- Insert 40 Staff members (5 for each of the 8 locations)
 INSERT INTO employee_demographics (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code, birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active) VALUES
--- Frontierland (Manager: Woody ID 3)
+-- Frontierland (Manager: ID 3)
 (UUID(), 'Jessie', 'Yodeling', 'Female', '(555) 001-0001', 'jessie@park.com', 'Addr 1', 'Orlando', 'FL', '32830', '1999-01-01', '2024-01-01', 'Staff', 1, 3, 18.00, TRUE),
 (UUID(), 'Bullseye', 'Horse', 'Male', '(555) 001-0002', 'bullseye@park.com', 'Addr 2', 'Orlando', 'FL', '32830', '1999-02-01', '2024-01-01', 'Staff', 1, 3, 18.00, TRUE),
 (UUID(), 'Stinky', 'Pete', 'Male', '(555) 001-0003', 'pete@park.com', 'Addr 3', 'Orlando', 'FL', '32830', '1980-03-01', '2024-01-01', 'Staff', 1, 3, 18.00, TRUE),
 (UUID(), 'Davy', 'Crockett', 'Male', '(555) 001-0004', 'davy@park.com', 'Addr 4', 'Orlando', 'FL', '32830', '1995-04-01', '2024-01-01', 'Staff', 1, 3, 18.00, TRUE),
 (UUID(), 'Pocahontas', 'Powhatan', 'Female', '(555) 001-0005', 'poca@park.com', 'Addr 5', 'Orlando', 'FL', '32830', '1995-05-01', '2024-01-01', 'Staff', 1, 3, 18.00, TRUE),
 
--- Tomorrowland (Manager: Buzz ID 4)
+-- Tomorrowland (Manager: ID 4)
 (UUID(), 'Zurg', 'Emperor', 'Male', '(555) 002-0001', 'zurg@park.com', 'Addr 6', 'Orlando', 'FL', '32830', '1999-06-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE),
-(UUID(), 'Wall', 'E', 'Male', '(555) 002-0002', 'walle@park.com', 'Addr 7', 'Orlando', 'FL', '32830', '2000-07-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE), -- Adjusted to 2000
-(UUID(), 'Eve', 'Probe', 'Female', '(555) 002-0003', 'eve@park.com', 'Addr 8', 'Orlando', 'FL', '32830', '2000-08-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE), -- Adjusted to 2000
+(UUID(), 'Wall', 'E', 'Male', '(555) 002-0002', 'walle@park.com', 'Addr 7', 'Orlando', 'FL', '32830', '2000-07-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE),
+(UUID(), 'Eve', 'Probe', 'Female', '(555) 002-0003', 'eve@park.com', 'Addr 8', 'Orlando', 'FL', '32830', '2000-08-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE),
 (UUID(), 'Stitch', 'Experiment', 'Male', '(555) 002-0004', 'stitch@park.com', 'Addr 9', 'Orlando', 'FL', '32830', '2002-09-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE),
 (UUID(), 'Tron', 'Program', 'Male', '(555) 002-0005', 'tron@park.com', 'Addr 10', 'Orlando', 'FL', '32830', '1982-10-01', '2024-01-01', 'Staff', 2, 4, 18.00, TRUE),
 
--- Fantasyland (Manager: Cinderella ID 5)
+-- Fantasyland (Manager: ID 5)
 (UUID(), 'Snow', 'White', 'Female', '(555) 003-0001', 'snow@park.com', 'Addr 11', 'Orlando', 'FL', '32830', '1937-11-01', '2024-01-01', 'Staff', 3, 5, 18.00, TRUE),
 (UUID(), 'Aurora', 'Rose', 'Female', '(555) 003-0002', 'aurora@park.com', 'Addr 12', 'Orlando', 'FL', '32830', '1959-12-01', '2024-01-01', 'Staff', 3, 5, 18.00, TRUE),
 (UUID(), 'Belle', 'French', 'Female', '(555) 003-0003', 'belle@park.com', 'Addr 13', 'Orlando', 'FL', '32830', '1991-01-01', '2024-01-01', 'Staff', 3, 5, 18.00, TRUE),
 (UUID(), 'Ariel', 'Triton', 'Female', '(555) 003-0004', 'ariel@park.com', 'Addr 14', 'Orlando', 'FL', '32830', '1989-02-01', '2024-01-01', 'Staff', 3, 5, 18.00, TRUE),
 (UUID(), 'Peter', 'Pan', 'Male', '(555) 003-0005', 'peter@park.com', 'Addr 15', 'Orlando', 'FL', '32830', '1953-03-01', '2024-01-01', 'Staff', 3, 5, 18.00, TRUE),
 
--- Main Entrance (Manager: Mickey ID 6)
+-- Main Entrance (Manager: ID 6)
 (UUID(), 'Donald', 'Duck', 'Male', '(555) 004-0001', 'donald@park.com', 'Addr 16', 'Orlando', 'FL', '32830', '1934-04-01', '2024-01-01', 'Staff', 4, 6, 18.00, TRUE),
 (UUID(), 'Daisy', 'Duck', 'Female', '(555) 004-0002', 'daisy@park.com', 'Addr 17', 'Orlando', 'FL', '32830', '1940-05-01', '2024-01-01', 'Staff', 4, 6, 18.00, TRUE),
 (UUID(), 'Pluto', 'Pup', 'Male', '(555) 004-0003', 'pluto@park.com', 'Addr 18', 'Orlando', 'FL', '32830', '1930-06-01', '2024-01-01', 'Staff', 4, 6, 18.00, TRUE),
 (UUID(), 'Clarabelle', 'Cow', 'Female', '(555) 004-0004', 'clarabelle@park.com', 'Addr 19', 'Orlando', 'FL', '32830', '1928-07-01', '2024-01-01', 'Staff', 4, 6, 18.00, TRUE),
 (UUID(), 'Horace', 'Horsecollar', 'Male', '(555) 004-0005', 'horace@park.com', 'Addr 20', 'Orlando', 'FL', '32830', '1929-08-01', '2024-01-01', 'Staff', 4, 6, 18.00, TRUE),
 
--- Adventureland (Manager: Jack ID 7)
+-- Adventureland (Manager: ID 7)
 (UUID(), 'Will', 'Turner', 'Male', '(555) 005-0001', 'will@park.com', 'Addr 21', 'Orlando', 'FL', '32830', '2003-09-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE),
 (UUID(), 'Elizabeth', 'Swann', 'Female', '(555) 005-0002', 'liz@park.com', 'Addr 22', 'Orlando', 'FL', '32830', '2003-10-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE),
 (UUID(), 'Aladdin', 'Streetrat', 'Male', '(555) 005-0003', 'aladdin@park.com', 'Addr 23', 'Orlando', 'FL', '32830', '1992-11-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE),
 (UUID(), 'Jasmine', 'Sultan', 'Female', '(555) 005-0004', 'jasmine@park.com', 'Addr 24', 'Orlando', 'FL', '32830', '1992-12-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE),
-(UUID(), 'Moana', 'Waialiki', 'Female', '(555) 005-0005', 'moana@park.com', 'Addr 25', 'Orlando', 'FL', '32830', '2000-01-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE), -- Adjusted to 2000
+(UUID(), 'Moana', 'Waialiki', 'Female', '(555) 005-0005', 'moana@park.com', 'Addr 25', 'Orlando', 'FL', '32830', '2000-01-01', '2024-01-01', 'Staff', 5, 7, 18.00, TRUE),
 
--- Liberty Square (Manager: Ichabod ID 8)
+-- Liberty Square (Manager: ID 8)
 (UUID(), 'Sam', 'Eagle', 'Male', '(555) 006-0001', 'sam@park.com', 'Addr 26', 'Orlando', 'FL', '32830', '1976-02-01', '2024-01-01', 'Staff', 6, 8, 18.00, TRUE),
 (UUID(), 'Betsy', 'Ross', 'Female', '(555) 006-0002', 'betsy@park.com', 'Addr 27', 'Orlando', 'FL', '32830', '1776-03-01', '2024-01-01', 'Staff', 6, 8, 18.00, TRUE),
 (UUID(), 'Paul', 'Revere', 'Male', '(555) 006-0003', 'paul@park.com', 'Addr 28', 'Orlando', 'FL', '32830', '1775-04-01', '2024-01-01', 'Staff', 6, 8, 18.00, TRUE),
 (UUID(), 'Constance', 'Hatchaway', 'Female', '(555) 006-0004', 'constance@park.com', 'Addr 29', 'Orlando', 'FL', '32830', '1969-05-01', '2024-01-01', 'Staff', 6, 8, 18.00, TRUE),
 (UUID(), 'Ezra', 'Ghost', 'Male', '(555) 006-0005', 'ezra@park.com', 'Addr 30', 'Orlando', 'FL', '32830', '1969-06-01', '2024-01-01', 'Staff', 6, 8, 18.00, TRUE),
 
--- Toontown (Manager: Roger ID 9)
+-- Toontown (Manager: ID 9)
 (UUID(), 'Jessica', 'Rabbit', 'Female', '(555) 007-0001', 'jessica@park.com', 'Addr 31', 'Orlando', 'FL', '32830', '1988-07-01', '2024-01-01', 'Staff', 7, 9, 18.00, TRUE),
 (UUID(), 'Benny', 'Cab', 'Male', '(555) 007-0002', 'benny@park.com', 'Addr 32', 'Orlando', 'FL', '32830', '1988-08-01', '2024-01-01', 'Staff', 7, 9, 18.00, TRUE),
 (UUID(), 'Gadget', 'Hackwrench', 'Female', '(555) 007-0003', 'gadget@park.com', 'Addr 33', 'Orlando', 'FL', '32830', '1989-09-01', '2024-01-01', 'Staff', 7, 9, 18.00, TRUE),
 (UUID(), 'Chip', 'Munk', 'Male', '(555) 007-0004', 'chipm@park.com', 'Addr 34', 'Orlando', 'FL', '32830', '1943-10-01', '2024-01-01', 'Staff', 7, 9, 18.00, TRUE),
 (UUID(), 'Dale', 'Munk', 'Male', '(555) 007-0005', 'dalem@park.com', 'Addr 35', 'Orlando', 'FL', '32830', '1943-11-01', '2024-01-01', 'Staff', 7, 9, 18.00, TRUE),
 
--- Galaxys Edge (Manager: Leia ID 10)
+-- Galaxys Edge (Manager: ID 10)
 (UUID(), 'Han', 'Solo', 'Male', '(555) 008-0001', 'hansolo@park.com', 'Addr 36', 'Orlando', 'FL', '32830', '1977-12-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE),
 (UUID(), 'Chewbacca', 'Wookie', 'Male', '(555) 008-0002', 'chewie@park.com', 'Addr 37', 'Orlando', 'FL', '32830', '1977-01-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE),
-(UUID(), 'Rey', 'Skywalker', 'Female', '(555) 008-0003', 'rey@park.com', 'Addr 38', 'Orlando', 'FL', '32830', '1995-02-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE), -- Adjusted to 1995
-(UUID(), 'Finn', 'FN2187', 'Male', '(555) 008-0004', 'finn@park.com', 'Addr 39', 'Orlando', 'FL', '32830', '1995-03-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE), -- Adjusted to 1995
-(UUID(), 'Poe', 'Dameron', 'Male', '(555) 008-0005', 'poe@park.com', 'Addr 40', 'Orlando', 'FL', '32830', '1995-04-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE); -- Adjusted to 1995
+(UUID(), 'Rey', 'Skywalker', 'Female', '(555) 008-0003', 'rey@park.com', 'Addr 38', 'Orlando', 'FL', '32830', '1995-02-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE),
+(UUID(), 'Finn', 'FN2187', 'Male', '(555) 008-0004', 'finn@park.com', 'Addr 39', 'Orlando', 'FL', '32830', '1995-03-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE),
+(UUID(), 'Poe', 'Dameron', 'Male', '(555) 008-0005', 'poe@park.com', 'Addr 40', 'Orlando', 'FL', '32830', '1995-04-01', '2024-01-01', 'Staff', 8, 10, 18.00, TRUE);
+
+-- Update the location table to assign the correct manager_id and start date for each location
+UPDATE location SET manager_id = 3, manager_start = '2021-03-15' WHERE location_id = 1;
+UPDATE location SET manager_id = 4, manager_start = '2021-03-15' WHERE location_id = 2;
+UPDATE location SET manager_id = 5, manager_start = '2019-06-01' WHERE location_id = 3;
+UPDATE location SET manager_id = 6, manager_start = '2018-01-01' WHERE location_id = 4;
+UPDATE location SET manager_id = 7, manager_start = '2022-05-20' WHERE location_id = 5;
+UPDATE location SET manager_id = 8, manager_start = '2020-10-31' WHERE location_id = 6;
+UPDATE location SET manager_id = 9, manager_start = '2023-01-15' WHERE location_id = 7;
+UPDATE location SET manager_id = 10, manager_start = '2019-12-20' WHERE location_id = 8;
 
 
--- Update Location Managers
-UPDATE location SET manager_id = 3, manager_start = '2021-03-15' WHERE location_id = 1; -- Woody
-UPDATE location SET manager_id = 4, manager_start = '2021-03-15' WHERE location_id = 2; -- Buzz
-UPDATE location SET manager_id = 5, manager_start = '2019-06-01' WHERE location_id = 3; -- Cinderella
-UPDATE location SET manager_id = 6, manager_start = '2018-01-01' WHERE location_id = 4; -- Mickey
-UPDATE location SET manager_id = 7, manager_start = '2022-05-20' WHERE location_id = 5; -- Jack
-UPDATE location SET manager_id = 8, manager_start = '2020-10-31' WHERE location_id = 6; -- Ichabod
-UPDATE location SET manager_id = 9, manager_start = '2023-01-15' WHERE location_id = 7; -- Roger
-UPDATE location SET manager_id = 10, manager_start = '2019-12-20' WHERE location_id = 8; -- Leia
-
--- 3. EMPLOYEE_AUTH
--- Password for everyone is 'Clubhouse123'
--- Insert for IDs 1-55
+-- Section 3: Insert Employee Authentication Records
+-- Insert the default password Clubhouse123 by its hash for all 55 employees
 INSERT INTO employee_auth (employee_id, password_hash)
 SELECT employee_id, '$2b$10$zKGpKcl0uHKA9Tg1GY8Jv.w8T0glQh/v7wFckZTjnyD0hSZJ/gkZu'
 FROM employee_demographics;
 
--- 4. RIDES
--- 5 Rides per location (40 total). At least 3 of each type.
--- Types: Rollercoaster, Water Ride, Flat Ride, Show, Other
--- ADDED public_ride_id and UUID()
 
+-- Section 4: Insert 40 Rides (5 per location)
 INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, max_weight, min_height, capacity, location_id) VALUES
 -- Frontierland (Loc 1)
 (UUID(), 'Big Thunder Mountain', 'Rollercoaster', 'OPEN', 300, 40, 30, 1),
@@ -176,18 +167,19 @@ INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, max_weight
 (UUID(), 'Rise of the Resistance', 'Other', 'OPEN', 400, 40, 16, 8),
 (UUID(), 'Millennium Falcon: Smugglers Run', 'Other', 'OPEN', 400, 38, 6, 8),
 (UUID(), 'Star Tours', 'Other', 'OPEN', 400, 40, 40, 8),
-(UUID(), 'Slinky Dog Dash', 'Rollercoaster', 'OPEN', 300, 38, 20, 8), -- Moved here for balance
+(UUID(), 'Slinky Dog Dash', 'Rollercoaster', 'OPEN', 300, 38, 20, 8),
 (UUID(), 'Alien Swirling Saucers', 'Flat Ride', 'OPEN', 400, 32, 16, 8);
 
--- 5. MAINTENANCE LOGS
--- Inserting 20 Total Logs: 18 Completed, 2 Open (Active)
--- Reported by Staff (IDs 16-55), Assigned to Maintenance (IDs 11-15)
-INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date, end_date, summary, employee_id, assignment_requested_by, cost) VALUES
--- OPEN / ACTIVE ISSUES (2 Entries)
-(UUID(), 15, '2025-10-20', '2025-10-21', NULL, 'Matterhorn: Track repairs needed on turn 3.', 11, 26, NULL), -- Reported by Snow White (26), Assigned to Goofy (11)
-(UUID(), 35, '2025-10-22', '2025-10-23', NULL, 'Donalds Boat: Leak in hull detected.', 12, 49, NULL),      -- Reported by Donald (31/49?), Assigned to Felix (12)
 
--- COMPLETED ISSUES (18 Entries)
+-- Section 5: Insert 20 Maintenance Log Entries
+
+-- Insert 2 Active/Open maintenance issues (Matterhorn, Donald's Boat)
+INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date, end_date, summary, employee_id, assignment_requested_by, cost) VALUES
+(UUID(), 15, '2025-10-20', '2025-10-21', NULL, 'Matterhorn: Track repairs needed on turn 3.', 11, 26, NULL),
+(UUID(), 35, '2025-10-22', '2025-10-23', NULL, 'Donalds Boat: Leak in hull detected.', 12, 49, NULL);
+
+-- Insert 18 Completed maintenance issues
+INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date, end_date, summary, employee_id, assignment_requested_by, cost) VALUES
 (UUID(), 10, '2025-10-01', '2025-10-01', '2025-10-05', 'Astro Orbiter: Hydraulic pump replacement.', 13, 21, 500.00),
 (UUID(), 1,  '2025-01-10', '2025-01-11', '2025-01-12', 'Big Thunder: Loose safety bar row 4.', 14, 16, 150.00),
 (UUID(), 6,  '2025-02-14', '2025-02-15', '2025-02-16', 'Space Mountain: Audio sync issue.', 15, 22, 75.00),
@@ -207,31 +199,29 @@ INSERT INTO maintenance (public_maintenance_id, ride_id, report_date, start_date
 (UUID(), 38, '2025-10-10', '2025-10-10', '2025-10-12', 'Star Tours: Seat belt sensor faulty.', 14, 53, 150.00),
 (UUID(), 39, '2025-10-15', '2025-10-16', '2025-10-17', 'Slinky Dog: Brake fin inspection.', 15, 54, 350.00);
 
--- 6. MEMBERSHIP_TYPE & TICKET_TYPES (Standard)
--- UPDATED: Added guest_pass_limit (Platinum=4, Gold=2, Family=2, Individual=0)
+
+-- Section 6: Insert Membership and Ticket Types
+
+-- Insert 5 Membership Tiers
 INSERT INTO membership_type (public_type_id, type_name, base_price, base_members, additional_member_price, guest_pass_limit, description, is_active) VALUES
--- ID 1: Platinum
 (UUID(), 'Platinum', 799.00, 1, NULL, 4, 'The ultimate VIP experience. 365-day access with NO blackout dates. Includes 4 Guest Passes.', TRUE),
--- ID 2: Gold
 (UUID(), 'Gold', 599.00, 1, NULL, 2, 'Perfect for regulars. Unlimited access except for major peak holidays. Includes 2 Guest Passes.', TRUE),
--- ID 3: Silver (Formerly Individual)
 (UUID(), 'Silver', 399.00, 1, NULL, 0, 'Our best value option. Valid on most days, but blocked on all holidays and peak weekends.', TRUE),
--- ID 4: Family
 (UUID(), 'Family', 798.00, 2, 249.00, 2, 'Admission for 2 members. Blocked on major peak holidays (same as Gold). Includes 2 Guest Passes.', TRUE),
--- ID 5: Founders (Legacy)
 (UUID(), 'Founders Club', 299.00, 1, NULL, 0, 'Legacy pass, no longer available.', FALSE);
 
+-- Insert 4 Standard Ticket Types
 INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type) VALUES
-(UUID(), 'Member', 0.00, 'System ticket for active members.', TRUE, TRUE),    
-(UUID(), 'Adult', 109.00, 'Standard park admission for ages 10-64.', TRUE, FALSE),   
-(UUID(), 'Child', 99.00, 'Park admission for ages 3-9.', TRUE, FALSE),    
+(UUID(), 'Member', 0.00, 'System ticket for active members.', TRUE, TRUE),
+(UUID(), 'Adult', 109.00, 'Standard park admission for ages 10-64.', TRUE, FALSE),
+(UUID(), 'Child', 99.00, 'Park admission for ages 3-9.', TRUE, FALSE),
 (UUID(), 'Senior', 89.00, 'Park admission for ages 65+.', TRUE, FALSE);
 
--- 7. BLACKOUT DATES
--- Applying restrictions to Gold (ID 2) and Individual (ID 3) tiers.
--- Platinum (ID 1) has no blackout dates.
+
+-- Section 7: Insert Blackout Dates
+
+-- Apply extensive blackout restrictions to Silver membership (ID 3)
 INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
--- SILVER RESTRICTIONS (Heavy)
 (3, '2025-01-01', 'New Years Day'),
 (3, '2025-05-26', 'Memorial Day'),
 (3, '2025-07-04', 'Independence Day'),
@@ -241,17 +231,17 @@ INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
 (3, '2025-12-24', 'Christmas Eve'),
 (3, '2025-12-25', 'Christmas Day'),
 (3, '2025-12-31', 'New Years Eve'),
-(3, '2026-01-01', 'New Years Day'),
+(3, '2026-01-01', 'New Years Day');
 
--- GOLD RESTRICTIONS (Peak Only)
-(2, '2025-07-04', 'Independence Day'), -- Peak Summer
-(2, '2025-10-31', 'Halloween'),        -- Peak Fall
-(2, '2025-11-27', 'Thanksgiving'),     -- Peak Holiday Start
-(2, '2025-12-25', 'Christmas Day'),    -- Peak Winter
-(2, '2025-12-31', 'New Years Eve');    -- Peak Party
+-- Apply peak holiday blackout restrictions to Gold membership (ID 2)
+INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
+(2, '2025-07-04', 'Independence Day'),
+(2, '2025-10-31', 'Halloween'),
+(2, '2025-11-27', 'Thanksgiving'),
+(2, '2025-12-25', 'Christmas Day'),
+(2, '2025-12-31', 'New Years Eve');
 
--- 7b. FAMILY RESTRICTIONS (Aligning with Gold to prevent loopholes)
--- Family (ID 4) shares the same "Peak Day" restrictions as Gold (ID 2).
+-- Apply peak holiday blackout restrictions to Family membership (ID 4)
 INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
 (4, '2025-07-04', 'Independence Day'),
 (4, '2025-10-31', 'Halloween'),
@@ -259,7 +249,8 @@ INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
 (4, '2025-12-25', 'Christmas Day'),
 (4, '2025-12-31', 'New Years Eve');
 
--- 8. PROMOTIONS
+
+-- Section 8: Insert Event Promotions
 INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary) VALUES
 ('New Year Kickoff', 'Holiday', '2025-01-01', '2025-01-05', 20.00, 'Start the year with a bang!'),
 ('MLK Weekend', 'Weekend', '2025-01-17', '2025-01-20', 15.00, 'Honor the dream with family fun.'),
@@ -279,8 +270,8 @@ INSERT INTO event_promotions (event_name, event_type, start_date, end_date, disc
 ('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.'),
 ('Winter Wonderland', 'Holiday', '2025-12-01', '2025-12-31', 10.00, 'Holiday-themed event with artificial snow.');
 
--- 9. VENDORS (2 per location = 16 total)
--- ADDED vendor_status column
+
+-- Section 9: Insert 16 Park Vendors (2 per location)
 INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) VALUES
 -- Frontierland
 (UUID(), 'Pecos Bill Tall Tale Inn', 1, 'OPEN'),
@@ -307,7 +298,8 @@ INSERT INTO vendors (public_vendor_id, vendor_name, location_id, vendor_status) 
 (UUID(), 'Docking Bay 7', 8, 'OPEN'),
 (UUID(), 'Milk Stand', 8, 'OPEN');
 
--- 10. ITEMS (Standard + Extras)
+
+-- Section 10: Insert 10 General Items
 INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Food', 'Cheeseburger', 12.99, '1/3 lb Angus Burger'),
 (UUID(), 'Food', 'Chicken Tenders', 11.99, '4 Tenders with Fries'),
@@ -320,51 +312,50 @@ INSERT INTO item (public_item_id, item_type, item_name, price, summary) VALUES
 (UUID(), 'Souvenir', 'Light Saber', 200.00, 'Custom built sword'),
 (UUID(), 'Other', 'Poncho', 10.00, 'Plastic rain poncho');
 
--- 11. INVENTORY
--- Populate inventory (Ensuring at least 2 items per vendor)
--- NEW: Added min_count (Low Stock Threshold) and def_count (Target Restock)
+
+-- Section 11: Populate Vendor Inventory
+-- Each entry includes the initial stock count, minimum restock threshold, and default restock quantity.
 INSERT INTO inventory (item_id, vendor_id, count, min_count, def_count) VALUES
 -- Frontierland
-(1, 1, 200, 50, 300), (2, 1, 200, 50, 300),   -- Pecos Bill: Burgers, Tenders (High Food Volume)
-(5, 2, 300, 75, 400), (2, 2, 150, 40, 200),   -- Golden Horseshoe: Churros, Tenders
+(1, 1, 200, 50, 300), (2, 1, 200, 50, 300),
+(5, 2, 300, 75, 400), (2, 2, 150, 40, 200),
 -- Tomorrowland
-(1, 3, 250, 60, 350), (2, 3, 250, 60, 350),   -- Cosmic Rays: Burgers, Tenders
-(5, 4, 200, 50, 300), (4, 4, 100, 20, 150),   -- Lunching Pad: Churros, Blue Milk
+(1, 3, 250, 60, 350), (2, 3, 250, 60, 350),
+(5, 4, 200, 50, 300), (4, 4, 100, 20, 150),
 -- Fantasyland
-(1, 5, 150, 40, 250), (2, 5, 150, 40, 250),   -- Pinocchio: Burgers, Tenders
-(2, 6, 100, 30, 150), (3, 6, 300, 75, 400),   -- Friars Nook: Tenders, Dole Whip
+(1, 5, 150, 40, 250), (2, 5, 150, 40, 250),
+(2, 6, 100, 30, 150), (3, 6, 300, 75, 400),
 -- Main Entrance
-(8, 7, 500, 100, 600), (10, 7, 1000, 150, 800), (6, 7, 300, 50, 400), -- Emporium: Ears, Ponchos (High min/def), T-Shirts
-(5, 8, 150, 40, 200), (3, 8, 200, 50, 250),   -- Main St Bakery: Churro, Dole Whip
+(8, 7, 500, 100, 600), (10, 7, 1000, 150, 800), (6, 7, 300, 50, 400),
+(5, 8, 150, 40, 200), (3, 8, 200, 50, 250),
 -- Adventureland
-(3, 9, 400, 100, 500), (5, 9, 200, 50, 300),   -- Sunshine Tree: Dole Whip, Churro
-(3, 10, 500, 100, 600), (10, 10, 100, 20, 150),-- Aloha Isle: Dole Whip, Ponchos
+(3, 9, 400, 100, 500), (5, 9, 200, 50, 300),
+(3, 10, 500, 100, 600), (10, 10, 100, 20, 150),
 -- Liberty Square
-(2, 11, 150, 40, 250), (1, 11, 150, 40, 250), -- Columbia Harbour: Tenders, Burgers
-(1, 12, 200, 50, 300), (2, 12, 200, 50, 300), -- Liberty Tree: Burgers, Tenders
+(2, 11, 150, 40, 250), (1, 11, 150, 40, 250),
+(1, 12, 200, 50, 300), (2, 12, 200, 50, 300),
 -- Toontown
-(8, 13, 300, 75, 400), (10, 13, 300, 75, 400),-- Gag Factory: Ears, Ponchos
-(3, 14, 100, 25, 150), (5, 14, 100, 25, 150), -- Farmers Market: Dole Whip, Churros
+(8, 13, 300, 75, 400), (10, 13, 300, 75, 400),
+(3, 14, 100, 25, 150), (5, 14, 100, 25, 150),
 -- Galaxys Edge
-(9, 15, 50, 5, 50), (4, 15, 200, 30, 250),    -- Docking Bay 7: Light Sabers (Low min/def), Blue Milk
-(4, 16, 300, 50, 350), (5, 16, 150, 30, 200); -- Milk Stand: Blue Milk, Churros
+(9, 15, 50, 5, 50), (4, 15, 200, 30, 250),
+(4, 16, 300, 50, 350), (5, 16, 150, 30, 200);
 
--- 12. PENDING REQUESTS (Updated for new IDs)
--- Wage change request for Donald Duck (ID 16, Staff at Main Entrance) requested by Mickey (ID 6)
-UPDATE employee_demographics
-SET pending_hourly_rate = 19.50, rate_change_requested_by = 6
-WHERE employee_id = 16;
 
--- 13. Maintenance reassignment: Matterhorn (Ride 15, Log 1) from Goofy (11) to Felix (12). Requested by Minnie (2).
+-- Section 12: Update Maintenance Reassignment
+
+-- Set the first maintenance log (Matterhorn) to show a pending reassignment
 UPDATE maintenance
 SET pending_employee_id = 12, assignment_requested_by = 2
 WHERE maintenance_id = 1;
 
--- 14. INVENTORY REQUESTS
-INSERT INTO inventory_requests (public_request_id, vendor_id, item_id, requested_count, requested_by_id, location_id, request_date, status) VALUES
-(UUID(), 7, 10, 200, 17, 4, '2025-10-25', 'Pending'), -- Daisy (ID 17) requests Ponchos for Emporium (Loc 4)
-(UUID(), 16, 4, 100, 53, 8, '2025-10-25', 'Pending'); -- Finn (ID 54/53?) requests Blue Milk for Milk Stand (Loc 8)
 
--- 15. Add "Guest Pass" as a system ticket type
+-- Section 13: Insert Pending Inventory Requests
+INSERT INTO inventory_requests (public_request_id, vendor_id, item_id, requested_count, requested_by_id, location_id, request_date, status) VALUES
+(UUID(), 7, 10, 200, 17, 4, '2025-10-25', 'Pending'),
+(UUID(), 16, 4, 100, 53, 8, '2025-10-25', 'Pending');
+
+
+-- Section 14: Insert Guest Pass Ticket Type
 INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type)
 VALUES (UUID(), 'Guest Pass', 0.00, 'Redeemable annual guest pass.', TRUE, TRUE);

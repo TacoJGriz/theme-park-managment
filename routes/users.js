@@ -286,7 +286,6 @@ router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async
     let connection;
     try {
         connection = await pool.getConnection();
-        await connection.query('UPDATE employee_demographics SET pending_hourly_rate = NULL, rate_change_requested_by = NULL WHERE public_employee_id = ?', [public_employee_id]);
 
         const {
             first_name, last_name, gender, phone_number, email,

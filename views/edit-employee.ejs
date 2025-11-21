@@ -266,14 +266,6 @@
             <div class="error"><%= error %></div>
         <% } %>
 
-        <% if (employee.pending_hourly_rate) { %>
-            <div class="info-note">
-                <strong>Pending Change:</strong> 
-                A request to change the hourly rate to <strong>$<%= parseFloat(employee.pending_hourly_rate).toFixed(2) %></strong> 
-                (requested by employee ID <%= employee.rate_change_requested_by %>) is awaiting approval.
-            </div>
-        <% } %>
-
         <form id="employeeForm" action="/employees/edit/<%= employee.public_employee_id %>" method="POST">
             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
             
