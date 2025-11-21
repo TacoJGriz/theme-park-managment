@@ -348,9 +348,18 @@
                         <td><%= vendor.location_name || 'N/A' %></td>
                         <td><span class="status-<%= vendor.vendor_status %>"><%= vendor.vendor_status %></span></td>
                         <td>
+                             <%# Checkout Button (Visible to all Staff/Admins/Managers) %>
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                <% if (vendor.vendor_status === 'CLOSED') { %>
+                                    <span class="btn-action btn-disabled" style="color: #adb5bd; border-color: #dee2e6; background-color: #f8f9fa; cursor: not-allowed;">Checkout</span>
+                                <% } else { %>
+                                    <a href="/inventory/checkout/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action" style="color: #28a745; border-color: #28a745;">Checkout</a>
+                                <% } %>
+                             <% } %>
+
                              <%# View Inventory Button %>
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
-                                <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action btn-inventory">View Inventory</a>
+                                 <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action btn-inventory">View Inventory</a>
                              <% } %>
 
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>

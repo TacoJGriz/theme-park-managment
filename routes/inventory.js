@@ -582,4 +582,161 @@ router.get('/requests', isAuthenticated, canManageInventory, async (req, res) =>
     }
 });
 
+// --- VENDOR CHECKOUT ROUTES ---
+
+// GET /inventory/checkout/:public_vendor_id
+router.get('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, async (req, res) => {
+    const { public_vendor_id } = req.params;
+    const { role, locationId } = req.session.user;
+    const { returnTo } = req.query;
+
+    try {
+        // 1. Fetch Vendor Details
+        const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        if (vendorRes.length === 0) return res.status(404).send('Vendor not found');
+        const vendor = vendorRes[0];
+
+        // 2. Permission Check (Location Scope)
+        if ((role === 'Location Manager' || role === 'Staff') && vendor.location_id !== locationId) {
+            return res.status(403).send('Forbidden: You can only access vendors in your assigned location.');
+        }
+
+        // 3. Fetch Items available at this Vendor
+        // We only want items that are currently stocked (count >= 0)
+        const [items] = await pool.query(`
+            SELECT 
+                i.item_id, i.count, 
+                it.item_name, it.price, it.public_item_id
+            FROM inventory i
+            JOIN item it ON i.item_id = it.item_id
+            WHERE i.vendor_id = ?
+            ORDER BY it.item_name
+        `, [vendor.vendor_id]);
+
+        res.render('vendor-checkout', {
+            vendor: vendor,
+            items: items,
+            returnTo: returnTo || '/vendors',
+            error: null
+        });
+
+    } catch (error) {
+        console.error("Error loading checkout page:", error);
+        res.status(500).send("Error loading page.");
+    }
+});
+
+// POST /inventory/checkout/:public_vendor_id
+router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, async (req, res) => {
+    const { public_vendor_id } = req.params;
+    const { quantities } = req.body;
+    const { role, locationId } = req.session.user;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Verify Vendor
+        const [vendorRes] = await connection.query('SELECT vendor_id, location_id, vendor_name, public_vendor_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+        if (vendorRes.length === 0) {
+            connection.release();
+            return res.status(404).send('Vendor not found');
+        }
+        const vendor = vendorRes[0];
+
+        if ((role === 'Location Manager' || role === 'Staff') && vendor.location_id !== locationId) {
+            connection.release();
+            return res.status(403).send('Forbidden');
+        }
+
+        // 2. Process Items
+        await connection.beginTransaction();
+
+        const soldItems = [];
+        let grandTotal = 0;
+
+        // Iterate through the submitted quantities
+        for (const [key, soldQty] of Object.entries(quantities)) {
+            const itemId = key.replace('item_', ''); // Remove prefix
+            const quantity = parseInt(soldQty, 10);
+
+            if (quantity > 0) {
+                // Check current stock AND get Item Name/Price for receipt
+                const [itemRes] = await connection.query(
+                    `SELECT i.count, it.item_name, it.price 
+                     FROM inventory i 
+                     JOIN item it ON i.item_id = it.item_id 
+                     WHERE i.vendor_id = ? AND i.item_id = ?`,
+                    [vendor.vendor_id, itemId]
+                );
+
+                if (itemRes.length === 0) {
+                    throw new Error(`Item ID ${itemId} not found in inventory.`);
+                }
+
+                const itemData = itemRes[0];
+                const currentStock = itemData.count;
+
+                if (quantity > currentStock) {
+                    throw new Error(`Insufficient stock for "${itemData.item_name}". Requested: ${quantity}, Available: ${currentStock}`);
+                }
+
+                // Deduct stock
+                await connection.query(
+                    'UPDATE inventory SET count = count - ? WHERE vendor_id = ? AND item_id = ?',
+                    [quantity, vendor.vendor_id, itemId]
+                );
+
+                // Add to Receipt Data
+                const subtotal = quantity * parseFloat(itemData.price);
+                grandTotal += subtotal;
+                soldItems.push({
+                    name: itemData.item_name,
+                    quantity: quantity,
+                    price: itemData.price,
+                    subtotal: subtotal
+                });
+            }
+        }
+
+        if (soldItems.length === 0) {
+            throw new Error("No items were selected for purchase.");
+        }
+
+        await connection.commit();
+
+        // 3. Render Receipt (Instead of redirecting)
+        res.render('vendor-receipt', {
+            vendor: vendor,
+            soldItems: soldItems,
+            grandTotal: grandTotal,
+            transactionId: crypto.randomUUID() // Fake ID for receipt purposes
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error processing checkout:", error);
+
+        // Re-fetch data to render checkout page again with error
+        const [items] = await pool.query(`
+            SELECT i.item_id, i.count, it.item_name, it.price, it.public_item_id
+            FROM inventory i
+            JOIN item it ON i.item_id = it.item_id
+            WHERE i.vendor_id = (SELECT vendor_id FROM vendors WHERE public_vendor_id = ?)
+            ORDER BY it.item_name
+        `, [public_vendor_id]);
+
+        const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
+
+        res.render('vendor-checkout', {
+            vendor: vendorRes[0],
+            items: items,
+            returnTo: '/vendors',
+            error: error.message
+        });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;
