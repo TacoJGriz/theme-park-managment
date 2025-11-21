@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Ticket Type</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
@@ -153,6 +154,81 @@
             border-top: 1px solid #eee;
             margin: 2em 0;
         }
+
+        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: #dc3545;
+            margin-top: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin: 1.5em 0;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            margin-top: 2em;
+        }
+
+        /* Modal Specific Buttons */
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0;
+        }
+        .btn-modal-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0;
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -192,7 +268,7 @@
             
             <% if (isMemberType) { %>
                  <input type="hidden" name="type_name" value="<%= type.type_name %>" />
-                <input type="hidden" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" />
+                 <input type="hidden" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" />
             <% } %>
     
            <br>
@@ -204,10 +280,50 @@
         <% if (!isMemberType) { %>
             <hr class="separator">
             
-            <form action="/ticket-types/delete/<%= type.public_ticket_type_id %>" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this ticket type?\n\nIf it has been used in past sales, you should DEACTIVATE it on the main list instead.');">
-                <button type="submit" class="btn-delete">Delete Ticket Type</button>
+            <form id="deleteForm" action="/ticket-types/delete/<%= type.public_ticket_type_id %>" method="POST">
+                <button type="button" class="btn-delete" onclick="openModal()">Delete Ticket Type</button>
             </form>
         <% } %>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <% if (!isMemberType) { %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Ticket Type?</h3>
+            <p>Are you sure you want to delete <strong><%= type.type_name %></strong>?<br>
+            This action cannot be undone. If it has been used in past sales, consider deactivating it instead.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            deleteForm.submit();
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+    <% } %>
 </body>
 </html>

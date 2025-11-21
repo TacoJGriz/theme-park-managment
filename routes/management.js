@@ -794,34 +794,46 @@ router.post('/ticket-types/delete/:public_ticket_type_id', isAuthenticated, isAd
     try {
         connection = await pool.getConnection();
 
-        // 1. Check if ticket type exists and if it is a system type
-        const [type] = await connection.query('SELECT type_name, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
+        // 1. Start Transaction to ensure atomicity
+        await connection.beginTransaction();
 
-        if (type.length === 0) {
+        // 2. Get the Internal ID (needed for dependency deletion)
+        const [typeRes] = await connection.query('SELECT ticket_type_id, type_name, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
+
+        if (typeRes.length === 0) {
+            await connection.rollback();
             req.session.error = "Ticket type not found.";
             return res.redirect('/ticket-types');
         }
 
-        if (type[0].is_member_type) {
+        const ticketType = typeRes[0];
+
+        if (ticketType.is_member_type) {
+            await connection.rollback();
             req.session.error = "Cannot delete the system 'Member' ticket type.";
             return res.redirect('/ticket-types');
         }
 
-        // 2. Attempt Delete
-        await connection.query('DELETE FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
+        // 3. Force Delete Dependencies (Manual Cascade)
+        // Delete associated prepaid tickets
+        await connection.query('DELETE FROM prepaid_tickets WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
 
-        req.session.success = `Ticket type "${type[0].type_name}" deleted successfully.`;
+        // Delete associated visits (Warning: This removes historical visit data)
+        await connection.query('DELETE FROM visits WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
+
+        // 4. Delete the Ticket Type
+        await connection.query('DELETE FROM ticket_types WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
+
+        // 5. Commit Changes
+        await connection.commit();
+
+        req.session.success = `Ticket type "${ticketType.type_name}" deleted successfully (including all associated history).`;
         res.redirect('/ticket-types');
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error("Error deleting ticket type:", error);
-
-        // Handle Foreign Key Constraint (if tickets have already been sold)
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            req.session.error = "Cannot delete this ticket type because it has already been used for sales. Please deactivate it instead.";
-        } else {
-            req.session.error = "Database error deleting ticket type.";
-        }
+        req.session.error = "Database error deleting ticket type.";
         res.redirect('/ticket-types');
     } finally {
         if (connection) connection.release();
@@ -1088,16 +1100,13 @@ router.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req,
 
 // Path is '/promotions'
 router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body; // Removed is_recurring
+    const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body;
     try {
-        // Default is_recurring to FALSE since automation is disabled
-        const isRecurring = false;
-
         const sql = `
-            INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
-        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null, isRecurring]);
+        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null]);
         req.session.success = "Promotion created successfully.";
         res.redirect('/promotions');
     } catch (error) {
@@ -1123,18 +1132,16 @@ router.get('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async 
     }
 });
 
-// Path is '/promotions/edit/:id' (Update Action)
+// Path is '/promotions/edit/:id'
 router.post('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring, returnQuery } = req.body;
+    const { event_name, event_type, start_date, end_date, discount_percent, summary, returnQuery } = req.body;
     try {
-        const isRecurring = is_recurring === '1';
-
         const sql = `
             UPDATE event_promotions 
-            SET event_name = ?, event_type = ?, start_date = ?, end_date = ?, discount_percent = ?, summary = ?, is_recurring = ?
+            SET event_name = ?, event_type = ?, start_date = ?, end_date = ?, discount_percent = ?, summary = ?
             WHERE event_id = ?
         `;
-        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null, isRecurring, req.params.id]);
+        await pool.query(sql, [event_name, event_type, start_date, end_date, discount_percent, summary || null, req.params.id]);
 
         req.session.success = "Promotion updated successfully.";
         res.redirect('/promotions' + (returnQuery ? `?${returnQuery}` : ''));

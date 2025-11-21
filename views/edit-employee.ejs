@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Employee</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
@@ -14,12 +15,12 @@
 
         /* Main Container */
         .container { 
-            max-width: 900px; 
+            max-width: 900px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Headings */
@@ -34,7 +35,7 @@
         
         /* Employee Name on new line */
         h1 small { 
-            display: block; 
+            display: block;
             font-size: 0.6em;
             color: #777; 
             font-weight: normal; 
@@ -121,7 +122,7 @@
         }
 
         .error { 
-            color: #721c24; 
+            color: #721c24;
             background-color: #f8d7da; 
             border-color: #f5c6cb;
             padding: 1em; 
@@ -132,9 +133,9 @@
 
         /* Buttons */
         button { 
-            padding: 12px 25px; 
+            padding: 12px 25px;
             background-color: #007bff; /* Blue for Edit/Update */
-            color: white; 
+            color: white;
             border: none; 
             border-radius: 8px; 
             cursor: pointer; 
@@ -146,9 +147,18 @@
             margin-top: 2em;
         }
         button:hover { 
-            background-color: #0056b3; 
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Delete Button Style */
+        .btn-delete {
+            background-color: #dc3545;
+            margin-top: 1.5em;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
         }
 
         /* Cancel Link */
@@ -163,8 +173,83 @@
             transition: color 0.2s;
         }
         .cancel-link:hover { 
-            color: #343a40; 
+            color: #343a40;
             text-decoration: underline;
+        }
+
+        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: #dc3545;
+            margin-top: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin: 1.5em 0;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            margin-top: 2em;
+        }
+
+        /* Modal Specific Buttons */
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0; /* Override general button margin */
+        }
+        .btn-modal-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0; /* Override general button margin */
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
@@ -189,7 +274,7 @@
             </div>
         <% } %>
 
-        <form action="/employees/edit/<%= employee.public_employee_id %>" method="POST">
+        <form id="employeeForm" action="/employees/edit/<%= employee.public_employee_id %>" method="POST">
             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
             
             <h2>Personal Information</h2>
@@ -278,7 +363,7 @@
                     <select id="location_id" name="location_id" required>
                         <% locations.forEach(location => { %>
                             <option value="<%= location.location_id %>" <% if (employee.location_id === location.location_id) { %>selected<% } %>>
-                               <%= location.location_name %>
+                                <%= location.location_name %>
                             </option>
                         <% }); %>
                     </select>
@@ -299,7 +384,7 @@
             <h2>Login Details</h2>
             <div class="form-grid">
                 <div class="form-group full-width">
-                     <label for="email">Email (Username):</label>
+                    <label for="email">Email (Username):</label>
                     <input type="email" id="email" name="email" value="<%= employee.email %>" required>
                     <div class="info-box-blue">
                         <i class="fa-solid fa-lock"></i> Password cannot be changed from this form. Use the "Reset Password" button on the main list.
@@ -308,8 +393,53 @@
             </div>
             
             <button type="submit">Update Employee</button>
+            
             <a href="/users<%= (typeof returnQuery !== 'undefined' && returnQuery) ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
+            
+            <button type="button" class="btn-delete" onclick="openModal()">Delete Employee</button>
         </form>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Employee?</h3>
+            <p>Are you sure you want to delete <strong><%= employee.first_name %> <%= employee.last_name %></strong>?<br>
+            This action cannot be undone.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <%# This button submits the form to the delete route %>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <%# --- MODAL SCRIPT --- %>
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('employeeForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            // Change the form action to the delete route and submit
+            form.action = "/users/delete/<%= employee.public_employee_id %>";
+            form.submit();
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

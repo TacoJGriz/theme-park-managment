@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Weather Event</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
@@ -128,13 +129,88 @@
             color: #343a40; 
             text-decoration: underline;
         }
+
+        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: #dc3545;
+            margin-top: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin: 1.5em 0;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            margin-top: 2em;
+        }
+
+        /* Modal Specific Buttons */
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0; /* Override general button margin */
+        }
+        .btn-modal-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0; /* Override general button margin */
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     
     <div class="container">
-        <form action="/weather/edit/<%= event.weather_id %>" method="POST">
+        <form id="weatherForm" action="/weather/edit/<%= event.weather_id %>" method="POST">
             <h1>Edit Weather Event</h1>
             <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
     
@@ -177,10 +253,52 @@
             <br>
             <button type="submit">Update Event</button>
             
-            <button type="submit" formaction="/weather/delete/<%= event.weather_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this log? This cannot be undone.')">Delete Event</button>
+            <button type="button" class="delete-btn" onclick="openDeleteModal()">Delete Event</button>
 
             <a href="/weather<%= returnQuery ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
         </form>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Weather Event?</h3>
+            <p>Are you sure you want to delete this weather log for <strong><%= toLocalISO(new Date(event.event_date)).replace('T', ' ') %></strong>?<br>
+            This action cannot be undone.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <%# This button submits the form to the delete route %>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <%# --- MODAL SCRIPT --- %>
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('weatherForm');
+
+        function openDeleteModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            // Change the form action to the delete route and submit
+            form.action = "/weather/delete/<%= event.weather_id %>";
+            form.submit();
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeDeleteModal();
+            }
+        }
+    </script>
 </body>
 </html>

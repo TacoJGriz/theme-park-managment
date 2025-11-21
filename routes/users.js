@@ -403,4 +403,55 @@ router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmploy
     }
 });
 
+// POST /delete/:public_employee_id
+router.post('/delete/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
+    const { public_employee_id } = req.params;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 1. Get Internal ID
+        const [emp] = await connection.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]);
+        if (emp.length === 0) {
+            connection.release();
+            return res.status(404).send('Employee not found');
+        }
+        const employeeId = emp[0].employee_id;
+
+        // 2. Start Transaction
+        await connection.beginTransaction();
+
+        // 3. Unassign as Supervisor (Set their direct reports' supervisor_id to NULL)
+        await connection.query('UPDATE employee_demographics SET supervisor_id = NULL WHERE supervisor_id = ?', [employeeId]);
+
+        // 4. Delete Login Credentials
+        await connection.query('DELETE FROM employee_auth WHERE employee_id = ?', [employeeId]);
+
+        // 5. Delete Employee Record
+        await connection.query('DELETE FROM employee_demographics WHERE employee_id = ?', [employeeId]);
+
+        // 6. Commit
+        await connection.commit();
+
+        req.session.success = `Employee "${emp[0].first_name} ${emp[0].last_name}" deleted successfully.`;
+        res.redirect('/users');
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error deleting employee:", error);
+
+        // Handle Foreign Key Constraints (e.g., Maintenance Logs, Sales)
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            req.session.error = "Cannot delete this employee because they have associated records (e.g., Maintenance Logs, Transactions). Please deactivate their account instead.";
+        } else {
+            req.session.error = "Database error deleting employee.";
+        }
+        // Redirect back to the edit page so they can see the error
+        res.redirect(`/users/edit/${public_employee_id}`);
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;

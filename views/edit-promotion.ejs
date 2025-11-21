@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Promotion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
@@ -83,8 +84,6 @@
             min-height: 100px; 
         }
 
-        /* Checkbox Styling - REMOVED */
-
         /* Error Message */
         .error { 
             color: #721c24; 
@@ -116,7 +115,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        /* Delete Button */
+        /* Delete Button (Trigger) */
         .btn-delete {
             background-color: #dc3545;
             margin-top: 1.5em;
@@ -140,6 +139,79 @@
             color: #343a40; 
             text-decoration: underline;
         }
+
+        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: #dc3545;
+            margin-top: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin: 1.5em 0;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            margin-top: 2em;
+        }
+
+        /* Modal Specific Buttons */
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            width: auto;
+            padding: 10px 20px;
+        }
+        .btn-modal-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            width: auto;
+            padding: 10px 20px;
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -155,7 +227,7 @@
             <div class="error"><%= error %></div>
         <% } %>
 
-        <form action="/promotions/edit/<%= promotion.event_id %>" method="POST">
+        <form id="promotionForm" action="/promotions/edit/<%= promotion.event_id %>" method="POST">
             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
             
             <div class="form-grid">
@@ -189,8 +261,6 @@
                     <input type="number" id="discount_percent" name="discount_percent" min="0" max="100" step="0.01" value="<%= promotion.discount_percent %>" required>
                 </div>
 
-                <!-- Removed Auto-Renew Checkbox -->
-
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="summary">Description / Terms:</label>
                     <textarea id="summary" name="summary"><%= promotion.summary %></textarea>
@@ -204,13 +274,50 @@
             <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/promotions?' + returnQuery : '/promotions'; %>
             <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
 
-            <button type="submit" 
-                formaction="/promotions/delete/<%= promotion.event_id %>" 
-                class="btn-delete" 
-                onclick="return confirm('Are you sure you want to delete this promotion?');">
-                Delete Promotion
-            </button>
+            <button type="button" class="btn-delete" onclick="openModal()">Delete Promotion</button>
         </form>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Promotion?</h3>
+            <p>Are you sure you want to delete <strong><%= promotion.event_name %></strong>?<br>
+            This action cannot be undone.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <%# This button submits the form to the delete route %>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
+            </div>
+        </div>
+    </div>
+
+    <%# --- MODAL SCRIPT --- %>
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('promotionForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            // Change the form action to the delete route and submit
+            form.action = "/promotions/delete/<%= promotion.event_id %>";
+            form.submit();
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
