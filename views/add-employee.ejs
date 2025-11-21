@@ -214,7 +214,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="employee_type">Job Role:</label>
-                    <select id="employee_type" name="employee_type" required>
+                    <select id="employee_type" name="employee_type" required onchange="filterSupervisors()">
                         <option value="">-- Select Role --</option>
                         <% creatableRoles.forEach(role => { %>
                             <option value="<%= role %>"><%= role %></option>
@@ -235,9 +235,12 @@
                 <div class="form-group">
                     <label for="supervisor_id">Reports To (Supervisor):</label>
                     <select id="supervisor_id" name="supervisor_id">
-                        <option value="">-- None --</option>
+                        <option value="" data-role="all">-- None --</option>
                         <% supervisors.forEach(sup => { %>
-                            <option value="<%= sup.employee_id %>"><%= sup.first_name %> <%= sup.last_name %> (<%= sup.employee_type %>)</option>
+                            <%# --- ADDED data-role attribute here for JS filtering --- %>
+                            <option value="<%= sup.employee_id %>" data-role="<%= sup.employee_type %>">
+                                <%= sup.first_name %> <%= sup.last_name %> (<%= sup.employee_type %>)
+                            </option>
                         <% }); %>
                     </select>
                 </div>
@@ -271,5 +274,47 @@
             <a href="/users" class="cancel-link">Cancel</a>
         </form>
     </div>
+
+    <script>
+        function filterSupervisors() {
+            const roleSelect = document.getElementById('employee_type');
+            const supervisorSelect = document.getElementById('supervisor_id');
+            const selectedRole = roleSelect.value;
+            const options = supervisorSelect.querySelectorAll('option');
+
+            // Reset selection
+            supervisorSelect.value = "";
+
+            // Define Hierarchy Logic
+            let allowedSupervisors = [];
+
+            if (selectedRole === 'Staff') {
+                allowedSupervisors = ['Location Manager'];
+            } else if (selectedRole === 'Location Manager') {
+                allowedSupervisors = ['Park Manager'];
+            } else if (selectedRole === 'Maintenance') {
+                allowedSupervisors = ['Park Manager'];
+            } else if (selectedRole === 'Park Manager') {
+                allowedSupervisors = ['Admin'];
+            } else if (selectedRole === 'Admin') {
+                allowedSupervisors = []; // Admins usually don't have supervisors, or report to other Admins
+            }
+
+            // Show/Hide options based on logic
+            options.forEach(opt => {
+                const supervisorRole = opt.getAttribute('data-role');
+                
+                if (supervisorRole === 'all') return; // Always show "None" option
+
+                if (allowedSupervisors.includes(supervisorRole)) {
+                    opt.style.display = 'block'; // Show
+                    opt.disabled = false;
+                } else {
+                    opt.style.display = 'none'; // Hide
+                    opt.disabled = true;
+                }
+            });
+        }
+    </script>
 </body>
 </html>

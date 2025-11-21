@@ -1088,10 +1088,10 @@ router.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req,
 
 // Path is '/promotions'
 router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring } = req.body;
+    const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body; // Removed is_recurring
     try {
-        // Checkbox returns '1' if checked, undefined if not
-        const isRecurring = is_recurring === '1';
+        // Default is_recurring to FALSE since automation is disabled
+        const isRecurring = false;
 
         const sql = `
             INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring)
@@ -1203,30 +1203,42 @@ router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrP
     try {
         connection = await pool.getConnection();
 
-        // 1. Check if location exists
+        // 1. Check if location exists and get Internal ID
         const [loc] = await connection.query('SELECT location_id, location_name FROM location WHERE public_location_id = ?', [public_location_id]);
         if (loc.length === 0) {
+            connection.release();
             req.session.error = "Location not found.";
             return res.redirect('/locations');
         }
+        const locationId = loc[0].location_id;
 
-        // 2. Attempt Delete
-        // Note: This will fail if Rides or Employees are still assigned (Foreign Key Constraints)
-        await connection.query('DELETE FROM location WHERE public_location_id = ?', [public_location_id]);
+        // 2. Start Transaction
+        await connection.beginTransaction();
 
-        req.session.success = `Location "${loc[0].location_name}" removed successfully.`;
+        // 3. Unassign Employees (Set location_id to NULL)
+        // This fixes the "employee_demographics_ibfk_3" constraint error
+        await connection.query('UPDATE employee_demographics SET location_id = NULL WHERE location_id = ?', [locationId]);
+
+        // 4. Unassign Rides (Set location_id to NULL)
+        // Rides will become "Unassigned" rather than being deleted
+        await connection.query('UPDATE rides SET location_id = NULL WHERE location_id = ?', [locationId]);
+
+        // Note: Vendors are configured with "ON DELETE SET NULL" in the schema, so they handle themselves.
+
+        // 5. Delete the Location
+        await connection.query('DELETE FROM location WHERE location_id = ?', [locationId]);
+
+        // 6. Commit
+        await connection.commit();
+
+        req.session.success = `Location "${loc[0].location_name}" removed successfully. Employees and Rides have been unassigned.`;
         res.redirect('/locations');
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error("Error deleting location:", error);
-
-        // Handle Foreign Key Constraint Violation (Error 1451)
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            req.session.error = "Cannot remove this location because it still has Rides or Employees assigned to it. Please reassign or remove them first.";
-        } else {
-            req.session.error = "An error occurred while trying to remove the location.";
-        }
-        res.redirect('/locations');
+        req.session.error = "An error occurred while trying to remove the location.";
+        res.redirect(`/locations/edit/${public_location_id}`);
     } finally {
         if (connection) connection.release();
     }

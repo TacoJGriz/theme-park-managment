@@ -14,12 +14,12 @@
 
         /* Main Container */
         .container { 
-            max-width: 800px; 
+            max-width: 800px;
             margin: 2em auto; 
             background: white; 
             padding: 2.5em; 
             border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Headings */
@@ -62,7 +62,7 @@
 
         /* Error Message */
         .error { 
-            color: #721c24; 
+            color: #721c24;
             background-color: #f8d7da; 
             border-color: #f5c6cb;
             padding: 1em; 
@@ -72,10 +72,10 @@
         }
 
         /* Buttons */
-        button { 
-            padding: 12px 25px; 
+        button.btn-save { 
+            padding: 12px 25px;
             background-color: #007bff; /* Primary Blue */
-            color: white; 
+            color: white;
             border: none; 
             border-radius: 8px; 
             cursor: pointer; 
@@ -85,21 +85,28 @@
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button.btn-save:hover { 
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
         /* Delete Button Style */
         .delete-btn { 
-            background-color: #dc3545; 
-            float: right; /* Keep delete button on the right */
-            width: auto; /* Auto width for delete button to separate it */
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            float: right; 
+            width: auto;
             margin-top: 1.5em;
+            transition: all 0.2s;
         }
         .delete-btn:hover { 
-            background-color: #c82333; 
+            background-color: #c82333;
         }
 
         /* Cancel Link */
@@ -114,7 +121,7 @@
             transition: color 0.2s;
         }
         .cancel-link:hover { 
-            color: #343a40; 
+            color: #343a40;
             text-decoration: underline;
         }
         
@@ -124,6 +131,42 @@
             clear: both;
             display: table;
         }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideIn 0.2s;
+        }
+        .modal-content h3 { margin-top: 0; color: #dc3545; }
+        .modal-content p { color: #555; margin-bottom: 1.5em; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
+        .btn-modal-cancel {
+            padding: 10px 20px; background: #e9ecef; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
+        }
+        .btn-modal-confirm {
+            padding: 10px 20px; background: #dc3545; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -148,14 +191,58 @@
             </div>
             
             <br>
-            <button type="submit">Save Changes</button>
-            
-            <a href="/locations" class="cancel-link">Cancel</a>
+            <button type="submit" class="btn-save">Save Changes</button>
+        </form>
 
-            <button type="submit" formaction="/locations/delete/<%= location.public_location_id %>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this location? This action cannot be undone.');">
+        <form id="deleteForm" action="/locations/delete/<%= location.public_location_id %>" method="POST">
+            <button type="button" class="delete-btn" onclick="openModal()">
                 Remove Location
             </button>
         </form>
+
+        <a href="/locations" class="cancel-link">Cancel</a>
     </div>
+
+    <%# --- CUSTOM CONFIRMATION MODAL --- %>
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Location?</h3>
+            <p>Are you sure you want to remove <strong><%= location.location_name %></strong>?<br>
+            <br>
+            <small style="color: #d9534f;">
+                <strong>Warning:</strong> Employees and Rides assigned to this location will be <u>unassigned</u>.
+            </small>
+            </p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Remove It</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            deleteForm.submit();
+        }
+
+        // Close if clicking outside modal
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

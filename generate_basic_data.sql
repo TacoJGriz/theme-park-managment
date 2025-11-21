@@ -260,24 +260,24 @@ INSERT INTO blackout_dates (type_id, blackout_date, reason) VALUES
 (4, '2025-12-31', 'New Years Eve');
 
 -- 8. PROMOTIONS
-INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary, is_recurring) VALUES
-('New Year Kickoff', 'Holiday', '2025-01-01', '2025-01-05', 20.00, 'Start the year with a bang!', TRUE),
-('MLK Weekend', 'Weekend', '2025-01-17', '2025-01-20', 15.00, 'Honor the dream with family fun.', TRUE),
-('Lunar New Year Festival', 'Holiday', '2025-01-28', '2025-02-02', 18.00, 'Celebrate the Year of the Snake with special parades.', TRUE),
-('Valentines Sweetheart Deal', 'Special', '2025-02-14', '2025-02-16', 25.00, 'Perfect date night discount.', TRUE),
-('Presidents Day Sale', 'Weekend', '2025-02-15', '2025-02-17', 10.00, 'School is out, fun is in!', TRUE),
-('St. Patricks Lucky Days', 'Special', '2025-03-14', '2025-03-17', 17.00, 'Wear green and save green!', TRUE),
-('Spring Break Splash', 'Seasonal', '2025-03-20', '2025-04-10', 10.00, 'Enjoy the warmer weather.', TRUE),
-('Easter Eggstravaganza', 'Holiday', '2025-04-18', '2025-04-20', 15.00, 'Egg hunts and bunny hops.', TRUE),
-('Memorial Day Salute', 'Holiday', '2025-05-23', '2025-05-26', 25.00, 'Kick off the summer season.', TRUE),
-('Summer School Out', 'Seasonal', '2025-06-01', '2025-06-15', 10.00, 'Celebrate the start of summer vacation.', TRUE),
-('Juneteenth Jubilee', 'Holiday', '2025-06-19', '2025-06-19', 19.00, 'Freedom celebration event.', TRUE),
-('Independence Week', 'Holiday', '2025-07-01', '2025-07-07', 15.00, 'Fireworks every night!', TRUE),
-('Labor Day Relaxer', 'Holiday', '2025-08-29', '2025-09-01', 20.00, 'The last big blast of summer.', TRUE),
-('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.', TRUE),
-('Veterans Day Honor', 'Special', '2025-11-11', '2025-11-11', 50.00, 'Special appreciation discount.', TRUE),
-('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.', TRUE),
-('Winter Wonderland', 'Holiday', '2025-12-01', '2025-12-31', 10.00, 'Holiday-themed event with artificial snow.', TRUE);
+INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary) VALUES
+('New Year Kickoff', 'Holiday', '2025-01-01', '2025-01-05', 20.00, 'Start the year with a bang!'),
+('MLK Weekend', 'Weekend', '2025-01-17', '2025-01-20', 15.00, 'Honor the dream with family fun.'),
+('Lunar New Year Festival', 'Holiday', '2025-01-28', '2025-02-02', 18.00, 'Celebrate the Year of the Snake with special parades.'),
+('Valentines Sweetheart Deal', 'Special', '2025-02-14', '2025-02-16', 25.00, 'Perfect date night discount.'),
+('Presidents Day Sale', 'Weekend', '2025-02-15', '2025-02-17', 10.00, 'School is out, fun is in!'),
+('St. Patricks Lucky Days', 'Special', '2025-03-14', '2025-03-17', 17.00, 'Wear green and save green!'),
+('Spring Break Splash', 'Seasonal', '2025-03-20', '2025-04-10', 10.00, 'Enjoy the warmer weather.'),
+('Easter Eggstravaganza', 'Holiday', '2025-04-18', '2025-04-20', 15.00, 'Egg hunts and bunny hops.'),
+('Memorial Day Salute', 'Holiday', '2025-05-23', '2025-05-26', 25.00, 'Kick off the summer season.'),
+('Summer School Out', 'Seasonal', '2025-06-01', '2025-06-15', 10.00, 'Celebrate the start of summer vacation.'),
+('Juneteenth Jubilee', 'Holiday', '2025-06-19', '2025-06-19', 19.00, 'Freedom celebration event.'),
+('Independence Week', 'Holiday', '2025-07-01', '2025-07-07', 15.00, 'Fireworks every night!'),
+('Labor Day Relaxer', 'Holiday', '2025-08-29', '2025-09-01', 20.00, 'The last big blast of summer.'),
+('Halloween Spooktacular', 'Seasonal', '2025-10-01', '2025-10-31', 15.00, 'Discount on tickets after 4pm.'),
+('Veterans Day Honor', 'Special', '2025-11-11', '2025-11-11', 50.00, 'Special appreciation discount.'),
+('Thanksgiving Harvest', 'Holiday', '2025-11-24', '2025-11-30', 10.00, 'Feast and fun for the whole family.'),
+('Winter Wonderland', 'Holiday', '2025-12-01', '2025-12-31', 10.00, 'Holiday-themed event with artificial snow.');
 
 -- 9. VENDORS (2 per location = 16 total)
 -- ADDED vendor_status column
