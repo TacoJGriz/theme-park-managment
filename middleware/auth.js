@@ -1,5 +1,6 @@
 const pool = require('../db');
 
+// middleware to ensure the user is logged in
 const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
         return next();
@@ -7,40 +8,59 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/');
 };
 
+// middleware to restrict access to admins only
 const isAdmin = (req, res, next) => {
-    if (req.session.user && req.session.user.role === 'Admin') { return next(); }
+    if (req.session.user && req.session.user.role === 'Admin') {
+        return next();
+    }
     res.status(403).send('Forbidden: Admins only');
 };
 
+// middleware to restrict access to park managers only
 const isParkManager = (req, res, next) => {
-    if (req.session.user && req.session.user.role === 'Park Manager') { return next(); }
+    if (req.session.user && req.session.user.role === 'Park Manager') {
+        return next();
+    }
     res.status(403).send('Forbidden: Park Managers only');
 };
 
+// middleware allowing only admins to add employees
 const canAddEmployees = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin') { return next(); }
+    if (role === 'Admin') {
+        return next();
+    }
     res.status(403).send('Forbidden: Admin access required');
 };
 
+// middleware allowing access to admins or park managers
 const isAdminOrParkManager = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Park Manager') { return next(); }
+    if (role === 'Admin' || role === 'Park Manager') {
+        return next();
+    }
     res.status(403).send('Forbidden: Admin or Park Manager access required');
 };
 
+// middleware allowing upper management to view user lists
 const canViewUsers = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') { return next(); }
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
+        return next();
+    }
     res.status(403).send('Forbidden: Access denied.');
 };
 
+// middleware allowing maintenance staff and management
 const isMaintenanceOrHigher = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
-    if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') { return next(); }
+    if (role === 'Admin' || role === 'Park Manager' || role === 'Maintenance') {
+        return next();
+    }
     res.status(403).send('Forbidden: Maintenance or higher access required');
 };
 
+// middleware allowing staff and management to handle member visits
 const canManageMembersVisits = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Staff') {
@@ -49,6 +69,7 @@ const canManageMembersVisits = (req, res, next) => {
     res.status(403).send('Forbidden: Staff access or higher required');
 };
 
+// middleware allowing most employees to view ride status
 const canViewRides = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance' || role === 'Staff') {
@@ -57,6 +78,7 @@ const canViewRides = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied for your role.');
 };
 
+// middleware restricting retail management to location managers and up
 const canManageRetail = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
@@ -65,6 +87,7 @@ const canManageRetail = (req, res, next) => {
     res.status(403).send('Forbidden: Admin, Park Manager, or Location Manager access required.');
 };
 
+// middleware allowing staff and management to view inventory
 const canViewInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -73,6 +96,7 @@ const canViewInventory = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied.');
 };
 
+// middleware allowing staff and management to modify inventory
 const canManageInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -81,6 +105,7 @@ const canManageInventory = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied.');
 };
 
+// middleware restricting report viewing to senior management
 const canViewReports = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') {
@@ -89,6 +114,7 @@ const canViewReports = (req, res, next) => {
     res.status(403).send('Forbidden: Admin or Park Manager access required for reports.');
 };
 
+// helper to calculate date ranges and formats for reports based on grouping
 const getReportSettings = (selectedDate, grouping) => {
     const d = new Date(selectedDate + 'T00:00:00');
     if (isNaN(d.getTime())) {
@@ -134,9 +160,15 @@ const getReportSettings = (selectedDate, grouping) => {
         throw new Error("Invalid grouping selection.");
     }
 
-    return { startDate, endDate, sqlDateFormat, labelFormat };
+    return {
+        startDate,
+        endDate,
+        sqlDateFormat,
+        labelFormat
+    };
 };
 
+// middleware restricting maintenance approval to senior management
 const canApproveMaintenance = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager') {
@@ -145,6 +177,7 @@ const canApproveMaintenance = (req, res, next) => {
     res.status(403).send('Forbidden: Admin or Park Manager access required.');
 };
 
+// middleware allowing employees to log ride runs
 const canLogRideRun = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -153,6 +186,7 @@ const canLogRideRun = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied.');
 };
 
+// middleware allowing employees to view ride history
 const canViewRideHistory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Staff') {
@@ -161,6 +195,7 @@ const canViewRideHistory = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied.');
 };
 
+// middleware restricting inventory approval to managers
 const canApproveInventory = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
@@ -169,7 +204,7 @@ const canApproveInventory = (req, res, next) => {
     res.status(403).send('Forbidden: Access denied.');
 };
 
-// UPDATED: Removed HR roles
+// middleware restricting approval viewing to managers
 const canViewApprovals = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
@@ -178,6 +213,7 @@ const canViewApprovals = (req, res, next) => {
     res.status(403).send('Forbidden: You do not have permission to view this page.');
 };
 
+// formats a phone string into standard US format
 const formatPhoneNumber = (phoneString) => {
     if (!phoneString) {
         return null;
@@ -191,12 +227,16 @@ const formatPhoneNumber = (phoneString) => {
 
     return phoneString.substring(0, 15) || null;
 };
+
+// strips non-numeric characters from a phone string
 const normalizePhone = (phoneString) => {
     if (!phoneString) {
         return "";
     }
     return phoneString.replace(/\D/g, '');
 };
+
+// formats a date object for receipt display
 const formatReceiptDate = (date) => {
     if (!date) return '';
     return date.toLocaleString('en-US', {
@@ -208,12 +248,12 @@ const formatReceiptDate = (date) => {
     });
 };
 
+// masks phone number digits for privacy
 const censorPhone = (phone) => {
     if (!phone) return 'N/A';
     const digits = phone.replace(/\D/g, '');
     if (digits.length > 4) {
         const lastFour = digits.slice(-4);
-
         const censoredPart = '*'.repeat(digits.length - 4);
 
         if (digits.length === 10) {
@@ -223,6 +263,8 @@ const censorPhone = (phone) => {
     }
     return phone;
 };
+
+// middleware ensuring a member is logged in
 const isMemberAuthenticated = (req, res, next) => {
     if (req.session && req.session.member) {
         return next();
@@ -230,6 +272,7 @@ const isMemberAuthenticated = (req, res, next) => {
     res.redirect('/login');
 };
 
+// middleware ensuring the user is a guest (not logged in)
 const isGuest = (req, res, next) => {
     if (req.session && req.session.user) {
         return res.redirect('/dashboard');
@@ -240,21 +283,25 @@ const isGuest = (req, res, next) => {
     return next();
 };
 
+// calculates pending approval counts for the dashboard notification badge
 const countPendingApprovals = async (req, res, next) => {
-    // Initialize defaults
     res.locals.approvalCount = 0;
     res.locals.newApprovalCount = 0;
-    res.locals.maintenanceCount = 0; // Initialize maintenance count
+    res.locals.maintenanceCount = 0;
 
     if (!req.session || !req.session.user) {
         return next();
     }
 
-    const { id, role, locationId } = req.session.user; // Destructure id for queries
+    const {
+        id,
+        role,
+        locationId
+    } = req.session.user;
     let count = 0;
 
     try {
-        // 1. Maintenance Reassignments (Admin & Park Manager only)
+        // count maintenance reassignments for senior management
         if (role === 'Admin' || role === 'Park Manager') {
             const [mResult] = await pool.query(
                 'SELECT COUNT(*) as count FROM maintenance WHERE pending_employee_id IS NOT NULL AND end_date IS NULL'
@@ -262,7 +309,7 @@ const countPendingApprovals = async (req, res, next) => {
             count += mResult[0].count;
         }
 
-        // 2. Inventory Requests (Admin, Park Manager, Location Manager)
+        // count pending inventory requests for managers
         if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager') {
             let sql = `
                 SELECT COUNT(*) as count 
@@ -281,7 +328,7 @@ const countPendingApprovals = async (req, res, next) => {
             count += iResult[0].count;
         }
 
-        // 3. Active Maintenance Assignments (Maintenance Staff only)
+        // count active assignments for maintenance staff
         if (role === 'Maintenance') {
             const [assignResult] = await pool.query(
                 'SELECT COUNT(*) as count FROM maintenance WHERE employee_id = ? AND end_date IS NULL',
@@ -292,7 +339,7 @@ const countPendingApprovals = async (req, res, next) => {
 
         res.locals.approvalCount = count;
 
-        // Calculate "New" since last check (For Admins/Managers)
+        // calculate new items since last check
         const lastCheck = req.session.lastApprovalCheckCount || 0;
         res.locals.newApprovalCount = Math.max(0, count - lastCheck);
 
@@ -302,6 +349,7 @@ const countPendingApprovals = async (req, res, next) => {
     next();
 };
 
+// middleware restricting maintenance management to relevant roles
 const canManageMaintenance = (req, res, next) => {
     const role = req.session.user ? req.session.user.role : null;
     if (role === 'Admin' || role === 'Park Manager' || role === 'Location Manager' || role === 'Maintenance') {

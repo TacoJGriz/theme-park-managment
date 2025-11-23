@@ -5,6 +5,8 @@ const session = require('express-session');
 const pool = require('./db');
 const app = express();
 const port = 3000;
+
+// import authentication and authorization middleware functions
 const {
     isAuthenticated,
     isAdmin,
@@ -37,32 +39,40 @@ const {
     isGuest
 } = require('./middleware/auth');
 
+// configure ejs as the view engine
 app.set('view engine', 'ejs');
 
-// --- MIDDLEWARE SETUP ---
-app.use(express.urlencoded({ extended: true })); // Handles HTML forms
-app.use(express.json());                         // HANDLES JSON (Fixes the Map Editor Error)
+// configure standard middleware for form data, json, and static files
+app.use(express.urlencoded({
+    extended: true
+}));
+app.use(express.json());
 app.use(express.static('public'));
 
-// --- SESSION CONFIGURATION ---
+// configure session management
 app.use(session({
-    secret: 'a_secret_key_for_your_project',
+    secret: 'MvXA5TJt6pcuq',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }
+    cookie: {
+        secure: false
+    }
 }));
 
-// --- GLOBAL MIDDLEWARE ---
+// middleware to make user and member session data available to templates
 app.use((req, res, next) => {
-    res.locals.user = req.session.user; // For Employee Portal
-    res.locals.member = req.session.member; // For Member Portal
+    res.locals.user = req.session.user;
+    res.locals.member = req.session.member;
     next();
 });
 
-const { countPendingApprovals } = require('./middleware/auth');
+// middleware to calculate pending approval counts for dashboards
+const {
+    countPendingApprovals
+} = require('./middleware/auth');
 app.use(countPendingApprovals);
 
-// --- ROUTE DEFINITIONS ---
+// register application routes
 const indexRoutes = require('./routes/index');
 app.use('/', indexRoutes);
 
@@ -95,16 +105,16 @@ app.use('/inventory', inventoryRoutes);
 const reportRoutes = require('./routes/reports');
 app.use('/reports', reportRoutes);
 
-const memberRoutes = require('./routes/members'); // Employee-facing /members routes
+const memberRoutes = require('./routes/members');
 app.use('/members', memberRoutes);
 
-const memberPortalRoutes = require('./routes/member-portal'); // Member-facing /member routes
+const memberPortalRoutes = require('./routes/member-portal');
 app.use('/member', memberPortalRoutes);
 
-const visitRoutes = require('./routes/visits'); // Employee-facing /visits routes
+const visitRoutes = require('./routes/visits');
 app.use('/visits', visitRoutes);
 
-// --- Start Server ---
+// start the server on the specified port
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
