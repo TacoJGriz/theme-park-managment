@@ -4,84 +4,73 @@
     <meta charset="UTF-8">
     <title>Inventory Requests</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 1200px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Back Link */
-        .back-link { 
+        .back-link {
             display: inline-block;
-            margin-bottom: 1.5em; 
-            text-decoration: none; 
+            margin-bottom: 1.5em;
+            text-decoration: none;
             color: #007bff;
             font-weight: 600;
-            padding: 8px 15px; 
+            padding: 8px 15px;
             background-color: #e9ecef;
-            border-radius: 8px; 
+            border-radius: 8px;
             transition: all 0.2s;
         }
-        .back-link:hover { 
-            background-color: #dee2e6; 
-            color: #0056b3; 
+        .back-link:hover {
+            background-color: #dee2e6;
+            color: #0056b3;
         }
-
-        /* --- TABLE STYLES --- */
-        table { 
+        table {
             width: 100%;
-            border-collapse: separate; 
+            border-collapse: separate;
             border-spacing: 0;
             font-size: 0.95em;
             background: white;
-            border-radius: 12px; 
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
-        th { 
+        th {
             background-color: #007bff;
-            color: white; 
+            color: white;
             padding: 15px;
-            text-align: left; 
+            text-align: left;
             font-weight: 600;
             border: none;
             text-transform: uppercase;
             font-size: 0.85em;
             letter-spacing: 0.5px;
         }
-        td { 
+        td {
             padding: 15px;
-            border-bottom: 1px solid #f1f1f1; 
+            border-bottom: 1px solid #f1f1f1;
             vertical-align: middle;
             color: #555;
         }
         tr:last-child td { border-bottom: none; }
         tr:nth-child(even) { background-color: #f8f9fa; }
         tr:hover { background-color: #f1f5f9; }
-
-        /* Status Badges */
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -93,8 +82,6 @@
         .badge-Pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .badge-Approved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .badge-Rejected { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-        /* Action Button */
         .btn-edit {
             display: inline-block;
             padding: 6px 12px;
@@ -103,7 +90,7 @@
             font-weight: 600;
             font-size: 0.9em;
             background-color: white;
-            color: #fd7e14; /* Orange */
+            color: #fd7e14;
             border: 1px solid #fd7e14;
             transition: all 0.2s;
         }
@@ -111,7 +98,6 @@
             background-color: #fd7e14;
             color: white;
         }
-        
         .text-muted { color: #999; font-style: italic; }
     </style>
 </head>
@@ -149,11 +135,6 @@
                         <td><%= req.requester_name %></td>
                         <td>
                             <% 
-                                // LOGIC: 
-                                // 1. Request must be pending.
-                                // 2. User is Admin OR Park Manager OR Location Manager (Global permission).
-                                //    (Note: Location Managers only see requests for their location in this list anyway due to the route filter).
-                                // 3. OR User is the original requester.
                                 const isManager = (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager');
                                 const isRequester = (user.id === req.requested_by_id);
                             %>

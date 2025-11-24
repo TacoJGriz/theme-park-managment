@@ -1,33 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const pool = require('../db'); // Adjust path to db.js
-const crypto = require('crypto'); // ADDED
+const pool = require('../db');
+const crypto = require('crypto');
 const {
     isAuthenticated,
     isGuest,
     formatPhoneNumber
-} = require('../middleware/auth'); // Adjust path to auth.js
+} = require('../middleware/auth');
 
 const saltRounds = 10;
 
-// GET /signup
-// Renders the new purchase & registration form
+// signup form
 router.get('/signup', isGuest, async (req, res) => {
     try {
-        const { type: type_id } = req.query;
+        const {
+            type: type_id
+        } = req.query;
         if (!type_id) {
-            return res.redirect('/'); // If no type is selected, go back to homepage
+            return res.redirect('/');
         }
 
-        // MODIFIED: Query by public_type_id
         const [typeResult] = await pool.query(
             'SELECT * FROM membership_type WHERE public_type_id = ? AND is_active = TRUE',
             [type_id]
         );
 
         if (typeResult.length === 0) {
-            // If type is invalid or not active, go back to homepage
             return res.redirect('/');
         }
 
@@ -42,50 +41,46 @@ router.get('/signup', isGuest, async (req, res) => {
     }
 });
 
-// POST /signup
-// Processes the new member purchase and creates their account
+// process registration
 router.post('/signup', isGuest, async (req, res) => {
     const {
-        type_id, // This is the *internal* type_id, passed from the form's hidden input
+        type_id,
         first_name,
         last_name,
         date_of_birth,
         email,
         password,
         confirm_password,
-        payment_method_choice, // 'card' or 'bank'
-        save_payment_card,   // 'true' or undefined
-        save_payment_bank,   // 'true' or undefined
+        payment_method_choice,
+        save_payment_card,
+        save_payment_bank,
         mock_card_brand,
         mock_card_number,
         mock_card_expiry,
-        mock_routing_number,
         mock_account_number
     } = req.body;
 
-    // --- Standardize sub-member fields into arrays ---
     const subFirstNames = [].concat(req.body.sub_first_name || []);
     const subLastNames = [].concat(req.body.sub_last_name || []);
     const subDobs = [].concat(req.body.sub_dob || []);
-
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
-    let type; // To re-render the page on error
-    const connection = await pool.getConnection(); // Get connection early
+    let type;
+    let connection;
 
     try {
-        // Get Membership Type details (using internal ID from form)
+        connection = await pool.getConnection();
+
         const [typeResult] = await connection.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) {
             throw new Error("Invalid membership type submitted.");
         }
         type = typeResult[0];
 
-        // --- Validation ---
         if (password !== confirm_password) {
             throw new Error("Passwords do not match.");
         }
-        // Check if email is already in use
+
         const [empEmail] = await connection.query('SELECT employee_id FROM employee_demographics WHERE email = ?', [email]);
         const [memEmail] = await connection.query('SELECT membership_id FROM membership WHERE email = ?', [email]);
 
@@ -93,197 +88,182 @@ router.post('/signup', isGuest, async (req, res) => {
             throw new Error("This email address is already in use.");
         }
 
-        // --- Dynamic Price Calculation ---
-        // *** FIXED THE STRING CONCATENATION BUG ***
         const totalMembers = 1 + subFirstNames.length;
         const additionalMembers = Math.max(0, totalMembers - type.base_members);
         const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
 
-        // --- Database Transaction ---
         await connection.beginTransaction();
 
         let newPrimaryMemberId;
         const purchaseDate = new Date();
         const endDate = new Date(new Date().setFullYear(purchaseDate.getFullYear() + 1));
-
-        // --- ADDED UUID GENERATION ---
         const publicMemberId = crypto.randomUUID();
         const publicPurchaseId = crypto.randomUUID();
         let newPaymentMethodId = null;
         let paymentIdentifier = 'N/A';
 
-        try {
-            // 1. Create the PRIMARY membership record
-            // ADDED public_membership_id
-            const memSql = `
-                INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-            `;
-            const [memResult] = await connection.query(memSql, [
-                publicMemberId, // ADDED
-                first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, purchaseDate, endDate
-            ]);
+        const memSql = `
+            INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+        `;
+        const [memResult] = await connection.query(memSql, [
+            publicMemberId,
+            first_name, last_name, email, formattedPhoneNumber, date_of_birth, type_id, purchaseDate, endDate
+        ]);
+        newPrimaryMemberId = memResult.insertId;
 
-            newPrimaryMemberId = memResult.insertId;
+        const hash = await bcrypt.hash(password, saltRounds);
+        const authSql = "INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)";
+        await connection.query(authSql, [newPrimaryMemberId, hash]);
 
-            // 2. Create the member_auth record
-            const hash = await bcrypt.hash(password, saltRounds);
-            const authSql = "INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)";
-            await connection.query(authSql, [newPrimaryMemberId, hash]);
+        const shouldSaveCard = (payment_method_choice === 'card' && save_payment_card === 'true');
+        const shouldSaveBank = (payment_method_choice === 'bank' && save_payment_bank === 'true');
 
-            // 3. Save Payment Method if checked
-            const shouldSaveCard = (payment_method_choice === 'card' && save_payment_card === 'true');
-            const shouldSaveBank = (payment_method_choice === 'bank' && save_payment_bank === 'true');
+        if (payment_method_choice === 'card') {
+            const cardDigits = (mock_card_number || '').replace(/\D/g, '');
+            const lastFour = cardDigits.slice(-4);
+            paymentIdentifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
+        } else if (payment_method_choice === 'bank') {
+            const accountDigits = (mock_account_number || '').replace(/\D/g, '');
+            const lastFour = accountDigits.slice(-4);
+            paymentIdentifier = `Bank Account ending in ${lastFour}`;
+        }
 
-            if (payment_method_choice === 'card') {
-                const cardDigits = (mock_card_number || '').replace(/\D/g, '');
-                const lastFour = cardDigits.slice(-4);
-                paymentIdentifier = `${mock_card_brand || 'Card'} ending in ${lastFour}`;
-            } else if (payment_method_choice === 'bank') {
-                const accountDigits = (mock_account_number || '').replace(/\D/g, '');
-                const lastFour = accountDigits.slice(-4);
-                paymentIdentifier = `Bank Account ending in ${lastFour}`;
-            }
+        if (shouldSaveCard) {
+            const publicPaymentId = crypto.randomUUID();
+            const [paymentResult] = await connection.query(
+                `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                 VALUES (?, ?, 'Card', TRUE, ?, ?)`,
+                [publicPaymentId, newPrimaryMemberId, paymentIdentifier, mock_card_expiry || null]
+            );
+            newPaymentMethodId = paymentResult.insertId;
 
+        } else if (shouldSaveBank) {
+            const publicPaymentId = crypto.randomUUID();
+            const [paymentResult] = await connection.query(
+                `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
+                 VALUES (?, ?, 'Bank', TRUE, ?, NULL)`,
+                [publicPaymentId, newPrimaryMemberId, paymentIdentifier]
+            );
+            newPaymentMethodId = paymentResult.insertId;
+        }
 
-            if (shouldSaveCard) {
-                const publicPaymentId = crypto.randomUUID(); // ADDED
-                const [paymentResult] = await connection.query(
-                    // ADDED public_payment_id
-                    `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-                     VALUES (?, ?, 'Card', TRUE, ?, ?)`,
-                    [publicPaymentId, newPrimaryMemberId, paymentIdentifier, mock_card_expiry || null] // ADDED
-                );
-                newPaymentMethodId = paymentResult.insertId;
-
-            } else if (shouldSaveBank) {
-                const publicPaymentId = crypto.randomUUID(); // ADDED
-                const [paymentResult] = await connection.query(
-                    // ADDED public_payment_id
-                    `INSERT INTO member_payment_methods (public_payment_id, membership_id, payment_type, is_default, mock_identifier, mock_expiration)
-                     VALUES (?, ?, 'Bank', TRUE, ?, NULL)`,
-                    [publicPaymentId, newPrimaryMemberId, paymentIdentifier] // ADDED
-                );
-                newPaymentMethodId = paymentResult.insertId;
-            }
-
-            // 4. --- *** ADDED THIS BLOCK *** ---
-            // ADDED public_membership_id
-            const subMemberSql = `
-                INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
-                VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?)
-            `;
-            for (let i = 0; i < subFirstNames.length; i++) {
-                const publicSubMemberId = crypto.randomUUID(); // ADDED
-                await connection.query(subMemberSql, [
-                    publicSubMemberId, // ADDED
-                    subFirstNames[i],
-                    subLastNames[i],
-                    subDobs[i],
-                    type_id,
-                    purchaseDate, // Use 'purchaseDate' from this route
-                    endDate,      // Use 'endDate' from this route
-                    newPrimaryMemberId // Link to the primary member
-                ]);
-            }
-            // 5. Log this initial purchase in the history table
-            // ADDED public_purchase_id
-            const historySql = `
-                INSERT INTO membership_purchase_history 
-                    (public_purchase_id, membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-            await connection.query(historySql, [
-                publicPurchaseId, // ADDED
-                newPrimaryMemberId, // The purchase is tied to the primary member
-                type.type_id,
-                purchaseDate,
-                finalPrice, // Use the dynamically calculated final price
+        const subMemberSql = `
+            INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
+            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?)
+        `;
+        for (let i = 0; i < subFirstNames.length; i++) {
+            const publicSubMemberId = crypto.randomUUID();
+            await connection.query(subMemberSql, [
+                publicSubMemberId,
+                subFirstNames[i],
+                subLastNames[i],
+                subDobs[i],
+                type_id,
                 purchaseDate,
                 endDate,
-                type.type_name,
-                newPaymentMethodId
+                newPrimaryMemberId
             ]);
-
-            // 6. Commit the transaction
-            await connection.commit();
-
-            // 7. Log the user in
-            req.session.regenerate(function (err) {
-                if (err) {
-                    console.error("Session regeneration error:", err);
-                    throw new Error("Error creating your login session.");
-                }
-
-                req.session.member = {
-                    id: newPrimaryMemberId, // Use internal ID for session
-                    firstName: first_name,
-                    lastName: last_name,
-                    email: email
-                };
-
-                // 8. Render the success page with a receipt object
-                const receiptData = {
-                    purchaseId: publicPurchaseId,
-                    memberName: `${first_name} ${last_name}`,
-                    membershipId: publicMemberId, // CHANGED to public ID
-                    typeName: type.type_name,
-                    endDate: endDate.toLocaleDateString(),
-                    pricePaid: parseFloat(finalPrice),
-                    paymentMethod: paymentIdentifier,
-                    subMembers: subFirstNames.map((firstName, index) => {
-                        return { firstName: firstName, lastName: subLastNames[index] };
-                    })
-                };
-
-                res.render('member-signup-success', { receipt: receiptData });
-            });
-
-        } catch (dbError) {
-            await connection.rollback(); // Rollback on error
-            throw dbError; // Pass error to outer catch block
-        } finally {
-            connection.release();
         }
+
+        const historySql = `
+            INSERT INTO membership_purchase_history 
+                (public_purchase_id, membership_id, type_id, purchase_date, price_paid, purchased_start_date, purchased_end_date, type_name_snapshot, payment_method_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        await connection.query(historySql, [
+            publicPurchaseId,
+            newPrimaryMemberId,
+            type.type_id,
+            purchaseDate,
+            finalPrice,
+            purchaseDate,
+            endDate,
+            type.type_name,
+            newPaymentMethodId
+        ]);
+
+        await connection.commit();
+
+        req.session.regenerate(function (err) {
+            if (err) {
+                console.error("Session regeneration error:", err);
+                throw new Error("Error creating your login session.");
+            }
+
+            req.session.member = {
+                id: newPrimaryMemberId,
+                firstName: first_name,
+                lastName: last_name,
+                email: email
+            };
+
+            const receiptData = {
+                purchaseId: publicPurchaseId,
+                memberName: `${first_name} ${last_name}`,
+                membershipId: publicMemberId,
+                typeName: type.type_name,
+                endDate: endDate.toLocaleDateString(),
+                pricePaid: parseFloat(finalPrice),
+                paymentMethod: paymentIdentifier,
+                subMembers: subFirstNames.map((firstName, index) => {
+                    return {
+                        firstName: firstName,
+                        lastName: subLastNames[index]
+                    };
+                })
+            };
+
+            res.render('member-signup-success', {
+                receipt: receiptData
+            });
+        });
 
     } catch (error) {
-        if (connection) connection.release(); // Ensure release on general error
+        if (connection) await connection.rollback();
         console.error("Error processing signup:", error);
 
-        // Re-fetch type info using the internal ID from the form
-        let fallbackType = { type_id: type_id, ...req.body };
-        if (type_id) {
-            const [refetchType] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
-            if (refetchType.length > 0) {
-                fallbackType = refetchType[0];
+        let fallbackType = {
+            type_id: type_id,
+            ...req.body
+        };
+        try {
+            if (type_id) {
+                const [refetchType] = await pool.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
+                if (refetchType.length > 0) {
+                    fallbackType = refetchType[0];
+                }
             }
+        } catch (e) {
+            // ignore secondary error
         }
 
-        // On error, re-render the signup page with the error message
         res.render('member-signup', {
             type: fallbackType,
             error: error.message || "An unexpected error occurred."
         });
+
+    } finally {
+        if (connection) connection.release();
     }
 });
 
-// --- LOGIN & LOGOUT ROUTES ---
-// ... (The rest of routes/auth.js is unchanged) ...
-// GET /login
+// login view
 router.get('/login', isGuest, (req, res) => {
     if (req.session.user) {
         return res.redirect('/dashboard');
     }
-    res.render('global-login', { error: null });
+    res.render('global-login', {
+        error: null
+    });
 });
 
-// POST /login
+// process login
 router.post('/login', isGuest, async (req, res) => {
     try {
         const email = req.body.username;
         const password = req.body.password;
 
-        // --- 1. Check for an EMPLOYEE match first ---
         const employeeQuery = `
             SELECT 
                 demo.employee_id, demo.first_name, demo.last_name, demo.employee_type, 
@@ -291,23 +271,22 @@ router.post('/login', isGuest, async (req, res) => {
             FROM employee_demographics AS demo
             JOIN employee_auth AS auth ON demo.employee_id = auth.employee_id
             LEFT JOIN location AS loc ON demo.location_id = loc.location_id
-            WHERE demo.email = ? AND demo.is_active = TRUE AND demo.is_pending_approval = FALSE
+            WHERE demo.email = ? AND demo.is_active = TRUE
         `;
         const [employeeResults] = await pool.query(employeeQuery, [email]);
 
         if (employeeResults.length > 0) {
-            // Employee email found, check password
             const user = employeeResults[0];
             const match = await bcrypt.compare(password, user.password_hash);
 
             if (match) {
-                // Employee login successful
                 return req.session.regenerate(function (err) {
                     if (err) {
                         console.error("Session regeneration error:", err);
-                        return res.status(500).render('global-login', { error: 'Session error during login.' });
+                        return res.status(500).render('global-login', {
+                            error: 'Session error during login.'
+                        });
                     }
-                    // Set EMPLOYEE session
                     req.session.user = {
                         id: user.employee_id,
                         firstName: user.first_name,
@@ -321,7 +300,6 @@ router.post('/login', isGuest, async (req, res) => {
             }
         }
 
-        // --- 2. No employee match, check for a MEMBER match ---
         const memberQuery = `
             SELECT 
                 m.membership_id, m.first_name, m.last_name, m.email,
@@ -333,18 +311,17 @@ router.post('/login', isGuest, async (req, res) => {
         const [memberResults] = await pool.query(memberQuery, [email]);
 
         if (memberResults.length > 0) {
-            // Member email found, check password
             const member = memberResults[0];
             const match = await bcrypt.compare(password, member.password_hash);
 
             if (match) {
-                // Member login successful
                 return req.session.regenerate(function (err) {
                     if (err) {
                         console.error("Session regeneration error:", err);
-                        return res.status(500).render('global-login', { error: 'Session error during login.' });
+                        return res.status(500).render('global-login', {
+                            error: 'Session error during login.'
+                        });
                     }
-                    // Set MEMBER session
                     req.session.member = {
                         id: member.membership_id,
                         firstName: member.first_name,
@@ -356,16 +333,19 @@ router.post('/login', isGuest, async (req, res) => {
             }
         }
 
-        // --- 3. No match for either ---
-        res.render('global-login', { error: 'Invalid email or password' });
+        res.render('global-login', {
+            error: 'Invalid email or password'
+        });
 
     } catch (error) {
         console.error("Global login error:", error);
-        return res.status(500).render('global-login', { error: 'An unexpected error occurred. Please try again later.' });
+        return res.status(500).render('global-login', {
+            error: 'An unexpected error occurred. Please try again later.'
+        });
     }
 });
 
-// GET /employee/logout
+// logout
 router.get('/employee/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
@@ -377,14 +357,21 @@ router.get('/employee/logout', (req, res) => {
     });
 });
 
-// GET /change-password
+// change password view
 router.get('/change-password', isAuthenticated, (req, res) => {
-    res.render('change-password', { error: null, success: null });
+    res.render('change-password', {
+        error: null,
+        success: null
+    });
 });
 
-// POST /change-password
+// process password change
 router.post('/change-password', isAuthenticated, async (req, res) => {
-    const { old_password, new_password, confirm_password } = req.body;
+    const {
+        old_password,
+        new_password,
+        confirm_password
+    } = req.body;
     const employeeId = req.session.user.id;
 
     if (new_password !== confirm_password) {

@@ -10,9 +10,7 @@ const {
     censorPhone
 } = require('../middleware/auth');
 
-// --- EMPLOYEE-FACING VISIT LOGGING ---
-
-// GET /visits/new
+// entry form
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
         const [ticketTypes] = await pool.query("SELECT ticket_type_id, public_ticket_type_id, type_name, base_price, is_member_type FROM ticket_types WHERE is_active = TRUE ORDER BY is_member_type DESC, base_price ASC");
@@ -23,7 +21,6 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
         let foundTickets = null;
         const ticketSearchTerm = req.query.ticket_search || '';
 
-        // --- SMART RETURN LOGIC ---
         const activeTab = req.query.active_tab || (ticketSearchTerm ? 'redeem' : 'standard');
         const returnParams = new URLSearchParams();
         if (ticketSearchTerm) returnParams.append('ticket_search', ticketSearchTerm);
@@ -40,23 +37,35 @@ router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => 
         res.render('log-visit', {
             error: req.session.error,
             success: req.session.success,
-            ticketTypes: ticketTypes,
-            activeMembers: activeMembers,
-            currentDiscount: currentDiscount,
-            normalizePhone: normalizePhone,
-            foundTickets: foundTickets,
-            ticketSearchTerm: ticketSearchTerm,
-            activeTab: activeTab,
-            returnQuery: returnQuery
+            ticketTypes,
+            activeMembers,
+            currentDiscount,
+            normalizePhone,
+            foundTickets,
+            ticketSearchTerm,
+            activeTab,
+            returnQuery
         });
-        req.session.error = null; req.session.success = null;
+        req.session.error = null;
+        req.session.success = null;
     } catch (error) {
         console.error(error);
-        res.render('log-visit', { error: "Error fetching data.", success: null, ticketTypes: [], activeMembers: [], currentDiscount: 0, normalizePhone: (p) => p, foundTickets: null, ticketSearchTerm: "", activeTab: 'standard', returnQuery: '' });
+        res.render('log-visit', {
+            error: "Error fetching data.",
+            success: null,
+            ticketTypes: [],
+            activeMembers: [],
+            currentDiscount: 0,
+            normalizePhone: (p) => p,
+            foundTickets: null,
+            ticketSearchTerm: "",
+            activeTab: 'standard',
+            returnQuery: ''
+        });
     }
 });
 
-// POST /visits
+// process visit
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     const {
         visit_mode,
@@ -65,7 +74,9 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         returnQuery: originalReturnQuery
     } = req.body;
 
-    const { id: actorId } = req.session.user;
+    const {
+        id: actorId
+    } = req.session.user;
     const visit_date = new Date();
     const visitGroupId = crypto.randomUUID();
     let connection;
@@ -74,7 +85,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // --- SCENARIO A: STANDARD TICKET PURCHASE (Mix & Match) ---
+        // standard ticket purchase
         if (visit_mode === 'standard') {
             const [promos] = await connection.query("SELECT event_name, discount_percent FROM event_promotions WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY discount_percent DESC LIMIT 1");
             const currentDiscountPercent = (promos.length > 0) ? promos[0].discount_percent : 0;
@@ -107,7 +118,10 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                                 VALUES (?, ?, NULL, ?, ?, ?, ?)`,
                                 [visit_date, ticket.ticket_type_id, singlePrice, singleDiscount, actorId, visitGroupId]);
 
-                            ticketCodes.push({ name: ticket.type_name, code: code });
+                            ticketCodes.push({
+                                name: ticket.type_name,
+                                code
+                            });
                             totalBasePrice += singlePrice;
                             totalDiscountAmount += singleDiscount;
                         }
@@ -131,10 +145,14 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             };
 
             await connection.commit();
-            res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true, returnQuery: '' });
+            res.render('visit-receipt', {
+                receipt: receiptData,
+                fromLogVisit: true,
+                returnQuery: ''
+            });
 
         }
-        // --- SCENARIO B: MEMBER CHECK-IN ---
+        // member check-in
         else {
             const member_ids = [].concat(req.body.member_ids || []);
             if (member_ids.length === 0) throw new Error("No members selected.");
@@ -184,27 +202,35 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 }
             }
 
-            // --- RECEIPT GENERATION ---
             let receiptData = {
                 visit_group_id: visitGroupId,
                 visit_date: formatReceiptDate(visit_date),
                 ticket_name: ticket.type_name,
-                base_price: 0.00, discount_amount: 0.00, total_cost: 0.00, promo_applied: 'N/A',
+                base_price: 0.00,
+                discount_amount: 0.00,
+                total_cost: 0.00,
+                promo_applied: 'N/A',
                 is_member: true,
                 staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
-                member_id: '', member_name: '', member_type: '', member_phone: '', guest_passes_remaining: 0, subMembers: []
+                member_id: '',
+                member_name: '',
+                member_type: '',
+                member_phone: '',
+                guest_passes_remaining: 0,
+                subMembers: []
             };
 
             if (ticket.type_name === 'Guest Pass') {
-                // --- SCENARIO B1: GUEST PASS (Carousel View) ---
                 receiptData.tickets = guestTickets;
                 await connection.commit();
 
-                // CHANGED: Render 'visit-receipt' for Guest Passes to get the carousel style
-                res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true, returnQuery: '' });
+                res.render('visit-receipt', {
+                    receipt: receiptData,
+                    fromLogVisit: true,
+                    returnQuery: ''
+                });
 
             } else {
-                // --- SCENARIO B2: STANDARD MEMBER CHECK-IN (List View) ---
                 const [checkedInMembers] = await connection.query(`SELECT m.membership_id, m.primary_member_id, m.first_name, m.last_name, m.phone_number, m.public_membership_id, mt.type_name FROM membership m JOIN membership_type mt ON m.type_id = mt.type_id WHERE m.membership_id IN (?)`, [member_ids]);
                 const primaryMemberInList = checkedInMembers.find(m => m.primary_member_id === null);
                 const primaryId = primaryMemberInList ? primaryMemberInList.membership_id : checkedInMembers[0].primary_member_id;
@@ -214,10 +240,17 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 receiptData.member_name = `${primaryData[0].first_name} ${primaryData[0].last_name}`;
                 receiptData.member_type = primaryData[0].type_name;
                 receiptData.member_phone = censorPhone(primaryData[0].phone_number);
-                receiptData.subMembers = checkedInMembers.filter(m => m.membership_id !== primaryId).map(sub => ({ ...sub, membership_id: sub.public_membership_id }));
+                receiptData.subMembers = checkedInMembers.filter(m => m.membership_id !== primaryId).map(sub => ({
+                    ...sub,
+                    membership_id: sub.public_membership_id
+                }));
 
                 await connection.commit();
-                res.render('member-visit-receipt', { receipt: receiptData, fromLogVisit: true, returnQuery: '' });
+                res.render('member-visit-receipt', {
+                    receipt: receiptData,
+                    fromLogVisit: true,
+                    returnQuery: ''
+                });
             }
         }
 
@@ -232,9 +265,15 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     }
 });
 
+// e-ticket redemption
 router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { ticket_code, returnQuery } = req.body;
-    const { id: actorId } = req.session.user;
+    const {
+        ticket_code,
+        returnQuery
+    } = req.body;
+    const {
+        id: actorId
+    } = req.session.user;
     let connection;
     const redirectOnError = '/visits/new' + (returnQuery ? `?${returnQuery}` : '');
 
@@ -264,43 +303,88 @@ router.post('/redeem', isAuthenticated, canManageMembersVisits, async (req, res)
         const [ticketType] = await pool.query("SELECT type_name FROM ticket_types WHERE ticket_type_id = ?", [ticket.ticket_type_id]);
 
         let receiptData = {
-            visit_group_id: visitGroupId, visit_date: formatReceiptDate(visit_date), ticket_name: ticketType[0].type_name,
-            base_price: parseFloat(ticket.base_price), discount_amount: parseFloat(ticket.base_price), total_cost: 0.00, promo_applied: 'Prepaid E-Ticket',
-            is_member: false, staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
-            member_id: null, member_name: "E-Ticket Guest", member_type: null, member_phone: null, subMembers: [],
-            tickets: [{ name: ticketType[0].type_name, code: ticket_code }]
+            visit_group_id: visitGroupId,
+            visit_date: formatReceiptDate(visit_date),
+            ticket_name: ticketType[0].type_name,
+            base_price: parseFloat(ticket.base_price),
+            discount_amount: parseFloat(ticket.base_price),
+            total_cost: 0.00,
+            promo_applied: 'Prepaid E-Ticket',
+            is_member: false,
+            staff_name: `${req.session.user.firstName} ${req.session.user.lastName}`,
+            member_id: null,
+            member_name: "E-Ticket Guest",
+            member_type: null,
+            member_phone: null,
+            subMembers: [],
+            tickets: [{
+                name: ticketType[0].type_name,
+                code: ticket_code
+            }]
         };
 
-        res.render('visit-receipt', { receipt: receiptData, fromLogVisit: true, returnQuery });
+        res.render('visit-receipt', {
+            receipt: receiptData,
+            fromLogVisit: true,
+            returnQuery
+        });
 
     } catch (error) {
         if (connection) await connection.rollback();
         req.session.error = "Error during redemption.";
         res.redirect(redirectOnError);
-    } finally { if (connection) connection.release(); }
+    } finally {
+        if (connection) connection.release();
+    }
 });
 
+// receipt lookup
 router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { visit_group_id } = req.params;
+    const {
+        visit_group_id
+    } = req.params;
     let connection;
     try {
         connection = await pool.getConnection();
         const [visitsInGroup] = await connection.query(`SELECT v.*, tt.type_name AS ticket_name, CONCAT(e.first_name, ' ', e.last_name) as staff_name, m.primary_member_id, m.first_name, m.last_name, m.phone_number, m.public_membership_id, m.guest_passes_remaining FROM visits v JOIN membership m ON v.membership_id = m.membership_id JOIN ticket_types tt ON v.ticket_type_id = tt.ticket_type_id LEFT JOIN employee_demographics e ON v.logged_by_employee_id = e.employee_id WHERE v.visit_group_id = ?`, [visit_group_id]);
-        if (visitsInGroup.length === 0) { return res.status(404).send('Visit not found.'); }
+        if (visitsInGroup.length === 0) {
+            return res.status(404).send('Visit not found.');
+        }
         const primaryMemberInList = visitsInGroup.find(m => m.primary_member_id === null);
         const visitPrimaryId = primaryMemberInList ? primaryMemberInList.membership_id : visitsInGroup[0].primary_member_id;
         const [primaryMemberData] = await connection.query(`SELECT m.first_name, m.last_name, m.phone_number, m.public_membership_id, m.guest_passes_remaining, mt.type_name FROM membership m JOIN membership_type mt ON m.type_id = mt.type_id WHERE m.membership_id = ?`, [visitPrimaryId]);
         const primaryMember = primaryMemberData[0];
         const receiptData = {
-            visit_group_id: visit_group_id, visit_date: formatReceiptDate(visitsInGroup[0].visit_date), ticket_name: visitsInGroup[0].ticket_name,
-            base_price: 0.00, discount_amount: 0.00, total_cost: 0.00, promo_applied: 'N/A', is_member: true,
-            staff_name: visitsInGroup[0].staff_name || 'N/A', member_id: primaryMember.public_membership_id,
-            member_name: `${primaryMember.first_name} ${primaryMember.last_name}`, member_type: primaryMember.type_name,
-            member_phone: censorPhone(primaryMember.phone_number), guest_passes_remaining: primaryMember.guest_passes_remaining,
-            subMembers: visitsInGroup.filter(v => v.membership_id !== visitPrimaryId).map(v => ({ first_name: v.first_name, last_name: v.last_name, membership_id: v.public_membership_id }))
+            visit_group_id,
+            visit_date: formatReceiptDate(visitsInGroup[0].visit_date),
+            ticket_name: visitsInGroup[0].ticket_name,
+            base_price: 0.00,
+            discount_amount: 0.00,
+            total_cost: 0.00,
+            promo_applied: 'N/A',
+            is_member: true,
+            staff_name: visitsInGroup[0].staff_name || 'N/A',
+            member_id: primaryMember.public_membership_id,
+            member_name: `${primaryMember.first_name} ${primaryMember.last_name}`,
+            member_type: primaryMember.type_name,
+            member_phone: censorPhone(primaryMember.phone_number),
+            guest_passes_remaining: primaryMember.guest_passes_remaining,
+            subMembers: visitsInGroup.filter(v => v.membership_id !== visitPrimaryId).map(v => ({
+                first_name: v.first_name,
+                last_name: v.last_name,
+                membership_id: v.public_membership_id
+            }))
         };
-        res.render('visit-receipt', { receipt: receiptData, fromLogVisit: false });
-    } catch (error) { console.error(error); res.status(500).send("Error."); } finally { if (connection) connection.release(); }
+        res.render('visit-receipt', {
+            receipt: receiptData,
+            fromLogVisit: false
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error.");
+    } finally {
+        if (connection) connection.release();
+    }
 });
 
 module.exports = router;

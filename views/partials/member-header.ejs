@@ -1,37 +1,30 @@
-<%# --- Import Fonts --- %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* --- GLOBAL THEME VARIABLES (Standardized) --- */
     :root {
-        /* Brand Colors */
-        --primary: #6f42c1;       /* Magical Purple */
+        --primary: #6f42c1;       
         --primary-dark: #5a32a3;
-        --secondary: #ffc107;     /* Gold */
-        --accent: #17a2b8;        /* Cyan/Teal (Member Theme) */
+        --secondary: #ffc107;     
+        --accent: #17a2b8;        
         
-        /* Neutrals */
         --dark: #343a40;
         --light: #f8f9fa;
         --white: #ffffff;
         --gray: #6c757d;
         
-        /* Status */
         --success: #28a745;
         --danger: #dc3545;
         --warning: #ffc107;
 
-        /* Effects */
         --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
         --radius: 12px;
         --transition: all 0.3s ease;
     }
 
-    /* --- Header Container --- */
     .navbar {
-        background-color: var(--accent); /* Member Theme Color */
+        background-color: var(--accent); 
         padding: 0.8em 2em;
         display: flex;
         justify-content: space-between;
@@ -46,7 +39,6 @@
         font-family: 'Poppins', sans-serif;
     }
 
-    /* --- Navigation Links --- */
     .nav-links {
         display: flex;
         align-items: center;
@@ -69,7 +61,6 @@
         transform: translateY(-1px);
     }
 
-    /* --- User Info Section --- */
     .user-info {
         display: flex;
         align-items: center;
@@ -82,7 +73,6 @@
         color: rgba(255, 255, 255, 0.9);
     }
 
-    /* --- Action Buttons (Standardized) --- */
     .btn-nav {
         padding: 6px 16px;
         border-radius: 20px;
@@ -93,7 +83,6 @@
         display: inline-block;
     }
 
-    /* FIX: "Change Password" is now Gold for high visibility */
     .btn-password {
         background-color: var(--secondary);
         color: var(--dark);
@@ -105,7 +94,6 @@
         transform: translateY(-1px);
     }
 
-    /* "Logout" is semi-transparent white */
     .btn-logout {
         background-color: rgba(0, 0, 0, 0.15);
         color: var(--white);

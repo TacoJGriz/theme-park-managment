@@ -4,50 +4,41 @@
     <meta charset="UTF-8">
     <title>Edit Location</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
+        .container {
             max-width: 800px;
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Form Elements */
         div.form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
         input[type="text"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -58,58 +49,41 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        textarea { resize: vertical; min-height: 120px; }
-
-        /* Error Message */
-        .error { 
+        textarea { resize: vertical; min-height: 100px; }
+        .error {
             color: #721c24;
-            background-color: #f8d7da; 
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button.btn-save { 
+        button {
             padding: 12px 25px;
-            background-color: #007bff; /* Primary Blue */
+            background-color: #007bff;
             color: white;
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button.btn-save:hover { 
+        button:hover {
             background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Delete Button Style */
-        .delete-btn { 
+        .delete-btn {
             background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            float: right; 
-            width: auto;
-            margin-top: 1.5em;
-            transition: all 0.2s;
+            margin-top: 10px;
         }
-        .delete-btn:hover { 
+        .delete-btn:hover {
             background-color: #c82333;
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -120,24 +94,15 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
+        .cancel-link:hover {
             color: #343a40;
             text-decoration: underline;
         }
-        
-        /* Clearfix for floated delete button */
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
-        }
-
-        /* --- MODAL STYLES --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none; /* Hidden by default */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -147,15 +112,20 @@
             background: white;
             padding: 2em;
             border-radius: 12px;
-            max-width: 400px;
+            width: 90%;
+            max-width: 450px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             animation: slideIn 0.2s;
         }
-        .modal-content h3 { margin-top: 0; color: #dc3545; }
-        .modal-content p { color: #555; margin-bottom: 1.5em; }
-        .modal-actions { display: flex; gap: 10px; justify-content: center; }
-        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+        .modal-content h3 {
+            margin-top: 0; color: #dc3545; font-size: 1.5em;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .modal-content p { color: #555; margin: 1.5em 0; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 1em; justify-content: center; margin-top: 2em; }
         .btn-modal-cancel {
             padding: 10px 20px; background: #e9ecef; border: none;
             border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
@@ -164,59 +134,48 @@
             padding: 10px 20px; background: #dc3545; border: none;
             border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
         }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     
-    <div class="container clearfix">
-        <h1>Edit Location</h1>
-
+    <div class="container">
+        <h1>Edit Location: <%= location.location_name %></h1>
+        
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="error"><%= error %></div>
         <% } %>
-
+        
         <form action="/locations/edit/<%= location.public_location_id %>" method="POST">
             <div class="form-group">
                 <label for="location_name">Location Name:</label>
                 <input type="text" id="location_name" name="location_name" value="<%= location.location_name %>" required>
             </div>
-    
+       
             <div class="form-group">
                 <label for="summary">Summary / Description:</label>
                 <textarea id="summary" name="summary"><%= location.summary %></textarea>
             </div>
-            
-            <br>
-            <button type="submit" class="btn-save">Save Changes</button>
-        </form>
 
+            <button type="submit">Save Changes</button>
+        </form>
+        
         <form id="deleteForm" action="/locations/delete/<%= location.public_location_id %>" method="POST">
-            <button type="button" class="delete-btn" onclick="openModal()">
-                Remove Location
-            </button>
+             <button type="button" class="delete-btn" onclick="openModal()">Delete Location</button>
         </form>
 
         <a href="/locations" class="cancel-link">Cancel</a>
     </div>
 
-    <%# --- CUSTOM CONFIRMATION MODAL --- %>
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Location?</h3>
-            <p>Are you sure you want to remove <strong><%= location.location_name %></strong>?<br>
-            <br>
-            <small style="color: #d9534f;">
-                <strong>Warning:</strong> Employees and Rides assigned to this location will be <u>unassigned</u>.
-            </small>
-            </p>
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Location?</h3>
+            <p>Are you sure you want to delete <strong><%= location.location_name %></strong>?<br>
+            This will unassign all rides and employees currently in this location.</p>
             
             <div class="modal-actions">
                 <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Remove It</button>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
             </div>
         </div>
     </div>
@@ -237,7 +196,6 @@
             deleteForm.submit();
         }
 
-        // Close if clicking outside modal
         window.onclick = function(event) {
             if (event.target == modal) {
                 closeModal();

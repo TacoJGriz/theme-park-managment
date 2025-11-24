@@ -3,53 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Ticket Type</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Form Elements */
         div.form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Textareas */
         input[type="text"], input[type="number"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -60,80 +49,47 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        
-        /* Disabled Input Styling */
-        input:disabled, textarea:disabled {
-            background-color: #e9ecef;
-            color: #6c757d;
-            cursor: not-allowed;
-            border-color: #dee2e6;
-        }
-
         textarea { resize: vertical; min-height: 100px; }
-
-        /* Info Alert Box */
-        .info-note {
-            color: #084298;
-            background-color: #cfe2ff;
-            border: 1px solid #b6d4fe;
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
             padding: 1em;
             border-radius: 8px;
-            margin-bottom: 2em;
-            font-size: 0.95em;
-            line-height: 1.5;
-        }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
-            border-color: #f5c6cb;
-            padding: 1em; 
-            border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #007bff; /* Primary Blue for Edits */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-        
-        /* Disabled Button */
-        button:disabled {
+        .btn-toggle {
+            margin-top: 1em;
+            width: 100%;
+        }
+        .btn-active { background-color: #dc3545; }
+        .btn-active:hover { background-color: #c82333; }
+        .btn-inactive { background-color: #28a745; }
+        .btn-inactive:hover { background-color: #218838; }
+        .delete-btn {
             background-color: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            opacity: 0.65;
+            margin-top: 10px;
         }
-
-        /* NEW: Delete Button Style */
-        .btn-delete {
-            background-color: #dc3545; /* Red */
-            margin-top: 0.5em;
-        }
-        .btn-delete:hover {
-            background-color: #c82333;
-            box-shadow: 0 4px 6px rgba(220, 53, 69, 0.25);
-        }
-
-        /* Cancel Link */
+        .delete-btn:hover { background-color: #5a6268; }
         .cancel-link {
             display: block;
             text-align: center;
@@ -144,166 +100,103 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
-            text-decoration: underline;
-        }
-        
-        .separator {
-            border: 0;
-            border-top: 1px solid #eee;
-            margin: 2em 0;
-        }
-
-        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
+        .cancel-link:hover { color: #343a40; text-decoration: underline; }
         .modal-overlay {
-            display: none; /* Hidden by default */
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-            z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(3px);
+            z-index: 1000;
+            animation: fadeIn 0.2s;
         }
-
         .modal-content {
-            background-color: white;
+            background: white;
             padding: 2em;
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: modalPop 0.3s ease-out;
+            animation: slideIn 0.2s;
         }
-
-        @keyframes modalPop {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-content h3 {
-            color: #dc3545;
-            margin-top: 0;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .modal-content p {
-            color: #555;
-            margin: 1.5em 0;
-            line-height: 1.6;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 1em;
-            justify-content: center;
-            margin-top: 2em;
-        }
-
-        /* Modal Specific Buttons */
-        .btn-modal-cancel {
-            background-color: #6c757d;
-            width: auto;
-            padding: 10px 20px;
-            margin-top: 0;
-        }
-        .btn-modal-cancel:hover {
-            background-color: #5a6268;
-        }
-
-        .btn-modal-confirm {
-            background-color: #dc3545;
-            width: auto;
-            padding: 10px 20px;
-            margin-top: 0;
-        }
-        .btn-modal-confirm:hover {
-            background-color: #c82333;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+        .modal-content h3 { margin-top: 0; color: #dc3545; font-size: 1.5em; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .modal-content p { color: #555; margin: 1.5em 0; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 1em; justify-content: center; margin-top: 2em; }
+        .btn-modal-cancel { padding: 10px 20px; background: #e9ecef; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057; }
+        .btn-modal-confirm { padding: 10px 20px; background: #dc3545; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     
     <div class="container">
-        <h1>Edit Ticket: <%= type.type_name %></h1>
+        <h1>Edit: <%= type.type_name %></h1>
         
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="error"><%= error %></div>
         <% } %>
         
-        <% const isMemberType = (typeof type.is_member_type !== 'undefined' && type.is_member_type); %>
-        
-        <% if (isMemberType) { %>
-            <div class="info-note">
-                <strong><i class="fa-solid fa-circle-info"></i> System Record:</strong> 
-                The 'Member' ticket type is managed automatically by the system. It cannot be edited manually.
-            </div>
-        <% } %>
-    
         <form action="/ticket-types/edit/<%= type.public_ticket_type_id %>" method="POST">
             <div class="form-group">
-                <label for="type_name">Type Name:</label>
-                <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required <% if (isMemberType) { %>disabled<% } %>>
+                <label for="type_name">Ticket Name:</label>
+                <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required>
             </div>
             
             <div class="form-group">
                 <label for="base_price">Base Price ($):</label>
-                <input type="number" id="base_price" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" step="0.01" min="0" required <% if (isMemberType) { %>disabled<% } %>>
+                <input type="number" id="base_price" name="base_price" step="0.01" min="0" value="<%= type.base_price %>" required>
             </div>
             
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea id="description" name="description" <% if (isMemberType) { %>disabled<% } %>><%= type.description || '' %></textarea>
+                <textarea id="description" name="description"><%= type.description %></textarea>
             </div>
             
-            <% if (isMemberType) { %>
-                 <input type="hidden" name="type_name" value="<%= type.type_name %>" />
-                 <input type="hidden" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" />
+            <% if (!type.is_member_type) { %>
+                <button type="submit">Save Changes</button>
+            <% } else { %>
+                 <div style="background: #e9ecef; padding: 10px; border-radius: 8px; color: #666; font-style: italic; text-align: center;">
+                    System Member Ticket types cannot be modified.
+                </div>
             <% } %>
-    
-           <br>
-            <button type="submit" <% if (isMemberType) { %>disabled<% } %>>Update Type</button>
-            <a href="/ticket-types" class="cancel-link">Cancel</a>
         </form>
-
-        <%# --- NEW: DELETE SECTION --- %>
-        <% if (!isMemberType) { %>
-            <hr class="separator">
-            
-            <form id="deleteForm" action="/ticket-types/delete/<%= type.public_ticket_type_id %>" method="POST">
-                <button type="button" class="btn-delete" onclick="openModal()">Delete Ticket Type</button>
+        
+        <% if (!type.is_member_type) { %>
+            <form action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST">
+                <% if (type.is_active) { %>
+                    <button type="submit" class="btn-toggle btn-active">Deactivate Ticket Type</button>
+                <% } else { %>
+                    <button type="submit" class="btn-toggle btn-inactive">Activate Ticket Type</button>
+                <% } %>
             </form>
+            
+            <button type="button" class="delete-btn" onclick="openModal()">Delete Ticket Type</button>
         <% } %>
+
+        <a href="/ticket-types" class="cancel-link">Cancel</a>
     </div>
 
-    <%# --- CUSTOM CONFIRMATION MODAL --- %>
-    <% if (!isMemberType) { %>
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Ticket Type?</h3>
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Ticket?</h3>
             <p>Are you sure you want to delete <strong><%= type.type_name %></strong>?<br>
-            This action cannot be undone. If it has been used in past sales, consider deactivating it instead.</p>
+            This will permanently remove all historical sales and visit logs associated with this ticket.</p>
             
             <div class="modal-actions">
                 <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete</button>
+                <form action="/ticket-types/delete/<%= type.public_ticket_type_id %>" method="POST">
+                    <button type="submit" class="btn-modal-confirm">Yes, Delete It</button>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
         const modal = document.getElementById('deleteModal');
-        const deleteForm = document.getElementById('deleteForm');
 
         function openModal() {
             modal.style.display = 'flex';
@@ -313,17 +206,11 @@
             modal.style.display = 'none';
         }
 
-        function confirmDelete() {
-            deleteForm.submit();
-        }
-
-        // Close modal if clicking outside the box
         window.onclick = function(event) {
             if (event.target == modal) {
                 closeModal();
             }
         }
     </script>
-    <% } %>
 </body>
 </html>

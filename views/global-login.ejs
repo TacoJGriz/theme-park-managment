@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Login | Primus Park</title>
-    <%# --- Import Google Fonts --- %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- STANDARDIZED THEME VARIABLES --- */
         :root {
-            --primary: #6f42c1;       /* Magical Purple */
-            --primary-dark: #5a32a3;  /* Deep Purple */
-            --secondary: #ffc107;     /* Gold */
-            --accent: #17a2b8;        /* Cyan/Teal */
-            --dark: #343a40;          /* Charcoal */
-            --light: #f8f9fa;         /* Off-white */
+            --primary: #6f42c1;       
+            --primary-dark: #5a32a3;  
+            --secondary: #ffc107;     
+            --accent: #17a2b8;        
+            --dark: #343a40;          
+            --light: #f8f9fa;         
             --white: #ffffff;
             --gray: #6c757d;
             --danger: #dc3545;
             
-            --shadow-lg: 0 10px 30px rgba(111, 66, 193, 0.3); /* Purple glow */
+            --shadow-lg: 0 10px 30px rgba(111, 66, 193, 0.3);
             --radius: 12px;
             --transition: all 0.3s ease;
             --hero-overlay: rgba(0, 0, 0, 0.4); 
@@ -36,22 +34,20 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            /* Hero Background */
             background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('/images/hero-bg.png');
             background-size: cover;
             background-position: center 30%;
             background-attachment: fixed;
         }
 
-        /* --- Standardized Card --- */
         form {
             max-width: 450px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95); /* Glass effect */
+            background: rgba(255, 255, 255, 0.95); 
             padding: 3em;
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            border-top: 5px solid var(--primary); /* Theme Accent */
+            border-top: 5px solid var(--primary); 
             box-sizing: border-box;
         }
 
@@ -71,7 +67,6 @@
         
         label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
 
-        /* --- Standardized Inputs --- */
         input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 12px 15px;
@@ -99,7 +94,6 @@
             box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
         }
 
-        /* --- Standardized Button (.btn-primary) --- */
         button {
             width: 100%;
             padding: 12px 20px;
@@ -107,7 +101,7 @@
             color: var(--white);
             border: none;
             cursor: pointer;
-            border-radius: 30px; /* Pill Shape */
+            border-radius: 30px; 
             font-size: 1.1em;
             font-weight: 600;
             transition: var(--transition);

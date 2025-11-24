@@ -5,35 +5,28 @@
     <title>Park Attendance Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 1200px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Filter Box (Styled as 'Filter Bar') */
         .filter-box {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -41,28 +34,24 @@
             border-radius: 12px;
             margin-bottom: 2em;
         }
-
-        .form-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 1.5em; 
-            align-items: end; 
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5em;
+            align-items: end;
         }
-        
-        .form-grid label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+        .form-grid label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-        
-        .form-grid input[type="date"], 
-        .form-grid select { 
+        .form-grid input[type="date"], .form-grid select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -73,31 +62,27 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #007bff; /* Primary Blue */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Chart Container */
-        .chart-container { 
+        .chart-container {
             margin-top: 2em;
-            border: 1px solid #e9ecef; 
+            border: 1px solid #e9ecef;
             padding: 15px;
             background: #fff;
             border-radius: 12px;
@@ -109,31 +94,29 @@
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-
-        /* --- TABLE STYLES --- */
-        table.data-table { 
+        table.data-table {
             width: 100%;
-            border-collapse: separate; 
+            border-collapse: separate;
             border-spacing: 0;
             margin-top: 2em;
             font-size: 0.95em;
             background: white;
-            border-radius: 12px; 
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
-        table.data-table th { 
+        table.data-table th {
             background-color: #007bff;
-            color: white; 
+            color: white;
             padding: 15px;
-            text-align: left; 
+            text-align: left;
             font-weight: 600;
             border: none;
             text-transform: uppercase;
             font-size: 0.85em;
             letter-spacing: 0.5px;
         }
-        table.data-table td { 
+        table.data-table td {
             padding: 15px;
             border-bottom: 1px solid #f1f1f1;
             vertical-align: middle;
@@ -141,10 +124,8 @@
         }
         table.data-table tr:last-child td { border-bottom: none; }
         table.data-table tr:nth-child(even) { background-color: #f8f9fa; }
-        
-        /* Spike Highlighting */
         .spike-row {
-            background-color: #fff5f5 !important; /* Light Red Tint */
+            background-color: #fff5f5 !important;
         }
         .spike-row td:first-child {
             border-left: 4px solid #dc3545;
@@ -156,39 +137,33 @@
             margin-bottom: 3px;
         }
         .normal-text { color: #28a745; font-weight: 600; }
-
-        /* Summary Footer */
         .summary-row {
             background-color: #e9ecef !important;
             font-weight: 700;
             font-size: 1.05em;
             color: #495057;
         }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Action Button */
-        .btn-action { 
-            display: inline-block; 
-            padding: 6px 12px; 
-            border-radius: 6px; 
-            text-align: center; 
-            text-decoration: none; 
-            font-weight: 600; 
-            font-size: 0.85em; 
-            border: 1px solid #007bff; 
+        .btn-action {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #007bff;
             background-color: white;
             color: #007bff;
-            cursor: pointer; 
+            cursor: pointer;
             transition: all 0.2s;
         }
         .btn-action:hover {
@@ -281,10 +256,10 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th><%= labelFormat %></th> 
+                        <th><%= labelFormat %></th>
                         <th>Visitor Count</th>
                         <th>Status</th>
-                        <th style="min-width: 140px;">Actions</th> 
+                        <th style="min-width: 140px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>

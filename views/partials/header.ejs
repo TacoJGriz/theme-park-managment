@@ -1,32 +1,23 @@
-<%# --- Import Fonts --- %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<%# Import Lobster (Magical) and Poppins (Professional) %>
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<%# Import FontAwesome for Icons %>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-    /* =========================================
-       THEME SWITCHER LOGIC
-       ========================================= */
     <% if (user) { %>
-        /* --- EMPLOYEE THEME (Professional, Dark Header) --- */
+        /* employee theme */
         :root {
-            --primary: #007bff;       /* Admin Blue */
-            --secondary: #6c757d;     /* Neutral Gray */
-            --success: #28a745;       /* Standard Green */
-            --danger: #dc3545;        /* Standard Red */
-            --warning: #ffc107;       /* Standard Yellow */
-            --info: #17a2b8;          /* Standard Teal */
-            
-            --dark: #343a40;          /* Header BG */
-            --light: #e9ecef;         /* Page BG */
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --dark: #343a40;
+            --light: #e9ecef;
             --white: #ffffff;
-            
             --font-head: 'Poppins', sans-serif; 
             --font-body: 'Poppins', sans-serif;
-            
             --radius: 4px;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
             --transition: all 0.2s ease-in-out;
@@ -40,7 +31,6 @@
             color: #333;
         }
 
-        /* Navbar Container */
         .navbar {
             background-color: var(--dark);
             padding: 0 30px;
@@ -54,7 +44,6 @@
             z-index: 1000;
         }
 
-        /* Logo Area */
         .nav-brand {
             font-family: var(--font-head);
             font-weight: 700;
@@ -72,7 +61,6 @@
 
         .nav-menu { display: flex; gap: 10px; height: 100%; align-items: center; }
 
-        /* Nav Links */
         .nav-item, .dropdown-trigger {
             display: flex;
             align-items: center;
@@ -96,7 +84,6 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* --- DROPDOWN STYLING --- */
         .nav-dropdown {
             position: relative;
             height: 100%; 
@@ -109,7 +96,6 @@
             position: absolute;
             top: 100%; 
             left: 0;
-            
             background: var(--white);
             min-width: 240px; 
             box-shadow: 0 8px 16px rgba(0,0,0,0.15);
@@ -120,7 +106,6 @@
             margin-top: 0; 
         }
 
-        /* HOVER FIX */
         .nav-dropdown::after {
             content: '';
             position: absolute;
@@ -168,7 +153,6 @@
         
         .dropdown-divider { border-top: 1px solid #eee; margin: 6px 0; }
 
-        /* User Badge */
         .user-badge {
             background-color: var(--primary);
             color: var(--white);
@@ -182,7 +166,7 @@
         }
         
     <% } else { %>
-        /* --- VISITOR THEME (Magical) --- */
+        /* visitor theme */
         :root {
             --primary: #6f42c1;
             --secondary: #ffc107;
@@ -250,7 +234,6 @@
                 <div class="nav-dropdown">
                     <div class="dropdown-trigger">
                         Management 
-                        <%# Red dot indicator on parent menu %>
                         <% if (typeof approvalCount !== 'undefined' && approvalCount > 0) { %>
                             <span style="height: 8px; width: 8px; background-color: var(--danger); border-radius: 50%; display: inline-block; margin-left: 6px;"></span>
                         <% } %>
@@ -259,7 +242,6 @@
                     <div class="dropdown-menu">
                         <a href="/users" class="dropdown-item"><i class="fa-solid fa-users-viewfinder"></i> Employees</a>
                         
-                        <%# MODIFIED: Dynamic Styling for Pending Requests Link %>
                         <% 
                             const hasPending = (typeof approvalCount !== 'undefined' && approvalCount > 0);
                             const linkStyle = hasPending ? 'color: var(--danger); font-weight: 700;' : '';
@@ -366,7 +348,6 @@
     <nav class="navbar">
         <a href="/" class="nav-brand">Primus Park</a>
         
-        <%# --- CONDITIONAL: Hide nav links if 'simpleNav' is true (Checkout Mode) --- %>
         <% if (typeof simpleNav === 'undefined' || !simpleNav) { %>
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>

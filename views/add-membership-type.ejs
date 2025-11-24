@@ -4,59 +4,46 @@
     <meta charset="UTF-8">
     <title>Add Membership Type</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
-        
         div.form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Textarea */
-        input[type="text"], 
-        input[type="number"], 
-        textarea {
+        input[type="text"], input[type="number"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -67,48 +54,40 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        
         input:disabled {
             background-color: #e9ecef;
             color: #6c757d;
             cursor: not-allowed;
             border-color: #dee2e6;
         }
-        
         textarea { resize: vertical; min-height: 100px; }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #28a745; /* Green for "Add" */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #218838; 
+        button:hover {
+            background-color: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -119,8 +98,8 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
@@ -178,6 +157,17 @@
                 const baseCount = parseInt(baseMembersInput.value, 10);
                 if (baseCount <= 1) {
                     addonPriceInput.disabled = true;
-                    addonPriceInput.value = ''; // Clear it if disabled
+                    addonPriceInput.value = '';
                     addonPriceInput.placeholder = 'N/A for 1 base member';
                 } else {
+                    addonPriceInput.disabled = false;
+                    addonPriceInput.placeholder = '0.00';
+                }
+            }
+
+            baseMembersInput.addEventListener('input', toggleAddonPrice);
+            toggleAddonPrice();
+        });
+    </script>
+</body>
+</html>

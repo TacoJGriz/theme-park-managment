@@ -2,7 +2,7 @@ DROP PROCEDURE IF EXISTS GenerateMembers;
 
 DELIMITER //
 
--- generate dummy member data
+-- generate dummy members
 CREATE PROCEDURE GenerateMembers(
     IN num_members INT,
     IN start_year INT
@@ -17,105 +17,63 @@ BEGIN
     DECLARE random_end_date DATE;
     DECLARE random_type_id INT;
     DECLARE v_guest_passes INT DEFAULT 0;
-    DECLARE dob_offset INT;
-    DECLARE start_offset INT;
-    DECLARE max_first_name_id INT;
-    DECLARE max_last_name_id INT;
-    DECLARE max_type_id INT;
-    DECLARE random_id INT;
+    DECLARE max_first INT;
+    DECLARE max_last INT;
+    DECLARE rnd_id INT;
 
-    -- name pool
+    -- name pools
     DROP TEMPORARY TABLE IF EXISTS temp_first_names;
-    CREATE TEMPORARY TABLE temp_first_names (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(25)
-    );
+    CREATE TEMPORARY TABLE temp_first_names (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25));
     INSERT INTO temp_first_names (name) VALUES
     ('James'), ('Mary'), ('Robert'), ('Patricia'), ('John'), ('Jennifer'),
     ('Michael'), ('Linda'), ('William'), ('Elizabeth'), ('David'), ('Barbara'),
     ('Richard'), ('Susan'), ('Joseph'), ('Jessica'), ('Thomas'), ('Sarah'),
     ('Charles'), ('Karen');
 
-    -- surname pool
     DROP TEMPORARY TABLE IF EXISTS temp_last_names;
-    CREATE TEMPORARY TABLE temp_last_names (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(25)
-    );
+    CREATE TEMPORARY TABLE temp_last_names (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25));
     INSERT INTO temp_last_names (name) VALUES
     ('Smith'), ('Johnson'), ('Williams'), ('Brown'), ('Jones'), ('Garcia'),
     ('Miller'), ('Davis'), ('Rodriguez'), ('Martinez'), ('Hernandez'), ('Lopez'),
     ('Gonzalez'), ('Wilson'), ('Anderson'), ('Thomas'), ('Taylor'), ('Moore'),
     ('Jackson'), ('Martin');
 
-    -- type ids
-    DROP TEMPORARY TABLE IF EXISTS temp_member_types;
-    CREATE TEMPORARY TABLE temp_member_types (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        type_id INT
-    );
-    INSERT INTO temp_member_types (type_id) VALUES (1), (2), (3), (4);
-
-    -- set ranges
-    SELECT COUNT(*) INTO max_first_name_id FROM temp_first_names;
-    SELECT COUNT(*) INTO max_last_name_id FROM temp_last_names;
-    SELECT COUNT(*) INTO max_type_id FROM temp_member_types;
+    SELECT COUNT(*) INTO max_first FROM temp_first_names;
+    SELECT COUNT(*) INTO max_last FROM temp_last_names;
 
     START TRANSACTION;
 
-    -- generation loop
     WHILE i < num_members DO
-        SET random_id = FLOOR(1 + RAND() * max_first_name_id);
-        SELECT name INTO random_first_name FROM temp_first_names WHERE id = random_id;
+        -- pick names
+        SET rnd_id = FLOOR(1 + RAND() * max_first);
+        SELECT name INTO random_first_name FROM temp_first_names WHERE id = rnd_id;
 
-        SET random_id = FLOOR(1 + RAND() * max_last_name_id);
-        SELECT name INTO random_last_name FROM temp_last_names WHERE id = random_id;
+        SET rnd_id = FLOOR(1 + RAND() * max_last);
+        SELECT name INTO random_last_name FROM temp_last_names WHERE id = rnd_id;
 
         SET random_email = CONCAT(LOWER(random_first_name), '.', LOWER(random_last_name), i, '.', start_year, '@parkmember.com');
 
-        SET dob_offset = FLOOR(RAND() * 18627);
-        SET random_dob = DATE_SUB('2000-12-31', INTERVAL dob_offset DAY);
-
-        SET start_offset = FLOOR(365 * RAND());
-        SET random_start_date = DATE_ADD(CONCAT(start_year, '-01-01'), INTERVAL start_offset DAY);
+        -- generate dates
+        SET random_dob = DATE_SUB('2000-12-31', INTERVAL FLOOR(RAND() * 18627) DAY);
+        SET random_start_date = DATE_ADD(CONCAT(start_year, '-01-01'), INTERVAL FLOOR(365 * RAND()) DAY);
         SET random_end_date = DATE_SUB(DATE_ADD(random_start_date, INTERVAL 1 YEAR), INTERVAL 1 DAY);
 
-        SET random_id = FLOOR(1 + RAND() * max_type_id);
-        SELECT type_id INTO random_type_id FROM temp_member_types WHERE id = random_id;
-
-        -- set guest passes
-        SET v_guest_passes = CASE
-            WHEN random_type_id = 1 THEN 4
-            WHEN random_type_id = 2 THEN 2
-            WHEN random_type_id = 4 THEN 2
-            ELSE 0
-        END;
+        -- pick valid type directly (robust against gaps in IDs)
+        SELECT type_id, guest_pass_limit INTO random_type_id, v_guest_passes 
+        FROM membership_type 
+        ORDER BY RAND() 
+        LIMIT 1;
 
         INSERT INTO membership (
-            public_membership_id,
-            first_name,
-            last_name,
-            email,
-            phone_number,
-            date_of_birth,
-            type_id,
-            start_date,
-            end_date,
-            guest_passes_remaining
+            public_membership_id, first_name, last_name, email, phone_number,
+            date_of_birth, type_id, start_date, end_date, guest_passes_remaining
         )
         VALUES (
-            UUID(),
-            random_first_name,
-            random_last_name,
-            random_email,
+            UUID(), random_first_name, random_last_name, random_email,
             CONCAT('(', LPAD(FLOOR(RAND() * 800) + 200, 3, '0'), ') ',
                    LPAD(FLOOR(RAND() * 900) + 100, 3, '0'), '-',
                    LPAD(FLOOR(RAND() * 10000), 4, '0')),
-            random_dob,
-            random_type_id,
-            random_start_date,
-            random_end_date,
-            v_guest_passes
+            random_dob, random_type_id, random_start_date, random_end_date, v_guest_passes
         );
 
         SET i = i + 1;
@@ -125,23 +83,18 @@ BEGIN
 
     DROP TEMPORARY TABLE IF EXISTS temp_first_names;
     DROP TEMPORARY TABLE IF EXISTS temp_last_names;
-    DROP TEMPORARY TABLE IF EXISTS temp_member_types;
-
 END //
 
 DELIMITER ;
 
--- clear old data
+-- cleanup and run
 SET SQL_SAFE_UPDATES = 0;
 DELETE FROM visits WHERE membership_id IS NOT NULL;
 DELETE FROM member_payment_methods;
 DELETE FROM membership_purchase_history;
 DELETE FROM member_auth;
 DELETE FROM membership;
-
 ALTER TABLE membership AUTO_INCREMENT = 1;
 
--- run generation
 CALL GenerateMembers(4512, 2024);
-
 SET SQL_SAFE_UPDATES = 1;

@@ -4,34 +4,28 @@
     <meta charset="UTF-8">
     <title>Add New Member</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
         h3 {
             font-size: 1.2em;
             color: #007bff;
@@ -41,35 +35,25 @@
             border-left: 5px solid #007bff;
             padding-left: 10px;
         }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
         .full-width { grid-column: 1 / -1; }
-        
         div.form-group { margin-bottom: 0; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Selects */
-        input[type="text"], 
-        input[type="email"], 
-        input[type="tel"], 
-        input[type="date"], 
-        select {
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -80,15 +64,11 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-
-        /* Read-only Input */
         input[readonly] {
             background-color: #e9ecef;
             color: #6c757d;
             cursor: not-allowed;
         }
-
-        /* Price Display Box */
         .price-display {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -99,8 +79,6 @@
         }
         .price-display h4 { margin: 0 0 0.5em 0; color: #6c757d; text-transform: uppercase; font-size: 0.85em; }
         .price-display p { margin: 0; font-size: 2em; font-weight: 700; color: #28a745; }
-
-        /* Sub-Member Styling */
         .sub-member-form {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -118,13 +96,11 @@
             padding-bottom: 0.5em;
         }
         .sub-member-header h4 { margin: 0; color: #444; }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
@@ -133,25 +109,20 @@
             color: white;
         }
         button:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
-
-        .btn-submit { background-color: #28a745; margin-top: 1em; } /* Green for Final Submit */
+        .btn-submit { background-color: #28a745; margin-top: 1em; }
         .btn-submit:hover { background-color: #218838; }
-
-        .btn-add-member { 
-            background-color: #17a2b8; /* Teal for adding sub-action */
-            margin-top: 1.5em; 
+        .btn-add-member {
+            background-color: #17a2b8;
+            margin-top: 1.5em;
         }
         .btn-add-member:hover { background-color: #138496; }
-
-        .btn-remove { 
-            width: auto; 
-            padding: 5px 10px; 
-            font-size: 0.85em; 
-            background-color: #dc3545; 
+        .btn-remove {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.85em;
+            background-color: #dc3545;
         }
         .btn-remove:hover { background-color: #c82333; }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -163,15 +134,13 @@
             transition: color 0.2s;
         }
         .cancel-link:hover { color: #343a40; text-decoration: underline; }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
     </style>
@@ -259,7 +228,7 @@
                 </div>
                 
                 <div id="subMemberContainer">
-                    </div>
+                </div>
                 
                 <button type="button" id="addMemberBtn" class="btn-add-member">
                     <i class="fa-solid fa-plus"></i> Add Another Member
@@ -272,7 +241,6 @@
     </div>
     
     <script>
-        // --- Pass EJS data (for error re-population) ---
         <% 
             let existingSubMembers = [];
             if (typeof subMembers !== 'undefined') {
@@ -287,7 +255,6 @@
         %>
         const existingSubMembersJSON = <%- JSON.stringify(existingSubMembers) %>;
 
-        // Helper function to format date as YYYY-MM-DD
         function formatDate(date) {
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -298,22 +265,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             const typeSelect = document.getElementById('type_id');
             const priceDisplay = document.getElementById('priceDisplay');
-            
-            // Sub-member elements
             const subMemberSection = document.getElementById('subMemberSection');
             const subMemberIntro = document.getElementById('subMemberIntro');
             const subMemberContainer = document.getElementById('subMemberContainer');
             const addMemberBtn = document.getElementById('addMemberBtn');
             let subMemberCount = 0;
 
-            // This object will hold the rules for the currently selected pass
             let membershipType = {
                 base_price: 0,
                 base_members: 1,
                 additional_member_price: 0
             };
 
-            // --- Date Auto-population ---
             const today = new Date();
             const endDate = new Date(today);
             endDate.setFullYear(today.getFullYear() + 1);
@@ -321,7 +284,6 @@
             document.getElementById('start_date').value = formatDate(today);
             document.getElementById('end_date').value = formatDate(endDate);
 
-            // --- Sub-member Functions ---
             function updatePriceAndText() {
                 const totalMembers = 1 + subMemberCount;
                 const additionalMembers = Math.max(0, totalMembers - membershipType.base_members);
@@ -346,7 +308,6 @@
                 const formDiv = document.createElement('div');
                 formDiv.className = 'sub-member-form';
                 
-                // Pre-fill data if it exists (from error re-load)
                 const firstName = existingData ? existingData.first : '';
                 const lastName = existingData ? existingData.last : '';
                 const dob = existingData ? existingData.dob : '';
@@ -382,49 +343,38 @@
                 updatePriceAndText();
             }
 
-            // --- Event Listener for Type Select ---
             typeSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
                 
-                // Update the membershipType object
                 membershipType.base_price = parseFloat(selectedOption.dataset.price) || 0;
                 membershipType.base_members = parseInt(selectedOption.dataset.baseMembers, 10) || 1;
                 membershipType.additional_member_price = parseFloat(selectedOption.dataset.addonPrice) || 0;
 
-                // Clear existing sub-member forms
                 subMemberContainer.innerHTML = '';
                 subMemberCount = 0;
                 
                 if (membershipType.base_members > 1) {
-                    // This is a multi-member pass, show the section
                     subMemberSection.style.display = 'block';
                 } else {
-                    // This is an individual pass, hide the section
                     subMemberSection.style.display = 'none';
                 }
 
-                // Update price and text
                 updatePriceAndText();
             });
 
-            // Add Member Button
             addMemberBtn.addEventListener('click', () => createSubMemberForm());
             
-            // --- Initialization on Page Load ---
-            // Trigger 'change' on page load if a type is already selected (e.g., on error)
             if (typeSelect.value) {
                 typeSelect.dispatchEvent(new Event('change'));
                 
-                // Re-populate existing sub-members if they exist
                 if (existingSubMembersJSON.length > 0) {
-                    subMemberContainer.innerHTML = ''; // Clear the one auto-added form
+                    subMemberContainer.innerHTML = '';
                     subMemberCount = 0;
                     existingSubMembersJSON.forEach(member => {
                         createSubMemberForm(member);
                     });
                 }
             } else {
-                // If no type is selected, just show default price
                 priceDisplay.textContent = '$--.--';
             }
         });

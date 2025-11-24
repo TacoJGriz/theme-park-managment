@@ -4,59 +4,46 @@
     <meta charset="UTF-8">
     <title>Edit Membership Type</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
-        
         div.form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Textareas */
-        input[type="text"], 
-        input[type="number"], 
-        textarea {
+        input[type="text"], input[type="number"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -67,59 +54,56 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        
-        /* Disabled State */
         input:disabled {
             background-color: #e9ecef;
             color: #6c757d;
             cursor: not-allowed;
+            border-color: #dee2e6;
         }
-
-        textarea { 
-            resize: vertical; 
-            min-height: 100px; 
-        }
-
-        /* Helper Text */
-        small {
-            display: block;
-            margin-top: 5px;
-            color: #6c757d;
-            font-size: 0.85em;
-        }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        textarea { resize: vertical; min-height: 100px; }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #007bff; /* Primary Blue for Edits */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Cancel Link */
+        .btn-toggle {
+            margin-top: 1em;
+            width: 100%;
+        }
+        .btn-active {
+            background-color: #dc3545;
+        }
+        .btn-active:hover {
+            background-color: #c82333;
+        }
+        .btn-inactive {
+            background-color: #28a745;
+        }
+        .btn-inactive:hover {
+            background-color: #218838;
+        }
         .cancel-link {
             display: block;
             text-align: center;
@@ -130,8 +114,8 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
@@ -140,8 +124,8 @@
     <%- include('partials/header') %>
     
     <div class="container">
-        <h1>Edit Membership: <%= type.type_name %></h1>
-
+        <h1>Edit: <%= type.type_name %></h1>
+        
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="error"><%= error %></div>
         <% } %>
@@ -151,36 +135,39 @@
                 <label for="type_name">Type Name:</label>
                 <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required>
             </div>
-    
+            
             <div class="form-grid">
                 <div class="form-group">
                     <label for="base_price">Base Price ($):</label>
-                    <input type="number" id="base_price" name="base_price" value="<%= parseFloat(type.base_price).toFixed(2) %>" step="0.01" min="0" required>
+                    <input type="number" id="base_price" name="base_price" step="0.01" min="0" value="<%= type.base_price %>" required>
                 </div>
-                
                 <div class="form-group">
-                    <label for="base_members">Base Members:</label>
-                    <input type="number" id="base_members" name="base_members" value="<%= type.base_members %>" min="1" required>
+                    <label for="base_members">Base Members Included:</label>
+                    <input type="number" id="base_members" name="base_members" min="1" value="<%= type.base_members %>" required>
                 </div>
-                
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="additional_member_price">Price per Add-on Member ($):</label>
-                    <input type="number" id="additional_member_price" name="additional_member_price" 
-                        value="<%= type.additional_member_price || '' %>" step="0.01" min="0" placeholder="Leave blank if N/A">
-                    <small><i>Only applies if Base Members is > 1.</i></small>
+                    <input type="number" id="additional_member_price" name="additional_member_price" step="0.01" min="0" value="<%= type.additional_member_price %>">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea id="description" name="description"><%= type.description || '' %></textarea>
+                <textarea id="description" name="description"><%= type.description %></textarea>
             </div>
             
-            <br>
-            
-            <button type="submit">Update Type</button>
-            <a href="/memberships/types" class="cancel-link">Cancel</a>
+            <button type="submit">Save Changes</button>
         </form>
+
+        <form action="/memberships/types/toggle/<%= type.public_type_id %>" method="POST">
+            <% if (type.is_active) { %>
+                <button type="submit" class="btn-toggle btn-active">Deactivate Type</button>
+            <% } else { %>
+                <button type="submit" class="btn-toggle btn-inactive">Activate Type</button>
+            <% } %>
+        </form>
+
+        <a href="/memberships/types" class="cancel-link">Cancel</a>
     </div>
 
     <script>
@@ -192,20 +179,16 @@
                 const baseCount = parseInt(baseMembersInput.value, 10);
                 if (baseCount <= 1) {
                     addonPriceInput.disabled = true;
-                    addonPriceInput.value = ''; // Clear it if disabled
+                    addonPriceInput.value = '';
                     addonPriceInput.placeholder = 'N/A for 1 base member';
-                    addonPriceInput.style.backgroundColor = '#e9ecef'; // Force visual update
                 } else {
                     addonPriceInput.disabled = false;
-                    addonPriceInput.placeholder = 'e.g., 199.99';
-                    addonPriceInput.style.backgroundColor = '#fff';
+                    addonPriceInput.placeholder = '0.00';
                 }
             }
-            
-            // Run on page load
-            toggleAddonPrice();
-            // Run when input changes
+
             baseMembersInput.addEventListener('input', toggleAddonPrice);
+            toggleAddonPrice();
         });
     </script>
 </body>

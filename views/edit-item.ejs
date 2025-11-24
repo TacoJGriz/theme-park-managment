@@ -4,44 +4,36 @@
     <meta charset="UTF-8">
     <title>Edit Item: <%= item.item_name %></title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
+        .container {
             max-width: 800px;
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-        
-        h1 small { 
+        h1 small {
             display: block;
             font-size: 0.6em;
-            color: #777; 
-            font-weight: normal; 
-            margin-top: 5px; 
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
             line-height: 1.4;
         }
-
-        /* ID Badge */
         .item-id-badge {
             display: inline-block;
             font-family: monospace;
@@ -53,27 +45,19 @@
             margin-bottom: 1.5em;
             border: 1px solid #ced4da;
         }
-
-        /* Form Layout */
         .form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Selects */
-        input[type="text"], 
-        input[type="number"], 
-        select,
-        textarea {
+        input[type="text"], input[type="number"], select, textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -85,47 +69,40 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
         textarea { resize: vertical; min-height: 100px; }
-
-        /* Error Message */
-        .error { 
+        .error {
             color: #721c24;
-            background-color: #f8d7da; 
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
+        button {
             padding: 12px 25px;
-            background-color: #007bff; /* Blue for Edit/Save */
+            background-color: #007bff;
             color: white;
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
+        button:hover {
             background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
         .delete-btn {
-            background-color: #dc3545; /* Red for Delete */
+            background-color: #dc3545;
             margin-top: 10px;
         }
         .delete-btn:hover {
             background-color: #c82333;
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -136,17 +113,15 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
+        .cancel-link:hover {
             color: #343a40;
             text-decoration: underline;
         }
-
-        /* --- MODAL STYLES --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none; /* Hidden by default */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -164,7 +139,6 @@
         .modal-content h3 { margin-top: 0; color: #dc3545; }
         .modal-content p { color: #555; margin-bottom: 1.5em; }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
-        
         .btn-modal-cancel {
             padding: 10px 20px; background: #e9ecef; border: none;
             border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
@@ -173,7 +147,6 @@
             padding: 10px 20px; background: #dc3545; border: none;
             border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
         }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
     </style>
@@ -225,7 +198,6 @@
             <button type="submit">Save Changes</button>
         </form>
         
-        <%# Separate Delete Form with Modal Trigger %>
         <form id="deleteForm" action="/items/delete/<%= item.public_item_id %>" method="POST">
              <button type="button" class="delete-btn" onclick="openModal()">Delete Item Permanently</button>
         </form>
@@ -233,7 +205,6 @@
         <a href="/items" class="cancel-link">Cancel</a>
     </div>
 
-    <%# --- CUSTOM CONFIRMATION MODAL --- %>
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
             <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Item?</h3>
@@ -242,13 +213,11 @@
             
             <div class="modal-actions">
                 <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-                <%# Calls JS function to submit the form %>
                 <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
             </div>
         </div>
     </div>
 
-    <%# --- SCRIPT --- %>
     <script>
         const modal = document.getElementById('deleteModal');
         const deleteForm = document.getElementById('deleteForm');
@@ -265,7 +234,6 @@
             deleteForm.submit();
         }
 
-        // Close if clicking outside modal
         window.onclick = function(event) {
             if (event.target == modal) {
                 closeModal();

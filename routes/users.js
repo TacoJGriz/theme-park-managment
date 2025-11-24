@@ -6,30 +6,33 @@ const crypto = require('crypto');
 const {
     isAuthenticated,
     canViewUsers,
-    canAddEmployees,
-    canApproveEmployees,
-    canViewPendingEmployees
+    canAddEmployees
 } = require('../middleware/auth');
 
 const saltRounds = 10;
 
-// --- USER & EMPLOYEE MANAGEMENT ---
-
-// GET /
+// employee list
 router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
     try {
-        const { role, locationId } = req.session.user;
-        const { search, sort, dir, filter_role, filter_location, filter_status } = req.query;
+        const {
+            role,
+            locationId
+        } = req.session.user;
+        const {
+            search,
+            sort,
+            dir,
+            filter_role,
+            filter_location,
+            filter_status
+        } = req.query;
 
-        // --- 1. Construct Query String for Links ---
         const queryParams = new URLSearchParams(req.query);
         const currentQueryString = queryParams.toString();
 
-        // ... (Data fetching for dropdowns remains the same) ...
         const [allLocations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
         const [allRoles] = await pool.query('SELECT DISTINCT employee_type FROM employee_demographics ORDER BY employee_type');
 
-        // ... (Filtering Logic remains the same) ...
         let whereClauses = [];
         let params = [];
 
@@ -62,11 +65,9 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
         }
         if (filter_status) {
             if (filter_status === 'active') {
-                whereClauses.push('(e.is_active = TRUE AND e.is_pending_approval = FALSE)');
+                whereClauses.push('e.is_active = TRUE');
             } else if (filter_status === 'inactive') {
                 whereClauses.push('e.is_active = FALSE');
-            } else if (filter_status === 'pending') {
-                whereClauses.push('e.is_pending_approval = TRUE');
             }
         }
 
@@ -75,13 +76,12 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
             whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
         }
 
-        // ... (Counts Query remains the same) ...
+        // stats
         const countQuery = `
-            SELECT
+            SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN e.is_active = TRUE AND e.is_pending_approval = FALSE THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN e.is_active = FALSE THEN 1 ELSE 0 END) as inactive,
-                SUM(CASE WHEN e.is_pending_approval = TRUE THEN 1 ELSE 0 END) as pending
+                SUM(CASE WHEN e.is_active = TRUE THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN e.is_active = FALSE THEN 1 ELSE 0 END) as inactive
             FROM employee_demographics e
             LEFT JOIN location l ON e.location_id = l.location_id
             ${whereQuery}
@@ -89,33 +89,42 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
         const [countResult] = await pool.query(countQuery, params);
         const counts = countResult[0];
 
-        // ... (Sort Logic remains the same) ...
+        // sorting
         let orderBy = '';
         if (sort === 'status') {
             const direction = (dir === 'desc') ? 'DESC' : 'ASC';
-            orderBy = ` ORDER BY e.is_active ${direction}, e.is_pending_approval ${direction}`;
+            orderBy = ` ORDER BY e.is_active ${direction}`;
         } else {
-            orderBy = ' ORDER BY e.is_active DESC, e.is_pending_approval DESC';
+            orderBy = ' ORDER BY e.is_active DESC';
             if (sort && dir) {
                 const direction = (dir === 'desc') ? 'DESC' : 'ASC';
                 switch (sort) {
-                    case 'id': orderBy += `, e.employee_id ${direction}`; break;
-                    case 'name': orderBy += `, e.last_name ${direction}, e.first_name ${direction}`; break;
-                    case 'email': orderBy += `, e.email ${direction}`; break;
-                    case 'role': orderBy += `, e.employee_type ${direction}`; break;
-                    case 'location': orderBy += `, l.location_name ${direction}`; break;
+                    case 'id':
+                        orderBy += `, e.employee_id ${direction}`;
+                        break;
+                    case 'name':
+                        orderBy += `, e.last_name ${direction}, e.first_name ${direction}`;
+                        break;
+                    case 'email':
+                        orderBy += `, e.email ${direction}`;
+                        break;
+                    case 'role':
+                        orderBy += `, e.employee_type ${direction}`;
+                        break;
+                    case 'location':
+                        orderBy += `, l.location_name ${direction}`;
+                        break;
                 }
             } else {
                 orderBy += ', e.last_name ASC, e.first_name ASC';
             }
         }
 
-        // ... (Main Query remains the same) ...
         const mainQuery = `
             SELECT 
                 e.employee_id, e.public_employee_id, e.first_name, e.last_name, 
                 e.email, e.employee_type, e.location_id, 
-                e.is_pending_approval, e.is_active,
+                e.is_active,
                 l.location_name
             FROM employee_demographics e
             LEFT JOIN location l ON e.location_id = l.location_id
@@ -125,8 +134,8 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
         const [users] = await pool.query(mainQuery, params);
 
         res.render('users', {
-            users: users,
-            counts: counts,
+            users,
+            counts,
             locations: allLocations,
             roles: allRoles,
             search: search || "",
@@ -137,7 +146,7 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
                 location: filter_location || "",
                 status: filter_status || ""
             },
-            currentQueryString: currentQueryString, // Passed to view
+            currentQueryString,
             success: req.session.success,
             error: req.session.error
         });
@@ -151,17 +160,18 @@ router.get('/', isAuthenticated, canViewUsers, async (req, res) => {
     }
 });
 
-// GET /new
+// add employee form
 router.get('/new', isAuthenticated, canAddEmployees, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE');
+        // included location_id in selection for frontend logic
+        const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type, location_id FROM employee_demographics WHERE is_active = TRUE');
         let creatableRoles = ['Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Admin'];
 
         res.render('add-employee', {
-            locations: locations,
-            supervisors: supervisors,
-            creatableRoles: creatableRoles,
+            locations,
+            supervisors,
+            creatableRoles,
             error: null
         });
     } catch (error) {
@@ -170,13 +180,25 @@ router.get('/new', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// POST /
+// create employee
 router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     const {
-        first_name, last_name, gender, phone_number, email,
-        street_address, city, state, zip_code,
-        birth_date, hire_date, employee_type,
-        location_id, hourly_rate, password, confirm_password
+        first_name,
+        last_name,
+        gender,
+        phone_number,
+        email,
+        street_address,
+        city,
+        state,
+        zip_code,
+        birth_date,
+        hire_date,
+        employee_type,
+        location_id,
+        hourly_rate,
+        password,
+        confirm_password
     } = req.body;
     const supervisor_id = req.body.supervisor_id ? req.body.supervisor_id : null;
 
@@ -191,16 +213,17 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
 
         if (password !== confirm_password) {
             return res.render('add-employee', {
-                locations: locations,
-                supervisors: supervisors,
-                creatableRoles: creatableRoles,
+                locations,
+                supervisors,
+                creatableRoles,
                 error: "Passwords do not match."
             });
         }
     } catch (error) {
         console.error("Error fetching dropdown data for add employee:", error);
         return res.render('add-employee', {
-            locations: [], supervisors: [],
+            locations: [],
+            supervisors: [],
             creatableRoles: [],
             error: "Error loading form data. Please try again."
         });
@@ -208,7 +231,6 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
 
     let connection;
     try {
-        const isPending = false; // CORRECTED: Use lowercase 'false'
         const publicEmployeeId = crypto.randomUUID();
         const hash = await bcrypt.hash(password, saltRounds);
         connection = await pool.getConnection();
@@ -217,13 +239,17 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
         const demoSql = `
             INSERT INTO employee_demographics
             (public_employee_id, first_name, last_name, gender, phone_number, email, street_address, city, state, zip_code,
-            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_pending_approval)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
         `;
+
+        // treat empty string location_id as null
+        const finalLocationId = location_id === "" ? null : location_id;
+
         await connection.query(demoSql, [
             publicEmployeeId,
             first_name, last_name, gender, phone_number || null, email, street_address || null, city || null, state || null, zip_code || null,
-            birth_date, hire_date, employee_type, location_id, supervisor_id, hourly_rate || null, isPending
+            birth_date, hire_date, employee_type, finalLocationId, supervisor_id, hourly_rate || null
         ]);
 
         const newEmployeeId = (await connection.query('SELECT last_insert_id() as id'))[0][0].id;
@@ -237,9 +263,9 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
         if (connection) await connection.rollback();
         console.error("Error adding employee:", error);
         res.render('add-employee', {
-            locations: locations,
-            supervisors: supervisors,
-            creatableRoles: creatableRoles,
+            locations,
+            supervisors,
+            creatableRoles,
             error: "Database error adding employee. The email may already be in use."
         });
     } finally {
@@ -247,11 +273,12 @@ router.post('/', isAuthenticated, canAddEmployees, async (req, res) => {
     }
 });
 
-// GET /edit/:public_employee_id
+// edit employee form
 router.get('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
+    const {
+        public_employee_id
+    } = req.params;
 
-    // --- 1. Capture Query String to Return To ---
     const returnQuery = new URLSearchParams(req.query).toString();
 
     try {
@@ -266,10 +293,10 @@ router.get('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async 
         const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND employee_id != ?', [targetId]);
 
         res.render('edit-employee', {
-            employee: employee,
-            locations: locations,
-            supervisors: supervisors,
-            returnQuery: returnQuery, // Pass to view
+            employee,
+            locations,
+            supervisors,
+            returnQuery,
             error: null
         });
     } catch (error) {
@@ -278,19 +305,35 @@ router.get('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async 
     }
 });
 
-// POST /edit/:public_employee_id
+// update employee
 router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
-    const { returnQuery } = req.body; // Capture return query from form
+    const {
+        public_employee_id
+    } = req.params;
+    const {
+        returnQuery
+    } = req.body;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
         const {
-            first_name, last_name, gender, phone_number, email,
-            street_address, city, state, zip_code, birth_date,
-            hire_date, employee_type, location_id, hourly_rate, is_active
+            first_name,
+            last_name,
+            gender,
+            phone_number,
+            email,
+            street_address,
+            city,
+            state,
+            zip_code,
+            birth_date,
+            hire_date,
+            employee_type,
+            location_id,
+            hourly_rate,
+            is_active
         } = req.body;
         const supervisor_id = req.body.supervisor_id ? req.body.supervisor_id : null;
         const termination_date = req.body.termination_date ? req.body.termination_date : null;
@@ -312,7 +355,6 @@ router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async
 
         req.session.success = 'Employee details updated successfully.';
 
-        // Redirect back to the filtered list if applicable
         const redirectUrl = returnQuery ? `${req.baseUrl}?${returnQuery}` : req.baseUrl;
         res.redirect(redirectUrl);
 
@@ -325,10 +367,10 @@ router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async
             const [supervisors] = await pool.query('SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE is_active = TRUE AND public_employee_id != ?', [public_employee_id]);
 
             res.render('edit-employee', {
-                employee: employee,
-                locations: locations,
-                supervisors: supervisors,
-                returnQuery: returnQuery,
+                employee,
+                locations,
+                supervisors,
+                returnQuery,
                 error: "Database error updating employee. Email might be a duplicate."
             });
         } catch (fetchError) {
@@ -339,10 +381,12 @@ router.post('/edit/:public_employee_id', isAuthenticated, canAddEmployees, async
     }
 });
 
-// GET /reset-password/:public_employee_id
+// reset password form
 router.get('/reset-password/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
-    const returnQuery = new URLSearchParams(req.query).toString(); // Capture query
+    const {
+        public_employee_id
+    } = req.params;
+    const returnQuery = new URLSearchParams(req.query).toString();
 
     try {
         const [employeeResult] = await pool.query('SELECT employee_id, public_employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]);
@@ -351,8 +395,8 @@ router.get('/reset-password/:public_employee_id', isAuthenticated, canAddEmploye
         }
         const employee = employeeResult[0];
         res.render('reset-password', {
-            employee: employee,
-            returnQuery: returnQuery, // Pass to view
+            employee,
+            returnQuery,
             error: null
         });
 
@@ -362,10 +406,16 @@ router.get('/reset-password/:public_employee_id', isAuthenticated, canAddEmploye
     }
 });
 
-// POST /reset-password/:public_employee_id
+// process password reset
 router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
-    const { password, confirm_password, returnQuery } = req.body; // Capture returnQuery
+    const {
+        public_employee_id
+    } = req.params;
+    const {
+        password,
+        confirm_password,
+        returnQuery
+    } = req.body;
 
     let employee;
     try {
@@ -378,8 +428,8 @@ router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmploy
 
         if (password !== confirm_password) {
             return res.render('reset-password', {
-                employee: employee,
-                returnQuery: returnQuery,
+                employee,
+                returnQuery,
                 error: "Passwords do not match. Please try again."
             });
         }
@@ -388,29 +438,33 @@ router.post('/reset-password/:public_employee_id', isAuthenticated, canAddEmploy
         const sql = "UPDATE employee_auth SET password_hash = ? WHERE employee_id = ?";
         await pool.query(sql, [hash, internal_employee_id]);
 
-        // Redirect back to filtered list
         const redirectUrl = returnQuery ? `${req.baseUrl}?${returnQuery}` : req.baseUrl;
         res.redirect(redirectUrl);
 
     } catch (error) {
         console.error("Error resetting password:", error);
         res.render('reset-password', {
-            employee: employee || { public_employee_id: public_employee_id, first_name: 'Unknown', last_name: '' },
-            returnQuery: returnQuery,
+            employee: employee || {
+                public_employee_id,
+                first_name: 'Unknown',
+                last_name: ''
+            },
+            returnQuery,
             error: "A database error occurred while resetting the password."
         });
     }
 });
 
-// POST /delete/:public_employee_id
+// delete employee
 router.post('/delete/:public_employee_id', isAuthenticated, canAddEmployees, async (req, res) => {
-    const { public_employee_id } = req.params;
+    const {
+        public_employee_id
+    } = req.params;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
-        // 1. Get Internal ID
         const [emp] = await connection.query('SELECT employee_id, first_name, last_name FROM employee_demographics WHERE public_employee_id = ?', [public_employee_id]);
         if (emp.length === 0) {
             connection.release();
@@ -418,19 +472,17 @@ router.post('/delete/:public_employee_id', isAuthenticated, canAddEmployees, asy
         }
         const employeeId = emp[0].employee_id;
 
-        // 2. Start Transaction
         await connection.beginTransaction();
 
-        // 3. Unassign as Supervisor (Set their direct reports' supervisor_id to NULL)
+        // unassign as supervisor
         await connection.query('UPDATE employee_demographics SET supervisor_id = NULL WHERE supervisor_id = ?', [employeeId]);
 
-        // 4. Delete Login Credentials
+        // delete credentials
         await connection.query('DELETE FROM employee_auth WHERE employee_id = ?', [employeeId]);
 
-        // 5. Delete Employee Record
+        // delete record
         await connection.query('DELETE FROM employee_demographics WHERE employee_id = ?', [employeeId]);
 
-        // 6. Commit
         await connection.commit();
 
         req.session.success = `Employee "${emp[0].first_name} ${emp[0].last_name}" deleted successfully.`;
@@ -440,13 +492,11 @@ router.post('/delete/:public_employee_id', isAuthenticated, canAddEmployees, asy
         if (connection) await connection.rollback();
         console.error("Error deleting employee:", error);
 
-        // Handle Foreign Key Constraints (e.g., Maintenance Logs, Sales)
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
             req.session.error = "Cannot delete this employee because they have associated records (e.g., Maintenance Logs, Transactions). Please deactivate their account instead.";
         } else {
             req.session.error = "Database error deleting employee.";
         }
-        // Redirect back to the edit page so they can see the error
         res.redirect(`/users/edit/${public_employee_id}`);
     } finally {
         if (connection) connection.release();

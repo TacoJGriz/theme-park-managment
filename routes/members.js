@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const bcrypt = require('bcrypt');
-const crypto = require('crypto'); // ADDED
+const crypto = require('crypto');
 const {
     isAuthenticated,
     canManageMembersVisits,
@@ -11,28 +11,31 @@ const {
 
 const saltRounds = 10;
 
-// --- EMPLOYEE-FACING MEMBER MANAGEMENT ---
-// GET /members
+// employee view of members list
 router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
-        const { search, sort, dir, filter_type, filter_status } = req.query;
+        const {
+            search,
+            sort,
+            dir,
+            filter_type,
+            filter_status
+        } = req.query;
         let whereClauses = [];
         let params = [];
-        let summaryParams = []; // Params for the summary query
-        let orderBy = ' ORDER BY m.membership_id ASC'; // Default sort to group families
+        let summaryParams = [];
+        let orderBy = ' ORDER BY m.membership_id ASC';
 
         const [memberTypes] = await pool.query(
             'SELECT type_id, type_name, public_type_id FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
 
-        // --- NEW: Subquery for visit count ---
         const visitCountSubquery = `(SELECT COUNT(*) FROM visits v WHERE v.membership_id = m.membership_id) AS visit_count`;
 
         let query;
         let summaryQuery;
 
         if (search) {
-            // --- Find matching groups ---
             const searchTerm = `%${search}%`;
 
             const searchWhere = `(
@@ -49,8 +52,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm
             ];
 
-            // 1. Main Query: Select all members belonging to a matched group
-            // UPDATED: Added visit_count
             query = `
                 SELECT 
                     m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
@@ -64,7 +65,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                         ELSE 'Expired' 
                     END AS member_status,
                     m.start_date, m.end_date,
-                    ${visitCountSubquery} -- ADDED
+                    ${visitCountSubquery}
                 FROM membership m
                 JOIN (
                     SELECT DISTINCT COALESCE(m_search.primary_member_id, m_search.membership_id) AS group_id
@@ -74,7 +75,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
             `;
 
-            // 2. Summary Query (Unchanged mostly, relies on search params)
             summaryQuery = `
                 SELECT 
                     COUNT(m.membership_id) AS totalMembers,
@@ -92,14 +92,11 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             params = [...searchParams];
             summaryParams = [...searchParams];
 
-            // Add filters *after* grouping
             if (filter_type) whereClauses.push('m.type_id = ?');
             if (filter_status === 'active') whereClauses.push('m.end_date >= CURDATE()');
             if (filter_status === 'expired') whereClauses.push('m.end_date < CURDATE()');
 
         } else {
-            // --- ORIGINAL LOGIC (when not searching) ---
-            // UPDATED: Added visit_count
             query = `
                 SELECT 
                     m.membership_id, m.first_name, m.last_name, m.email, m.phone_number,
@@ -113,7 +110,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                         ELSE 'Expired' 
                     END AS member_status,
                     m.start_date, m.end_date,
-                    ${visitCountSubquery} -- ADDED
+                    ${visitCountSubquery}
                 FROM membership m
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
             `;
@@ -127,7 +124,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 LEFT JOIN membership_type mt ON m.type_id = mt.type_id
             `;
 
-            // Add filters
             if (filter_type) {
                 whereClauses.push('m.type_id = ?');
                 params.push(filter_type);
@@ -140,7 +136,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             summaryParams = [...params];
         }
 
-        // Apply filters to queries
         if (whereClauses.length > 0) {
             const whereString = ` WHERE ${whereClauses.join(' AND ')}`;
             query += whereString;
@@ -150,11 +145,9 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             if (filter_type) summaryParams.push(filter_type);
         }
 
-        // Get Summary Counts
         const [summaryResult] = await pool.query(summaryQuery, summaryParams);
         const counts = summaryResult[0];
 
-        // Handle Sorting
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
                 'id': 'm.membership_id',
@@ -165,7 +158,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 'start_date': 'm.start_date',
                 'end_date': 'm.end_date',
                 'status': 'm.end_date >= CURDATE()',
-                'visits': 'visit_count' // NEW SORT KEY
+                'visits': 'visit_count'
             };
             if (validSorts[sort]) {
                 if (sort === 'name') {
@@ -178,7 +171,6 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
         query += orderBy;
 
-        // Get Member List
         const [members] = await pool.query(query, params);
 
         const queryParams = new URLSearchParams();
@@ -190,7 +182,7 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         const currentQueryString = queryParams.toString();
 
         res.render('members', {
-            members: members,
+            members,
             types: memberTypes,
             search: search || "",
             currentSort: sort,
@@ -199,10 +191,10 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 type: filter_type || "",
                 status: filter_status || ""
             },
-            counts: counts,
+            counts,
             success: req.session.success,
             error: req.session.error,
-            currentQueryString: currentQueryString
+            currentQueryString
         });
         req.session.success = null;
         req.session.error = null;
@@ -212,26 +204,36 @@ router.get('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
     }
 });
 
-// GET /members/new
+// form to register new member (employee view)
 router.get('/new', isAuthenticated, canManageMembersVisits, async (req, res) => {
     try {
-        // --- MODIFIED: Select all new pricing columns ---
         const [types] = await pool.query(
             'SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name'
         );
-        res.render('add-member', { error: null, types: types });
+        res.render('add-member', {
+            error: null,
+            types
+        });
     } catch (error) {
         console.error(error);
-        res.render('add-member', { error: "Error fetching membership types.", types: [] });
+        res.render('add-member', {
+            error: "Error fetching membership types.",
+            types: []
+        });
     }
 });
 
-// POST /members
+// process new member registration
 router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { first_name, last_name, email, date_of_birth, type_id } = req.body;
+    const {
+        first_name,
+        last_name,
+        email,
+        date_of_birth,
+        type_id
+    } = req.body;
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
-    // Handle sub-member arrays (ensure they are arrays even if only 1 sub-member)
     const subFirstNames = [].concat(req.body.sub_first_name || []);
     const subLastNames = [].concat(req.body.sub_last_name || []);
     const subDobs = [].concat(req.body.sub_dob || []);
@@ -249,17 +251,14 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // 1. Get Membership Type
         const [typeResult] = await connection.query('SELECT * FROM membership_type WHERE type_id = ?', [type_id]);
         if (typeResult.length === 0) throw new Error("Invalid membership type selected.");
         type = typeResult[0];
 
-        // 2. Calculate Price
         const totalMembers = 1 + subFirstNames.length;
         const additionalMembers = Math.max(0, totalMembers - type.base_members);
         const finalPrice = parseFloat(type.base_price) + (additionalMembers * (parseFloat(type.additional_member_price) || 0));
 
-        // 3. Create PRIMARY member
         const publicMemberId = crypto.randomUUID();
         const primarySql = `
             INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
@@ -273,8 +272,7 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         ]);
         const newPrimaryMemberId = memResult.insertId;
 
-        // 4. Create SUB-MEMBER records AND Capture Data
-        const createdSubMembers = []; // <--- Array to store sub-members for the receipt
+        const createdSubMembers = [];
 
         const subMemberSql = `
             INSERT INTO membership (public_membership_id, first_name, last_name, email, phone_number, date_of_birth, type_id, start_date, end_date, primary_member_id)
@@ -295,7 +293,6 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
                 newPrimaryMemberId
             ]);
 
-            // Add to array for the view
             createdSubMembers.push({
                 first_name: subFirstNames[i],
                 last_name: subLastNames[i],
@@ -303,7 +300,6 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
             });
         }
 
-        // 5. Log Purchase History
         const publicPurchaseId = crypto.randomUUID();
         const historySql = `
             INSERT INTO membership_purchase_history 
@@ -324,20 +320,18 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
 
         await connection.commit();
 
-        // 7. Build Receipt Data
-        // IMPORTANT: Property names here must match the EJS view variables exactly!
         const receiptData = {
             public_purchase_id: publicPurchaseId,
             public_membership_id: publicMemberId,
-            first_name: first_name,
-            last_name: last_name,
+            first_name,
+            last_name,
             purchase_date: purchaseTime,
             type_name: type.type_name,
             purchased_start_date: serverStartDate,
             purchased_end_date: serverEndDate,
             price_paid: finalPrice,
             payment_method_name: 'In-Park Transaction',
-            subMembers: createdSubMembers // <--- Passing the array we built
+            subMembers: createdSubMembers
         };
 
         res.render('member-purchase-receipt-detail', {
@@ -351,21 +345,26 @@ router.post('/', isAuthenticated, canManageMembersVisits, async (req, res) => {
         const [types] = await pool.query('SELECT * FROM membership_type WHERE is_active = TRUE ORDER BY type_name');
         res.render('add-member', {
             error: "Database error adding member. Email might be duplicate.",
-            types: types,
+            types,
             member: req.body,
-            subMembers: { subFirstNames, subLastNames, subDobs }
+            subMembers: {
+                subFirstNames,
+                subLastNames,
+                subDobs
+            }
         });
     } finally {
         if (connection) connection.release();
     }
 });
 
-// GET /members/history/:public_membership_id
+// view member history (employee view)
 router.get('/history/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { public_membership_id } = req.params; // CHANGED
+    const {
+        public_membership_id
+    } = req.params;
     let connection;
 
-    // --- NEW: Rebuild the query string to pass to the template ---
     const queryParams = new URLSearchParams();
     if (req.query.search) queryParams.set('search', req.query.search);
     if (req.query.sort) queryParams.set('sort', req.query.sort);
@@ -377,18 +376,16 @@ router.get('/history/:public_membership_id', isAuthenticated, canManageMembersVi
     try {
         connection = await pool.getConnection();
 
-        // 1. Get the member's info (for the page title)
         const [memberResult] = await pool.query(
-            'SELECT membership_id, first_name, last_name, primary_member_id FROM membership WHERE public_membership_id = ?', // CHANGED
-            [public_membership_id] // CHANGED
+            'SELECT membership_id, first_name, last_name, primary_member_id FROM membership WHERE public_membership_id = ?',
+            [public_membership_id]
         );
         if (memberResult.length === 0) {
             return res.status(404).send('Member not found');
         }
         const memberData = memberResult[0];
-        const internal_member_id = memberData.membership_id; // Get internal ID
+        const internal_member_id = memberData.membership_id;
 
-        // 2. Find all membership IDs associated with this member's group
         const primaryId = memberData.primary_member_id || internal_member_id;
 
         const [allGroupIds] = await connection.query(
@@ -397,7 +394,6 @@ router.get('/history/:public_membership_id', isAuthenticated, canManageMembersVi
         );
         const memberGroupIds = allGroupIds.map(m => m.membership_id);
 
-        // 3. Fetch visits, grouping them by the visit_group_id
         const [visits] = await pool.query(`
             SELECT 
                 v.visit_group_id,
@@ -416,9 +412,9 @@ router.get('/history/:public_membership_id', isAuthenticated, canManageMembersVi
         `, [memberGroupIds]);
 
         res.render('visit-history', {
-            member: memberData, // This contains first_name, last_name
-            visits: visits,
-            currentQueryString: currentQueryString // <-- Pass the query string
+            member: memberData,
+            visits,
+            currentQueryString
         });
 
     } catch (error) {
@@ -429,14 +425,12 @@ router.get('/history/:public_membership_id', isAuthenticated, canManageMembersVi
     }
 });
 
-
-// *** EMPLOYEE-SIDE EDIT MEMBER ***
-
-// GET /members/edit/:public_membership_id
+// edit member form (employee view)
 router.get('/edit/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { public_membership_id } = req.params; // CHANGED
+    const {
+        public_membership_id
+    } = req.params;
 
-    // --- NEW: Rebuild the query string to pass to the template ---
     const queryParams = new URLSearchParams();
     if (req.query.search) queryParams.set('search', req.query.search);
     if (req.query.sort) queryParams.set('sort', req.query.sort);
@@ -447,16 +441,16 @@ router.get('/edit/:public_membership_id', isAuthenticated, canManageMembersVisit
 
     try {
         const [memberResult] = await pool.query(
-            "SELECT * FROM membership WHERE public_membership_id = ?", // CHANGED
-            [public_membership_id] // CHANGED
+            "SELECT * FROM membership WHERE public_membership_id = ?",
+            [public_membership_id]
         );
         if (memberResult.length === 0) {
             return res.status(404).send('Member not found');
         }
         res.render('member-edit-employee', {
-            member: memberResult[0], // Contains internal and public IDs
+            member: memberResult[0],
             error: null,
-            currentQueryString: currentQueryString // <-- Pass the query string
+            currentQueryString
         });
     } catch (error) {
         console.error("Error loading member edit page:", error);
@@ -464,10 +458,17 @@ router.get('/edit/:public_membership_id', isAuthenticated, canManageMembersVisit
     }
 });
 
-// POST /members/edit/:public_membership_id
+// update member profile (employee view)
 router.post('/edit/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { public_membership_id } = req.params; // CHANGED
-    const { first_name, last_name, email, date_of_birth } = req.body;
+    const {
+        public_membership_id
+    } = req.params;
+    const {
+        first_name,
+        last_name,
+        email,
+        date_of_birth
+    } = req.body;
     const formattedPhoneNumber = formatPhoneNumber(req.body.phone_number);
 
     try {
@@ -475,10 +476,9 @@ router.post('/edit/:public_membership_id', isAuthenticated, canManageMembersVisi
             throw new Error("First Name, Last Name, and Date of Birth are required.");
         }
 
-        // --- NEW: Fetch member first to check if they are a sub-member ---
         const [memberResult] = await pool.query(
-            "SELECT primary_member_id FROM membership WHERE public_membership_id = ?", // CHANGED
-            [public_membership_id] // CHANGED
+            "SELECT primary_member_id FROM membership WHERE public_membership_id = ?",
+            [public_membership_id]
         );
         if (memberResult.length === 0) {
             throw new Error("Member not found.");
@@ -489,32 +489,29 @@ router.post('/edit/:public_membership_id', isAuthenticated, canManageMembersVisi
         let sqlParams;
 
         if (isSubMember) {
-            // Sub-member: DO NOT update email or phone
             sql = `
                 UPDATE membership 
                 SET first_name = ?, last_name = ?, date_of_birth = ?
                 WHERE public_membership_id = ? 
-            `; // CHANGED
-            sqlParams = [first_name, last_name, date_of_birth, public_membership_id]; // CHANGED
+            `;
+            sqlParams = [first_name, last_name, date_of_birth, public_membership_id];
         } else {
-            // Primary member: Update all fields
             sql = `
                 UPDATE membership 
                 SET first_name = ?, last_name = ?, email = ?, phone_number = ?, date_of_birth = ?
                 WHERE public_membership_id = ?
-            `; // CHANGED
+            `;
             sqlParams = [
                 first_name,
                 last_name,
                 email,
                 formattedPhoneNumber,
                 date_of_birth,
-                public_membership_id // CHANGED
+                public_membership_id
             ];
         }
 
         await pool.query(sql, sqlParams);
-        // --- END NEW LOGIC ---
 
         req.session.success = "Member profile updated successfully.";
         res.redirect('/members');
@@ -523,11 +520,14 @@ router.post('/edit/:public_membership_id', isAuthenticated, canManageMembersVisi
         console.error("Error updating member profile:", error);
         try {
             const [memberResult] = await pool.query(
-                "SELECT * FROM membership WHERE public_membership_id = ?", // CHANGED
-                [public_membership_id] // CHANGED
+                "SELECT * FROM membership WHERE public_membership_id = ?",
+                [public_membership_id]
             );
             res.render('member-edit-employee', {
-                member: memberResult[0] || { public_membership_id: public_membership_id, ...req.body }, // CHANGED
+                member: memberResult[0] || {
+                    public_membership_id,
+                    ...req.body
+                },
                 error: "Database error updating profile. Email may be a duplicate."
             });
         } catch (fetchError) {
@@ -536,13 +536,12 @@ router.post('/edit/:public_membership_id', isAuthenticated, canManageMembersVisi
     }
 });
 
-// *** EMPLOYEE-SIDE RESET MEMBER PASSWORD ***
-
-// GET /members/reset-password/:public_membership_id
+// reset member password form (employee view)
 router.get('/reset-password/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { public_membership_id } = req.params; // CHANGED
+    const {
+        public_membership_id
+    } = req.params;
 
-    // --- NEW: Rebuild the query string to pass to the template ---
     const queryParams = new URLSearchParams();
     if (req.query.search) queryParams.set('search', req.query.search);
     if (req.query.sort) queryParams.set('sort', req.query.sort);
@@ -553,8 +552,8 @@ router.get('/reset-password/:public_membership_id', isAuthenticated, canManageMe
 
     try {
         const [memberResult] = await pool.query(
-            "SELECT membership_id, public_membership_id, first_name, last_name FROM membership WHERE public_membership_id = ?", // CHANGED
-            [public_membership_id] // CHANGED
+            "SELECT membership_id, public_membership_id, first_name, last_name FROM membership WHERE public_membership_id = ?",
+            [public_membership_id]
         );
         if (memberResult.length === 0) {
             return res.status(404).send('Member not found');
@@ -562,28 +561,33 @@ router.get('/reset-password/:public_membership_id', isAuthenticated, canManageMe
         res.render('member-reset-password', {
             member: memberResult[0],
             error: null,
-            currentQueryString: currentQueryString // <-- Pass the query string
+            currentQueryString
         });
     } catch (error) {
         console.error("Error loading member reset password page:", error);
         res.status(500).send("Error loading page.");
     }
 });
-// POST /members/reset-password/:public_membership_id
-router.post('/reset-password/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
-    const { public_membership_id } = req.params; // CHANGED
-    const { password, confirm_password } = req.body;
 
-    // Fetch member data again in case of error
+// process password reset
+router.post('/reset-password/:public_membership_id', isAuthenticated, canManageMembersVisits, async (req, res) => {
+    const {
+        public_membership_id
+    } = req.params;
+    const {
+        password,
+        confirm_password
+    } = req.body;
+
     const [memberResult] = await pool.query(
-        "SELECT membership_id, public_membership_id, first_name, last_name FROM membership WHERE public_membership_id = ?", // CHANGED
-        [public_membership_id] // CHANGED
+        "SELECT membership_id, public_membership_id, first_name, last_name FROM membership WHERE public_membership_id = ?",
+        [public_membership_id]
     );
     if (memberResult.length === 0) {
         return res.status(404).send('Member not found');
     }
     const member = memberResult[0];
-    const internal_member_id = member.membership_id; // Get internal ID
+    const internal_member_id = member.membership_id;
 
     try {
         if (password !== confirm_password) {
@@ -593,16 +597,13 @@ router.post('/reset-password/:public_membership_id', isAuthenticated, canManageM
             throw new Error("Password must be at least 8 characters.");
         }
 
-        // Check if member has an auth account to update (using internal ID)
         const [authCheck] = await pool.query("SELECT * FROM member_auth WHERE membership_id = ?", [internal_member_id]);
 
         const newHash = await bcrypt.hash(password, saltRounds);
 
         if (authCheck.length > 0) {
-            // Member has an account, update it (using internal ID)
             await pool.query('UPDATE member_auth SET password_hash = ? WHERE membership_id = ?', [newHash, internal_member_id]);
         } else {
-            // Member does not have an account, create one (using internal ID)
             await pool.query('INSERT INTO member_auth (membership_id, password_hash) VALUES (?, ?)', [internal_member_id, newHash]);
         }
 
@@ -612,11 +613,10 @@ router.post('/reset-password/:public_membership_id', isAuthenticated, canManageM
     } catch (error) {
         console.error("Error resetting member password:", error);
         res.render('member-reset-password', {
-            member: member,
+            member,
             error: error.message
         });
     }
 });
-
 
 module.exports = router;

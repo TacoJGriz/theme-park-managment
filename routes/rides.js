@@ -10,26 +10,30 @@ const {
     canViewRideHistory
 } = require('../middleware/auth');
 
-// --- RIDE & MAINTENANCE MANAGEMENT ---
-
-// GET /rides (Main rides list)
+// list rides
 router.get('/', isAuthenticated, canViewRides, async (req, res) => {
     try {
-        const { role, locationId } = req.session.user;
-
-        // --- 1. Get query params ---
         const {
-            search, sort, dir, filter_type, filter_status, filter_location
+            role,
+            locationId
+        } = req.session.user;
+        const {
+            search,
+            sort,
+            dir,
+            filter_type,
+            filter_status,
+            filter_location
         } = req.query;
 
         let orderBy = ' ORDER BY r.ride_name ASC';
         let whereClauses = [];
         let params = [];
 
-        // --- 2. Fetch data for filters ---
         const [allLocations] = await pool.query('SELECT location_id, public_location_id, location_name FROM location ORDER BY location_name');
         const [allTypes] = await pool.query('SELECT DISTINCT ride_type FROM rides ORDER BY ride_type');
 
+        // get valid statuses
         const [schemaResult] = await pool.query(
             `SELECT COLUMN_TYPE 
              FROM INFORMATION_SCHEMA.COLUMNS 
@@ -40,19 +44,19 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
         if (schemaResult.length > 0) {
             const enumString = schemaResult[0].COLUMN_TYPE;
             const values = enumString.substring(5, enumString.length - 1).replace(/'/g, '').split(',');
-            allStatuses = values.map(status => ({ ride_status: status }));
+            allStatuses = values.map(status => ({
+                ride_status: status
+            }));
         } else {
             const [distinctStatuses] = await pool.query('SELECT DISTINCT ride_status FROM rides ORDER BY ride_status');
             allStatuses = distinctStatuses;
         }
 
-        // --- 3. Handle Location Manager Scope ---
         if (role === 'Location Manager' || role === 'Staff') {
             whereClauses.push('r.location_id = ?');
             params.push(locationId);
         }
 
-        // --- 4. Handle Search Query ---
         if (search) {
             whereClauses.push(
                 '(r.ride_name LIKE ? OR l.location_name LIKE ? OR r.ride_status LIKE ? OR r.ride_type LIKE ?)'
@@ -61,7 +65,6 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
-        // --- 5. Handle Specific Filters ---
         if (filter_type) {
             whereClauses.push('r.ride_type = ?');
             params.push(filter_type);
@@ -75,9 +78,9 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             params.push(filter_location);
         }
 
-        // --- 6. Build and Run Summary Query ---
+        // get summary counts
         let summaryQuery = `
-            SELECT
+            SELECT 
                 COUNT(r.ride_id) AS totalRides,
                 SUM(CASE WHEN r.ride_status = 'OPEN' THEN 1 ELSE 0 END) AS countOpen,
                 SUM(CASE WHEN r.ride_status = 'CLOSED' THEN 1 ELSE 0 END) AS countClosed,
@@ -99,7 +102,7 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
         const [summaryResult] = await pool.query(summaryQuery + whereQuery, params);
         const counts = summaryResult[0];
 
-        // --- 7. Handle Sort Query ---
+        // sorting logic
         if (sort && dir && (dir === 'asc' || dir === 'desc')) {
             const validSorts = {
                 name: 'r.ride_name',
@@ -112,7 +115,6 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
             }
         }
 
-        // --- 8. Build Main Query ---
         let query = `
             SELECT r.*, l.location_name
             FROM rides r
@@ -123,13 +125,11 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
 
         const [rides] = await pool.query(query, params);
 
-        // --- 9. Capture the current query string for Smart Recall ---
         const queryParams = new URLSearchParams(req.query);
         const currentQueryString = queryParams.toString();
 
-        // --- 10. Render with all data ---
         res.render('rides', {
-            rides: rides,
+            rides,
             search: search || "",
             currentSort: sort,
             currentDir: dir,
@@ -141,15 +141,14 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
                 status: filter_status || "",
                 location: filter_location || ""
             },
-            counts: counts,
-            currentQueryString: currentQueryString,
-            success: req.session.success, // ADDED
-            error: req.session.error      // ADDED
+            counts,
+            currentQueryString,
+            success: req.session.success,
+            error: req.session.error
         });
 
-        // Clear messages after display
-        req.session.success = null; // ADDED
-        req.session.error = null;   // ADDED
+        req.session.success = null;
+        req.session.error = null;
 
     } catch (error) {
         console.error(error);
@@ -157,27 +156,42 @@ router.get('/', isAuthenticated, canViewRides, async (req, res) => {
     }
 });
 
-// GET /rides/new
+// add ride form
 router.get('/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const { returnQuery } = req.query;
+        const {
+            returnQuery
+        } = req.query;
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        res.render('add-ride', { locations: locations, error: null, returnQuery: returnQuery || '' });
+        res.render('add-ride', {
+            locations,
+            error: null,
+            returnQuery: returnQuery || ''
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error loading add ride page');
     }
 });
 
-// POST /rides
+// create ride
 router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight, returnQuery } = req.body;
+    const {
+        ride_name,
+        ride_type,
+        ride_status,
+        location_id,
+        capacity,
+        min_height,
+        max_weight,
+        returnQuery
+    } = req.body;
     const publicRideId = crypto.randomUUID();
     let connection;
     try {
         connection = await pool.getConnection();
         const sql = `
-            INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight)
+            INSERT INTO rides (public_ride_id, ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await connection.query(sql, [
@@ -186,7 +200,7 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
             capacity || null, min_height || null, max_weight || null
         ]);
 
-        req.session.success = 'Ride added successfully.'; // ADDED
+        req.session.success = 'Ride added successfully.';
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
@@ -194,7 +208,7 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
         console.error(error);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
         res.render('add-ride', {
-            locations: locations,
+            locations,
             error: "Database error adding ride. Name might be duplicate.",
             returnQuery: returnQuery || ''
         });
@@ -203,11 +217,19 @@ router.post('/', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     }
 });
 
-// POST /rides/status/:public_ride_id
+// update status
 router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { ride_status, returnQuery } = req.body;
-    const { role, locationId } = req.session.user;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        ride_status,
+        returnQuery
+    } = req.body;
+    const {
+        role,
+        locationId
+    } = req.session.user;
 
     const [schemaResult] = await pool.query(
         `SELECT COLUMN_TYPE 
@@ -246,8 +268,6 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
         const sql = "UPDATE rides SET ride_status = ? WHERE public_ride_id = ?";
         await connection.query(sql, [ride_status, public_ride_id]);
 
-        // req.session.success = 'Status updated.'; // Optional: feedback for status change
-
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
 
@@ -259,11 +279,18 @@ router.post('/status/:public_ride_id', isAuthenticated, async (req, res) => {
     }
 });
 
-// GET /rides/log/:public_ride_id
+// log run form
 router.get('/log/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnQuery } = req.query;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnQuery
+    } = req.query;
     let ride;
 
     try {
@@ -279,23 +306,38 @@ router.get('/log/:public_ride_id', isAuthenticated, canLogRideRun, async (req, r
             }
         }
 
-        res.render('log-ride-run', { ride: ride, error: null, returnQuery: returnQuery || '' });
+        res.render('log-ride-run', {
+            ride,
+            error: null,
+            returnQuery: returnQuery || ''
+        });
 
     } catch (error) {
         console.error("Error loading log ride run page:", error);
         res.render('log-ride-run', {
-            ride: ride || { public_ride_id: public_ride_id, ride_name: 'Unknown Ride' },
+            ride: ride || {
+                public_ride_id,
+                ride_name: 'Unknown Ride'
+            },
             error: 'Error loading page. Please try again.',
             returnQuery: returnQuery || ''
         });
     }
 });
 
-// POST /rides/run/:public_ride_id
+// process run log
 router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { rider_count, returnQuery } = req.body;
-    const { role, locationId } = req.session.user;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        rider_count,
+        returnQuery
+    } = req.body;
+    const {
+        role,
+        locationId
+    } = req.session.user;
     let connection;
     let ride;
 
@@ -320,7 +362,7 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
 
         if (isNaN(numRiders) || numRiders < 0) {
             return res.render('log-ride-run', {
-                ride: ride,
+                ride,
                 error: 'Invalid number of riders submitted.',
                 returnQuery: returnQuery || ''
             });
@@ -328,7 +370,7 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
 
         if (numRiders > maxCapacity) {
             return res.render('log-ride-run', {
-                ride: ride,
+                ride,
                 error: `Error: Number of riders (${numRiders}) cannot exceed the max capacity of ${maxCapacity}.`,
                 returnQuery: returnQuery || ''
             });
@@ -351,7 +393,7 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
 
         await connection.commit();
 
-        req.session.success = 'Ride run logged successfully.'; // ADDED
+        req.session.success = 'Ride run logged successfully.';
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
@@ -361,7 +403,11 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
         console.error("Error logging ride run:", error);
 
         res.render('log-ride-run', {
-            ride: ride || { public_ride_id: public_ride_id, ride_name: 'Unknown Ride', capacity: 0 },
+            ride: ride || {
+                public_ride_id,
+                ride_name: 'Unknown Ride',
+                capacity: 0
+            },
             error: 'Error saving ride data. Please try again.',
             returnQuery: returnQuery || ''
         });
@@ -370,11 +416,18 @@ router.post('/run/:public_ride_id', isAuthenticated, canLogRideRun, async (req, 
     }
 });
 
-// GET /rides/history/:public_ride_id
+// view ride history
 router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { returnQuery } = req.query;
-    const { role, locationId } = req.session.user;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        returnQuery
+    } = req.query;
+    const {
+        role,
+        locationId
+    } = req.session.user;
     const today = new Date().toISOString().substring(0, 10);
     let ride;
 
@@ -414,10 +467,10 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
         );
 
         res.render('ride-run-history', {
-            ride: ride,
-            todayStats: todayStats,
-            allTimeStats: allTimeStats,
-            dailyHistory: dailyHistory,
+            ride,
+            todayStats,
+            allTimeStats,
+            dailyHistory,
             returnQuery: returnQuery || ''
         });
 
@@ -427,9 +480,14 @@ router.get('/history/:public_ride_id', isAuthenticated, canViewRideHistory, asyn
     }
 });
 
+// edit ride form
 router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { returnQuery } = req.query;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        returnQuery
+    } = req.query;
     try {
         const [rideResult] = await pool.query('SELECT * FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (rideResult.length === 0) {
@@ -439,8 +497,8 @@ router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async
         const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
 
         res.render('edit-ride', {
-            ride: ride,
-            locations: locations,
+            ride,
+            locations,
             error: null,
             returnQuery: returnQuery || ''
         });
@@ -451,9 +509,21 @@ router.get('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async
     }
 });
 
+// update ride
 router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { ride_name, ride_type, ride_status, location_id, capacity, min_height, max_weight, returnQuery } = req.body;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        ride_name,
+        ride_type,
+        ride_status,
+        location_id,
+        capacity,
+        min_height,
+        max_weight,
+        returnQuery
+    } = req.body;
 
     try {
         const sql = `
@@ -468,7 +538,7 @@ router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, asyn
             public_ride_id
         ]);
 
-        req.session.success = 'Ride details updated.'; // ADDED
+        req.session.success = 'Ride details updated.';
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
         res.redirect(redirectUrl);
@@ -480,24 +550,26 @@ router.post('/edit/:public_ride_id', isAuthenticated, isAdminOrParkManager, asyn
 
         res.render('edit-ride', {
             ride: rideResult[0] || req.body,
-            locations: locations,
+            locations,
             error: "Database error updating ride. Name might be duplicate.",
             returnQuery: returnQuery || ''
         });
     }
 });
 
-// POST /delete/:public_ride_id
-// UPDATED: Deletes dependencies first to prevent Foreign Key Errors
+// delete ride
 router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ride_id } = req.params;
-    const { returnQuery } = req.body;
+    const {
+        public_ride_id
+    } = req.params;
+    const {
+        returnQuery
+    } = req.body;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
-        // 1. Get Internal ID
         const [ride] = await connection.query('SELECT ride_id, ride_name FROM rides WHERE public_ride_id = ?', [public_ride_id]);
         if (ride.length === 0) {
             req.session.error = 'Ride not found.';
@@ -506,23 +578,15 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
         }
         const rideId = ride[0].ride_id;
 
-        // 2. Start Transaction
         await connection.beginTransaction();
 
-        // 3. Delete Dependencies (Order matters!)
-        // Delete maintenance logs first
+        // clear dependencies
         await connection.query('DELETE FROM maintenance WHERE ride_id = ?', [rideId]);
-
-        // Delete daily_ride history
         await connection.query('DELETE FROM daily_ride WHERE ride_id = ?', [rideId]);
-
-        // 4. Delete Ride
         await connection.query('DELETE FROM rides WHERE ride_id = ?', [rideId]);
 
-        // 5. Commit
         await connection.commit();
 
-        // Set Success Message for the "Custom Alert"
         req.session.success = `Ride "${ride[0].ride_name}" and its history were deleted successfully.`;
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';
@@ -532,7 +596,6 @@ router.post('/delete/:public_ride_id', isAuthenticated, isAdminOrParkManager, as
         if (connection) await connection.rollback();
         console.error("Error deleting ride:", error);
 
-        // Set Error Message for the "Custom Alert"
         req.session.error = "Error deleting ride. Database constraint error.";
 
         const redirectUrl = returnQuery ? `/rides?${returnQuery}` : '/rides';

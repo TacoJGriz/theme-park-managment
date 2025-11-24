@@ -3,71 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Promotion</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-        
-        h1 small { 
-            display: block; 
-            font-size: 0.6em;
-            color: #777; 
-            font-weight: normal; 
-            margin-top: 5px; 
-            line-height: 1.4;
-        }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
-        div.form-group { margin-bottom: 0; } 
-        
-        label { 
+        .full-width { grid-column: 1 / -1; }
+        div.form-group { margin-bottom: 0; }
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Selects */
-        input[type="text"], 
-        input[type="date"], 
-        input[type="number"], 
-        select, 
-        textarea {
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -78,53 +55,41 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-        textarea { 
-            grid-column: 1 / -1; 
-            resize: vertical; 
-            min-height: 100px; 
-        }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        textarea { resize: vertical; min-height: 100px; }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #28a745; /* Green for Save */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #218838; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Delete Button (Trigger) */
-        .btn-delete {
+        .delete-btn {
             background-color: #dc3545;
             margin-top: 1.5em;
         }
-        .btn-delete:hover {
+        .delete-btn:hover {
             background-color: #c82333;
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -135,42 +100,32 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
-
-        /* --- CUSTOM CONFIRMATION MODAL STYLES --- */
         .modal-overlay {
-            display: none; /* Hidden by default */
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-            z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(3px);
+            z-index: 1000;
+            animation: fadeIn 0.2s;
         }
-
         .modal-content {
-            background-color: white;
+            background: white;
             padding: 2em;
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: modalPop 0.3s ease-out;
+            animation: slideIn 0.2s;
         }
-
-        @keyframes modalPop {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
         .modal-content h3 {
             color: #dc3545;
             margin-top: 0;
@@ -180,37 +135,15 @@
             justify-content: center;
             gap: 10px;
         }
-
-        .modal-content p {
-            color: #555;
-            margin: 1.5em 0;
-            line-height: 1.6;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 1em;
-            justify-content: center;
-            margin-top: 2em;
-        }
-
-        /* Modal Specific Buttons */
+        .modal-content p { color: #555; margin: 1.5em 0; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 1em; justify-content: center; margin-top: 2em; }
         .btn-modal-cancel {
-            background-color: #6c757d;
-            width: auto;
-            padding: 10px 20px;
+            padding: 10px 20px; background: #e9ecef; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
         }
-        .btn-modal-cancel:hover {
-            background-color: #5a6268;
-        }
-
         .btn-modal-confirm {
-            background-color: #dc3545;
-            width: auto;
-            padding: 10px 20px;
-        }
-        .btn-modal-confirm:hover {
-            background-color: #c82333;
+            padding: 10px 20px; background: #dc3545; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
         }
     </style>
 </head>
@@ -218,85 +151,78 @@
     <%- include('partials/header') %>
     
     <div class="container">
-        <h1>
-            Edit Promotion
-            <small>for <%= promotion.event_name %></small>
-        </h1>
+        <h1>Edit Promotion</h1>
 
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="error"><%= error %></div>
         <% } %>
 
-        <form id="promotionForm" action="/promotions/edit/<%= promotion.event_id %>" method="POST">
+        <form action="/promotions/edit/<%= promotion.event_id %>" method="POST">
             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
             
             <div class="form-grid">
-                <div class="form-group">
-                    <label for="event_name">Event / Promotion Name:</label>
+                <div class="form-group full-width">
+                    <label for="event_name">Event Name:</label>
                     <input type="text" id="event_name" name="event_name" value="<%= promotion.event_name %>" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="event_type">Type:</label>
+                    <label for="event_type">Event Type:</label>
                     <select id="event_type" name="event_type" required>
                         <option value="Holiday" <%= promotion.event_type === 'Holiday' ? 'selected' : '' %>>Holiday</option>
                         <option value="Seasonal" <%= promotion.event_type === 'Seasonal' ? 'selected' : '' %>>Seasonal</option>
-                        <option value="Special" <%= promotion.event_type === 'Special' ? 'selected' : '' %>>Special Event</option>
-                        <option value="Weekend" <%= promotion.event_type === 'Weekend' ? 'selected' : '' %>>Weekend Deal</option>
+                        <option value="Special" <%= promotion.event_type === 'Special' ? 'selected' : '' %>>Special</option>
+                        <option value="Weekend" <%= promotion.event_type === 'Weekend' ? 'selected' : '' %>>Weekend</option>
                     </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="discount_percent">Discount (%):</label>
+                    <input type="number" id="discount_percent" name="discount_percent" step="0.01" min="0" max="100" value="<%= promotion.discount_percent %>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="start_date">Start Date:</label>
-                    <input type="date" id="start_date" name="start_date" value="<%= promotion.start_date.toISOString().split('T')[0] %>" required>
+                    <input type="date" id="start_date" name="start_date" value="<%= promotion.start_date.toISOString().substring(0, 10) %>" required>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="end_date">End Date:</label>
-                    <input type="date" id="end_date" name="end_date" value="<%= promotion.end_date.toISOString().split('T')[0] %>" required>
+                    <input type="date" id="end_date" name="end_date" value="<%= promotion.end_date.toISOString().substring(0, 10) %>" required>
                 </div>
-
-                <div class="form-group">
-                    <label for="discount_percent">Discount (%):</label>
-                    <input type="number" id="discount_percent" name="discount_percent" min="0" max="100" step="0.01" value="<%= promotion.discount_percent %>" required>
-                </div>
-
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label for="summary">Description / Terms:</label>
+                
+                <div class="form-group full-width">
+                    <label for="summary">Summary:</label>
                     <textarea id="summary" name="summary"><%= promotion.summary %></textarea>
                 </div>
             </div>
             
-            <br>
+            <button type="submit">Save Changes</button>
             
-            <button type="submit">Update Promotion</button>
+            <button type="button" class="delete-btn" onclick="openModal()">Delete Promotion</button>
             
-            <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/promotions?' + returnQuery : '/promotions'; %>
-            <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
-
-            <button type="button" class="btn-delete" onclick="openModal()">Delete Promotion</button>
+            <a href="/promotions<%= (typeof returnQuery !== 'undefined' && returnQuery) ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
         </form>
     </div>
 
-    <%# --- CUSTOM CONFIRMATION MODAL --- %>
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Promotion?</h3>
+            <h3>Delete Promotion?</h3>
             <p>Are you sure you want to delete <strong><%= promotion.event_name %></strong>?<br>
-            This action cannot be undone.</p>
+            This cannot be undone.</p>
             
             <div class="modal-actions">
                 <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-                <%# This button submits the form to the delete route %>
-                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
+                
+                <form action="/promotions/delete/<%= promotion.event_id %>" method="POST">
+                    <button type="submit" class="btn-modal-confirm">Yes, Delete</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <%# --- MODAL SCRIPT --- %>
     <script>
         const modal = document.getElementById('deleteModal');
-        const form = document.getElementById('promotionForm');
 
         function openModal() {
             modal.style.display = 'flex';
@@ -306,13 +232,6 @@
             modal.style.display = 'none';
         }
 
-        function confirmDelete() {
-            // Change the form action to the delete route and submit
-            form.action = "/promotions/delete/<%= promotion.event_id %>";
-            form.submit();
-        }
-
-        // Close modal if clicking outside the box
         window.onclick = function(event) {
             if (event.target == modal) {
                 closeModal();

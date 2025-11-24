@@ -1,55 +1,24 @@
 require('dotenv').config();
 const express = require('express');
-const bcrypt = require('bcrypt');
 const session = require('express-session');
-const pool = require('./db');
 const app = express();
 const port = 3000;
 
-// import authentication and authorization middleware functions
 const {
-    isAuthenticated,
-    isAdmin,
-    isHR,
-    isParkManager,
-    canAddEmployees,
-    canApproveEmployees,
-    canViewPendingEmployees,
-    isAdminOrParkManager,
-    canViewUsers,
-    isMaintenanceOrHigher,
-    canManageMembersVisits,
-    canViewRides,
-    canManageRetail,
-    canViewInventory,
-    canManageInventory,
-    canViewReports,
-    getReportSettings,
-    canApproveWages,
-    canApproveMaintenance,
-    canLogRideRun,
-    canViewRideHistory,
-    canApproveInventory,
-    canViewApprovals,
-    formatPhoneNumber,
-    normalizePhone,
-    formatReceiptDate,
-    censorPhone,
-    isMemberAuthenticated,
-    isGuest
+    countPendingApprovals
 } = require('./middleware/auth');
 
-// configure ejs as the view engine
+// view engine setup
 app.set('view engine', 'ejs');
 
-// configure standard middleware for form data, json, and static files
+// standard middleware
 app.use(express.urlencoded({
     extended: true
 }));
 app.use(express.json());
 app.use(express.static('public'));
 
-// configure session management
+// session config
 app.use(session({
     secret: 'MvXA5TJt6pcuq',
     resave: false,
@@ -59,62 +28,36 @@ app.use(session({
     }
 }));
 
-// middleware to make user and member session data available to templates
+// expose session data to views
 app.use((req, res, next) => {
     res.locals.user = req.session.user;
     res.locals.member = req.session.member;
     next();
 });
 
-// middleware to calculate pending approval counts for dashboards
-const {
-    countPendingApprovals
-} = require('./middleware/auth');
+// notification badges
 app.use(countPendingApprovals);
 
-// register application routes
-const indexRoutes = require('./routes/index');
-app.use('/', indexRoutes);
+// routes
+app.use('/', require('./routes/index'));
+app.use('/', require('./routes/auth'));
+app.use('/', require('./routes/management'));
+app.use('/', require('./routes/approvals'));
+app.use('/rides', require('./routes/rides'));
+app.use('/maintenance', require('./routes/maintenance'));
 
-const rideRoutes = require('./routes/rides');
-app.use('/rides', rideRoutes);
+// user management (mapped to both /users and /employees for compatibility)
+app.use('/users', require('./routes/users'));
+app.use('/employees', require('./routes/users'));
 
-const maintenanceRoutes = require('./routes/maintenance');
-app.use('/maintenance', maintenanceRoutes);
+app.use('/items', require('./routes/items'));
+app.use('/inventory', require('./routes/inventory'));
+app.use('/reports', require('./routes/reports'));
+app.use('/members', require('./routes/members'));
+app.use('/member', require('./routes/member-portal'));
+app.use('/visits', require('./routes/visits'));
 
-const authRoutes = require('./routes/auth');
-app.use('/', authRoutes);
-
-const userRoutes = require('./routes/users');
-app.use('/users', userRoutes);
-app.use('/employees', userRoutes);
-
-const approvalRoutes = require('./routes/approvals');
-app.use('/', approvalRoutes);
-app.use('/approvals', approvalRoutes);
-
-const managementRoutes = require('./routes/management');
-app.use('/', managementRoutes);
-
-const itemRoutes = require('./routes/items');
-app.use('/items', itemRoutes);
-
-const inventoryRoutes = require('./routes/inventory');
-app.use('/inventory', inventoryRoutes);
-
-const reportRoutes = require('./routes/reports');
-app.use('/reports', reportRoutes);
-
-const memberRoutes = require('./routes/members');
-app.use('/members', memberRoutes);
-
-const memberPortalRoutes = require('./routes/member-portal');
-app.use('/member', memberPortalRoutes);
-
-const visitRoutes = require('./routes/visits');
-app.use('/visits', visitRoutes);
-
-// start the server on the specified port
+// start server
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });

@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <%# --- Add Icons --- %>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>Dashboard</title>    
     <style>        
         .dashboard-container { padding: 2em;
             max-width: 1400px; margin: 0 auto; }
@@ -19,7 +16,6 @@
             border-bottom: 1px solid #ddd; color: #666;
         }
 
-        /* --- Assignment Info Box --- */
         .assignment-info {
             background-color: #e7f5ff;
             color: #004085;
@@ -32,17 +28,15 @@
         .assignment-info strong { display: block; font-size: 1.1em; margin-bottom: 0.5em;
         }
 
-        /* --- Grid Layout --- */
         .card-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
         }
 
-        /* --- Card Styles --- */
         .card {
             background: white;
-            padding: 0; /* Removed padding to handle header/body separately */
+            padding: 0;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: transform 0.2s, box-shadow 0.2s;
@@ -50,7 +44,6 @@
             display: flex;
             flex-direction: column;
             border-top: 4px solid #ccc;
-            /* Default border color */
         }
         .card:hover {
             transform: translateY(-5px);
@@ -88,7 +81,7 @@
         .card a:hover {
             background-color: #f8f9fa;
             color: #007bff;
-            padding-left: 15px; /* Slide effect */
+            padding-left: 15px;
         }
         .card a i {
             margin-right: 8px;
@@ -99,7 +92,6 @@
         .card a:hover i { color: #007bff;
         }
 
-        /* --- Specific Card Colors --- */
         .card.rides { border-top-color: #dc3545;
         }
         .card.rides .card-icon { color: #dc3545;
@@ -130,19 +122,16 @@
         .card.hr .card-icon { color: #17a2b8;
         }
         
-        /* --- NEW: Reports Card Color (Indigo) --- */
         .card.reports { border-top-color: #6610f2;
         }
         .card.reports .card-icon { color: #6610f2;
         }
 
-        /* Highlight Special Links */
         .important-link {
             color: #d39e00 !important;
             font-weight: bold !important;
         }
         
-        /* Notification Note Style */
         .notification-note {
             margin-top: 15px; 
             padding: 12px; 
@@ -198,7 +187,6 @@
 
             <div class="card-container">
 
-            <%# --- RIDES & MAINTENANCE --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Maintenance' || user.role === 'Staff') { %>
                 <div class="card rides">
                     <div class="card-header">
@@ -208,7 +196,6 @@
                     <div class="card-body">
                         <a href="/rides"><i class="fa-solid fa-list"></i> View Rides</a>
 
-                        <%# --- NEW: Maintenance Notification --- %>
                         <% if (user.role === 'Maintenance' && typeof maintenanceCount !== 'undefined' && maintenanceCount > 0) { %>
                             <div class="notification-note">
                                 <i class="fa-solid fa-triangle-exclamation"></i> 
@@ -219,7 +206,6 @@
 
                         <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                             <% 
-                                // Logic: If approvals exist, turn text/icon RED. Otherwise, leave empty (default grey).
                                 const hasApprovals = (typeof approvalCount !== 'undefined' && approvalCount > 0);
                                 const linkColorStyle = hasApprovals ? 'color: #dc3545; font-weight: 700;' : ''; 
                                 const iconColorStyle = hasApprovals ? 'color: #dc3545;' : '';
@@ -229,16 +215,15 @@
                                 <i class="fa-solid fa-clipboard-check" style="<%= iconColorStyle %>"></i> 
                                 <span style="flex-grow: 1;">Pending Approvals</span>
                                 
-                                <%# --- Notification Badges --- %>
                                 <% if (hasApprovals) { %>
                                     <span style="
-                                        background-color: #dc3545; 
-                                        color: white; 
-                                        font-size: 0.8em; 
-                                        font-weight: bold; 
-                                        padding: 2px 8px; 
-                                        border-radius: 12px;
-                                        margin-left: 8px;
+                                            background-color: #dc3545; 
+                                            color: white; 
+                                            font-size: 0.8em; 
+                                            font-weight: bold; 
+                                            padding: 2px 8px; 
+                                            border-radius: 12px;
+                                            margin-left: 8px;
                                     "><%= approvalCount %></span>
                                     
                                     <% if (typeof newApprovalCount !== 'undefined' && newApprovalCount > 0) { %>
@@ -260,7 +245,6 @@
                 </div>
             <% } %>
 
-            <%# --- GUEST SERVICES --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Staff') { %>
                  <div class="card guests">
                     <div class="card-header">
@@ -274,7 +258,6 @@
                 </div>
             <% } %>
 
-            <%# --- PARK ADMIN --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                 <div class="card admin">
                     <div class="card-header">
@@ -302,7 +285,6 @@
                 </div>
             <% } %>
 
-            <%# --- RETAIL --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                  <div class="card retail">
                     <div class="card-header">
@@ -319,7 +301,6 @@
                 </div>
             <% } %>
 
-            <%# --- REPORTS & ANALYTICS (UPDATED) --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
                 <div class="card reports">
                     <div class="card-header">
@@ -335,7 +316,6 @@
                 </div>
             <% } %>
 
-            <%# --- HR --- %>
             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
                 <div class="card hr">
                     <div class="card-header">
@@ -344,7 +324,6 @@
                     </div>
                     <div class="card-body">
                         <a href="/users"><i class="fa-solid fa-users-viewfinder"></i> Manage Employees</a>
-                        <%# Removed Pending Hires Link %>
                     </div>
                 </div>
             <% } %>

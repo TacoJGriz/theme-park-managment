@@ -9,41 +9,42 @@ const {
     canManageRetail
 } = require('../middleware/auth');
 
-// --- INVENTORY VIEW ROUTES ---
-
-// GET /inventory (Global Inventory View)
+// global inventory list
 router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
     try {
-        const { role, locationId } = req.session.user;
-        const { search, sort, dir, filter_vendor, filter_status } = req.query;
+        const {
+            role,
+            locationId
+        } = req.session.user;
+        const {
+            search,
+            sort,
+            dir,
+            filter_vendor,
+            filter_status
+        } = req.query;
 
         let whereClauses = [];
         let params = [];
 
-        // 1. Base Security Filter (Location Scope)
         if (role === 'Location Manager' || role === 'Staff') {
             whereClauses.push('v.location_id = ?');
             params.push(locationId);
         }
 
-        // 2. Search Filter
         if (search) {
             const term = `%${search}%`;
             whereClauses.push('(v.vendor_name LIKE ? OR it.item_name LIKE ?)');
             params.push(term, term);
         }
 
-        // 3. Dropdown Filters
         if (filter_vendor) {
             whereClauses.push('v.public_vendor_id = ?');
             params.push(filter_vendor);
         }
 
-        // 4. Status Filter Logic
-        // We handle this by adding specific conditions to the WHERE clause
-        // Note: 'ir' is the joined inventory_requests table
-        if (filter_status === 'out_of_stock') { // UPDATED FILTER NAME
-            whereClauses.push('i.count = 0');    // UPDATED COUNT LOGIC
+        if (filter_status === 'out_of_stock') {
+            whereClauses.push('i.count = 0');
         } else if (filter_status === 'pending') {
             whereClauses.push('ir.request_id IS NOT NULL');
         } else if (filter_status === 'ok') {
@@ -52,9 +53,9 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
 
         let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-        // 5. Stats Query
+        // get stats
         const statsQuery = `
-            SELECT
+            SELECT 
                 COUNT(*) as total_records,
                 SUM(CASE WHEN i.count = 0 THEN 1 ELSE 0 END) as out_of_stock_count,
                 SUM(CASE WHEN ir.request_id IS NOT NULL THEN 1 ELSE 0 END) as pending_count
@@ -67,18 +68,24 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
         const [statsResult] = await pool.query(statsQuery, params);
         const counts = statsResult[0];
 
-        // 6. Sorting Logic
-        let orderBy = 'ORDER BY v.vendor_name ASC, it.item_name ASC'; // Default
+        // sorting
+        let orderBy = 'ORDER BY v.vendor_name ASC, it.item_name ASC';
         if (sort && dir) {
             const d = dir === 'desc' ? 'DESC' : 'ASC';
             switch (sort) {
-                case 'vendor': orderBy = `ORDER BY v.vendor_name ${d}`; break;
-                case 'item': orderBy = `ORDER BY it.item_name ${d}`; break;
-                case 'count': orderBy = `ORDER BY i.count ${d}`; break;
+                case 'vendor':
+                    orderBy = `ORDER BY v.vendor_name ${d}`;
+                    break;
+                case 'item':
+                    orderBy = `ORDER BY it.item_name ${d}`;
+                    break;
+                case 'count':
+                    orderBy = `ORDER BY i.count ${d}`;
+                    break;
             }
         }
 
-        // 7. Main Data Query
+        // get data
         const query = `
             SELECT 
                 v.vendor_id, v.vendor_name, v.public_vendor_id,
@@ -97,7 +104,7 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
 
         const [inventory] = await pool.query(query, params);
 
-        // 8. Fetch Vendors for Dropdown
+        // get dropdown options
         let vendorQuery = 'SELECT public_vendor_id, vendor_name FROM vendors';
         let vendorParams = [];
         if (role === 'Location Manager' || role === 'Staff') {
@@ -108,9 +115,9 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
         const [vendors] = await pool.query(vendorQuery, vendorParams);
 
         res.render('inventory', {
-            inventory: inventory,
-            counts: counts,
-            vendors: vendors,
+            inventory,
+            counts,
+            vendors,
             search: search || "",
             filters: {
                 vendor: filter_vendor || "",
@@ -118,7 +125,7 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
             },
             currentSort: sort || "",
             currentDir: dir || "",
-            role: role // Pass role to view explicitly if needed
+            role
         });
 
     } catch (error) {
@@ -127,14 +134,20 @@ router.get('/', isAuthenticated, canViewInventory, async (req, res) => {
     }
 });
 
-// GET /inventory/vendor/:public_vendor_id (Specific Vendor Inventory)
+// vendor inventory
 router.get('/vendor/:public_vendor_id', isAuthenticated, canViewInventory, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query; // Capture return path
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
-    // Determine Back Link Logic
-    let backLink = '/vendors'; // Default
+    let backLink = '/vendors';
     let backText = 'Back to Vendors';
 
     if (returnTo === 'inventory') {
@@ -147,7 +160,6 @@ router.get('/vendor/:public_vendor_id', isAuthenticated, canViewInventory, async
         if (vendorRes.length === 0) return res.status(404).send('Vendor not found');
         const vendor = vendorRes[0];
 
-        // Note: Staff can view, but Location Manager is restricted to their own location
         if (role === 'Location Manager' && vendor.location_id !== locationId) {
             return res.status(403).send('Forbidden: Access denied.');
         }
@@ -170,10 +182,10 @@ router.get('/vendor/:public_vendor_id', isAuthenticated, canViewInventory, async
         const [inventory] = await pool.query(query, [public_vendor_id]);
 
         res.render('vendor-inventory', {
-            vendor: vendor,
-            inventory: inventory,
-            backLink: backLink,
-            backText: backText,
+            vendor,
+            inventory,
+            backLink,
+            backText,
             success: req.session.success,
             error: req.session.error
         });
@@ -186,13 +198,16 @@ router.get('/vendor/:public_vendor_id', isAuthenticated, canViewInventory, async
     }
 });
 
-// --- INVENTORY MANAGEMENT ROUTES ---
-
-// GET /inventory/add
+// add inventory form
 router.get('/add', isAuthenticated, canManageRetail, async (req, res) => {
-    const { preselected_vendor } = req.query;
+    const {
+        preselected_vendor
+    } = req.query;
     try {
-        const { role, locationId } = req.session.user;
+        const {
+            role,
+            locationId
+        } = req.session.user;
 
         let vendorQuery = 'SELECT vendor_id, public_vendor_id, vendor_name FROM vendors';
         let vendorParams = [];
@@ -208,10 +223,10 @@ router.get('/add', isAuthenticated, canManageRetail, async (req, res) => {
         const cancelLink = preselected_vendor ? `/inventory/vendor/${preselected_vendor}` : '/inventory';
 
         res.render('manage-inventory', {
-            vendors: vendors,
-            items: items,
+            vendors,
+            items,
             preselected_vendor: preselected_vendor || null,
-            cancelLink: cancelLink,
+            cancelLink,
             error: null,
             success: null
         });
@@ -222,10 +237,19 @@ router.get('/add', isAuthenticated, canManageRetail, async (req, res) => {
     }
 });
 
-// POST /inventory/add
+// process inventory addition
 router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id, public_item_id, count, min_count, def_count } = req.body; // CHANGED: Added min/def
-    const { role, locationId } = req.session.user;
+    const {
+        public_vendor_id,
+        public_item_id,
+        count,
+        min_count,
+        def_count
+    } = req.body;
+    const {
+        role,
+        locationId
+    } = req.session.user;
 
     try {
         const [vendorRes] = await pool.query('SELECT vendor_id, location_id, public_vendor_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
@@ -237,7 +261,6 @@ router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
 
         if (role === 'Location Manager' && vendor.location_id !== locationId) return res.status(403).send("Forbidden");
 
-        // CHANGED: Insert min_count and def_count, and update them on duplicate
         const sql = `
             INSERT INTO inventory (vendor_id, item_id, count, min_count, def_count) 
             VALUES (?, ?, ?, ?, ?) 
@@ -247,7 +270,6 @@ router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
                 def_count = VALUES(def_count)
         `;
 
-        // Use defaults if not provided (though HTML required attribute handles this mostly)
         const minVal = parseInt(min_count) || 10;
         const defVal = parseInt(def_count) || 50;
 
@@ -262,18 +284,29 @@ router.post('/add', isAuthenticated, canManageRetail, async (req, res) => {
         const [items] = await pool.query('SELECT item_id, public_item_id, item_name FROM item');
 
         res.render('manage-inventory', {
-            vendors: vendors, items: items, preselected_vendor: public_vendor_id,
-            cancelLink: cancelLink,
-            error: error.message, success: null
+            vendors,
+            items,
+            preselected_vendor: public_vendor_id,
+            cancelLink,
+            error: error.message,
+            success: null
         });
     }
 });
 
-// GET /inventory/destock/:public_vendor_id/:public_item_id
+// destock form
 router.get('/destock/:public_vendor_id/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id, public_item_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id,
+        public_item_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
     try {
         const [itemResult] = await pool.query(`
@@ -292,15 +325,13 @@ router.get('/destock/:public_vendor_id/:public_item_id', isAuthenticated, canMan
 
         if (role === 'Location Manager' && item.location_id !== locationId) return res.status(403).send('Forbidden.');
 
-        // CALCULATE LINKS
         const cancelLink = (returnTo === 'inventory') ? '/inventory' : `/inventory/vendor/${public_vendor_id}`;
-        // Pass the full action URL including the query param to persist 'returnTo'
         const formAction = `/inventory/destock/${public_vendor_id}/${public_item_id}${returnTo ? '?returnTo=' + returnTo : ''}`;
 
         res.render('destock-item', {
-            item: item,
-            cancelLink: cancelLink,
-            formAction: formAction,
+            item,
+            cancelLink,
+            formAction,
             error: null
         });
 
@@ -310,12 +341,22 @@ router.get('/destock/:public_vendor_id/:public_item_id', isAuthenticated, canMan
     }
 });
 
-// POST /inventory/destock/:public_vendor_id/:public_item_id
+// process destock
 router.post('/destock/:public_vendor_id/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id, public_item_id } = req.params;
-    const { remove_count } = req.body;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id,
+        public_item_id
+    } = req.params;
+    const {
+        remove_count
+    } = req.body;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
     const countToRemove = parseInt(remove_count, 10);
 
     try {
@@ -344,17 +385,24 @@ router.post('/destock/:public_vendor_id/:public_item_id', isAuthenticated, canMa
         }
 
     } catch (error) {
-        // Fallback
         const cancelLink = `/inventory/vendor/${public_vendor_id}`;
         res.status(500).send(`Error: ${error.message}. <a href="${cancelLink}">Go Back</a>`);
     }
 });
 
-// POST /inventory/deshelf/:public_vendor_id/:public_item_id
+// remove from catalog
 router.post('/deshelf/:public_vendor_id/:public_item_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id, public_item_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id,
+        public_item_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
     try {
         const [vendorRes] = await pool.query('SELECT vendor_id, location_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
@@ -376,12 +424,16 @@ router.post('/deshelf/:public_vendor_id/:public_item_id', isAuthenticated, canMa
     }
 });
 
-// --- RESTOCK REQUEST ROUTES ---
-
-// GET /inventory/request/edit/:public_request_id
+// edit request form
 router.get('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { public_request_id } = req.params;
-    const { id: userId, role, locationId } = req.session.user;
+    const {
+        public_request_id
+    } = req.params;
+    const {
+        id: userId,
+        role,
+        locationId
+    } = req.session.user;
 
     try {
         const [reqResult] = await pool.query(`
@@ -395,19 +447,13 @@ router.get('/request/edit/:public_request_id', isAuthenticated, canManageInvento
         if (reqResult.length === 0) return res.status(404).send('Request not found.');
         const request = reqResult[0];
 
-        // --- PERMISSION CHECK ---
         let canEdit = false;
 
-        // 1. Admin / Park Manager: Global Access
         if (role === 'Admin' || role === 'Park Manager') {
             canEdit = true;
-        }
-        // 2. Location Manager: Access if vendor is in their location
-        else if (role === 'Location Manager' && request.location_id === locationId) {
+        } else if (role === 'Location Manager' && request.location_id === locationId) {
             canEdit = true;
-        }
-        // 3. Original Requester: Always access (if they can see it)
-        else if (request.requested_by_id === userId) {
+        } else if (request.requested_by_id === userId) {
             canEdit = true;
         }
 
@@ -417,7 +463,10 @@ router.get('/request/edit/:public_request_id', isAuthenticated, canManageInvento
 
         if (request.status !== 'Pending') return res.status(400).send('Request already processed.');
 
-        res.render('inventory-request-edit', { request: request, error: null });
+        res.render('inventory-request-edit', {
+            request,
+            error: null
+        });
 
     } catch (error) {
         console.error(error);
@@ -425,14 +474,21 @@ router.get('/request/edit/:public_request_id', isAuthenticated, canManageInvento
     }
 });
 
-// POST /inventory/request/edit/:public_request_id
+// update request
 router.post('/request/edit/:public_request_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { public_request_id } = req.params;
-    const { requested_count } = req.body;
-    const { id: userId, role, locationId } = req.session.user;
+    const {
+        public_request_id
+    } = req.params;
+    const {
+        requested_count
+    } = req.body;
+    const {
+        id: userId,
+        role,
+        locationId
+    } = req.session.user;
 
     try {
-        // 1. Fetch Request Details for Permission Check
         const [reqResult] = await pool.query(`
             SELECT ir.request_id, ir.requested_by_id, ir.status, v.location_id
             FROM inventory_requests ir
@@ -443,7 +499,6 @@ router.post('/request/edit/:public_request_id', isAuthenticated, canManageInvent
         if (reqResult.length === 0) return res.status(404).send('Request not found.');
         const request = reqResult[0];
 
-        // 2. Permission Check (Same as GET)
         let canEdit = false;
         if (role === 'Admin' || role === 'Park Manager') {
             canEdit = true;
@@ -457,7 +512,6 @@ router.post('/request/edit/:public_request_id', isAuthenticated, canManageInvent
             return res.status(403).send('Forbidden: You do not have permission to edit this request.');
         }
 
-        // 3. Validation
         if (request.status !== 'Pending') {
             return res.status(400).send('Cannot edit a request that has already been processed.');
         }
@@ -467,7 +521,6 @@ router.post('/request/edit/:public_request_id', isAuthenticated, canManageInvent
             return res.status(400).send('Invalid quantity.');
         }
 
-        // 4. Perform Update
         await pool.query(
             'UPDATE inventory_requests SET requested_count = ? WHERE request_id = ?',
             [newCount, request.request_id]
@@ -481,11 +534,19 @@ router.post('/request/edit/:public_request_id', isAuthenticated, canManageInvent
     }
 });
 
-// GET /inventory/request/:public_vendor_id/:public_item_id
+// new restock request form
 router.get('/request/:public_vendor_id/:public_item_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { public_vendor_id, public_item_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id,
+        public_item_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
     try {
         const [itemResult] = await pool.query(`
@@ -506,15 +567,13 @@ router.get('/request/:public_vendor_id/:public_item_id', isAuthenticated, canMan
             return res.status(403).send('Forbidden.');
         }
 
-        // CALCULATE LINKS
         const cancelLink = (returnTo === 'inventory') ? '/inventory' : `/inventory/vendor/${public_vendor_id}`;
-        // Pass full action URL including query param
         const formAction = `/inventory/request/${public_vendor_id}/${public_item_id}${returnTo ? '?returnTo=' + returnTo : ''}`;
 
         res.render('inventory-request-form', {
-            item: item,
-            cancelLink: cancelLink,
-            formAction: formAction,
+            item,
+            cancelLink,
+            formAction,
             error: null
         });
 
@@ -523,12 +582,21 @@ router.get('/request/:public_vendor_id/:public_item_id', isAuthenticated, canMan
     }
 });
 
-// POST /inventory/request/:public_vendor_id/:public_item_id
+// create restock request
 router.post('/request/:public_vendor_id/:public_item_id', isAuthenticated, canManageInventory, async (req, res) => {
-    const { public_vendor_id, public_item_id } = req.params;
-    const { requested_count } = req.body;
-    const { id: actorId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id,
+        public_item_id
+    } = req.params;
+    const {
+        requested_count
+    } = req.body;
+    const {
+        id: actorId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
     try {
         const [itemResult] = await pool.query(`SELECT vendor_id, location_id FROM vendors WHERE public_vendor_id = ?`, [public_vendor_id]);
@@ -551,9 +619,12 @@ router.post('/request/:public_vendor_id/:public_item_id', isAuthenticated, canMa
     }
 });
 
-// GET /inventory/requests
+// list requests
 router.get('/requests', isAuthenticated, canManageInventory, async (req, res) => {
-    const { role, locationId } = req.session.user;
+    const {
+        role,
+        locationId
+    } = req.session.user;
     try {
         let queryParams = [];
         let locationFilter = "";
@@ -562,47 +633,49 @@ router.get('/requests', isAuthenticated, canManageInventory, async (req, res) =>
             queryParams.push(locationId);
         }
 
-        // FIXED BUG: Use single quotes in ORDER BY clause
         let query = `
             SELECT ir.*, it.item_name, v.vendor_name, 
                    COALESCE(CONCAT(e.first_name, ' ', e.last_name), 'System Auto-Restock') as requester_name
             FROM inventory_requests ir
             JOIN item it ON ir.item_id = it.item_id
             JOIN vendors v ON ir.vendor_id = v.vendor_id
-            LEFT JOIN employee_demographics e ON ir.requested_by_id = e.employee_id -- CHANGED TO LEFT JOIN
+            LEFT JOIN employee_demographics e ON ir.requested_by_id = e.employee_id
             ${locationFilter}
             ORDER BY CASE WHEN ir.status = 'Pending' THEN 1 ELSE 2 END, ir.request_date DESC
         `;
 
         const [requests] = await pool.query(query, queryParams);
-        res.render('inventory-request-list', { requests: requests });
+        res.render('inventory-request-list', {
+            requests
+        });
     } catch (error) {
         console.error("Error fetching requests:", error);
         res.status(500).send("Error loading requests.");
     }
 });
 
-// --- VENDOR CHECKOUT ROUTES ---
-
-// GET /inventory/checkout/:public_vendor_id
+// vendor checkout form
 router.get('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { role, locationId } = req.session.user;
-    const { returnTo } = req.query;
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
+    const {
+        returnTo
+    } = req.query;
 
     try {
-        // 1. Fetch Vendor Details
         const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
         if (vendorRes.length === 0) return res.status(404).send('Vendor not found');
         const vendor = vendorRes[0];
 
-        // 2. Permission Check (Location Scope)
         if ((role === 'Location Manager' || role === 'Staff') && vendor.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only access vendors in your assigned location.');
         }
 
-        // 3. Fetch Items available at this Vendor
-        // We only want items that are currently stocked (count >= 0)
         const [items] = await pool.query(`
             SELECT 
                 i.item_id, i.count, 
@@ -614,8 +687,8 @@ router.get('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, asy
         `, [vendor.vendor_id]);
 
         res.render('vendor-checkout', {
-            vendor: vendor,
-            items: items,
+            vendor,
+            items,
             returnTo: returnTo || '/vendors',
             error: null
         });
@@ -626,17 +699,23 @@ router.get('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, asy
     }
 });
 
-// POST /inventory/checkout/:public_vendor_id
+// process checkout
 router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { quantities } = req.body;
-    const { role, locationId } = req.session.user;
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        quantities
+    } = req.body;
+    const {
+        role,
+        locationId
+    } = req.session.user;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
-        // 1. Verify Vendor
         const [vendorRes] = await connection.query('SELECT vendor_id, location_id, vendor_name, public_vendor_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
         if (vendorRes.length === 0) {
             connection.release();
@@ -649,19 +728,16 @@ router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, as
             return res.status(403).send('Forbidden');
         }
 
-        // 2. Process Items
         await connection.beginTransaction();
 
         const soldItems = [];
         let grandTotal = 0;
 
-        // Iterate through the submitted quantities
         for (const [key, soldQty] of Object.entries(quantities)) {
-            const itemId = key.replace('item_', ''); // Remove prefix
+            const itemId = key.replace('item_', '');
             const quantity = parseInt(soldQty, 10);
 
             if (quantity > 0) {
-                // Check current stock AND get Item Name/Price for receipt
                 const [itemRes] = await connection.query(
                     `SELECT i.count, it.item_name, it.price 
                      FROM inventory i 
@@ -681,13 +757,11 @@ router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, as
                     throw new Error(`Insufficient stock for "${itemData.item_name}". Requested: ${quantity}, Available: ${currentStock}`);
                 }
 
-                // Deduct stock
                 await connection.query(
                     'UPDATE inventory SET count = count - ? WHERE vendor_id = ? AND item_id = ?',
                     [quantity, vendor.vendor_id, itemId]
                 );
 
-                // Add to Receipt Data
                 const subtotal = quantity * parseFloat(itemData.price);
                 grandTotal += subtotal;
                 soldItems.push({
@@ -705,19 +779,17 @@ router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, as
 
         await connection.commit();
 
-        // 3. Render Receipt (Instead of redirecting)
         res.render('vendor-receipt', {
-            vendor: vendor,
-            soldItems: soldItems,
-            grandTotal: grandTotal,
-            transactionId: crypto.randomUUID() // Fake ID for receipt purposes
+            vendor,
+            soldItems,
+            grandTotal,
+            transactionId: crypto.randomUUID()
         });
 
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error processing checkout:", error);
 
-        // Re-fetch data to render checkout page again with error
         const [items] = await pool.query(`
             SELECT i.item_id, i.count, it.item_name, it.price, it.public_item_id
             FROM inventory i
@@ -730,7 +802,7 @@ router.post('/checkout/:public_vendor_id', isAuthenticated, canViewInventory, as
 
         res.render('vendor-checkout', {
             vendor: vendorRes[0],
-            items: items,
+            items,
             returnTo: '/vendors',
             error: error.message
         });

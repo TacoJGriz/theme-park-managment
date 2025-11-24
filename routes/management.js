@@ -1,30 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // Adjust path to db.js
-const crypto = require('crypto'); // ADDED
+const pool = require('../db');
+const crypto = require('crypto');
 const {
     isAuthenticated,
     isAdminOrParkManager,
     canManageRetail,
     canViewInventory
-} = require('../middleware/auth'); // Adjust path to auth.js
+} = require('../middleware/auth');
 
-// --- LOCATION & VENDOR MANAGEMENT --- 
-// ... (routes /locations, /vendors, /assign-manager are all unchanged) ...
-// Path is '/locations'
-// GET /locations
+// list locations
 router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        // 1. Capture Query Params
-        const { search, sort, dir, filter_assigned } = req.query;
+        const {
+            search,
+            sort,
+            dir,
+            filter_assigned
+        } = req.query;
 
-        // 2. Build Filtering Logic
         let whereClauses = [];
         let params = [];
 
         if (search) {
             const likeTerm = `%${search}%`;
-            // Search against ID, Name, Summary, or Manager Name
             whereClauses.push(`(
                 l.public_location_id LIKE ? OR
                 l.location_name LIKE ? OR
@@ -48,9 +47,9 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
             whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
         }
 
-        // 3. Get Counts for Stats Bar
+        // get counts
         const countQuery = `
-            SELECT
+            SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN l.manager_id IS NOT NULL THEN 1 ELSE 0 END) as assigned,
                 SUM(CASE WHEN l.manager_id IS NULL THEN 1 ELSE 0 END) as unassigned
@@ -61,19 +60,23 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
         const [countResult] = await pool.query(countQuery, params);
         const counts = countResult[0];
 
-        // 4. Sorting Logic
-        let orderBy = ' ORDER BY l.location_name ASC'; // Default sort
+        // sorting
+        let orderBy = ' ORDER BY l.location_name ASC';
         if (sort && dir) {
             const direction = (dir === 'desc') ? 'DESC' : 'ASC';
             switch (sort) {
-                // Sort by internal ID is implicitly chronological
-                case 'id': orderBy = ` ORDER BY l.location_id ${direction}`; break;
-                case 'name': orderBy = ` ORDER BY l.location_name ${direction}`; break;
-                case 'manager': orderBy = ` ORDER BY e.last_name ${direction}, e.first_name ${direction}`; break;
+                case 'id':
+                    orderBy = ` ORDER BY l.location_id ${direction}`;
+                    break;
+                case 'name':
+                    orderBy = ` ORDER BY l.location_name ${direction}`;
+                    break;
+                case 'manager':
+                    orderBy = ` ORDER BY e.last_name ${direction}, e.first_name ${direction}`;
+                    break;
             }
         }
 
-        // 5. Main Data Query
         const query = `
             SELECT l.*, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
             FROM location l
@@ -84,15 +87,15 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
 
         const [locations] = await pool.query(query, params);
 
-        // 6. Render View
         res.render('locations', {
-            locations: locations,
-            counts: counts,
-            // Pass back state to maintain UI
+            locations,
+            counts,
             search: search || "",
             currentSort: sort || "",
             currentDir: dir || "",
-            filters: { assigned: filter_assigned || "" }
+            filters: {
+                assigned: filter_assigned || ""
+            }
         });
 
     } catch (error) {
@@ -101,30 +104,36 @@ router.get('/locations', isAuthenticated, isAdminOrParkManager, async (req, res)
     }
 });
 
-// Path is '/locations/new'
+// add location form
 router.get('/locations/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        // Fetch active Location Managers to populate the dropdown
         const [managers] = await pool.query(
             "SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = 'Location Manager' AND is_active = TRUE ORDER BY last_name, first_name"
         );
-        res.render('add-location', { managers: managers, error: null });
+        res.render('add-location', {
+            managers,
+            error: null
+        });
     } catch (error) {
         console.error("Error loading add location page:", error);
         res.status(500).send("Error loading page");
     }
 });
 
-// Path is '/locations'
+// create location
 router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { location_name, summary, manager_id, manager_start } = req.body;
+    const {
+        location_name,
+        summary,
+        manager_id,
+        manager_start
+    } = req.body;
 
     let connection;
     try {
         connection = await pool.getConnection();
         const publicLocationId = crypto.randomUUID();
 
-        // Handle optional manager assignment
         const assignedManagerId = manager_id ? parseInt(manager_id) : null;
         const assignedManagerStart = (assignedManagerId && manager_start) ? manager_start : null;
 
@@ -146,11 +155,10 @@ router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res
 
     } catch (error) {
         console.error("Error adding location:", error);
-        // Re-fetch managers to render the form again with error
         const [managers] = await pool.query("SELECT employee_id, first_name, last_name FROM employee_demographics WHERE employee_type = 'Location Manager' AND is_active = TRUE");
 
         res.render('add-location', {
-            managers: managers,
+            managers,
             error: "Database error adding location. Name might be duplicate."
         });
     } finally {
@@ -158,11 +166,20 @@ router.post('/locations', isAuthenticated, isAdminOrParkManager, async (req, res
     }
 });
 
-// Path is '/vendors'
+// list vendors
 router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
     try {
-        const { role, locationId } = req.session.user;
-        const { search, sort, dir, filter_location, filter_status } = req.query; // Added filter_status
+        const {
+            role,
+            locationId
+        } = req.session.user;
+        const {
+            search,
+            sort,
+            dir,
+            filter_location,
+            filter_status
+        } = req.query;
 
         const queryParams = new URLSearchParams(req.query);
         const currentQueryString = queryParams.toString();
@@ -192,7 +209,6 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
             params.push(filter_location);
         }
 
-        // NEW: Filter by Status
         if (filter_status) {
             whereClauses.push('v.vendor_status = ?');
             params.push(filter_status);
@@ -203,9 +219,9 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
             whereQuery = ` WHERE ${whereClauses.join(' AND ')}`;
         }
 
-        // UPDATED: Count Query for Statuses
+        // get counts
         const countQuery = `
-            SELECT
+            SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN v.vendor_status = 'OPEN' THEN 1 ELSE 0 END) as open_count,
                 SUM(CASE WHEN v.vendor_status = 'CLOSED' THEN 1 ELSE 0 END) as closed_count
@@ -216,18 +232,26 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
         const [countResult] = await pool.query(countQuery, params);
         const counts = countResult[0];
 
+        // sorting
         let orderBy = ' ORDER BY v.vendor_name ASC';
         if (sort && dir) {
             const direction = (dir === 'desc') ? 'DESC' : 'ASC';
             switch (sort) {
-                case 'id': orderBy = ` ORDER BY v.vendor_id ${direction}`; break;
-                case 'name': orderBy = ` ORDER BY v.vendor_name ${direction}`; break;
-                case 'location': orderBy = ` ORDER BY l.location_name ${direction}`; break;
-                case 'status': orderBy = ` ORDER BY v.vendor_status ${direction}`; break; // New Sort
+                case 'id':
+                    orderBy = ` ORDER BY v.vendor_id ${direction}`;
+                    break;
+                case 'name':
+                    orderBy = ` ORDER BY v.vendor_name ${direction}`;
+                    break;
+                case 'location':
+                    orderBy = ` ORDER BY l.location_name ${direction}`;
+                    break;
+                case 'status':
+                    orderBy = ` ORDER BY v.vendor_status ${direction}`;
+                    break;
             }
         }
 
-        // UPDATED: Main Query includes status
         const query = `
             SELECT v.*, l.location_name
             FROM vendors v
@@ -239,17 +263,17 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
         const [vendors] = await pool.query(query, params);
 
         res.render('vendors', {
-            vendors: vendors,
-            counts: counts,
+            vendors,
+            counts,
             locations: allLocations,
             search: search || "",
             currentSort: sort || "",
             currentDir: dir || "",
             filters: {
                 location: filter_location || "",
-                status: filter_status || "" // New Filter
+                status: filter_status || ""
             },
-            currentQueryString: currentQueryString,
+            currentQueryString,
             success: req.session.success,
             error: req.session.error
         });
@@ -262,20 +286,28 @@ router.get('/vendors', isAuthenticated, canViewInventory, async (req, res) => {
     }
 });
 
-// Path is '/vendors/new'
+// add vendor form
 router.get('/vendors/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
-        res.render('add-vendor', { locations: locations, managers: [], error: null });
+        res.render('add-vendor', {
+            locations,
+            managers: [],
+            error: null
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error loading add vendor page');
     }
 });
 
-// Path is '/vendors'
+// create vendor
 router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { vendor_name, location_id, vendor_status } = req.body;
+    const {
+        vendor_name,
+        location_id,
+        vendor_status
+    } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
@@ -287,7 +319,7 @@ router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) 
         console.error(error);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location');
         res.render('add-vendor', {
-            locations: locations,
+            locations,
             error: "Database error adding vendor. Name might be duplicate."
         });
     } finally {
@@ -295,9 +327,15 @@ router.post('/vendors', isAuthenticated, isAdminOrParkManager, async (req, res) 
     }
 });
 
+// edit vendor form
 router.get('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { role, locationId } = req.session.user;
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
 
     try {
         const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
@@ -306,7 +344,6 @@ router.get('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, 
         }
         const vendor = vendorRes[0];
 
-        // Check Location Manager permissions
         if (role === 'Location Manager' && vendor.location_id !== locationId) {
             return res.status(403).send('Forbidden: You can only edit vendors in your location.');
         }
@@ -314,8 +351,8 @@ router.get('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, 
         const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
 
         res.render('edit-vendor', {
-            vendor: vendor,
-            locations: locations,
+            vendor,
+            locations,
             error: null
         });
 
@@ -325,22 +362,28 @@ router.get('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, 
     }
 });
 
-// POST /vendors/edit/:public_vendor_id (NEW)
+// update vendor
 router.post('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { vendor_name, location_id, vendor_status } = req.body;
-    const { role, locationId } = req.session.user;
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        vendor_name,
+        location_id,
+        vendor_status
+    } = req.body;
+    const {
+        role,
+        locationId: userLocationId
+    } = req.session.user;
 
     try {
-        // Permission check logic...
         if (role === 'Location Manager') {
-            // Ensure they aren't moving it to a location they don't own, 
-            // and ensure the vendor they are editing is currently in their location.
             const [current] = await pool.query('SELECT location_id FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
-            if (current.length > 0 && current[0].location_id !== locationId) {
+            if (current.length > 0 && current[0].location_id !== userLocationId) {
                 return res.status(403).send('Forbidden');
             }
-            if (parseInt(location_id) !== locationId) {
+            if (parseInt(location_id) !== userLocationId) {
                 return res.status(403).send('Forbidden: You cannot move a vendor to a location you do not manage.');
             }
         }
@@ -353,28 +396,31 @@ router.post('/vendors/edit/:public_vendor_id', isAuthenticated, canManageRetail,
 
     } catch (error) {
         console.error("Error updating vendor:", error);
-        // Fetch data to re-render form
         const [vendorRes] = await pool.query('SELECT * FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
         const [locations] = await pool.query('SELECT location_id, location_name FROM location ORDER BY location_name');
 
         res.render('edit-vendor', {
             vendor: vendorRes[0] || req.body,
-            locations: locations,
+            locations,
             error: "Database error updating vendor."
         });
     }
 });
 
-// POST /vendors/delete/:public_vendor_id
+// delete vendor
 router.post('/vendors/delete/:public_vendor_id', isAuthenticated, canManageRetail, async (req, res) => {
-    const { public_vendor_id } = req.params;
-    const { role, locationId } = req.session.user;
+    const {
+        public_vendor_id
+    } = req.params;
+    const {
+        role,
+        locationId
+    } = req.session.user;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
-        // 1. Check existence and permission
         const [vendorRes] = await connection.query('SELECT vendor_id, location_id, vendor_name FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
         if (vendorRes.length === 0) {
             connection.release();
@@ -387,20 +433,12 @@ router.post('/vendors/delete/:public_vendor_id', isAuthenticated, canManageRetai
             return res.status(403).send('Forbidden');
         }
 
-        // 2. Start Transaction
         await connection.beginTransaction();
 
-        // 3. Delete dependencies first (Inventory & Requests)
-        // Delete inventory requests for this vendor
         await connection.query('DELETE FROM inventory_requests WHERE vendor_id = ?', [vendor.vendor_id]);
-
-        // Delete actual inventory for this vendor
         await connection.query('DELETE FROM inventory WHERE vendor_id = ?', [vendor.vendor_id]);
-
-        // 4. Delete the Vendor
         await connection.query('DELETE FROM vendors WHERE public_vendor_id = ?', [public_vendor_id]);
 
-        // 5. Commit
         await connection.commit();
 
         req.session.success = `Vendor "${vendor.vendor_name}" and its inventory were deleted successfully.`;
@@ -416,14 +454,16 @@ router.post('/vendors/delete/:public_vendor_id', isAuthenticated, canManageRetai
     }
 });
 
-// Path is '/assign-manager/:type/:public_id'
+// assign manager form
 router.get('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type, public_id } = req.params; // CHANGED
+    const {
+        type,
+        public_id
+    } = req.params;
     try {
         let entity = null;
         if (type === 'location') {
-            // Query by public_location_id, select internal location_id
-            const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]); // CHANGED
+            const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]);
             if (loc.length > 0) entity = loc[0];
         } else if (type === 'vendor') {
             return res.status(404).send('Assigning managers to vendors is no longer supported.');
@@ -434,11 +474,9 @@ router.get('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMan
         }
 
         let managerRolesToQuery = [];
-        let redirectUrl = '/dashboard';
 
         if (type === 'location') {
             managerRolesToQuery = ['Location Manager', 'Park Manager', 'Admin'];
-            redirectUrl = '/locations';
         } else {
             return res.status(400).send('Invalid entity type');
         }
@@ -446,9 +484,9 @@ router.get('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMan
         const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN (?) AND is_active = TRUE", [managerRolesToQuery]);
 
         res.render('assign-manager', {
-            entity: entity, // entity object now contains public_location_id as 'public_location_id' and internal id as 'id'
-            managers: managers,
-            type: type,
+            entity,
+            managers,
+            type,
             error: null
         });
     } catch (error) {
@@ -457,10 +495,15 @@ router.get('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMan
     }
 });
 
-// Path is '/assign-manager/:type/:public_id'
+// process manager assignment
 router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type, public_id } = req.params; // CHANGED
-    const { manager_id } = req.body;
+    const {
+        type,
+        public_id
+    } = req.params;
+    const {
+        manager_id
+    } = req.body;
     const manager_start = (type === 'location' && req.body.manager_start) ? req.body.manager_start : null;
 
     let connection;
@@ -474,9 +517,8 @@ router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMa
             if (!manager_start) {
                 throw new Error("Manager Start Date is required for locations.");
             }
-            // Update using public_location_id
-            sql = "UPDATE location SET manager_id = ?, manager_start = ? WHERE public_location_id = ?"; // CHANGED
-            params = [manager_id, manager_start, public_id]; // CHANGED
+            sql = "UPDATE location SET manager_id = ?, manager_start = ? WHERE public_location_id = ?";
+            params = [manager_id, manager_start, public_id];
             redirectUrl = '/locations';
         } else if (type === 'vendor') {
             return res.status(404).send('Assigning managers to vendors is no longer supported.');
@@ -492,10 +534,12 @@ router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMa
         try {
             let entity = null;
             if (type === 'location') {
-                const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]); // CHANGED
+                const [loc] = await pool.query('SELECT location_id as id, location_name as name, public_location_id FROM location WHERE public_location_id = ?', [public_id]);
                 if (loc.length > 0) entity = loc[0];
             } else {
-                entity = { name: 'Unknown' };
+                entity = {
+                    name: 'Unknown'
+                };
             }
 
             let managerRolesToQuery = [];
@@ -506,9 +550,11 @@ router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMa
             const [managers] = await pool.query("SELECT employee_id, first_name, last_name, employee_type FROM employee_demographics WHERE employee_type IN (?) AND is_active = TRUE", [managerRolesToQuery]);
 
             res.render('assign-manager', {
-                entity: entity || { name: 'Unknown' },
-                managers: managers,
-                type: type,
+                entity: entity || {
+                    name: 'Unknown'
+                },
+                managers,
+                type,
                 error: `Database error assigning manager: ${error.message}`
             });
         } catch (fetchError) {
@@ -520,14 +566,12 @@ router.post('/assign-manager/:type/:public_id', isAuthenticated, isAdminOrParkMa
     }
 });
 
-// --- MEMBERSHIP TYPE MANAGEMENT ---
-// Path is '/memberships/types'
+// list membership types
 router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        // --- MODIFIED: SELECT * to get new columns (including public_type_id) ---
         const [types] = await pool.query('SELECT * FROM membership_type ORDER BY is_active DESC, type_name');
         res.render('membership-types', {
-            types: types,
+            types,
             error: req.session.error,
             success: req.session.success
         });
@@ -539,82 +583,98 @@ router.get('/memberships/types', isAuthenticated, isAdminOrParkManager, async (r
     }
 });
 
-// Path is '/memberships/types/new'
+// add membership type form
 router.get('/memberships/types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
-    res.render('add-membership-type', { error: null });
+    res.render('add-membership-type', {
+        error: null
+    });
 });
 
-// Path is '/memberships/types'
+// create membership type
 router.post('/memberships/types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    // --- MODIFIED: Get new fields from req.body ---
-    const { type_name, base_price, description, base_members, additional_member_price } = req.body;
+    const {
+        type_name,
+        base_price,
+        description,
+        base_members,
+        additional_member_price
+    } = req.body;
 
-    // --- MODIFIED: Handle NULL values ---
     const baseMembersNum = parseInt(base_members, 10) || 1;
     const additionalPriceNum = (baseMembersNum > 1 && additional_member_price) ? parseFloat(additional_member_price) : null;
-    const publicTypeId = crypto.randomUUID(); // ADDED
+    const publicTypeId = crypto.randomUUID();
 
     let connection;
     try {
         connection = await pool.getConnection();
-        // --- MODIFIED: Updated SQL query ---
         const sql = `
             INSERT INTO membership_type 
             (public_type_id, type_name, base_price, base_members, additional_member_price, description, is_active) 
             VALUES (?, ?, ?, ?, ?, ?, TRUE)
         `;
-        await connection.query(sql, [publicTypeId, type_name, base_price, baseMembersNum, additionalPriceNum, description || null]); // ADDED
+        await connection.query(sql, [publicTypeId, type_name, base_price, baseMembersNum, additionalPriceNum, description || null]);
         req.session.success = "Membership type added successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
         console.error(error);
-        res.render('add-membership-type', { error: "Database error adding type. Name might be duplicate." });
+        res.render('add-membership-type', {
+            error: "Database error adding type. Name might be duplicate."
+        });
     } finally {
         if (connection) connection.release();
     }
 });
 
-// Path is '/memberships/types/edit/:public_type_id'
+// edit membership type form
 router.get('/memberships/types/edit/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_type_id } = req.params; // CHANGED
+    const {
+        public_type_id
+    } = req.params;
     try {
-        // --- MODIFIED: SELECT * to get all data for form, query by public_type_id ---
-        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]);
         if (typeResult.length === 0) {
             return res.status(404).send('Membership type not found');
         }
-        res.render('edit-membership-type', { type: typeResult[0], error: null });
+        res.render('edit-membership-type', {
+            type: typeResult[0],
+            error: null
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error loading edit page');
     }
 });
 
-// Path is '/memberships/types/edit/:public_type_id'
+// update membership type
 router.post('/memberships/types/edit/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_type_id } = req.params; // CHANGED
-    // --- MODIFIED: Get new fields from req.body ---
-    const { type_name, base_price, description, base_members, additional_member_price } = req.body;
+    const {
+        public_type_id
+    } = req.params;
+    const {
+        type_name,
+        base_price,
+        description,
+        base_members,
+        additional_member_price
+    } = req.body;
 
-    // --- MODIFIED: Handle NULL values ---
     const baseMembersNum = parseInt(base_members, 10) || 1;
     const additionalPriceNum = (baseMembersNum > 1 && additional_member_price) ? parseFloat(additional_member_price) : null;
 
     let connection;
     try {
         connection = await pool.getConnection();
-        // --- MODIFIED: Updated SQL query to use public_type_id ---
         const sql = `
             UPDATE membership_type 
             SET type_name = ?, base_price = ?, base_members = ?, additional_member_price = ?, description = ?
-            WHERE public_type_id = ? -- CHANGED
+            WHERE public_type_id = ?
         `;
-        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null, public_type_id]); // CHANGED
+        await connection.query(sql, [type_name, base_price, baseMembersNum, additionalPriceNum, description || null, public_type_id]);
         req.session.success = "Membership type updated successfully!";
         res.redirect('/memberships/types');
     } catch (error) {
         console.error(error);
-        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
+        const [typeResult] = await pool.query('SELECT * FROM membership_type WHERE public_type_id = ?', [public_type_id]);
         res.render('edit-membership-type', {
             type: typeResult.length > 0 ? typeResult[0] : {},
             error: "Database error updating type. Name might be duplicate."
@@ -624,21 +684,23 @@ router.post('/memberships/types/edit/:public_type_id', isAuthenticated, isAdminO
     }
 });
 
-// Path is '/memberships/types/toggle/:public_type_id'
+// toggle membership status
 router.post('/memberships/types/toggle/:public_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_type_id } = req.params; // CHANGED
+    const {
+        public_type_id
+    } = req.params;
     let connection;
     try {
         connection = await pool.getConnection();
 
-        const [current] = await pool.query('SELECT is_active FROM membership_type WHERE public_type_id = ?', [public_type_id]); // CHANGED
+        const [current] = await pool.query('SELECT is_active FROM membership_type WHERE public_type_id = ?', [public_type_id]);
         if (current.length === 0) {
             return res.status(404).send('Membership type not found');
         }
 
         const newStatus = !current[0].is_active;
 
-        await connection.query('UPDATE membership_type SET is_active = ? WHERE public_type_id = ?', [newStatus, public_type_id]); // CHANGED
+        await connection.query('UPDATE membership_type SET is_active = ? WHERE public_type_id = ?', [newStatus, public_type_id]);
         req.session.success = `Membership type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
         res.redirect('/memberships/types');
 
@@ -651,16 +713,13 @@ router.post('/memberships/types/toggle/:public_type_id', isAuthenticated, isAdmi
     }
 });
 
-
-// --- TICKET TYPE MANAGEMENT ---
-// Path is '/ticket-types'
+// list ticket types
 router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        // ADDED public_ticket_type_id
         const [types] = await pool.query('SELECT *, public_ticket_type_id FROM ticket_types ORDER BY is_member_type DESC, is_active DESC, type_name');
 
         res.render('manage-ticket-types', {
-            types: types,
+            types,
             error: req.session.error,
             success: req.session.success
         });
@@ -672,57 +731,75 @@ router.get('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, r
     }
 });
 
-// Path is '/ticket-types/new'
+// add ticket type form
 router.get('/ticket-types/new', isAuthenticated, isAdminOrParkManager, (req, res) => {
-    res.render('add-ticket-type', { error: null });
+    res.render('add-ticket-type', {
+        error: null
+    });
 });
 
-// Path is '/ticket-types'
+// create ticket type
 router.post('/ticket-types', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { type_name, base_price, description } = req.body;
-    const publicTicketTypeId = crypto.randomUUID(); // ADDED
+    const {
+        type_name,
+        base_price,
+        description
+    } = req.body;
+    const publicTicketTypeId = crypto.randomUUID();
     let connection;
     try {
         connection = await pool.getConnection();
-        // ADDED public_ticket_type_id
         const sql = "INSERT INTO ticket_types (public_ticket_type_id, type_name, base_price, description, is_active, is_member_type) VALUES (?, ?, ?, ?, TRUE, FALSE)";
-        await connection.query(sql, [publicTicketTypeId, type_name, base_price, description || null]); // ADDED
+        await connection.query(sql, [publicTicketTypeId, type_name, base_price, description || null]);
         req.session.success = "Ticket type added successfully!";
         res.redirect('/ticket-types');
     } catch (error) {
         console.error("Error adding ticket type:", error);
-        res.render('add-ticket-type', { error: "Database error adding type. Name might be duplicate." });
+        res.render('add-ticket-type', {
+            error: "Database error adding type. Name might be duplicate."
+        });
     } finally {
         if (connection) connection.release();
     }
 });
 
-// Path is '/ticket-types/edit/:public_ticket_type_id'
+// edit ticket type form
 router.get('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ticket_type_id } = req.params; // CHANGED
+    const {
+        public_ticket_type_id
+    } = req.params;
     try {
-        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
+        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
         if (typeResult.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
-        res.render('edit-ticket-type', { type: typeResult[0], error: null });
+        res.render('edit-ticket-type', {
+            type: typeResult[0],
+            error: null
+        });
     } catch (error) {
         console.error("Error loading ticket edit page:", error);
         res.status(500).send('Error loading edit page');
     }
 });
 
-// Path is '/ticket-types/edit/:public_ticket_type_id'
+// update ticket type
 router.post('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ticket_type_id } = req.params; // CHANGED
-    const { type_name, base_price, description } = req.body;
+    const {
+        public_ticket_type_id
+    } = req.params;
+    const {
+        type_name,
+        base_price,
+        description
+    } = req.body;
     let connection;
     let typeResult = [];
 
     try {
         connection = await pool.getConnection();
 
-        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
+        const [typeResult] = await pool.query('SELECT * FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
         if (typeResult.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
@@ -736,9 +813,9 @@ router.post('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdmi
         const sql = `
             UPDATE ticket_types 
             SET type_name = ?, base_price = ?, description = ?
-            WHERE public_ticket_type_id = ? AND is_member_type = FALSE -- CHANGED
+            WHERE public_ticket_type_id = ? AND is_member_type = FALSE 
         `;
-        await connection.query(sql, [type_name, base_price, description || null, public_ticket_type_id]); // CHANGED
+        await connection.query(sql, [type_name, base_price, description || null, public_ticket_type_id]);
 
         req.session.success = "Ticket type updated successfully!";
         res.redirect('/ticket-types');
@@ -746,7 +823,9 @@ router.post('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdmi
     } catch (error) {
         console.error("Error updating ticket type:", error);
         res.render('edit-ticket-type', {
-            type: typeResult.length > 0 ? typeResult[0] : { public_ticket_type_id: public_ticket_type_id }, // CHANGED
+            type: typeResult.length > 0 ? typeResult[0] : {
+                public_ticket_type_id
+            },
             error: "Database error updating type. Name might be duplicate."
         });
     } finally {
@@ -754,14 +833,16 @@ router.post('/ticket-types/edit/:public_ticket_type_id', isAuthenticated, isAdmi
     }
 });
 
-// Path is '/ticket-types/toggle/:public_ticket_type_id'
+// toggle ticket type
 router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ticket_type_id } = req.params; // CHANGED
+    const {
+        public_ticket_type_id
+    } = req.params;
     let connection;
     try {
         connection = await pool.getConnection();
 
-        const [current] = await pool.query('SELECT is_active, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]); // CHANGED
+        const [current] = await pool.query('SELECT is_active, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
         if (current.length === 0) {
             return res.status(404).send('Ticket type not found');
         }
@@ -773,7 +854,7 @@ router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAd
 
         const newStatus = !current[0].is_active;
 
-        await connection.query('UPDATE ticket_types SET is_active = ? WHERE public_ticket_type_id = ?', [newStatus, public_ticket_type_id]); // CHANGED
+        await connection.query('UPDATE ticket_types SET is_active = ? WHERE public_ticket_type_id = ?', [newStatus, public_ticket_type_id]);
         req.session.success = `Ticket type ${newStatus ? 'activated' : 'deactivated'} successfully.`;
         res.redirect('/ticket-types');
 
@@ -786,18 +867,17 @@ router.post('/ticket-types/toggle/:public_ticket_type_id', isAuthenticated, isAd
     }
 });
 
-// POST /ticket-types/delete/:public_ticket_type_id
+// delete ticket type
 router.post('/ticket-types/delete/:public_ticket_type_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_ticket_type_id } = req.params;
+    const {
+        public_ticket_type_id
+    } = req.params;
 
     let connection;
     try {
         connection = await pool.getConnection();
-
-        // 1. Start Transaction to ensure atomicity
         await connection.beginTransaction();
 
-        // 2. Get the Internal ID (needed for dependency deletion)
         const [typeRes] = await connection.query('SELECT ticket_type_id, type_name, is_member_type FROM ticket_types WHERE public_ticket_type_id = ?', [public_ticket_type_id]);
 
         if (typeRes.length === 0) {
@@ -814,17 +894,10 @@ router.post('/ticket-types/delete/:public_ticket_type_id', isAuthenticated, isAd
             return res.redirect('/ticket-types');
         }
 
-        // 3. Force Delete Dependencies (Manual Cascade)
-        // Delete associated prepaid tickets
         await connection.query('DELETE FROM prepaid_tickets WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
-
-        // Delete associated visits (Warning: This removes historical visit data)
         await connection.query('DELETE FROM visits WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
-
-        // 4. Delete the Ticket Type
         await connection.query('DELETE FROM ticket_types WHERE ticket_type_id = ?', [ticketType.ticket_type_id]);
 
-        // 5. Commit Changes
         await connection.commit();
 
         req.session.success = `Ticket type "${ticketType.type_name}" deleted successfully (including all associated history).`;
@@ -840,26 +913,27 @@ router.post('/ticket-types/delete/:public_ticket_type_id', isAuthenticated, isAd
     }
 });
 
-// --- PARK OPERATIONS (Weather, Promos) ---
-// ... (All /weather and /promotions routes are unchanged, no IDs exposed) ...
-// Path is '/weather'
+// list weather events
 router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const { search, sort, dir, filter_type, filter_closure } = req.query;
+        const {
+            search,
+            sort,
+            dir,
+            filter_type,
+            filter_closure
+        } = req.query;
         const queryParams = new URLSearchParams(req.query);
         const currentQueryString = queryParams.toString();
 
         let whereClauses = [];
         let params = [];
 
-        // 1. Search (Matches Type or Date in MM/DD/YYYY format)
         if (search) {
-            // UPDATED: Search against the formatted date string to match UI display
             whereClauses.push("(weather_type LIKE ? OR DATE_FORMAT(event_date, '%m/%d/%Y') LIKE ?)");
             params.push(`%${search}%`, `%${search}%`);
         }
 
-        // 2. Filters
         if (filter_type) {
             whereClauses.push('weather_type = ?');
             params.push(filter_type);
@@ -871,7 +945,6 @@ router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) =
 
         let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-        // 3. Stats
         const countQuery = `
             SELECT 
                 COUNT(*) as total,
@@ -881,31 +954,36 @@ router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) =
         const [stats] = await pool.query(countQuery, params);
         const counts = stats[0];
 
-        // 4. Sorting (Supports 3-state: if sort/dir missing, use default)
-        let orderBy = 'ORDER BY event_date DESC'; // Default sort (Undo state)
+        let orderBy = 'ORDER BY event_date DESC';
 
         if (sort && dir) {
             const d = dir === 'asc' ? 'ASC' : 'DESC';
             if (sort === 'date') orderBy = `ORDER BY event_date ${d}`;
-            if (sort === 'end_time') orderBy = `ORDER BY end_time ${d}`; // ADDED
+            if (sort === 'end_time') orderBy = `ORDER BY end_time ${d}`;
             if (sort === 'type') orderBy = `ORDER BY weather_type ${d}`;
             if (sort === 'closure') orderBy = `ORDER BY park_closure ${d}`;
         }
 
-        // 5. Fetch Data
         const [events] = await pool.query(`SELECT * FROM weather_events ${whereQuery} ${orderBy}`, params);
         const [types] = await pool.query('SELECT DISTINCT weather_type FROM weather_events ORDER BY weather_type');
 
         res.render('weather-events', {
-            events, counts, types,
+            events,
+            counts,
+            types,
             search: search || '',
-            filters: { type: filter_type || '', closure: filter_closure || '' },
+            filters: {
+                type: filter_type || '',
+                closure: filter_closure || ''
+            },
             currentSort: sort || '',
             currentDir: dir || '',
             currentQueryString,
-            success: req.session.success, error: req.session.error
+            success: req.session.success,
+            error: req.session.error
         });
-        req.session.success = null; req.session.error = null;
+        req.session.success = null;
+        req.session.error = null;
 
     } catch (error) {
         console.error(error);
@@ -913,13 +991,12 @@ router.get('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) =
     }
 });
 
-// Path is '/weather/edit/:id'
+// edit weather event form
 router.get('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [event] = await pool.query('SELECT * FROM weather_events WHERE weather_id = ?', [req.params.id]);
         if (event.length === 0) return res.status(404).send('Event not found');
 
-        // Pass the query string back to the view for "Smart Cancel"
         res.render('edit-weather-event', {
             event: event[0],
             returnQuery: req.query.returnQuery || '',
@@ -930,22 +1007,25 @@ router.get('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (re
     }
 });
 
-// Path is '/weather/edit/:id'
+// update weather event
 router.post('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_date, end_time, weather_type, park_closure, returnQuery } = req.body;
+    const {
+        event_date,
+        end_time,
+        weather_type,
+        park_closure,
+        returnQuery
+    } = req.body;
     const weatherId = req.params.id;
 
-    // --- SERVER-SIDE VALIDATION: Check for future end_time ---
     if (end_time) {
         const endTimeDate = new Date(end_time);
         const now = new Date();
-        // Allow a small buffer (5 seconds) to account for transmission time
         if (endTimeDate.getTime() > now.getTime() + 5000) {
             req.session.error = "Error: End time cannot be set in the future.";
             return res.redirect(`/weather/edit/${weatherId}` + (returnQuery ? `?returnQuery=${returnQuery}` : ''));
         }
     }
-    // --- END VALIDATION ---
 
     try {
         const isClosed = park_closure === '1';
@@ -961,7 +1041,7 @@ router.post('/weather/edit/:id', isAuthenticated, isAdminOrParkManager, async (r
     }
 });
 
-// Path is '/weather/delete/:id'
+// delete weather event
 router.post('/weather/delete/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         await pool.query('DELETE FROM weather_events WHERE weather_id = ?', [req.params.id]);
@@ -974,29 +1054,32 @@ router.post('/weather/delete/:id', isAuthenticated, isAdminOrParkManager, async 
     }
 });
 
-// Path is '/weather/new'
+// add weather event form
 router.get('/weather/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    res.render('add-weather-event', { error: null });
+    res.render('add-weather-event', {
+        error: null
+    });
 });
 
-// Path is '/weather'
+// create weather event
 router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_date, weather_type, park_closure } = req.body;
+    const {
+        event_date,
+        weather_type,
+        park_closure
+    } = req.body;
     const end_time = req.body.end_time ? req.body.end_time : null;
     const isClosed = park_closure === '1';
 
-    // --- SERVER-SIDE VALIDATION: Check for future end_time ---
     if (end_time) {
         const endTimeDate = new Date(end_time);
         const now = new Date();
-        // Allow a small buffer (5 seconds)
         if (endTimeDate.getTime() > now.getTime() + 5000) {
             return res.render('add-weather-event', {
                 error: "Error: End time cannot be set in the future."
             });
         }
     }
-    // --- END VALIDATION ---
 
     let connection;
     try {
@@ -1010,30 +1093,36 @@ router.post('/weather', isAuthenticated, isAdminOrParkManager, async (req, res) 
         res.redirect('/weather');
     } catch (error) {
         console.error(error);
-        res.render('add-weather-event', { error: "Database error logging weather event." });
+        res.render('add-weather-event', {
+            error: "Database error logging weather event."
+        });
     } finally {
         if (connection) connection.release();
     }
 });
 
-// Path is '/promotions'
+// list promotions
 router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
-        const { search, sort, dir, filter_type, filter_status } = req.query;
+        const {
+            search,
+            sort,
+            dir,
+            filter_type,
+            filter_status
+        } = req.query;
         const queryParams = new URLSearchParams(req.query);
         const currentQueryString = queryParams.toString();
-        const currentYear = new Date().getFullYear(); // Get current year for the view
+        const currentYear = new Date().getFullYear();
 
         let whereClauses = [];
         let params = [];
 
-        // 1. Search (Name or Summary)
         if (search) {
             whereClauses.push('(event_name LIKE ? OR summary LIKE ?)');
             params.push(`%${search}%`, `%${search}%`);
         }
 
-        // 2. Filters
         if (filter_type) {
             whereClauses.push('event_type = ?');
             params.push(filter_type);
@@ -1049,8 +1138,6 @@ router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res
 
         let whereQuery = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-        // 3. Stats (Updated to count Remaining in Current Year)
-        // "Remaining" means the promotion has not ended yet (end_date >= today)
         const countQuery = `
             SELECT 
                 COUNT(*) as total,
@@ -1060,32 +1147,37 @@ router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res
         const [stats] = await pool.query(countQuery, params);
         const counts = stats[0];
 
-        // 4. Sorting (Added Type and End Date)
-        let orderBy = 'ORDER BY start_date DESC'; // Default sort
+        let orderBy = 'ORDER BY start_date DESC';
         if (sort && dir) {
             const d = dir === 'asc' ? 'ASC' : 'DESC';
             if (sort === 'name') orderBy = `ORDER BY event_name ${d}`;
-            if (sort === 'type') orderBy = `ORDER BY event_type ${d}`;      // ADDED
+            if (sort === 'type') orderBy = `ORDER BY event_type ${d}`;
             if (sort === 'start_date') orderBy = `ORDER BY start_date ${d}`;
-            if (sort === 'end_date') orderBy = `ORDER BY end_date ${d}`;    // ADDED
+            if (sort === 'end_date') orderBy = `ORDER BY end_date ${d}`;
             if (sort === 'discount') orderBy = `ORDER BY discount_percent ${d}`;
         }
 
-        // 5. Fetch Data
         const [promotions] = await pool.query(`SELECT * FROM event_promotions ${whereQuery} ${orderBy}`, params);
         const [types] = await pool.query('SELECT DISTINCT event_type FROM event_promotions ORDER BY event_type');
 
         res.render('promotions', {
-            promotions, counts, types,
+            promotions,
+            counts,
+            types,
             search: search || '',
-            filters: { type: filter_type || '', status: filter_status || '' },
+            filters: {
+                type: filter_type || '',
+                status: filter_status || ''
+            },
             currentSort: sort || '',
             currentDir: dir || '',
             currentQueryString,
             currentYear,
-            success: req.session.success, error: req.session.error
+            success: req.session.success,
+            error: req.session.error
         });
-        req.session.success = null; req.session.error = null;
+        req.session.success = null;
+        req.session.error = null;
 
     } catch (error) {
         console.error(error);
@@ -1093,14 +1185,23 @@ router.get('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res
     }
 });
 
-// Path is '/promotions/new'
+// add promotion form
 router.get('/promotions/new', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    res.render('add-promotion', { error: null });
+    res.render('add-promotion', {
+        error: null
+    });
 });
 
-// Path is '/promotions'
+// create promotion
 router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary } = req.body;
+    const {
+        event_name,
+        event_type,
+        start_date,
+        end_date,
+        discount_percent,
+        summary
+    } = req.body;
     try {
         const sql = `
             INSERT INTO event_promotions (event_name, event_type, start_date, end_date, discount_percent, summary)
@@ -1111,11 +1212,13 @@ router.post('/promotions', isAuthenticated, isAdminOrParkManager, async (req, re
         res.redirect('/promotions');
     } catch (error) {
         console.error(error);
-        res.render('add-promotion', { error: "Database error adding promotion. Name might be duplicate." });
+        res.render('add-promotion', {
+            error: "Database error adding promotion. Name might be duplicate."
+        });
     }
 });
 
-// Path is '/promotions/edit/:id' (Edit Page)
+// edit promotion form
 router.get('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         const [promo] = await pool.query('SELECT * FROM event_promotions WHERE event_id = ?', [req.params.id]);
@@ -1132,9 +1235,17 @@ router.get('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async 
     }
 });
 
-// Path is '/promotions/edit/:id'
+// update promotion
 router.post('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { event_name, event_type, start_date, end_date, discount_percent, summary, returnQuery } = req.body;
+    const {
+        event_name,
+        event_type,
+        start_date,
+        end_date,
+        discount_percent,
+        summary,
+        returnQuery
+    } = req.body;
     try {
         const sql = `
             UPDATE event_promotions 
@@ -1152,22 +1263,27 @@ router.post('/promotions/edit/:id', isAuthenticated, isAdminOrParkManager, async
     }
 });
 
-// GET /locations/edit/:public_location_id
+// edit location form
 router.get('/locations/edit/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_location_id } = req.params;
+    const {
+        public_location_id
+    } = req.params;
     try {
         const [locResult] = await pool.query('SELECT * FROM location WHERE public_location_id = ?', [public_location_id]);
         if (locResult.length === 0) {
             return res.status(404).send('Location not found');
         }
-        res.render('edit-location', { location: locResult[0], error: null });
+        res.render('edit-location', {
+            location: locResult[0],
+            error: null
+        });
     } catch (error) {
         console.error("Error loading edit location page:", error);
         res.status(500).send('Error loading page');
     }
 });
 
-// Path is '/promotions/delete/:id' (Delete Action)
+// delete promotion
 router.post('/promotions/delete/:id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
     try {
         await pool.query('DELETE FROM event_promotions WHERE event_id = ?', [req.params.id]);
@@ -1180,10 +1296,15 @@ router.post('/promotions/delete/:id', isAuthenticated, isAdminOrParkManager, asy
     }
 });
 
-// POST /locations/edit/:public_location_id
+// update location
 router.post('/locations/edit/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_location_id } = req.params;
-    const { location_name, summary } = req.body;
+    const {
+        public_location_id
+    } = req.params;
+    const {
+        location_name,
+        summary
+    } = req.body;
 
     try {
         const sql = "UPDATE location SET location_name = ?, summary = ? WHERE public_location_id = ?";
@@ -1202,15 +1323,16 @@ router.post('/locations/edit/:public_location_id', isAuthenticated, isAdminOrPar
     }
 });
 
-// POST /locations/delete/:public_location_id
+// delete location
 router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { public_location_id } = req.params;
+    const {
+        public_location_id
+    } = req.params;
 
     let connection;
     try {
         connection = await pool.getConnection();
 
-        // 1. Check if location exists and get Internal ID
         const [loc] = await connection.query('SELECT location_id, location_name FROM location WHERE public_location_id = ?', [public_location_id]);
         if (loc.length === 0) {
             connection.release();
@@ -1219,23 +1341,12 @@ router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrP
         }
         const locationId = loc[0].location_id;
 
-        // 2. Start Transaction
         await connection.beginTransaction();
 
-        // 3. Unassign Employees (Set location_id to NULL)
-        // This fixes the "employee_demographics_ibfk_3" constraint error
         await connection.query('UPDATE employee_demographics SET location_id = NULL WHERE location_id = ?', [locationId]);
-
-        // 4. Unassign Rides (Set location_id to NULL)
-        // Rides will become "Unassigned" rather than being deleted
         await connection.query('UPDATE rides SET location_id = NULL WHERE location_id = ?', [locationId]);
-
-        // Note: Vendors are configured with "ON DELETE SET NULL" in the schema, so they handle themselves.
-
-        // 5. Delete the Location
         await connection.query('DELETE FROM location WHERE location_id = ?', [locationId]);
 
-        // 6. Commit
         await connection.commit();
 
         req.session.success = `Location "${loc[0].location_name}" removed successfully. Employees and Rides have been unassigned.`;
@@ -1251,12 +1362,17 @@ router.post('/locations/delete/:public_location_id', isAuthenticated, isAdminOrP
     }
 });
 
-// POST /locations/update-coords (Save Map Pins)
+// update map coordinates
 router.post('/locations/update-coords', isAuthenticated, isAdminOrParkManager, async (req, res) => {
-    const { pins } = req.body; // Array of { id, x, y }
+    const {
+        pins
+    } = req.body;
 
     if (!pins || !Array.isArray(pins)) {
-        return res.status(400).json({ success: false, message: 'Invalid data' });
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid data'
+        });
     }
 
     let connection;
@@ -1272,11 +1388,17 @@ router.post('/locations/update-coords', isAuthenticated, isAdminOrParkManager, a
         }
 
         await connection.commit();
-        res.json({ success: true, message: 'Map updated successfully' });
+        res.json({
+            success: true,
+            message: 'Map updated successfully'
+        });
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error updating map pins:", error);
-        res.status(500).json({ success: false, message: 'Database error' });
+        res.status(500).json({
+            success: false,
+            message: 'Database error'
+        });
     } finally {
         if (connection) connection.release();
     }

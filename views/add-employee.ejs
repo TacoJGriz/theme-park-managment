@@ -4,34 +4,28 @@
     <meta charset="UTF-8">
     <title>Add New Employee</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container - Wider for HR Form */
-        .container { 
-            max-width: 900px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 900px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
         h2 {
             font-size: 1.1em;
             color: #007bff;
@@ -42,40 +36,25 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
         }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
-        
-        /* Responsive/Special Spans */
         .full-width { grid-column: 1 / -1; }
-        .one-third { grid-column: span 1; } /* For 3-column feel in 2-col grid */
-        
-        div.form-group { margin-bottom: 0; } 
-        
-        label { 
+        div.form-group { margin-bottom: 0; }
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Selects */
-        input[type="text"], 
-        input[type="email"], 
-        input[type="password"], 
-        input[type="number"], 
-        input[type="date"],
-        input[type="tel"],
-        select {
+        input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="tel"], select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -86,40 +65,34 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-top: 2em;
         }
-        button:hover { 
-            background-color: #218838; 
+        button:hover {
+            background-color: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -130,8 +103,8 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
@@ -147,24 +120,20 @@
         <% } %>
 
         <form action="/users" method="POST">
-            
             <h2>Personal Information</h2>
             <div class="form-grid">
                 <div class="form-group">
                     <label for="first_name">First Name:</label>
                     <input type="text" id="first_name" name="first_name" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="last_name">Last Name:</label>
                     <input type="text" id="last_name" name="last_name" required>
                 </div>
-
                 <div class="form-group">
                     <label for="birth_date">Date of Birth:</label>
                     <input type="date" id="birth_date" name="birth_date" required>
                 </div>
-
                 <div class="form-group">
                     <label for="gender">Gender:</label>
                     <select id="gender" name="gender" required>
@@ -182,22 +151,18 @@
                     <label for="email">Email Address:</label>
                     <input type="email" id="email" name="email" required>
                 </div>
-
                 <div class="form-group">
                     <label for="phone_number">Phone Number:</label>
                     <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
                 </div>
-
                 <div class="form-group full-width">
                     <label for="street_address">Street Address:</label>
                     <input type="text" id="street_address" name="street_address">
                 </div>
-
                 <div class="form-group">
                     <label for="city">City:</label>
                     <input type="text" id="city" name="city">
                 </div>
-
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em;">
                     <div>
                         <label for="state">State (Abbrev):</label>
@@ -214,14 +179,13 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="employee_type">Job Role:</label>
-                    <select id="employee_type" name="employee_type" required onchange="filterSupervisors()">
+                    <select id="employee_type" name="employee_type" required onchange="updateFormLogic()">
                         <option value="">-- Select Role --</option>
                         <% creatableRoles.forEach(role => { %>
                             <option value="<%= role %>"><%= role %></option>
                         <% }); %>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="location_id">Assigned Location:</label>
                     <select id="location_id" name="location_id">
@@ -231,25 +195,23 @@
                         <% }); %>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="supervisor_id">Reports To (Supervisor):</label>
-                    <select id="supervisor_id" name="supervisor_id">
+                    <select id="supervisor_id" name="supervisor_id" onchange="onSupervisorChange()">
                         <option value="" data-role="all">-- None --</option>
                         <% supervisors.forEach(sup => { %>
-                            <%# --- ADDED data-role attribute here for JS filtering --- %>
-                            <option value="<%= sup.employee_id %>" data-role="<%= sup.employee_type %>">
+                            <option value="<%= sup.employee_id %>" 
+                                    data-role="<%= sup.employee_type %>"
+                                    data-location="<%= sup.location_id %>">
                                 <%= sup.first_name %> <%= sup.last_name %> (<%= sup.employee_type %>)
                             </option>
                         <% }); %>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="hire_date">Hire Date:</label>
                     <input type="date" id="hire_date" name="hire_date" value="<%= new Date().toISOString().split('T')[0] %>" required>
                 </div>
-
                 <div class="form-group">
                     <label for="hourly_rate">Hourly Rate ($):</label>
                     <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" placeholder="0.00">
@@ -262,7 +224,6 @@
                     <label for="password">Initial Password:</label>
                     <input type="password" id="password" name="password" required minlength="6">
                 </div>
-
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password:</label>
                     <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
@@ -270,24 +231,22 @@
             </div>
             
             <button type="submit">Create Employee Account</button>
-            
             <a href="/users" class="cancel-link">Cancel</a>
         </form>
     </div>
 
     <script>
-        function filterSupervisors() {
+        function updateFormLogic() {
             const roleSelect = document.getElementById('employee_type');
             const supervisorSelect = document.getElementById('supervisor_id');
+            const locationSelect = document.getElementById('location_id');
             const selectedRole = roleSelect.value;
+            
+            // filter supervisors
             const options = supervisorSelect.querySelectorAll('option');
-
-            // Reset selection
             supervisorSelect.value = "";
-
-            // Define Hierarchy Logic
+            
             let allowedSupervisors = [];
-
             if (selectedRole === 'Staff') {
                 allowedSupervisors = ['Location Manager'];
             } else if (selectedRole === 'Location Manager') {
@@ -296,25 +255,55 @@
                 allowedSupervisors = ['Park Manager'];
             } else if (selectedRole === 'Park Manager') {
                 allowedSupervisors = ['Admin'];
-            } else if (selectedRole === 'Admin') {
-                allowedSupervisors = []; // Admins usually don't have supervisors, or report to other Admins
             }
 
-            // Show/Hide options based on logic
             options.forEach(opt => {
                 const supervisorRole = opt.getAttribute('data-role');
-                
-                if (supervisorRole === 'all') return; // Always show "None" option
+                if (supervisorRole === 'all') return;
 
                 if (allowedSupervisors.includes(supervisorRole)) {
-                    opt.style.display = 'block'; // Show
+                    opt.style.display = 'block';
                     opt.disabled = false;
                 } else {
-                    opt.style.display = 'none'; // Hide
+                    opt.style.display = 'none';
                     opt.disabled = true;
                 }
             });
+
+            // handle location locking
+            locationSelect.disabled = false;
+            locationSelect.value = "";
+
+            if (selectedRole === 'Staff') {
+                locationSelect.disabled = true;
+            } else if (['Maintenance', 'Park Manager', 'Admin'].includes(selectedRole)) {
+                locationSelect.value = ""; 
+                locationSelect.disabled = true;
+            } else if (selectedRole === 'Location Manager') {
+                locationSelect.disabled = false;
+            }
         }
+
+        function onSupervisorChange() {
+            const supervisorSelect = document.getElementById('supervisor_id');
+            const locationSelect = document.getElementById('location_id');
+            const selectedRole = document.getElementById('employee_type').value;
+
+            if (selectedRole === 'Staff') {
+                const selectedOption = supervisorSelect.options[supervisorSelect.selectedIndex];
+                const supervisorLocation = selectedOption.getAttribute('data-location');
+                
+                if (supervisorLocation) {
+                    locationSelect.value = supervisorLocation;
+                } else {
+                    locationSelect.value = "";
+                }
+            }
+        }
+
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('location_id').disabled = false;
+        });
     </script>
 </body>
 </html>
