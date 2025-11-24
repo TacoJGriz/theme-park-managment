@@ -1,4 +1,3 @@
--- setup db
 DROP DATABASE IF EXISTS park_database;
 CREATE DATABASE park_database;
 USE park_database;
