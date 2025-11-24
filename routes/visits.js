@@ -375,10 +375,19 @@ router.get('/receipt-group/:visit_group_id', isAuthenticated, canManageMembersVi
                 membership_id: v.public_membership_id
             }))
         };
-        res.render('visit-receipt', {
-            receipt: receiptData,
-            fromLogVisit: false
-        });
+        if (receiptData.is_member) {
+            res.render('member-visit-receipt', {
+                receipt: receiptData,
+                fromLogVisit: false,
+                fromEmployee: true
+            });
+        }
+        else {
+            res.render('visit-receipt', {
+                receipt: receiptData,
+                fromLogVisit: false
+            });
+        }
     } catch (error) {
         console.error(error);
         res.status(500).send("Error.");

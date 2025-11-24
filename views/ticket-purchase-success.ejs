@@ -4,26 +4,24 @@
     <meta charset="UTF-8">
     <title>Tickets Ready! | Primus Park</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <%# Import Fonts %>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- Local Variables for Stability --- */
         :root {
             --ticket-gold: #ffc107;
             --ticket-dark: #343a40;
             --ticket-blue: #17a2b8;
-            --bg-color: #222; /* Dark background makes tickets pop on screen */
+            --bg-color: #222;
         }
 
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: var(--bg-color); 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+            margin: 0;
+            background-color: var(--bg-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
             padding: 20px;
         }
@@ -33,38 +31,39 @@
             margin-bottom: 30px;
             animation: fadeIn 1s;
         }
-        .page-header h1 { 
+        .page-header h1 {
             font-family: 'Lobster', cursive;
             font-size: 3em;
             color: var(--ticket-gold);
             margin: 0;
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .page-header p { margin-top: 5px; opacity: 0.8; }
+        .page-header p {
+            margin-top: 5px;
+            opacity: 0.8;
+        }
 
-        /* --- Ticket Carousel --- */
         .carousel-container {
             position: relative;
             width: 100%;
-            max-width: 360px; /* Mobile ticket width on screen */
+            max-width: 360px;
         }
 
-        /* --- THE TICKET STYLE (Digital Wallet Look) --- */
         .ticket-visual {
             background: white;
             color: #333;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-            display: none; /* Hidden by default for carousel logic */
+            display: none;
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
         }
-        
-        /* Only the 'active' ticket is shown on screen */
-        .ticket-visual.active { display: block; }
 
-        /* Top Section */
+        .ticket-visual.active {
+            display: block;
+        }
+
         .ticket-top {
             background: var(--ticket-blue);
             padding: 20px;
@@ -72,19 +71,16 @@
             position: relative;
             text-align: center;
             border-bottom: 3px dashed rgba(255,255,255,0.5);
-            
-            /* Force Print Colors */
-            -webkit-print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
-        /* Park Logo Text */
         .park-logo {
             font-family: 'Lobster', cursive;
             font-size: 1.5em;
             opacity: 0.9;
         }
-        /* Ticket Type */
+
         .ticket-type-title {
             font-size: 2em;
             font-weight: 800;
@@ -94,12 +90,13 @@
             text-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* Middle Section */
         .ticket-mid {
             padding: 25px;
             text-align: center;
         }
-        .info-group { margin-bottom: 15px; }
+        .info-group {
+            margin-bottom: 15px;
+        }
         .info-label {
             font-size: 0.75em;
             color: #888;
@@ -113,15 +110,12 @@
             color: #222;
         }
 
-        /* Bottom Section (Barcode) */
         .ticket-bottom {
             background: #f8f9fa;
             padding: 20px;
             text-align: center;
             border-top: 1px solid #eee;
-            
-            /* Force Print Colors */
-            -webkit-print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
         .barcode-container svg {
@@ -129,19 +123,17 @@
             height: 70px;
             display: block;
         }
-        
-        /* UPDATED: Smaller font for full UUID */
+
         .code-text {
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            letter-spacing: 0; /* Reduced spacing to fit */
+            letter-spacing: 0;
             color: #555;
             margin-top: 5px;
-            font-size: 0.65em; /* Smaller size */
-            word-break: break-all; /* Force wrap if needed */
+            font-size: 0.65em;
+            word-break: break-all;
         }
 
-        /* --- Navigation Arrows --- */
         .nav-controls {
             display: flex;
             justify-content: space-between;
@@ -165,11 +157,16 @@
             border-color: var(--ticket-gold);
             transform: scale(1.1);
         }
-        .nav-btn:disabled { opacity: 0.3; cursor: default; }
-        
-        .counter { font-weight: bold; letter-spacing: 1px; }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
 
-        /* --- Footer Actions --- */
+        .counter {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
         .footer-actions {
             margin-top: 40px;
             text-align: center;
@@ -184,8 +181,11 @@
             font-size: 0.9em;
             transition: 0.2s;
         }
-        .btn-print:hover { background: white; color: #222; }
-        
+        .btn-print:hover {
+            background: white;
+            color: #222;
+        }
+
         .link-home {
             display: block;
             margin-top: 15px;
@@ -193,17 +193,19 @@
             text-decoration: none;
             font-weight: bold;
         }
-        .link-home:hover { text-decoration: underline; }
+        .link-home:hover {
+            text-decoration: underline;
+        }
 
         @keyframes popIn {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes fadeIn {
+            from { opacity:0; }
+            to { opacity:1; }
+        }
 
-        /* ========================================= */
-        /* --- PRINT STYLES (UPDATED) --- */
-        /* ========================================= */
         @media print {
             body {
                 background: white !important;
@@ -215,50 +217,43 @@
                 min-height: 0 !important;
             }
 
-            /* Hide UI Elements */
             .page-header, .footer-actions, .nav-controls {
                 display: none !important;
             }
 
-            /* Layout Container for Print */
             .carousel-container {
                 max-width: none !important;
                 width: 100% !important;
-                display: block !important; /* Block layout stacks them vertically */
+                display: block !important;
                 margin: 0 !important;
             }
 
-            /* Force Ticket Visibility */
             .ticket-visual {
                 display: block !important;
                 opacity: 1 !important;
                 visibility: visible !important;
                 animation: none !important;
                 transform: none !important;
-                
-                /* Print Layout Adjustments */
                 box-shadow: none !important;
                 border: 1px solid #ccc !important;
-                margin: 0 auto 30px auto !important; /* Center and add gap */
-                max-width: 400px !important; /* Keep ticket width sane on paper */
-                page-break-inside: avoid !important; /* Don't cut ticket in half */
+                margin: 0 auto 30px auto !important;
+                max-width: 400px !important;
+                page-break-inside: avoid !important;
             }
 
-            /* Ensure Colors Print */
             .ticket-top {
                 background-color: #17a2b8 !important;
                 color: white !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            
+
             .ticket-bottom {
                 background-color: #f8f9fa !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
         }
-
     </style>
 </head>
 <body>
@@ -269,10 +264,10 @@
     </div>
 
     <div class="carousel-container">
-        
+
         <% receipt.tickets.forEach((ticket, index) => { %>
             <div class="ticket-visual <%= index === 0 ? 'active' : '' %>">
-                
+
                 <div class="ticket-top">
                     <div class="park-logo">Primus Park</div>
                     <div class="ticket-type-title"><%= ticket.name %></div>
@@ -297,8 +292,7 @@
                              data-displayValue="false">
                         </svg>
                     </div>
-                    <%# Full Token ID displayed with smaller font %>
-                    <div class="code-text"><%= ticket.code %></div> 
+                    <div class="code-text"><%= ticket.code %></div>
                 </div>
 
             </div>
@@ -326,8 +320,6 @@
             let currentIndex = 0;
             const total = tickets.length;
 
-            // Init Barcodes
-            // Note: We init ALL barcodes immediately so they appear when printing
             tickets.forEach((ticketEl, index) => {
                 const svg = ticketEl.querySelector('svg');
                 if(svg) {
@@ -346,7 +338,7 @@
                     t.classList.toggle('active', i === currentIndex);
                 });
                 counter.textContent = `${currentIndex + 1} / ${total}`;
-                
+
                 prevBtn.disabled = currentIndex === 0;
                 nextBtn.disabled = currentIndex === total - 1;
             }

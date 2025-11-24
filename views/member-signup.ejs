@@ -1,66 +1,56 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Purchase Membership | Primus Park</title>
     <style>
-        /* --- STANDARDIZED VARIABLES --- */
         :root {
             --primary: #6f42c1;
-            --accent: #17a2b8;        /* Member Theme */
+            --accent: #17a2b8;
             --secondary: #ffc107;
-            --success: #28a745;       /* Green */
-            --danger: #dc3545;        /* Red */
+            --success: #28a745;
+            --danger: #dc3545;
             --dark: #343a40;
             --light: #f8f9fa;
             --white: #ffffff;
             --gray: #6c757d;
-            
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
             --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.15);
             --radius: 16px;
             --transition: all 0.3s ease;
         }
-
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: var(--light); 
+            margin: 0;
+            background-color: var(--light);
             color: var(--dark);
         }
-        
-        .container { 
+        .container {
             max-width: 800px;
-            margin: 2em auto; 
+            margin: 2em auto;
             padding: 0 1em;
         }
-
-        /* --- Header & Titles --- */
         .page-header {
             text-align: center;
             margin-bottom: 2em;
         }
-        .page-header h1 { 
+        .page-header h1 {
             font-family: 'Lobster', cursive;
             font-size: 3em;
             color: var(--primary);
             margin: 0;
             text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
         }
-
-        /* --- Magic Form Card --- */
         .signup-card {
             background: var(--white);
             padding: 3em;
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            border-top: 5px solid var(--accent); /* Member Theme */
+            border-top: 5px solid var(--accent);
         }
-
-        /* --- Plan Summary Box --- */
         .plan-summary {
-            background: linear-gradient(135deg, #e0f7fa, #e1bee7); /* Subtle gradient */
+            background: linear-gradient(135deg, #e0f7fa, #e1bee7);
             border: 1px solid rgba(0,0,0,0.05);
             padding: 1.5em;
             border-radius: var(--radius);
@@ -75,17 +65,21 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .plan-summary p { margin: 0; }
-        .plan-name { font-size: 1.5em; font-weight: 800; color: var(--dark); }
-        .plan-price { 
+        .plan-summary p {
+            margin: 0;
+        }
+        .plan-name {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: var(--dark);
+        }
+        .plan-price {
             font-size: 2.5em;
-            font-weight: 700; 
-            color: var(--success); 
-            font-family: 'Lobster', cursive; 
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'Lobster', cursive;
             line-height: 1.2;
         }
-
-        /* --- Form Layout --- */
         .form-section-title {
             font-size: 1.2em;
             color: var(--accent);
@@ -94,42 +88,40 @@
             margin: 2em 0 1.5em 0;
             font-weight: 700;
         }
-        .form-section-title:first-of-type { margin-top: 0; }
-
+        .form-section-title:first-of-type {
+            margin-top: 0;
+        }
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5em;
         }
-        .full-width { grid-column: 1 / -1; }
-
-        label { 
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            color: var(--dark); 
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
             font-size: 0.95em;
         }
-
-        /* Standard Inputs */
-        input[type="text"], input[type="email"], input[type="tel"], 
+        input[type="text"], input[type="email"], input[type="tel"],
         input[type="date"], input[type="password"], select {
             width: 100%;
             padding: 12px 15px;
             box-sizing: border-box;
-            border-radius: 8px; 
+            border-radius: 8px;
             border: 2px solid #eee;
             font-family: 'Poppins', sans-serif;
             font-size: 1em;
             transition: var(--transition);
         }
-        input:focus, select:focus { 
+        input:focus, select:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
         }
-
-        /* --- Sub-Member Section --- */
         #subMemberSection {
             background: #f8f9fa;
             border: 2px dashed #ddd;
@@ -147,22 +139,28 @@
             position: relative;
             animation: slideIn 0.3s ease-out;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .sub-member-header {
             display: flex;
             justify-content: space-between; align-items: center;
             margin-bottom: 1em; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;
         }
-        .sub-member-header h4 { margin: 0; color: var(--primary); }
-
+        .sub-member-header h4 {
+            margin: 0;
+            color: var(--primary);
+        }
         .btn-remove {
             background: #ffebee;
             color: var(--danger); border: none;
             padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; cursor: pointer;
         }
-        .btn-remove:hover { background: var(--danger); color: white; }
-
+        .btn-remove:hover {
+            background: var(--danger);
+            color: white;
+        }
         .btn-add-member {
             width: 100%;
             padding: 12px;
@@ -179,8 +177,6 @@
             background: var(--accent);
             color: white;
         }
-
-        /* --- Payment Options --- */
         .payment-choice {
             display: flex;
             gap: 20px; justify-content: center;
@@ -191,30 +187,33 @@
             align-items: center; gap: 8px; margin: 0; cursor: pointer;
             padding: 8px 15px; border-radius: 20px; transition: background 0.2s;
         }
-        .payment-choice label:hover { background: rgba(0,0,0,0.05); }
-        .payment-choice input[type="radio"] { width: auto; margin: 0; }
-
+        .payment-choice label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .payment-choice input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
         .payment-details-card {
             background: var(--light);
             padding: 1.5em;
             border-radius: 8px;
             border: 1px solid #eee;
         }
-
         .checkbox-wrapper {
             display: flex;
             align-items: center; gap: 10px; margin-top: 1em;
             font-size: 0.9em; color: var(--gray);
         }
-        .checkbox-wrapper input { width: auto; }
-
-        /* --- Buttons & Validation --- */
+        .checkbox-wrapper input {
+            width: auto;
+        }
         .btn-purchase {
             width: 100%;
             padding: 15px;
             font-size: 1.3em;
             border-radius: 30px;
-            background-color: var(--success); /* Ensures green background */
+            background-color: var(--success);
             color: white;
             border: none;
             font-weight: 700;
@@ -223,36 +222,50 @@
             transition: var(--transition);
             box-shadow: var(--shadow-md);
         }
-        .btn-purchase:hover { 
+        .btn-purchase:hover {
             background-color: #218838;
             transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
-        
         .btn-cancel {
             display: block;
             text-align: center; margin-top: 1.5em;
             color: var(--gray); text-decoration: none; font-weight: 600;
         }
-        .btn-cancel:hover { color: var(--danger); text-decoration: underline; }
-
-        .input-error { border-color: var(--danger) !important; }
-        .error-msg { color: var(--danger); font-size: 0.85em; font-weight: bold; margin-top: 4px; display: block; }
-        .main-error { background: var(--danger); color: white; padding: 1em; border-radius: 8px; margin-bottom: 1.5em; text-align: center; font-weight: bold; }
-
+        .btn-cancel:hover {
+            color: var(--danger);
+            text-decoration: underline;
+        }
+        .input-error {
+            border-color: var(--danger) !important;
+        }
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 4px;
+            display: block;
+        }
+        .main-error {
+            background: var(--danger);
+            color: white;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <%# Pass simpleNav: true to hide menu buttons during checkout %>
     <%- include('partials/header', { simpleNav: true }) %>
-    
+
     <div class="container">
         <div class="page-header">
             <h1>Join the Family</h1>
             <p>Unlock a year of magic with your new membership.</p>
         </div>
 
-        
         <form action="/signup" method="POST" id="signupForm" class="signup-card" novalidate>
 
             <% if (typeof error !== 'undefined' && error) { %>
@@ -306,16 +319,16 @@
             <div class="full-width" id="subMemberSection" style="display: none;">
                 <div class="form-section-title">3. Add Family Members</div>
                 <p id="subMemberIntro" style="color: var(--gray); font-size: 0.9em; margin-bottom: 1em;"></p>
-                
+
                 <div id="subMemberContainer"></div>
-                
+
                 <button type="button" id="addMemberBtn" class="btn-add-member">
                      <i class="fa-solid fa-plus"></i> Add Another Member
                 </button>
             </div>
 
             <div class="form-section-title" id="paymentSectionTitle">4. Payment Method</div>
-            
+
             <div class="payment-choice">
                 <label>
                     <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
@@ -372,7 +385,7 @@
                     Save securely for future renewals.
                 </label>
             </div>
-            
+
             <p style="margin-top: 2em; font-size: 0.85em; color: var(--gray); text-align: center;">
                 <i>Payment is mocked for this demo. No real charge will be made.</i>
             </p>
@@ -399,19 +412,16 @@
             const paymentSectionTitle = document.getElementById('paymentSectionTitle');
             let subMemberCount = 0;
 
-            // --- 1. Define updatePrice FIRST to prevent ReferenceErrors ---
             window.updatePrice = function() {
                 const currentSubMembers = document.querySelectorAll('.sub-member-card').length;
-                const totalMembers = 1 + currentSubMembers; // 1 is primary
-                
-                // Calculate Cost
+                const totalMembers = 1 + currentSubMembers;
+
                 const includedSubMembers = Math.max(0, membershipType.base_members - 1);
                 const paidMembers = Math.max(0, currentSubMembers - includedSubMembers);
                 const total = membershipType.base_price + (paidMembers * membershipType.additional_member_price);
-                
+
                 planPriceEl.textContent = '$' + total.toFixed(2);
 
-                // Update Info Text
                 if (membershipType.base_members > 1) {
                     if (paidMembers > 0) {
                          subMemberIntro.innerHTML = `Pass includes <b>${membershipType.base_members}</b> members. You have added <b>${paidMembers}</b> extra member(s) at <b>$${membershipType.additional_member_price.toFixed(2)}</b> each.`;
@@ -422,17 +432,12 @@
                 }
             };
 
-            // --- 2. SUB-MEMBER LOGIC ---
             if (membershipType.base_members > 1) {
-                // Show Family Section
                 subMemberSection.style.display = 'block';
-                // Fix Numbering: Payment is section 4
                 paymentSectionTitle.textContent = '4. Payment Method';
                 updatePrice();
             } else {
-                // Hide Family Section
                 subMemberSection.style.display = 'none';
-                // Fix Numbering: Payment is section 3
                 paymentSectionTitle.textContent = '3. Payment Method';
             }
 
@@ -455,7 +460,6 @@
                 updatePrice();
             });
 
-            // --- 3. PAYMENT TOGGLE LOGIC ---
             const cardRadio = document.getElementById('payWithCard');
             const bankRadio = document.getElementById('payWithBank');
             const cardGroup = document.getElementById('cardPaymentGroup');
@@ -485,7 +489,6 @@
             cardRadio.addEventListener('change', togglePayment);
             bankRadio.addEventListener('change', togglePayment);
 
-            // Initialize payment state
             togglePayment();
         });
     </script>

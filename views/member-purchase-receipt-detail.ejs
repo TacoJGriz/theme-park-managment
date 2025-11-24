@@ -6,12 +6,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* --- STANDARDIZED VARIABLES --- */
         :root {
             --primary: #6f42c1;
-            --accent: #17a2b8;        /* Member Theme */
+            --accent: #17a2b8;
             --secondary: #ffc107;
             --success: #28a745;
             --dark: #343a40;
@@ -22,10 +21,11 @@
             --radius: 16px;
         }
 
-        body { 
+        /* center everything vertically */
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: var(--light); 
+            margin: 0;
+            background-color: var(--light);
             color: var(--dark);
             display: flex;
             flex-direction: column;
@@ -34,13 +34,13 @@
             min-height: 100vh;
         }
 
-        .container { 
-            max-width: 500px; 
+        .container {
+            max-width: 500px;
             width: 95%;
             margin-bottom: 3em;
         }
 
-        /* --- Receipt Card --- */
+        /* main receipt container with float animation */
         .receipt-card {
             background: var(--white);
             border-radius: var(--radius);
@@ -48,13 +48,13 @@
             overflow: hidden;
             animation: floatUp 0.4s ease-out;
         }
-        
+
         @keyframes floatUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* --- Header --- */
+        /* colorful top section */
         .receipt-header {
             background: linear-gradient(135deg, var(--accent), #138496);
             color: white;
@@ -77,11 +77,11 @@
             font-weight: 600;
         }
 
-        /* --- Body --- */
         .receipt-body {
             padding: 2em;
         }
-        
+
+        /* data rows */
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -92,23 +92,23 @@
         }
         .info-row:last-child { border-bottom: none; }
 
-        .label { 
-            color: var(--gray); 
-            font-weight: 600; 
-            font-size: 0.85em; 
+        .label {
+            color: var(--gray);
+            font-weight: 600;
+            font-size: 0.85em;
             text-transform: uppercase;
         }
-        .value { 
-            font-weight: 600; 
-            color: var(--dark); 
+        .value {
+            font-weight: 600;
+            color: var(--dark);
             text-align: right;
         }
-        
-        /* Highlighted Values */
+
+        /* specific text styling */
         .value.id { font-family: 'Courier New', monospace; letter-spacing: 1px; }
         .value.main { font-size: 1.1em; color: var(--accent); }
 
-        /* --- Sub Members --- */
+        /* sub-member block */
         .sub-list {
             background: #f8f9fa;
             border-radius: 8px;
@@ -121,7 +121,7 @@
             font-size: 0.9em; margin-bottom: 5px;
         }
 
-        /* --- Footer / Total --- */
+        /* bottom totals area */
         .receipt-footer {
             background: #f8f9fa;
             padding: 1.5em 2em;
@@ -131,14 +131,14 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .total-label { font-weight: 700; font-size: 1.1em; }
-        .total-amount { 
-            font-family: 'Lobster', cursive; 
-            font-size: 2em; 
-            color: var(--success); 
+        .total-amount {
+            font-family: 'Lobster', cursive;
+            font-size: 2em;
+            color: var(--success);
             line-height: 1;
         }
 
-        /* --- Buttons --- */
+        /* close/back button */
         .btn-close {
             display: block;
             width: 100%;
@@ -174,7 +174,7 @@
                     <span class="label">Date</span>
                     <span class="value"><%= new Date(purchase.purchase_date).toLocaleString() %></span>
                 </div>
-                
+
                 <div class="info-row" style="margin-top: 10px;">
                     <span class="label">Item Purchased</span>
                     <span class="value main"><%= purchase.type_name %></span>
@@ -185,18 +185,18 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Member ID</span>
-                    <%# FIXED: Matches route data exactly now %>
+                    <% /* pull ID from route data */ %>
                     <span class="value id"><%= purchase.public_membership_id.substring(0, 8).toUpperCase() %></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Valid Term</span>
                     <span class="value">
-                        <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> - 
+                        <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> -
                         <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
                     </span>
                 </div>
 
-                <%# --- Sub Members Section --- %>
+                <% /* list any extra people covered by this purchase */ %>
                 <% if (purchase.subMembers && purchase.subMembers.length > 0) { %>
                     <div class="sub-list">
                         <div style="font-weight:bold; font-size:0.75em; color:var(--gray); text-transform:uppercase; margin-bottom:0.5em;">
@@ -223,6 +223,7 @@
             </div>
         </div>
 
+        <% /* redirect logic based on who is viewing */ %>
         <% if (typeof fromEmployee !== 'undefined' && fromEmployee) { %>
             <a href="/members" class="btn-close" style="background-color: var(--success);">Back to Member List</a>
         <% } else { %>

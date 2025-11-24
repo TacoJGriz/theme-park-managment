@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Renew Membership | Primus Park</title>
-    <%# --- Import Fonts --- %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- STANDARDIZED VARIABLES --- */
         :root {
             --primary: #6f42c1;
-            --accent: #17a2b8; /* Member Theme */
+            --accent: #17a2b8;
             --secondary: #ffc107;
             --success: #28a745;
             --danger: #dc3545;
@@ -20,25 +18,24 @@
             --light: #f8f9fa;
             --white: #ffffff;
             --gray: #6c757d;
-            
             --radius: 12px;
             --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
         }
 
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: var(--light); 
+            margin: 0;
+            background-color: var(--light);
             color: var(--dark);
         }
-        .container { 
-            max-width: 600px; 
-            margin: 3em auto; 
+        .container {
+            max-width: 600px;
+            margin: 3em auto;
             padding: 0 1em;
         }
 
-        h1 { 
+        h1 {
             font-family: 'Lobster', cursive;
             font-size: 2.5em;
             color: var(--dark);
@@ -47,18 +44,18 @@
             text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
         }
 
-        /* --- Magic Cards --- */
+        /* content sections */
         .card {
             background: var(--white);
             padding: 2em;
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
             margin-bottom: 2em;
-            border-top: 5px solid var(--accent); /* Member Theme */
+            border-top: 5px solid var(--accent);
             animation: slideUp 0.4s ease-out;
         }
         .card.payment-card {
-            border-top-color: var(--success); /* Payment Highlight */
+            border-top-color: var(--success);
         }
 
         @keyframes slideUp {
@@ -76,7 +73,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- Info Lists --- */
+        /* data rows */
         .info-pair {
             display: flex;
             justify-content: space-between;
@@ -87,14 +84,14 @@
         .info-pair:last-child { border-bottom: none; }
         .info-pair strong { color: var(--gray); font-weight: 600; font-size: 0.9em; text-transform: uppercase; }
         .info-pair span { color: var(--dark); font-weight: 600; }
-        
-        .price { 
-            color: var(--success) !important; 
-            font-size: 1.4em !important; 
+
+        .price {
+            color: var(--success) !important;
+            font-size: 1.4em !important;
             font-weight: 700;
         }
 
-        /* --- Payment Options --- */
+        /* payment radio buttons */
         .payment-option {
             display: block;
             padding: 15px;
@@ -109,27 +106,27 @@
             background-color: #e9ecef;
             border-color: #dee2e6;
         }
-        /* Highlight selected (needs JS or specific styling logic, but hover helps) */
-        .payment-option input[type="radio"] { 
-            margin-right: 12px; 
+
+        .payment-option input[type="radio"] {
+            margin-right: 12px;
             transform: scale(1.2);
         }
-        .payment-option label { 
-            font-weight: 600; 
-            cursor: pointer; 
+        .payment-option label {
+            font-weight: 600;
+            cursor: pointer;
             color: var(--dark);
         }
-        .payment-option .default { 
-            color: var(--success); 
-            font-size: 0.85em; 
-            font-weight: 700; 
-            margin-left: 10px; 
+        .payment-option .default {
+            color: var(--success);
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-left: 10px;
             background: #d4edda;
             padding: 2px 8px;
             border-radius: 10px;
         }
 
-        /* --- Buttons --- */
+        /* action buttons */
         .btn-confirm {
             width: 100%;
             padding: 15px;
@@ -144,8 +141,8 @@
             transition: var(--transition);
             box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
         }
-        .btn-confirm:hover { 
-            background-color: #218838; 
+        .btn-confirm:hover {
+            background-color: #218838;
             transform: translateY(-2px);
         }
 
@@ -174,7 +171,7 @@
 </head>
 <body>
     <%- include('partials/member-header') %>
-    
+
     <div class="container">
         <h1>Confirm Renewal</h1>
 
@@ -184,7 +181,7 @@
 
         <div class="card">
             <h3>Renewal Details</h3>
-            
+
             <div class="info-pair">
                 <strong>Membership Type</strong>
                 <span><%= renewal.type_name %></span>
@@ -202,12 +199,13 @@
         <div class="card payment-card">
             <h3 style="color: var(--success);">Select Payment Method</h3>
             <form action="/member/renew" method="POST">
+                <% /* Loop through saved cards */ %>
                 <% paymentMethods.forEach(method => { %>
                     <div class="payment-option">
                         <label>
-                            <input 
-                                type="radio" 
-                                name="payment_method_id" 
+                            <input
+                                type="radio"
+                                name="payment_method_id"
                                 value="<%= method.payment_method_id %>"
                                 <% if (method.is_default) { %>checked<% } %>
                             >
@@ -221,7 +219,7 @@
                         </label>
                     </div>
                 <% }); %>
-                
+
                 <button type="submit" class="btn-confirm">Confirm & Pay</button>
             </form>
             <a href="/member/manage" class="cancel-link">Cancel</a>

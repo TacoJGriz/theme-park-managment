@@ -3,112 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <title>Reopen Work Order</title>
-     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+    <style>
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-        
-        /* Ride Name on new line */
-        h1 small { 
-            display: block; 
+        h1 small {
+            display: block;
             font-size: 0.6em;
-            color: #777; 
-            font-weight: normal; 
-            margin-top: 5px; 
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
             line-height: 1.4;
         }
-
-        /* Form Layout */
-        .form-grid { 
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
-        div.form-group { margin-bottom: 0; } 
-        
-        label { 
+        div.form-group {
+            margin-bottom: 0;
+        }
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
-        /* Inputs & Textareas */
         input[type="number"], input[type="text"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
         input:focus, textarea:focus {
-            border-color: #dc3545; /* Red focus for reopening */
+            border-color: #dc3545;
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
         }
-        
-        /* Read-only inputs */
         input:disabled {
             background-color: #e9ecef;
             color: #6c757d;
             cursor: not-allowed;
         }
-
-        textarea { 
-            grid-column: 1 / -1; 
-            resize: vertical; 
-            min-height: 120px; 
+        textarea {
+            grid-column: 1 / -1;
+            resize: vertical;
+            min-height: 120px;
         }
-
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #dc3545; /* Red for "Reopen" action */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #c82333; 
+        button:hover {
+            background-color: #c82333;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -119,55 +102,55 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    
+
     <div class="container">
         <h1>
             Reopen Work Order
             <small>for <%= log.ride_name %></small>
         </h1>
-        
+
         <form action="/maintenance/reopen/<%= log.public_maintenance_id %>" method="POST">
             <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
-            
+
             <div class="form-grid">
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="summary">Reason for Reopening / Updated Notes:</label>
                     <textarea name="summary" id="summary" required><%= log.summary %></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="cost">Cost to Date ($):</label>
-                    <input 
-                        type="number" 
-                        id="cost" 
-                        name="cost" 
-                        step="0.01" 
-                        min="0" 
+                    <input
+                        type="number"
+                        id="cost"
+                        name="cost"
+                        step="0.01"
+                        min="0"
                         value="<%= log.cost ? parseFloat(log.cost).toFixed(2) : '0.00' %>">
                 </div>
-                
+
                 <div class="form-group">
                     <label>New Ride Status:</label>
-                    <input 
-                        type="text" 
-                        value="BROKEN" 
-                        disabled 
+                    <input
+                        type="text"
+                        value="BROKEN"
+                        disabled
                         style="color: #dc3545; font-weight: bold; border-color: #dc3545; background-color: #fff5f5;">
                 </div>
             </div>
-            
+
             <br>
-            
+
             <button type="submit">Confirm Reopen</button>
-            
+
             <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/rides?' + returnQuery : '/rides'; %>
             <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
         </form>

@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Maintenance Report</title>
-    <%# Link to Chart.js library %>
+    <%# chart js library %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
+        /* standard body styles */
         body { 
             font-family: 'Poppins', sans-serif;
             margin: 0; 
@@ -14,7 +14,7 @@
             color: #333; 
         }
 
-        /* Main Container */
+        /* main container */
         .container { 
             max-width: 1400px; 
             margin: 2em auto; 
@@ -24,7 +24,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
 
-        /* Headings */
+        /* headers */
         h1 { 
             color: #2c3e50;
             border-bottom: 2px solid #f0f0f0; 
@@ -34,7 +34,7 @@
             font-weight: 700;
         }
 
-        /* Form & Controls */
+        /* report filter controls */
         .report-controls {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -58,6 +58,7 @@
             color: #495057;
         }
 
+        /* inputs */
         input[type="date"], select {
             width: 100%;
             padding: 10px 12px;
@@ -74,7 +75,7 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
 
-        /* Buttons */
+        /* update button */
         button { 
             padding: 11px 25px; 
             background-color: #007bff; 
@@ -94,7 +95,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        /* --- Metrics Section --- */
+        /* top metrics bar */
         .metrics-bar { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
@@ -126,7 +127,7 @@
             text-transform: uppercase;
         }
         
-        /* Highlight Card (Red for Alerts) */
+        /* red highlight for bad metrics */
         .metric-card.highlight {
             background-color: #fff5f5;
             border-color: #f5c6cb;
@@ -134,7 +135,7 @@
         .metric-card.highlight h3 { color: #dc3545; }
         .metric-card.highlight p { color: #a71d2a; }
 
-        /* --- Charts Section --- */
+        /* charts layout */
         .charts-container { 
             display: grid; 
             grid-template-columns: 2fr 1fr; 
@@ -164,7 +165,7 @@
             width: 100%;
         }
 
-        /* --- Table Styles --- */
+        /* data table */
         table { 
             width: 100%;
             border-collapse: separate; 
@@ -177,7 +178,7 @@
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
         th { 
-            background-color: #007bff; /* Standard Blue Header */
+            background-color: #007bff;
             color: white; 
             padding: 15px;
             text-align: left; 
@@ -199,9 +200,9 @@
         tr:nth-child(even) { background-color: #f8f9fa; }
         tr:hover { background-color: #f1f5f9; }
         
-        /* Data Styles */
         .ride-id { font-family: monospace; color: #6c757d; font-weight: bold; }
         
+        /* status badges */
         .status-badge { 
             display: inline-block; 
             padding: 4px 8px; 
@@ -213,11 +214,11 @@
         .status-open { background-color: #ffeeba; color: #856404; }
         .status-complete { background-color: #d4edda; color: #155724; }
         
-        /* Action Button */
+        /* view details button */
         .btn-view { 
             display: inline-block;
             text-decoration: none; 
-            color: #17a2b8; /* Teal */
+            color: #17a2b8;
             font-weight: 600; 
             padding: 6px 12px; 
             border: 1px solid #17a2b8; 
@@ -313,6 +314,7 @@
             </div>
 
             <% 
+                // construct the back query for links
                 const backParams = new URLSearchParams();
                 backParams.set('d1', selected_date1);
                 backParams.set('d2', selected_date2);
@@ -363,7 +365,7 @@
             </table>
 
             <script>
-                // --- TIMELINE CHART ---
+                // setup the timeline bar chart
                 const timelineCtx = document.getElementById('timelineChart').getContext('2d');
                 new Chart(timelineCtx, {
                     type: 'bar',
@@ -384,7 +386,7 @@
                     }
                 });
 
-                // --- TYPE CHART ---
+                // setup the ride type doughnut chart
                 const typeCtx = document.getElementById('typeChart').getContext('2d');
                 new Chart(typeCtx, {
                     type: 'doughnut',

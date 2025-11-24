@@ -4,72 +4,64 @@
     <meta charset="UTF-8">
     <title>Reassign Work Order</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-        
-        /* Ride Name on new line */
-        h1 small { 
-            display: block; 
+        h1 small {
+            display: block;
             font-size: 0.6em;
-            color: #777; 
-            font-weight: normal; 
-            margin-top: 5px; 
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
             line-height: 1.4;
         }
-
-        /* Info Box */
-        .report-info { 
-            background-color: #fff3cd; /* Warning/Yellow tint */
+        .report-info {
+            background-color: #fff3cd;
             padding: 1.2em;
-            border-left: 5px solid #ffc107; /* Warning Color */
+            border-left: 5px solid #ffc107;
             margin-bottom: 2em;
             border-radius: 8px;
             color: #856404;
             font-size: 0.95em;
         }
-        .report-info strong { display: block; margin-bottom: 5px; }
-
-        /* Form Elements */
-        div.form-group { margin-bottom: 1.5em; }
-        
-        label { 
+        .report-info strong {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 5px;
+        }
+        div.form-group {
+            margin-bottom: 1.5em;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
-
         select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -80,28 +72,24 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-
-        /* Button */
-        button { 
-            padding: 12px 25px; 
-            background-color: #007bff; /* Primary Blue for Assignment */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Cancel Link */
         .cancel-link {
             display: block;
             text-align: center;
@@ -112,25 +100,25 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    
+
     <div class="container">
         <h1>
             Reassign Work Order
             <small>for <%= log.ride_name %></small>
         </h1>
-        
+
         <form action="/maintenance/reassign/<%= log.public_maintenance_id %>" method="POST">
             <input type="hidden" name="ride_id" value="<%= log.ride_id %>">
             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
-            
+
             <div class="report-info">
                 <strong>Initial Report (<%= log.report_date.toISOString().substring(0, 10) %>):</strong>
                 <p style="margin:0; font-style: italic;">"<%= log.summary %>"</p>
@@ -145,12 +133,11 @@
                     <% }); %>
                 </select>
             </div>
-            
+
             <br>
-            
+
             <button type="submit">Submit Request</button>
-            
-            <%# Smart Cancel Link %>
+
             <a href="/maintenance/ride/<%= log.public_ride_id %><%= (typeof returnQuery !== 'undefined' && returnQuery) ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
         </form>
     </div>

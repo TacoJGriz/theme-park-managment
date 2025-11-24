@@ -4,35 +4,28 @@
     <meta charset="UTF-8">
     <title>Park Vendors</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-        
-        /* Main Container */
-        .container { 
+        .container {
             max-width: 1200px;
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1.5em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -47,26 +40,26 @@
             text-align: center;
             transition: transform 0.2s;
         }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card h3 { 
-            margin: 0 0 0.25em 0; 
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card h3 {
+            margin: 0 0 0.25em 0;
             font-size: 1.8em;
             font-weight: 700;
         }
-        .stat-card p { 
-            margin: 0; 
-            font-weight: 600; 
-            color: #6c757d; 
+        .stat-card p {
+            margin: 0;
+            font-weight: 600;
+            color: #6c757d;
             font-size: 0.85em;
             text-transform: uppercase;
         }
-
-        /* --- FILTER BAR --- */
-        .filter-bar { 
+        .filter-bar {
             background-color: #f8f9fa;
-            border: 1px solid #e9ecef; 
-            padding: 1.5em; 
-            border-radius: 12px; 
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px;
             margin-bottom: 2em;
         }
         .filter-controls {
@@ -75,113 +68,128 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { 
+        .filter-controls label {
             font-weight: 600;
-            display: block; 
-            margin-bottom: 6px; 
+            display: block;
+            margin-bottom: 6px;
             font-size: 0.9em;
             color: #495057;
         }
         .filter-controls input,
-        .filter-controls select { 
+        .filter-controls select {
             width: 100%;
-            padding: 10px 12px; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px; 
-            font-size: 0.95em; 
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 0.95em;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
-
-        .filter-buttons { display: flex; gap: 10px; }
-        
-        .filter-btn { 
-            flex-grow: 1; 
-            padding: 10px 15px; 
-            color: white; 
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px 15px;
+            color: white;
             border: none;
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 0.95em; 
-            font-weight: 600; 
-            text-decoration: none; 
-            text-align: center; 
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .filter-btn:hover { transform: translateY(-1px); }
-        
-        .btn-filter { background-color: #007bff; }
-        .btn-filter:hover { background-color: #0056b3; }
-        
-        .btn-clear { background-color: #6c757d; }
-        .btn-clear:hover { background-color: #545b62; }
-
-        /* --- ADD BUTTON --- */
-        .add-button { 
+        .filter-btn:hover {
+            transform: translateY(-1px);
+        }
+        .btn-filter {
+            background-color: #007bff;
+        }
+        .btn-filter:hover {
+            background-color: #0056b3;
+        }
+        .btn-clear {
+            background-color: #6c757d;
+        }
+        .btn-clear:hover {
+            background-color: #545b62;
+        }
+        .add-button {
             display: inline-block;
-            margin-bottom: 1.5em; 
-            padding: 12px 25px; 
+            margin-bottom: 1.5em;
+            padding: 12px 25px;
             background-color: #28a745;
-            color: white; 
-            text-decoration: none; 
+            color: white;
+            text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.2s;
         }
-        .add-button:hover { 
+        .add-button:hover {
             background-color: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* --- TABLE STYLES --- */
-        table { 
+        table {
             width: 100%;
-            border-collapse: separate; 
+            border-collapse: separate;
             border-spacing: 0;
             font-size: 0.95em;
             background: white;
-            border-radius: 12px; 
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
         }
-        th { 
+        th {
             background-color: #007bff;
-            color: white; 
+            color: white;
             padding: 15px;
-            text-align: left; 
+            text-align: left;
             font-weight: 600;
             border: none;
             text-transform: uppercase;
             font-size: 0.85em;
             letter-spacing: 0.5px;
         }
-        th.sortable a { 
+        th.sortable a {
             text-decoration: none;
-            color: white; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
-        
-        td { 
+        th.sortable a:hover {
+            text-decoration: none;
+            opacity: 0.9;
+        }
+        td {
             padding: 15px;
             border-bottom: 1px solid #f1f1f1;
             vertical-align: middle;
             color: #555;
         }
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
-        tr:hover { background-color: #f1f5f9; }
-
-        /* Status Colors */
-        .status-OPEN { color: #28a745; font-weight: bold; }
-        .status-CLOSED { color: #dc3545; font-weight: bold; }
-
-        /* --- ACTION BUTTONS --- */
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        .status-OPEN {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-CLOSED {
+            color: #dc3545;
+            font-weight: bold;
+        }
         .btn-action {
             display: block;
             width: 100%;
@@ -199,26 +207,51 @@
             transition: all 0.2s;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0; }
-        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
-
-        .btn-inventory { color: #17a2b8; border-color: #17a2b8; }
-        .btn-inventory:hover { background-color: #17a2b8; color: white; }
-
-        .btn-edit { color: #007bff; border-color: #007bff; }
-        .btn-edit:hover { background-color: #007bff; color: white; }
-
-        /* Messages */
-        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
-        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
-        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+        .btn-action:last-child {
+            margin-bottom: 0;
+        }
+        .btn-action:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-1px);
+        }
+        .btn-inventory {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-inventory:hover {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .message {
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        .success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+        }
+        .error {
+            color: #842029;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
 
     <div class="container">
-        <h1>Park Vendors</h1>
 
         <% if (typeof success !== 'undefined' && success) { %>
             <div class="message success"><%= success %></div>
@@ -226,6 +259,8 @@
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="message error"><%= error %></div>
         <% } %>
+
+        <h1>Park Vendors</h1>
 
         <div class="stats-bar">
             <div class="stat-card">
@@ -284,14 +319,14 @@
             <a href="/vendors/new" class="add-button">Add New Vendor</a>
         <% } %>
 
-        <% 
+        <%
             const getSortState = (column) => {
                 let nextDir = 'asc';
                 let indicator = '';
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
-                        indicator = '▲'; 
+                        indicator = '▲';
                     } else if (currentDir === 'desc') {
                         nextDir = 'none';
                         indicator = '▼';
@@ -339,16 +374,13 @@
                 <% } %>
                 <% vendors.forEach(vendor => { %>
                     <tr>
-                         <%# Clean ID without grey background, just plain text %>
                         <td><%= vendor.public_vendor_id.substring(0, 8).toUpperCase() %></td>
-                        
-                        <%# Name is now BOLD %>
+
                         <td><strong><%= vendor.vendor_name %></strong></td>
-                        
+
                         <td><%= vendor.location_name || 'N/A' %></td>
                         <td><span class="status-<%= vendor.vendor_status %>"><%= vendor.vendor_status %></span></td>
                         <td>
-                             <%# Checkout Button (Visible to all Staff/Admins/Managers) %>
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                                 <% if (vendor.vendor_status === 'CLOSED') { %>
                                     <span class="btn-action btn-disabled" style="color: #adb5bd; border-color: #dee2e6; background-color: #f8f9fa; cursor: not-allowed;">Checkout</span>
@@ -357,7 +389,6 @@
                                 <% } %>
                              <% } %>
 
-                             <%# View Inventory Button %>
                              <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
                                  <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action btn-inventory">View Inventory</a>
                              <% } %>

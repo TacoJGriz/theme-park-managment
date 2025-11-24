@@ -44,8 +44,8 @@ router.post('/register', isGuest, async (req, res) => {
         await connection.beginTransaction();
 
         const [memberResult] = await connection.query(
-            'SELECT * FROM membership WHERE public_membership_id = ? AND email = ?',
-            [membership_id, email]
+            'SELECT * FROM membership WHERE public_membership_id LIKE ? AND email = ?',
+            [`${membership_id}%`, email]
         );
         if (memberResult.length === 0) {
             throw new Error('Invalid Membership ID or Email. Please check your member card.');
@@ -210,21 +210,6 @@ router.get('/history', isMemberAuthenticated, async (req, res) => {
         res.status(500).send('Error loading page.');
     } finally {
         if (connection) connection.release();
-    }
-});
-
-// promotions list
-router.get('/promotions', isMemberAuthenticated, async (req, res) => {
-    try {
-        const [promotions] = await pool.query(
-            "SELECT event_name, event_type, start_date, end_date, discount_percent, summary FROM event_promotions WHERE end_date >= CURDATE() ORDER BY start_date"
-        );
-        res.render('member-promotions', {
-            promotions
-        });
-    } catch (error) {
-        console.error("Error fetching promotions:", error);
-        res.status(500).send('Error loading promotions.');
     }
 });
 

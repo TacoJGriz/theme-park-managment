@@ -4,70 +4,69 @@
     <meta charset="UTF-8">
     <title>Edit Member Profile</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
 
-        /* Main Container */
-        .container { 
-            max-width: 800px; 
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        /* Centered content box */
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        /* Headings */
-        h1 { 
+        /* Header styling */
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1em;
             font-size: 2.2em;
             font-weight: 700;
         }
-        
-        h1 small { 
-            display: block; 
-            font-size: 0.6em; 
-            color: #777; 
-            font-weight: normal; 
-            margin-top: 5px; 
+
+        h1 small {
+            display: block;
+            font-size: 0.6em;
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
             line-height: 1.4;
         }
 
-        /* Form Layout */
-        .form-grid { 
+        /* Two-column layout for the form */
+        .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 1.5em; 
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
         }
         .full-width { grid-column: 1 / -1; }
-        
+
         div.form-group { margin-bottom: 0; }
-        
-        label { 
+
+        label {
             display: block;
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.9em; 
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
             color: #495057;
         }
 
-        /* Inputs */
-        input[type="text"], 
-        input[type="email"], 
-        input[type="tel"], 
+        /* Input field styles */
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
         input[type="date"] {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ced4da;
-            border-radius: 8px; 
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
             font-size: 0.95em;
@@ -79,7 +78,7 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
 
-        /* Read-only State (for Sub-members) */
+        /* Grey out stuff they can't touch */
         input[readonly] {
             background-color: #e9ecef;
             color: #6c757d;
@@ -87,7 +86,7 @@
             border-color: #dee2e6;
         }
 
-        /* Explanatory Text */
+        /* Small hints under inputs */
         .help-text {
             font-size: 0.85em;
             color: #6c757d;
@@ -95,38 +94,38 @@
             font-style: italic;
         }
 
-        /* Error Message */
-        .error { 
-            color: #721c24; 
-            background-color: #f8d7da; 
+        /* Error box */
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
             border-color: #f5c6cb;
-            padding: 1em; 
+            padding: 1em;
             border-radius: 8px;
-            margin-bottom: 1.5em; 
+            margin-bottom: 1.5em;
             font-weight: 600;
         }
 
-        /* Buttons */
-        button { 
-            padding: 12px 25px; 
-            background-color: #007bff; /* Primary Blue for Edit/Save */
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
+        /* Save button */
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
             font-weight: 600;
             width: 100%;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover { 
-            background-color: #0056b3; 
+        button:hover {
+            background-color: #0056b3;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        /* Cancel Link */
+        /* Back button */
         .cancel-link {
             display: block;
             text-align: center;
@@ -137,27 +136,27 @@
             font-size: 0.9em;
             transition: color 0.2s;
         }
-        .cancel-link:hover { 
-            color: #343a40; 
+        .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    
+
     <% const isSubMember = member.primary_member_id; %>
-    
+
     <div class="container">
         <h1>
             Edit Member Profile
             <small>For: <%= member.first_name %> <%= member.last_name %> (ID: <%= member.public_membership_id.substring(0, 8).toUpperCase() %>)</small>
         </h1>
-        
+
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="error"><%= error %></div>
         <% } %>
-        
+
         <form action="/members/edit/<%= member.public_membership_id %>" method="POST">
             <div class="form-grid">
                 <div class="form-group">
@@ -168,31 +167,31 @@
                     <label for="last_name">Last Name:</label>
                     <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
                 </div>
-                
+
                 <div class="form-group full-width">
                      <label for="email">Email:</label>
                     <input type="email" id="email" name="email" value="<%= member.email %>" <%= isSubMember ? 'readonly' : '' %> required>
+                    <% /* Sub-members can't change contact info directly */ %>
                     <% if (isSubMember) { %>
                         <div class="help-text"><i class="fa-solid fa-lock"></i> Email and phone for sub-members are managed by the primary account holder.</div>
                     <% } %>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="phone_number">Phone Number:</label>
                     <input type="tel" id="phone_number" name="phone_number" value="<%= member.phone_number || '' %>" <%= isSubMember ? 'readonly' : '' %>>
                 </div>
-       
+
                 <div class="form-group">
                     <label for="date_of_birth">Date of Birth:</label>
                     <input type="date" id="date_of_birth" name="date_of_birth" value="<%= member.date_of_birth.toISOString().substring(0, 10) %>" required>
                 </div>
             </div>
-            
+
             <br>
-            
+
             <button type="submit">Save Changes</button>
-            
-            <%# Smart Cancel Link %>
+
             <a href="/members<%= (typeof currentQueryString !== 'undefined' && currentQueryString) ? '?' + currentQueryString : '' %>" class="cancel-link">Cancel</a>
         </form>
     </div>

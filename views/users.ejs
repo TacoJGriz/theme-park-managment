@@ -4,38 +4,31 @@
     <meta charset="UTF-8">
     <title>Park Employees</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-        
-        /* Main Container */
-        .container { 
+        .container {
             max-width: 1200px;
-            margin: 2em auto; 
-            background: white; 
-            padding: 2.5em; 
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
-        /* Headings */
-        h1 { 
+        h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #f0f0f0; 
-            padding-bottom: 0.5em; 
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
             margin-bottom: 1.5em;
             font-size: 2.2em;
             font-weight: 700;
         }
-
-        /* --- STATS BAR --- */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1em;
             margin-bottom: 2em;
         }
@@ -51,30 +44,31 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        .stat-card h3 { 
-            margin: 0 0 0.25em 0; 
+        .stat-card h3 {
+            margin: 0 0 0.25em 0;
             font-size: 2.5em;
             font-weight: 700;
             color: #007bff;
         }
-        .stat-card h3.active { color: #28a745; }
-        .stat-card h3.inactive { color: #dc3545; }
-        
-        .stat-card p { 
-            margin: 0; 
-            font-weight: 600; 
-            color: #6c757d; 
+        .stat-card h3.active {
+            color: #28a745;
+        }
+        .stat-card h3.inactive {
+            color: #dc3545;
+        }
+        .stat-card p {
+            margin: 0;
+            font-weight: 600;
+            color: #6c757d;
             font-size: 0.9em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
-        /* --- FILTER BAR --- */
-        .filter-bar { 
+        .filter-bar {
             background-color: #f1f3f5;
-            border: 1px solid #dee2e6; 
-            padding: 1.5em; 
-            border-radius: 12px; 
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 12px;
             margin-bottom: 2em;
         }
         .filter-controls {
@@ -83,20 +77,20 @@
             gap: 1em;
             align-items: flex-end;
         }
-        .filter-controls label { 
+        .filter-controls label {
             font-weight: 600;
-            display: block; 
-            margin-bottom: 6px; 
+            display: block;
+            margin-bottom: 6px;
             font-size: 0.9em;
             color: #495057;
         }
         .filter-controls input,
-        .filter-controls select { 
+        .filter-controls select {
             width: 100%;
-            padding: 10px 12px; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px; 
-            font-size: 0.95em; 
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 0.95em;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
@@ -106,108 +100,127 @@
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
-
-        .filter-buttons { display: flex; gap: 10px; }
-        
-        .filter-btn { 
-            flex-grow: 1; 
-            padding: 10px 15px; 
-            color: white; 
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px 15px;
+            color: white;
             border: none;
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 0.95em; 
-            font-weight: 600; 
-            text-decoration: none; 
-            text-align: center; 
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
             display: inline-block;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
-        
-        .btn-filter { background-color: #007bff; }
-        .btn-filter:hover { background-color: #0056b3; }
-        
-        .btn-clear { background-color: #6c757d; }
-        .btn-clear:hover { background-color: #545b62; }
-
-        /* --- ADD BUTTON --- */
-        .add-button { 
+        .filter-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .btn-filter {
+            background-color: #007bff;
+        }
+        .btn-filter:hover {
+            background-color: #0056b3;
+        }
+        .btn-clear {
+            background-color: #6c757d;
+        }
+        .btn-clear:hover {
+            background-color: #545b62;
+        }
+        .add-button {
             display: inline-block;
-            margin-bottom: 1.5em; 
-            padding: 12px 25px; 
+            margin-bottom: 1.5em;
+            padding: 12px 25px;
             background-color: #28a745;
-            color: white; 
-            text-decoration: none; 
+            color: white;
+            text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.2s;
         }
-        .add-button:hover { 
+        .add-button:hover {
             background-color: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-
-        /* Messages */
-        .message { 
-            padding: 1em; 
-            border-radius: 8px; 
-            margin-bottom: 1.5em; 
-            font-weight: 600; 
-            border: 1px solid transparent; 
+        .message {
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+            border: 1px solid transparent;
         }
-        .success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc; }
-        .error { color: #842029; background-color: #f8d7da; border-color: #f5c6cb; }
-
-        /* --- TABLE STYLES --- */
-        table { 
+        .success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+        }
+        .error {
+            color: #842029;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        table {
             width: 100%;
-            border-collapse: separate; 
+            border-collapse: separate;
             border-spacing: 0;
             font-size: 0.95em;
             background: white;
-            border-radius: 12px; 
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
-            margin-top: 0; /* Removed margin since header handles spacing */
+            margin-top: 0;
         }
-        th { 
+        th {
             background-color: #007bff;
-            color: white; 
+            color: white;
             padding: 15px;
-            text-align: left; 
+            text-align: left;
             font-weight: 600;
             border: none;
             text-transform: uppercase;
             font-size: 0.85em;
             letter-spacing: 0.5px;
         }
-        
-        /* Sortable Header Links */
         th.sortable a {
             text-decoration: none;
-            color: white; 
-            display: flex; 
-            justify-content: space-between; 
+            color: white;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
-        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
-        .sort-indicator { font-size: 1.2em; margin-left: 5px; }
-
-        td { 
+        th.sortable a:hover {
+            text-decoration: none;
+            opacity: 0.9;
+        }
+        .sort-indicator {
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
+        td {
             padding: 15px;
             border-bottom: 1px solid #f1f1f1;
             vertical-align: middle;
             color: #555;
         }
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
-        tr:hover { background-color: #f1f5f9; }
-
-        /* --- ACTION BUTTONS --- */
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
         .btn-action {
             display: block;
             width: 100%;
@@ -225,15 +238,29 @@
             transition: all 0.2s;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .btn-action:last-child { margin-bottom: 0; }
-        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
-
-        .btn-edit { color: #007bff; border-color: #007bff; }
-        .btn-edit:hover { background-color: #007bff; color: white; }
-
-        .btn-reset { color: #dc3545; border-color: #dc3545; }
-        .btn-reset:hover { background-color: #dc3545; color: white; }
-
+        .btn-action:last-child {
+            margin-bottom: 0;
+        }
+        .btn-action:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-1px);
+        }
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-reset {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-reset:hover {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -249,7 +276,6 @@
 
         <h1>Park Employees</h1>
 
-        <%# --- STATS BAR --- %>
         <div class="stats-bar">
             <div class="stat-card">
                 <h3><%= counts.total || 0 %></h3>
@@ -265,7 +291,6 @@
             </div>
         </div>
 
-        <%# --- FILTER BAR --- %>
         <div class="filter-bar">
             <form action="" method="GET">
                 <div class="filter-controls">
@@ -273,7 +298,7 @@
                         <label for="search">Search</label>
                         <input type="text" id="search" name="search" placeholder="Name, ID, Email..." value="<%= search %>">
                     </div>
-                    
+
                     <div>
                         <label for="filter_role">Role</label>
                         <select id="filter_role" name="filter_role">
@@ -312,8 +337,7 @@
                         <a href="?" class="filter-btn btn-clear">Clear</a>
                     </div>
                 </div>
-                
-                <%# Maintain sort state when filtering %>
+
                 <% if (currentSort && currentDir) { %>
                     <input type="hidden" name="sort" value="<%= currentSort %>">
                     <input type="hidden" name="dir" value="<%= currentDir %>">
@@ -325,15 +349,14 @@
             <a href="/employees/new" class="add-button">Add New Employee</a>
         <% } %>
 
-        <%# --- SORT LOGIC HELPER --- %>
-        <% 
+        <%
             const getSortState = (column) => {
                 let nextDir = 'asc';
                 let indicator = '';
                 if (currentSort === column) {
                     if (currentDir === 'asc') {
                         nextDir = 'desc';
-                        indicator = '▲'; 
+                        indicator = '▲';
                     } else if (currentDir === 'desc') {
                         nextDir = 'none';
                         indicator = '▼';

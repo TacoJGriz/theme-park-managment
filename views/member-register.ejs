@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Activate Membership | Primus Park</title>
-    <%# --- Import Google Fonts --- %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* --- STANDARDIZED THEME VARIABLES --- */
         :root {
             --primary: #6f42c1;
             --secondary: #ffc107;
-            --accent: #17a2b8;        /* Cyan/Teal - Member Theme Color */
+            --accent: #17a2b8;
             --dark: #343a40;
             --light: #f8f9fa;
             --white: #ffffff;
             --gray: #6c757d;
             --success: #28a745;
             --danger: #dc3545;
-            
             --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.3);
             --radius: 12px;
             --transition: all 0.3s ease;
-            --hero-overlay: rgba(0, 0, 0, 0.4); 
+            --hero-overlay: rgba(0, 0, 0, 0.4);
         }
 
+        /* background image setup */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -36,14 +34,13 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            /* Hero Background */
             background: linear-gradient(var(--hero-overlay), var(--hero-overlay)), url('/images/hero-bg.png');
             background-size: cover;
             background-position: center 30%;
             background-attachment: fixed;
         }
 
-        /* --- Standardized Card --- */
+        /* main form card */
         form {
             max-width: 450px;
             width: 100%;
@@ -51,7 +48,7 @@
             padding: 3em;
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            border-top: 5px solid var(--accent); /* Member Accent Color */
+            border-top: 5px solid var(--accent);
             box-sizing: border-box;
         }
 
@@ -64,7 +61,7 @@
             letter-spacing: 1px;
             font-size: 2.2em;
         }
-        
+
         .subtitle {
             text-align: center;
             color: var(--gray);
@@ -73,26 +70,27 @@
         }
 
         div.form-group { margin-bottom: 1.5em; }
-        
+
         label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); }
 
-        /* --- Standardized Inputs --- */
+        /* form fields */
         input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 12px 15px;
             box-sizing: border-box;
-            border-radius: 8px; 
+            border-radius: 8px;
             border: 2px solid #eee;
             font-family: 'Poppins', sans-serif;
             font-size: 1em;
             transition: var(--transition);
         }
-        input:focus { 
-            outline: none; 
+        input:focus {
+            outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
         }
 
+        /* alert box */
         .error {
             color: var(--white);
             font-weight: 600;
@@ -104,11 +102,11 @@
             box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
         }
 
-        /* --- Standardized Button (.btn-success for Activation) --- */
+        /* big green button */
         button {
             width: 100%;
             padding: 12px 20px;
-            background-color: var(--success); /* Green for "Go" */
+            background-color: var(--success);
             color: var(--white);
             border: none;
             cursor: pointer;
@@ -118,11 +116,11 @@
             transition: var(--transition);
             box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
         }
-        button:hover { 
-            background-color: #218838; 
+        button:hover {
+            background-color: #218838;
             transform: translateY(-2px);
         }
-        
+
         .info-note {
             text-align: center;
             font-size: 0.9em;
@@ -144,6 +142,7 @@
         <h1>Activate Account</h1>
         <p class="subtitle">Set up online access for your membership.</p>
 
+        <% /* display validation errors */ %>
         <% if (typeof error !== 'undefined' && error) { %>
             <p class="error"><%= error %></p>
         <% } %>
@@ -152,7 +151,7 @@
             <label for="email">Membership Email:</label>
             <input type="email" id="email" name="email" placeholder="Email used at purchase" required>
         </div>
-        
+
         <div class="form-group">
             <label for="membership_id">Membership ID:</label>
             <input type="text" id="membership_id" name="membership_id" placeholder="Found on your receipt/card" required>
@@ -167,7 +166,7 @@
             <label for="confirm_password">Confirm Password:</label>
             <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
         </div>
-        
+
         <button type="submit">Create Account</button>
 
         <p class="info-note">

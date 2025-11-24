@@ -4,42 +4,56 @@
     <meta charset="UTF-8">
     <title>Receipt - <%= vendor.vendor_name %></title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: #f4f4f9; 
-            color: #333; 
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-        .container { 
+        .container {
             max-width: 600px;
-            margin: 3em auto; 
-            background: white; 
-            padding: 3em; 
-            border-radius: 12px; 
+            margin: 3em auto;
+            background: white;
+            padding: 3em;
+            border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
         }
-        
-        /* Receipt Styling */
         .receipt-header {
             border-bottom: 2px dashed #ddd;
             padding-bottom: 1.5em;
             margin-bottom: 1.5em;
         }
-        .receipt-header h1 { margin: 0; color: #2c3e50; font-size: 2em; }
-        .receipt-header p { margin: 5px 0 0 0; color: #777; font-size: 0.9em; }
-
+        .receipt-header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 2em;
+        }
+        .receipt-header p {
+            margin: 5px 0 0 0;
+            color: #777;
+            font-size: 0.9em;
+        }
         .receipt-items {
             width: 100%;
             margin-bottom: 1.5em;
             text-align: left;
             border-collapse: collapse;
         }
-        .receipt-items th { text-transform: uppercase; font-size: 0.8em; color: #777; border-bottom: 1px solid #eee; padding: 8px 0; }
-        .receipt-items td { padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
-        .receipt-items .price-col { text-align: right; }
-        
+        .receipt-items th {
+            text-transform: uppercase;
+            font-size: 0.8em;
+            color: #777;
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+        }
+        .receipt-items td {
+            padding: 12px 0;
+            border-bottom: 1px solid #f9f9f9;
+        }
+        .receipt-items .price-col {
+            text-align: right;
+        }
         .receipt-total {
             display: flex;
             justify-content: space-between;
@@ -49,8 +63,6 @@
             padding-top: 1em;
             border-top: 2px solid #333;
         }
-
-        /* Buttons */
         .btn-print {
             background-color: #343a40;
             color: white;
@@ -61,8 +73,9 @@
             font-weight: 600;
             margin-right: 10px;
         }
-        .btn-print:hover { background-color: #000; }
-
+        .btn-print:hover {
+            background-color: #000;
+        }
         .btn-continue {
             background-color: #007bff;
             color: white;
@@ -72,15 +85,25 @@
             font-weight: 600;
             display: inline-block;
         }
-        .btn-continue:hover { background-color: #0056b3; }
-
-        .actions { margin-top: 2.5em; }
-
-        /* Print specific styles */
+        .btn-continue:hover {
+            background-color: #0056b3;
+        }
+        .actions {
+            margin-top: 2.5em;
+        }
         @media print {
-            body { background-color: white; }
-            .container { box-shadow: none; margin: 0; width: 100%; max-width: 100%; }
-            .actions, .navbar { display: none !important; } /* Hide buttons and nav */
+            body {
+                background-color: white;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+            .actions, .navbar {
+                display: none !important;
+            }
         }
     </style>
 </head>

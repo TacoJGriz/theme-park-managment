@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Add Item to Shelf</title>
     <style>
-        /* --- STANDARDIZED STYLES (from style-guide.ejs) --- */
         body { 
             font-family: 'Poppins', sans-serif;
             margin: 0; 
@@ -12,7 +11,7 @@
             color: #333; 
         }
 
-        /* Main Container */
+        /* Layout wrapper */
         .container { 
             max-width: 800px; 
             margin: 2em auto; 
@@ -22,7 +21,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
 
-        /* Headings */
+        /* Header styling */
         h1 { 
             color: #2c3e50;
             border-bottom: 2px solid #f0f0f0; 
@@ -41,7 +40,7 @@
             line-height: 1.4;
         }
 
-        /* Form Elements */
+        /* Input groups */
         div.form-group { margin-bottom: 1.5em; }
         
         label { 
@@ -68,7 +67,7 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
 
-        /* Error Message */
+        /* Alerts */
         .error { 
             color: #721c24; 
             background-color: #f8d7da; 
@@ -79,7 +78,7 @@
             font-weight: 600;
         }
 
-        /* Buttons */
+        /* Action buttons */
         button { 
             padding: 12px 25px; 
             background-color: #28a745; 
@@ -99,7 +98,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        /* Cancel Link */
+        /* Navigation */
         .cancel-link {
             display: block;
             text-align: center;
@@ -132,14 +131,13 @@
         <% } %>
 
         <form action="/inventory/add" method="POST">
-            <%# If a vendor was passed in the URL, select it automatically %>
             <div class="form-group">
                 <label for="vendor_id">Select Vendor:</label>
                 <select id="vendor_id" name="vendor_id" required>
                     <% vendors.forEach(v => { %>
                         <option value="<%= v.vendor_id %>" 
                             <%= (typeof preselected_vendor !== 'undefined' && v.public_vendor_id === preselected_vendor) ? 'selected' : '' %>>
-                            <%# MODIFIED: Check if location_name exists before adding parentheses %>
+                            <% // Display location if available %>
                             <%= v.vendor_name %><%= v.location_name ? ' (' + v.location_name + ')' : '' %>
                         </option>
                     <% }); %>
@@ -173,7 +171,7 @@
             <button type="submit">Add Item to Vendor</button>
             
             <% 
-                // Smart cancel link
+                // Determine redirect path on cancel
                 const cancelHref = (typeof preselected_vendor !== 'undefined' && preselected_vendor) 
                     ? `/inventory/vendor/${preselected_vendor}` 
                     : '/inventory'; 

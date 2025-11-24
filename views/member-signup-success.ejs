@@ -6,9 +6,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* --- Page Variables --- */
         :root {
             --primary: #6f42c1;
             --success: #28a745;
@@ -20,27 +19,28 @@
             --radius: 16px;
         }
 
-        body { 
+        body {
             font-family: 'Poppins', sans-serif;
-            margin: 0; 
-            background-color: var(--light); 
+            margin: 0;
+            background-color: var(--light);
             color: var(--dark);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 2em;
             min-height: 100vh;
+            /* subtle dot pattern */
             background-image: radial-gradient(#e9ecef 1px, transparent 1px);
             background-size: 20px 20px;
         }
 
-        .container { 
-            max-width: 480px; 
+        .container {
+            max-width: 480px;
             width: 95%;
             margin-bottom: 3em;
         }
 
-        /* --- The Magic Card --- */
+        /* animated success card */
         .receipt-card {
             background: var(--white);
             border-radius: var(--radius);
@@ -49,23 +49,22 @@
             position: relative;
             animation: slideUp 0.5s ease-out;
         }
-        
+
         @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        
-        /* --- Receipt Header --- */
+
+        /* green header block */
         .receipt-header {
-            /* Fallback color first, then gradient */
-            background-color: var(--success); 
+            background-color: var(--success);
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
             padding: 2.5em 2em;
             text-align: center;
             position: relative;
         }
-        
+
         .icon-check {
             background: white;
             color: var(--success);
@@ -85,21 +84,21 @@
             margin: 0;
             font-size: 2.8em;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            color: white; /* Enforce white text */
+            color: white;
         }
         .receipt-header p {
             margin: 0.5em 0 0 0;
             font-size: 1.1em;
             font-weight: 600;
             opacity: 0.95;
-            color: white; /* Enforce white text */
+            color: white;
         }
 
-        /* --- Receipt Body --- */
         .receipt-body {
             padding: 2em;
         }
-        
+
+        /* details listing */
         .detail-row {
             display: flex;
             justify-content: space-between;
@@ -109,27 +108,27 @@
             font-size: 0.95em;
         }
         .detail-row:last-child { border-bottom: none; }
-        
-        .label { 
-            color: var(--gray); 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            font-size: 0.75em; 
-            letter-spacing: 1px; 
+
+        .label {
+            color: var(--gray);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75em;
+            letter-spacing: 1px;
         }
-        .value { 
-            font-weight: 700; 
-            color: var(--dark); 
-            text-align: right; 
+        .value {
+            font-weight: 700;
+            color: var(--dark);
+            text-align: right;
         }
-        
-        .highlight { 
-            color: var(--primary); 
-            font-size: 1.2em; 
+
+        .highlight {
+            color: var(--primary);
+            font-size: 1.2em;
             font-family: 'Courier New', monospace;
         }
 
-        /* --- Sub Members List --- */
+        /* sub members list */
         .sub-list {
             background: #f8f9fa;
             border-radius: 8px;
@@ -143,7 +142,7 @@
             margin-bottom: 5px;
         }
 
-        /* --- Total Section --- */
+        /* footer total */
         .receipt-footer {
             background: #f1f3f5;
             padding: 1.5em 2em;
@@ -153,15 +152,15 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .total-label { font-weight: 800; font-size: 1.1em; text-transform: uppercase; color: var(--dark); }
-        .total-amount { 
-            font-family: 'Lobster', cursive; 
-            font-size: 2.2em; 
-            color: var(--success); 
-            line-height: 1; 
+        .total-amount {
+            font-family: 'Lobster', cursive;
+            font-size: 2.2em;
+            color: var(--success);
+            line-height: 1;
             text-shadow: 1px 1px 0px white;
         }
 
-        /* --- Actions --- */
+        /* continue button */
         .btn-continue {
             display: block;
             width: 100%;
@@ -214,6 +213,7 @@
                     <span class="value"><%= receipt.endDate %></span>
                 </div>
 
+                <% /* List sub-members if they exist on the receipt */ %>
                 <% if (receipt.subMembers && receipt.subMembers.length > 0) { %>
                     <div class="sub-list">
                         <div style="font-weight:bold; margin-bottom:0.5em; font-size:0.75em; color:#666; text-transform:uppercase;">Group Members Included</div>

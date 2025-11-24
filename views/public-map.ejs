@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- STANDARDIZED VARIABLES --- */
         :root {
             --primary: #6f42c1;
             --secondary: #ffc107;
@@ -26,12 +25,11 @@
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background-color: #222; /* Cinematic dark mode for map */
+            background-color: #222;
             color: var(--dark);
             overflow-x: hidden;
         }
 
-        /* --- Custom Transparent Navbar --- */
         .navbar {
             background-color: rgba(52, 58, 64, 0.9);
             padding: 0.8em 2em;
@@ -40,17 +38,25 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .nav-brand { font-family: 'Lobster', cursive; font-size: 1.8em; color: var(--secondary); text-decoration: none; }
-        
+        .nav-brand {
+            font-family: 'Lobster', cursive;
+            font-size: 1.8em;
+            color: var(--secondary);
+            text-decoration: none;
+        }
+
         .btn-back {
-            color: var(--white); text-decoration: none; font-weight: 600; 
+            color: var(--white); text-decoration: none; font-weight: 600;
             display: flex; align-items: center; gap: 8px;
             padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);
             transition: var(--transition);
         }
-        .btn-back:hover { background: rgba(255,255,255,0.1); color: var(--secondary); border-color: var(--secondary); }
+        .btn-back:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
 
-        /* --- Map Container --- */
         .map-wrapper {
             position: relative;
             width: 100%; max-width: 1200px;
@@ -62,63 +68,92 @@
             user-select: none;
         }
 
-        .park-map { width: 100%; display: block; height: auto; pointer-events: none; }
+        .park-map {
+            width: 100%;
+            display: block;
+            height: auto;
+            pointer-events: none;
+        }
 
-        /* --- Map Pins --- */
         .map-pin {
             position: absolute; transform: translate(-50%, -100%);
             cursor: pointer; transition: transform 0.2s, z-index 0.2s;
             z-index: 10; display: flex; flex-direction: column; align-items: center;
         }
-        .map-pin:hover { transform: translate(-50%, -110%) scale(1.1); z-index: 20; }
-        .map-pin.draggable { cursor: grab; }
-        .map-pin.draggable:active { cursor: grabbing; }
+        .map-pin:hover {
+            transform: translate(-50%, -110%) scale(1.1);
+            z-index: 20;
+        }
+        .map-pin.draggable {
+            cursor: grab;
+        }
+        .map-pin.draggable:active {
+            cursor: grabbing;
+        }
 
         .pin-icon {
             font-size: 2.5em; color: var(--secondary);
             text-shadow: 0 2px 5px rgba(0,0,0,0.5);
             animation: dropIn 0.5s ease-out;
         }
-        
+
         .pin-label {
             background: rgba(0,0,0,0.8); color: white;
             padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold;
             margin-top: 5px; white-space: nowrap; opacity: 0; transition: opacity 0.2s;
             pointer-events: none;
         }
-        .map-pin:hover .pin-label { opacity: 1; }
+        .map-pin:hover .pin-label {
+            opacity: 1;
+        }
         @keyframes dropIn {
             0% { transform: translateY(-50px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
         }
 
-        /* --- Admin Edit Controls (Standardized Buttons) --- */
-        .admin-controls { text-align: center; margin-bottom: 1em; display: none; }
-        
+        .admin-controls {
+            text-align: center;
+            margin-bottom: 1em;
+            display: none;
+        }
+
         .btn-admin {
             padding: 10px 25px; border-radius: 30px; border: none;
             font-weight: bold; cursor: pointer; font-size: 1em;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: var(--transition);
             color: white;
         }
-        .btn-edit-mode { background-color: var(--secondary); color: var(--dark); }
-        .btn-edit-mode:hover { background-color: #e0a800; transform: translateY(-2px); }
-        
-        .btn-save-mode { background-color: var(--success); display: none; }
-        .btn-save-mode:hover { background-color: #218838; transform: translateY(-2px); }
+        .btn-edit-mode {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+        .btn-edit-mode:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-save-mode {
+            background-color: var(--success);
+            display: none;
+        }
+        .btn-save-mode:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
 
         .edit-mode-active .btn-edit-mode { display: none; }
         .edit-mode-active .btn-save-mode { display: inline-block; }
         .edit-mode-active .map-pin { animation: pulse 1s infinite; }
         @keyframes pulse { 0% { filter: brightness(1); } 50% { filter: brightness(1.3); } 100% { filter: brightness(1); } }
 
-        /* --- Modal (Magic Card Style) --- */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
             z-index: 2000; display: none; justify-content: center; align-items: center;
         }
-        .modal-backdrop.active { display: flex; }
+        .modal-backdrop.active {
+            display: flex;
+        }
 
         .info-card {
             background: var(--white); width: 90%; max-width: 450px;
@@ -133,33 +168,47 @@
             background: linear-gradient(135deg, var(--primary), #5a32a3);
             color: white; padding: 1.5em; position: relative; text-align: center;
         }
-        .info-header h2 { margin: 0; font-family: 'Lobster', cursive; letter-spacing: 1px; font-size: 2em; }
-        .info-header p { margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9; font-style: italic; }
-        
+        .info-header h2 {
+            margin: 0; font-family: 'Lobster', cursive; letter-spacing: 1px; font-size: 2em;
+        }
+        .info-header p {
+            margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9; font-style: italic;
+        }
+
         .close-btn {
             position: absolute; top: 10px; right: 10px;
             background: rgba(0,0,0,0.2); border: none; color: white;
             width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
-        .close-btn:hover { background: rgba(255,255,255,0.3); }
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
 
-        .info-body { padding: 1.5em; max-height: 60vh; overflow-y: auto; }
-        
+        .info-body {
+            padding: 1.5em; max-height: 60vh; overflow-y: auto;
+        }
+
         .section-title {
             color: var(--primary); border-bottom: 2px solid #eee;
             padding-bottom: 5px; margin: 1.5em 0 10px 0;
             font-weight: bold; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px;
         }
-        .section-title:first-child { margin-top: 0; }
+        .section-title:first-child {
+            margin-top: 0;
+        }
 
-        .item-list { list-style: none; padding: 0; margin: 0; }
+        .item-list {
+            list-style: none; padding: 0; margin: 0;
+        }
         .item-list li {
             padding: 10px; border-bottom: 1px solid #f4f4f9;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .item-list li:last-child { border-bottom: none; }
-        
+        .item-list li:last-child {
+            border-bottom: none;
+        }
+
         .status-badge {
             font-size: 0.7em; padding: 3px 8px; border-radius: 10px;
             font-weight: bold; text-transform: uppercase;
@@ -168,15 +217,42 @@
         .badge-CLOSED { background: #f8d7da; color: #721c24; }
         .badge-BROKEN { background: #fff3cd; color: #856404; }
 
-        .title-area { text-align: center; color: white; margin-top: 2em; }
-        .title-area h1 { font-family: 'Lobster', cursive; font-size: 3.5em; margin-bottom: 0.1em; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .title-area {
+            text-align: center; color: white; margin-top: 2em;
+        }
+        .title-area h1 {
+            font-family: 'Lobster', cursive; font-size: 3.5em; margin-bottom: 0.1em; text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* --- ALERT MODAL STYLES (New) --- */
+        .alert-card {
+            background: var(--white);
+            width: 90%; max-width: 400px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+        }
+        .alert-header { padding: 1.5em; color: white; }
+        .alert-header.success { background: var(--success); }
+        .alert-header.error { background: var(--danger); }
+        
+        .alert-header h3 { margin: 0; color: white; font-size: 1.5em; }
+        .alert-body { padding: 2em; color: var(--dark); font-weight: 500; }
+        .alert-btn {
+            padding: 10px 25px; border: none; border-radius: 30px;
+            font-weight: bold; cursor: pointer; margin-bottom: 1.5em;
+            background: #eee; color: #333; transition: 0.2s;
+        }
+        .alert-btn:hover { background: #ddd; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
         <a href="/" class="nav-brand">Primus Park</a>
-        
+
         <% if (member) { %>
             <a href="/member/dashboard" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
         <% } else if (user) { %>
@@ -190,7 +266,7 @@
         <h1>Park Map</h1>
         <p>Click a pin to explore attractions & dining!</p>
     </div>
-    
+
     <% if (user && (user.role === 'Admin' || user.role === 'Park Manager')) { %>
     <div class="admin-controls" style="display: block;">
         <button class="btn-admin btn-edit-mode" onclick="toggleEditMode()">✏️ Edit Pins</button>
@@ -203,9 +279,9 @@
         <img src="/images/park-map.png" alt="Park Map" class="park-map">
 
         <% locations.forEach(loc => { %>
-            <div class="map-pin" 
+            <div class="map-pin"
                  id="pin-<%= loc.location_id %>"
-                 data-id="<%= loc.location_id %>" 
+                 data-id="<%= loc.location_id %>"
                  style="left: <%= loc.pin_x || 50 %>%; top: <%= loc.pin_y || 50 %>%;"
                  onclick="handlePinClick(<%= loc.location_id %>)">
                 <i class="fa-solid fa-location-dot pin-icon"></i>
@@ -231,12 +307,28 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="alertModal">
+        <div class="alert-card" onclick="event.stopPropagation()">
+            <div class="alert-header" id="alertHeader">
+                <h3 id="alertTitle">Notification</h3>
+            </div>
+            <div class="alert-body" id="alertMessage">
+                Message goes here.
+            </div>
+            <button class="alert-btn" onclick="closeAlert()">OK</button>
+        </div>
+    </div>
+
     <script>
         const locationsData = <%- JSON.stringify(locations) %>;
         const ridesData = <%- JSON.stringify(rides) %>;
         const vendorsData = <%- JSON.stringify(vendors) %>;
 
         const modal = document.getElementById('infoModal');
+        const alertModal = document.getElementById('alertModal');
+        const alertHeader = document.getElementById('alertHeader');
+        const alertTitle = document.getElementById('alertTitle');
+        const alertMessage = document.getElementById('alertMessage');
         const titleEl = document.getElementById('modalTitle');
         const descEl = document.getElementById('modalDesc');
         const ridesList = document.getElementById('modalRides');
@@ -261,6 +353,22 @@
             });
         }
 
+        function showAlert(title, message, type) {
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            
+            // Reset classes
+            alertHeader.classList.remove('success', 'error');
+            if (type === 'success') alertHeader.classList.add('success');
+            if (type === 'error') alertHeader.classList.add('error');
+            
+            alertModal.classList.add('active');
+        }
+
+        function closeAlert() {
+            alertModal.classList.remove('active');
+        }
+
         async function savePinLocations() {
             const pins = [];
             document.querySelectorAll('.map-pin').forEach(pin => {
@@ -274,9 +382,15 @@
                     body: JSON.stringify({ pins })
                 });
                 const result = await response.json();
-                if (result.success) { alert('Map positions saved!'); toggleEditMode(); } 
-                else { alert('Error saving positions.'); }
-            } catch (err) { alert('Failed to connect to server.'); }
+                if (result.success) { 
+                    showAlert('Success!', 'Map positions saved successfully.', 'success'); 
+                    toggleEditMode(); 
+                } else { 
+                    showAlert('Error', 'Could not save positions.', 'error'); 
+                }
+            } catch (err) { 
+                showAlert('Connection Failed', 'Failed to connect to server.', 'error'); 
+            }
         }
 
         function dragMouseDown(e) {
@@ -307,12 +421,12 @@
 
             titleEl.textContent = loc.location_name;
             descEl.textContent = loc.summary || 'Experience the magic!';
-            
-            ridesList.innerHTML = locRides.length ? locRides.map(r => 
+
+            ridesList.innerHTML = locRides.length ? locRides.map(r =>
                 `<li><div><strong>${r.ride_name}</strong><div style="font-size:0.8em; color:#888;">${r.ride_type}</div></div><span class="status-badge badge-${r.ride_status}">${r.ride_status}</span></li>`
             ).join('') : '<li style="color:#777; font-style:italic;">No attractions listed.</li>';
 
-            vendorsList.innerHTML = locVendors.length ? locVendors.map(v => 
+            vendorsList.innerHTML = locVendors.length ? locVendors.map(v =>
                 `<li><span>${v.vendor_name}</span><span class="status-badge badge-${v.vendor_status}">${v.vendor_status}</span></li>`
             ).join('') : '<li style="color:#777; font-style:italic;">No dining/shopping listed.</li>';
 

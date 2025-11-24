@@ -10,7 +10,9 @@
 
     <style>
         :root {
-            --primary: #6f42c1; --primary-dark: #5a32a3;
+            /* Member colors */
+            --primary: #6f42c1;
+            --primary-dark: #5a32a3;
             --secondary: #ffc107;
             --accent: #17a2b8;
             --dark: #343a40; --light: #f8f9fa; --white: #ffffff; --gray: #6c757d;
@@ -19,43 +21,61 @@
             --radius: 12px; --transition: all 0.3s ease;
         }
 
+        /* Global resets and main container setup */
         body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--light); color: var(--dark); }
         .dashboard-container { max-width: 1100px; margin: 2em auto; padding: 0 2em; }
 
+        /* Welcome message styling */
         .welcome-header { margin-bottom: 2em; }
-        .welcome-header h1 { font-family: 'Lobster', cursive; font-size: 3em; color: var(--primary); margin: 0; text-shadow: 1px 1px 0px rgba(0,0,0,0.05); }
+        .welcome-header h1 {
+            font-family: 'Lobster', cursive; font-size: 3em; color: var(--primary); margin: 0;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
+        }
         .welcome-header p { color: var(--gray); font-size: 1.1em; margin-top: 0.2em; }
 
+        /* Main responsive grid layout */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
         @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        /* --- Dynamic Member Card --- */
+        /* Digital membership card styling */
         .member-card {
-            border-radius: 20px; padding: 2em; position: relative;
+            border-radius: 20px;
+            padding: 2em; position: relative;
             box-shadow: var(--shadow-lg); overflow: hidden; min-height: 240px;
             display: flex; flex-direction: column; justify-content: space-between;
-            /* Default Fallback */
-            background: linear-gradient(135deg, var(--accent), #138496); color: white;
+            background: linear-gradient(135deg, var(--accent), #138496);
+            color: white;
         }
-        
-        /* Tier Specific Styles (Matching Public Page) */
+
+        /* Specific gradients for each membership tier */
         .member-card.tier-platinum { background: linear-gradient(135deg, #6f42c1, #8e44ad); color: white; }
         .member-card.tier-gold { background: linear-gradient(135deg, #ffc107, #ffca2c); color: #333; }
         .member-card.tier-silver { background: linear-gradient(135deg, #e9ecef, #dee2e6); color: #333; }
         .member-card.tier-family { background: linear-gradient(135deg, #17a2b8, #20c997); color: white; }
 
-        /* Adjust text contrast for light cards (Gold/Silver) */
+        /* Adjust text color for lighter card backgrounds */
         .member-card.tier-gold .card-brand, .member-card.tier-silver .card-brand { color: #212529; }
         .member-card.tier-gold .card-label, .member-card.tier-silver .card-label { color: #555; opacity: 1; }
         .member-card.tier-gold .card-value, .member-card.tier-silver .card-value { color: #212529; }
-        
-        .member-card::before { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
-        .member-card::after { content: ''; position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; }
 
+        /* Decorative background circles on the card */
+        .member-card::before {
+            content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1); border-radius: 50%;
+        }
+        .member-card::after {
+            content: ''; position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px;
+            background: rgba(255,255,255,0.1); border-radius: 50%;
+        }
+
+        /* Internal structure of the card elements */
         .card-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2; }
         .card-brand { font-family: 'Lobster', cursive; font-size: 1.6em; letter-spacing: 1px; color: var(--secondary); }
-        
-        .card-qr { background: var(--white); padding: 5px; border-radius: 8px; width: 80px; height: 80px; box-shadow: var(--shadow-sm); }
+
+        .card-qr {
+            background: var(--white); padding: 5px; border-radius: 8px; width: 80px; height: 80px;
+            box-shadow: var(--shadow-sm);
+        }
         .card-qr img { width: 100%; height: 100%; display: block; }
 
         .card-body { margin-top: 1em; position: relative; z-index: 2; }
@@ -66,35 +86,46 @@
         .card-footer { display: flex; justify-content: space-between; margin-top: 1.5em; position: relative; z-index: 2; }
         .card-footer div { display: flex; flex-direction: column; }
 
-        /* --- Stats Bar --- */
+        /* Three-column statistics bar */
         .stats-bar {
-            background: var(--white); border-radius: var(--radius); padding: 1.5em; margin-top: 1.5em;
+            background: var(--white);
+            border-radius: var(--radius); padding: 1.5em; margin-top: 1.5em;
             display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; box-shadow: var(--shadow-md); border: 1px solid #eee;
         }
         .stat-box { text-align: center; position: relative; }
-        .stat-box:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 15%; height: 70%; width: 1px; background: #eee; }
+        .stat-box:not(:last-child)::after {
+            content: ''; position: absolute; right: 0; top: 15%; height: 70%; width: 1px; background: #eee;
+        }
         .stat-val { display: block; font-size: 1.6em; font-weight: 700; color: var(--primary); line-height: 1.2; }
         .stat-lbl { font-size: 0.85em; color: var(--gray); text-transform: uppercase; font-weight: 700; margin-top: 5px; }
 
-        /* --- Profile Details --- */
+        /* Member profile details container */
         .details-panel {
-            background: var(--white); padding: 2em; border-radius: var(--radius); box-shadow: var(--shadow-md); height: 100%; box-sizing: border-box; border-top: 5px solid var(--accent);
+            background: var(--white);
+            padding: 2em; border-radius: var(--radius); box-shadow: var(--shadow-md); height: 100%; box-sizing: border-box;
+            border-top: 5px solid var(--accent);
         }
         .details-panel h3 { margin-top: 0; color: var(--dark); border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px; font-size: 1.4em; }
         .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f9f9f9; font-size: 0.95em; }
         .info-row:last-of-type { border-bottom: none; }
         .info-label { color: var(--gray); font-weight: 600; }
         .info-data { color: var(--dark); font-weight: 600; }
+
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; text-transform: uppercase; }
         .status-active { background: #d4edda; color: var(--success); }
         .status-expired { background: #f8d7da; color: var(--danger); }
 
-        /* --- Actions --- */
+        /* Quick action navigation grid */
         .actions-section { margin-top: 3em; }
         .actions-section h3 { font-size: 1.8em; margin-bottom: 1em; color: var(--dark); font-family: 'Lobster', cursive; }
         .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+
         .action-btn {
-            background: var(--white); border: none; border-radius: var(--radius); padding: 2em 1.5em; text-align: center; text-decoration: none; color: var(--dark); box-shadow: var(--shadow-sm); transition: var(--transition); display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 4px solid transparent;
+            background: var(--white);
+            border: none; border-radius: var(--radius); padding: 2em 1.5em; text-align: center; text-decoration: none;
+            color: var(--dark); box-shadow: var(--shadow-sm); transition: var(--transition);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-bottom: 4px solid transparent;
         }
         .action-btn:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); color: var(--primary); border-bottom-color: var(--primary); }
         .action-icon { font-size: 2.5em; margin-bottom: 15px; color: var(--accent); transition: var(--transition); }
@@ -102,12 +133,19 @@
         .action-label { font-weight: 700; font-size: 1.1em; }
         .action-desc { font-size: 0.85em; color: var(--gray); margin-top: 5px; }
 
-        /* --- Renewal Banner --- */
-        .renewal-banner { background: #fff3cd; border-left: 5px solid var(--warning); padding: 1.5em; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2em; box-shadow: var(--shadow-md); }
+        /* Renewal notification banner styles */
+        .renewal-banner {
+            background: #fff3cd; border-left: 5px solid var(--warning); padding: 1.5em; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 2em; box-shadow: var(--shadow-md);
+        }
         .renewal-banner.expired { background: #f8d7da; border-left-color: var(--danger); }
         .renewal-text { color: #856404; font-weight: 700; font-size: 1.1em; }
         .renewal-banner.expired .renewal-text { color: #721c24; }
-        .banner-btn { background: var(--warning); color: var(--dark); text-decoration: none; padding: 10px 25px; border-radius: 30px; font-weight: 700; transition: var(--transition); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .banner-btn {
+            background: var(--warning); color: var(--dark); text-decoration: none; padding: 10px 25px;
+            border-radius: 30px; font-weight: 700; transition: var(--transition); box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
         .banner-btn:hover { background: #e0a800; transform: translateY(-2px); }
         .renewal-banner.expired .banner-btn { background: var(--danger); color: white; }
         .renewal-banner.expired .banner-btn:hover { background: #c82333; }
@@ -117,13 +155,15 @@
     <%- include('partials/member-header') %>
 
     <div class="dashboard-container">
-        
+
+        <% /* Check if we need to show the renewal warning banner */ %>
         <% if (showRenewalBanner) { %>
-            <% 
+            <%
                 let bannerClass = 'expiring';
                 let bannerText = `Your membership expires on ${new Date(member.endDate).toLocaleDateString()}!`;
                 let btnText = "Renew Now";
                 let btnLink = "/member/renew";
+
                 if (member.status === 'Expired') {
                     bannerClass = 'expired';
                     bannerText = 'Your membership has expired! Renew today to restore access.';
@@ -149,8 +189,8 @@
 
         <div class="dashboard-grid">
             <div class="left-col">
-                <% 
-                    // Generate class slug based on Type Name (Gold -> tier-gold)
+                <%
+                    /* Determine css class based on the tier name (e.g., Gold, Platinum) */
                     const tierSlug = member.typeName ? 'tier-' + member.typeName.split(' ')[0].toLowerCase() : 'tier-default';
                 %>
                 <div class="member-card <%= tierSlug %>">
@@ -160,7 +200,7 @@
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= member.id %>" alt="Scan Pass">
                         </div>
                     </div>
-                    
+
                     <div class="card-body">
                         <div class="card-label">Membership Type</div>
                         <div class="card-value"><%= member.typeName %> Pass</div>
@@ -191,7 +231,8 @@
                         <span class="stat-lbl">Last Visit</span>
                     </div>
                     <div class="stat-box">
-                        <% 
+                        <%
+                            /* Calculate days remaining until expiration */
                             const daysLeft = Math.ceil((new Date(member.endDate) - new Date()) / (1000 * 60 * 60 * 24));
                             const daysDisplay = daysLeft > 0 ? daysLeft : 0;
                         %>
@@ -245,11 +286,6 @@
                     <i class="fa-solid fa-clock-rotate-left action-icon"></i>
                     <span class="action-label">Visit History</span>
                     <span class="action-desc">View past trips & receipts</span>
-                </a>
-                <a href="/member/promotions" class="action-btn">
-                    <i class="fa-solid fa-tags action-icon"></i>
-                    <span class="action-label">My Offers</span>
-                    <span class="action-desc">Exclusive member deals</span>
                 </a>
                 <a href="/map" class="action-btn">
                     <i class="fa-solid fa-map-location-dot action-icon"></i>

@@ -3,72 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <title>Visit History</title>
-    
-    <%# --- CONDITIONAL STYLES --- %>
+
     <% if (user) { %>
-        <%# --- EMPLOYEE VIEW (Standard Admin Theme) --- %>
         <style>
-            /* Standardized Admin Styles */
-            body { 
+            body {
                 font-family: 'Poppins', sans-serif;
-                margin: 0; 
-                background-color: #f4f4f9; 
-                color: #333; 
+                margin: 0;
+                background-color: #f4f4f9;
+                color: #333;
             }
-
-            .container { 
-                max-width: 1200px; 
-                margin: 2em auto; 
-                background: white; 
-                padding: 2.5em; 
-                border-radius: 12px; 
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            .container {
+                max-width: 1200px;
+                margin: 2em auto;
+                background: white;
+                padding: 2.5em;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             }
-
-            h1 { 
+            h1 {
                 color: #2c3e50;
-                border-bottom: 2px solid #f0f0f0; 
-                padding-bottom: 0.5em; 
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 0.5em;
                 margin-bottom: 1.5em;
                 font-size: 2.2em;
                 font-weight: 700;
             }
-            h1 small { font-size: 0.6em; color: #777; font-weight: normal; margin-left: 10px; }
-
-            /* Standard Table */
-            table { 
+            h1 small {
+                font-size: 0.6em;
+                color: #777;
+                font-weight: normal;
+                margin-left: 10px;
+            }
+            table {
                 width: 100%;
-                border-collapse: separate; 
+                border-collapse: separate;
                 border-spacing: 0;
                 font-size: 0.95em;
                 background: white;
-                border-radius: 12px; 
+                border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
                 margin-top: 1em;
             }
-            th { 
-                background-color: #007bff; /* Admin Blue */
-                color: white; 
+            th {
+                background-color: #007bff;
+                color: white;
                 padding: 15px;
-                text-align: left; 
+                text-align: left;
                 font-weight: 600;
                 border: none;
                 text-transform: uppercase;
                 font-size: 0.85em;
                 letter-spacing: 0.5px;
             }
-            td { 
+            td {
                 padding: 15px;
                 border-bottom: 1px solid #f1f1f1;
                 vertical-align: middle;
                 color: #555;
             }
-            tr:last-child td { border-bottom: none; }
-            tr:nth-child(even) { background-color: #f8f9fa; }
-            tr:hover { background-color: #f1f5f9; }
-
-            /* Action Button (View Receipt) */
+            tr:last-child td {
+                border-bottom: none;
+            }
+            tr:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+            tr:hover {
+                background-color: #f1f5f9;
+            }
             .btn-action {
                 display: inline-block;
                 padding: 6px 12px;
@@ -81,9 +83,10 @@
                 background-color: white;
                 transition: all 0.2s;
             }
-            .btn-action:hover { background-color: #007bff; color: white; }
-
-            /* Back Link */
+            .btn-action:hover {
+                background-color: #007bff;
+                color: white;
+            }
             .back-link {
                 display: inline-block;
                 margin-bottom: 1.5em;
@@ -95,17 +98,19 @@
                 border-radius: 8px;
                 transition: background-color 0.2s;
             }
-            .back-link:hover { background-color: #dee2e6; color: #0056b3; }
-            
-            /* Helper for the card wrapper in member view, essentially invisible here */
-            .table-card { display: block; }
+            .back-link:hover {
+                background-color: #dee2e6;
+                color: #0056b3;
+            }
+            .table-card {
+                display: block;
+            }
         </style>
     <% } else { %>
-        <%# --- MEMBER VIEW (Magical Customer Theme) --- %>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-        
+
         <style>
             :root {
                 --primary: #6f42c1;
@@ -118,17 +123,35 @@
                 --radius: 12px;
                 --transition: all 0.3s ease;
             }
-            
-            body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--light); color: var(--dark); }
-            .container { max-width: 1000px; margin: 3em auto; padding: 0 2em; }
-            
-            h1 { 
-                font-family: 'Lobster', cursive; color: var(--dark); font-size: 3em;
-                border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em;
-            }
-            h1 small { font-family: 'Poppins', sans-serif; color: var(--gray); font-size: 0.5em; font-weight: 400; display: block; margin-top: 5px; }
 
-            /* Magical Table Card */
+            body {
+                font-family: 'Poppins', sans-serif;
+                margin: 0;
+                background-color: var(--light);
+                color: var(--dark);
+            }
+            .container {
+                max-width: 1000px;
+                margin: 3em auto;
+                padding: 0 2em;
+            }
+
+            h1 {
+                font-family: 'Lobster', cursive;
+                color: var(--dark);
+                font-size: 3em;
+                border-bottom: 2px solid #eee;
+                padding-bottom: 0.5em;
+                margin-bottom: 1em;
+            }
+            h1 small {
+                font-family: 'Poppins', sans-serif;
+                color: var(--gray);
+                font-size: 0.5em;
+                font-weight: 400;
+                display: block;
+                margin-top: 5px;
+            }
             .table-card {
                 background: var(--white);
                 border-radius: var(--radius);
@@ -136,35 +159,68 @@
                 overflow: hidden;
                 border-top: 5px solid var(--accent);
             }
-            
-            table { width: 100%; border-collapse: collapse; }
-            th { 
-                background-color: var(--dark); color: var(--white); 
-                padding: 1.2em; text-align: left; font-weight: 600; 
-                text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px;
-            }
-            td { padding: 1.2em; border-bottom: 1px solid #f0f0f0; color: #555; }
-            tr:hover { background-color: #f9f9f9; }
 
-            /* Member Buttons */
-            .btn-back { 
-                display: inline-block; margin-bottom: 2em; 
-                text-decoration: none; color: var(--gray); font-weight: 600; 
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                background-color: var(--dark);
+                color: var(--white);
+                padding: 1.2em;
+                text-align: left;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.85em;
+                letter-spacing: 1px;
+            }
+            td {
+                padding: 1.2em;
+                border-bottom: 1px solid #f0f0f0;
+                color: #555;
+            }
+            tr:hover {
+                background-color: #f9f9f9;
+            }
+            .btn-back {
+                display: inline-block;
+                margin-bottom: 2em;
+                text-decoration: none;
+                color: var(--gray);
+                font-weight: 600;
                 transition: var(--transition);
             }
-            .btn-back:hover { color: var(--accent); transform: translateX(-5px); }
+            .btn-back:hover {
+                color: var(--accent);
+                transform: translateX(-5px);
+            }
 
             .btn-action {
-                display: inline-block; padding: 6px 15px;
-                background-color: var(--accent); color: var(--white);
-                border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.85em;
+                display: inline-block;
+                padding: 6px 15px;
+                background-color: var(--accent);
+                color: var(--white);
+                border-radius: 20px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.85em;
                 transition: var(--transition);
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 border: none;
             }
-            .btn-action:hover { background-color: #138496; transform: translateY(-2px); }
-            
-            .badge-group { background: #e2e6ea; color: var(--dark); padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; }
+            .btn-action:hover {
+                background-color: #138496;
+                transform: translateY(-2px);
+            }
+
+            .badge-group {
+                background: #e2e6ea;
+                color: var(--dark);
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 0.8em;
+                font-weight: 700;
+            }
         </style>
     <% } %>
 </head>
@@ -179,7 +235,7 @@
         <h1>Visit History
             <% if (user) { %> <small>(Member: <%= member.first_name %> <%= member.last_name %>)</small> <% } %>
         </h1>
-        
+
         <% if (user) { %>
             <a href="/members<%= typeof currentQueryString !== 'undefined' && currentQueryString ? '?' + currentQueryString : '' %>" class="back-link">&laquo; Back to Members List</a>
         <% } else { %>
