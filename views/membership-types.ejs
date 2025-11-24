@@ -257,8 +257,8 @@
             <tbody>
                 <% types.forEach(type => { %>
                     <tr>
-                        <td><strong><%= type.public_type_id.substring(0, 8).toUpperCase() %></strong></td>
-                        <td><%= type.type_name %></td>
+                        <td><%= type.public_type_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= type.type_name %></strong></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
                         <td><%= type.base_members %></td>
                         <td>

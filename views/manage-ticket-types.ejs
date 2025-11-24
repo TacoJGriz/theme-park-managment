@@ -235,8 +235,8 @@
             <tbody>
                 <% types.forEach(type => { %>
                     <tr>
-                        <td><strong><%= type.public_ticket_type_id.substring(0, 8).toUpperCase() %></strong></td>
-                        <td><%= type.type_name %></td>
+                        <td><%= type.public_ticket_type_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= type.type_name %></strong></td>
                         <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
                         <td>
                            <% if (type.is_member_type) { %>

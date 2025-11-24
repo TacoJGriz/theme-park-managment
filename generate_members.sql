@@ -58,9 +58,10 @@ BEGIN
         SET random_start_date = DATE_ADD(CONCAT(start_year, '-01-01'), INTERVAL FLOOR(365 * RAND()) DAY);
         SET random_end_date = DATE_SUB(DATE_ADD(random_start_date, INTERVAL 1 YEAR), INTERVAL 1 DAY);
 
-        -- pick valid type directly (robust against gaps in IDs)
+        -- pick random membership
         SELECT type_id, guest_pass_limit INTO random_type_id, v_guest_passes 
         FROM membership_type 
+        WHERE is_active = TRUE
         ORDER BY RAND() 
         LIMIT 1;
 
@@ -95,6 +96,4 @@ DELETE FROM membership_purchase_history;
 DELETE FROM member_auth;
 DELETE FROM membership;
 ALTER TABLE membership AUTO_INCREMENT = 1;
-
-CALL GenerateMembers(4512, 2024);
 SET SQL_SAFE_UPDATES = 1;

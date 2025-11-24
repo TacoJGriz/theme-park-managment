@@ -198,5 +198,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
-CALL GenerateHistoricalData(2025, 2025, 20);
