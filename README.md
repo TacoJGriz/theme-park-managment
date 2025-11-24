@@ -20,7 +20,7 @@ The submission includes the following files and directories:
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### 1. Connect to Database
 To view park data and verify changes, connect via **MySQL Workbench**:
