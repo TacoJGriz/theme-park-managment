@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Ticket Type</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        div.form-group { margin-bottom: 1.5em; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .btn-toggle {
+            margin-top: 1em;
+            width: 100%;
+        }
+        .btn-active { background-color: #dc3545; }
+        .btn-active:hover { background-color: #c82333; }
+        .btn-inactive { background-color: #28a745; }
+        .btn-inactive:hover { background-color: #218838; }
+        .delete-btn {
+            background-color: #6c757d;
+            margin-top: 10px;
+        }
+        .delete-btn:hover { background-color: #5a6268; }
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .cancel-link:hover { color: #343a40; text-decoration: underline; }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideIn 0.2s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+        .modal-content h3 { margin-top: 0; color: #dc3545; font-size: 1.5em; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .modal-content p { color: #555; margin: 1.5em 0; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 1em; justify-content: center; margin-top: 2em; }
+        .btn-modal-cancel { padding: 10px 20px; background: #e9ecef; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057; }
+        .btn-modal-confirm { padding: 10px 20px; background: #dc3545; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <div class="container">
+        <h1>Edit: <%= type.type_name %></h1>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+        
+        <form action="/ticket-types/edit/<%= type.public_ticket_type_id %>" method="POST">
+            <div class="form-group">
+                <label for="type_name">Ticket Name:</label>
+                <input type="text" id="type_name" name="type_name" value="<%= type.type_name %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="base_price">Base Price ($):</label>
+                <input type="number" id="base_price" name="base_price" step="0.01" min="0" value="<%= type.base_price %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description"><%= type.description %></textarea>
+            </div>
+            
+            <% if (!type.is_member_type) { %>
+                <button type="submit">Save Changes</button>
+            <% } else { %>
+                 <div style="background: #e9ecef; padding: 10px; border-radius: 8px; color: #666; font-style: italic; text-align: center;">
+                    System Member Ticket types cannot be modified.
+                </div>
+            <% } %>
+        </form>
+        
+        <% if (!type.is_member_type) { %>
+            <form action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST">
+                <% if (type.is_active) { %>
+                    <button type="submit" class="btn-toggle btn-active">Deactivate Ticket Type</button>
+                <% } else { %>
+                    <button type="submit" class="btn-toggle btn-inactive">Activate Ticket Type</button>
+                <% } %>
+            </form>
+            
+            <button type="button" class="delete-btn" onclick="openModal()">Delete Ticket Type</button>
+        <% } %>
+
+        <a href="/ticket-types" class="cancel-link">Cancel</a>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Ticket?</h3>
+            <p>Are you sure you want to delete <strong><%= type.type_name %></strong>?<br>
+            This will permanently remove all historical sales and visit logs associated with this ticket.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <form action="/ticket-types/delete/<%= type.public_ticket_type_id %>" method="POST">
+                    <button type="submit" class="btn-modal-confirm">Yes, Delete It</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('deleteModal');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

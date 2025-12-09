@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pending Approvals</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        h2 {
+            font-size: 1.4em;
+            color: #007bff;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-weight: 600;
+            border-left: 5px solid #007bff;
+            padding-left: 10px;
+        }
+        .no-pending {
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            margin-top: 1.5em;
+            background-color: #f8f9fa;
+            padding: 2em;
+            border-radius: 8px;
+            border: 1px dashed #dee2e6;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1em;
+            font-size: 0.9em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+        .btn-action {
+            display: block;
+            width: 100%;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .actions-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 100px;
+        }
+        .btn-approve {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-approve:hover {
+            background-color: #28a745;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+        .btn-reject {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-reject:hover {
+            background-color: #dc3545;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+        }
+        .id-badge {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        .id-badge.system {
+            background-color: #343a40;
+            color: #fff;
+            border-color: #343a40;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Pending Approvals</h1>
+
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+            <h2>Maintenance Reassignments</h2>
+            
+            <% if (reassignments.length > 0) { %>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ride ID</th>
+                                <th>Ride</th>
+                                <th>Currently Assigned</th>
+                                <th>Assignee ID</th>
+                                <th>Requested Assignee</th>
+                                <th>Requester ID</th>
+                                <th>Requested By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% reassignments.forEach(req => { %>
+                                <tr>
+                                    <td><span class="id-badge"><%= req.public_ride_id.substring(0, 8).toUpperCase() %></span></td>
+                                    <td><strong><%= req.ride_name %></strong></td>
+                                    <td><%= req.current_employee_name || 'Unassigned' %></td>
+                                    <td><span class="id-badge"><%= req.assignee_public_id.substring(0, 8).toUpperCase() %></span></td>
+                                    <td><%= req.pending_employee_name %></td>
+                                    <td><span class="id-badge"><%= req.requester_public_id.substring(0, 8).toUpperCase() %></span></td>
+                                    <td><%= req.requester_name %></td>
+                                    <td>
+                                        <div class="actions-cell">
+                                            <form action="/approve/reassignment/<%= req.public_maintenance_id %>" method="POST" style="margin:0;">
+                                                <button type="submit" class="btn-action btn-approve">Approve</button>
+                                            </form>
+                                            <form action="/reject/reassignment/<%= req.public_maintenance_id %>" method="POST" style="margin:0;">
+                                                <button type="submit" class="btn-action btn-reject">Reject</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="no-pending">No pending maintenance reassignments.</p>
+            <% } %>
+        <% } %>
+
+    
+        <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+            <h2>Inventory Restock Requests</h2>
+            <% if (inventoryRequests.length > 0) { %>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vendor ID</th>
+                                <th>Vendor</th>
+                                <th>Item ID</th>
+                                <th>Item</th>
+                                <th>Current</th>
+                                <th>Requested</th>
+                                <th>Requester ID</th>
+                                <th>Requested By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% inventoryRequests.forEach(req => { %>
+                                <tr>
+                                    <td><span class="id-badge"><%= req.public_vendor_id.substring(0, 8).toUpperCase() %></span></td>
+                                    <td><strong><%= req.vendor_name %></strong></td>
+                                    <td><span class="id-badge"><%= req.public_item_id.substring(0, 8).toUpperCase() %></span></td>
+                                    <td><%= req.item_name %></td>
+                                    <td><%= req.current_count %></td>
+                                    <td style="color: #007bff; font-weight: bold;">+<%= req.requested_count %></td>
+                                    
+                                    <td>
+                                        <% if (req.requester_public_id) { %>
+                                            <span class="id-badge"><%= req.requester_public_id.substring(0, 8).toUpperCase() %></span>
+                                        <% } else { %>
+                                            <span class="id-badge system">SYSTEM</span>
+                                        <% } %>
+                                    </td>
+                                    
+                                    <td><%= req.requester_name %></td>
+                                    <td>
+                                        <div class="actions-cell">
+                                            <form action="/approve/inventory/<%= req.public_request_id %>" method="POST" style="margin:0;">
+                                                <button type="submit" class="btn-action btn-approve">Approve</button>
+                                            </form>
+                                            <form action="/reject/inventory/<%= req.public_request_id %>" method="POST" style="margin:0;">
+                                                <button type="submit" class="btn-action btn-reject">Reject</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="no-pending">No pending inventory restock requests.</p>
+            <% } %>
+        <% } %>
+
+    </div>
+</body>
+</html>

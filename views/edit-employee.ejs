@@ -4,94 +4,236 @@
     <meta charset="UTF-8">
     <title>Edit Employee</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-section { margin-bottom: 1.5em; }
-        .form-section h3 { border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em; color: #0056b3; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"], input[type="tel"],
-        input[type="date"], input[type="password"], input[type="number"], select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-        /* Make disabled fields visually clear */
+        .container {
+            max-width: 900px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        h1 small {
+            display: block;
+            font-size: 0.6em;
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        h2 {
+            font-size: 1.1em;
+            color: #007bff;
+            margin-top: 1.5em;
+            margin-bottom: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+        .full-width { grid-column: 1 / -1; }
+        div.form-group { margin-bottom: 0; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
         input:disabled, select:disabled {
             background-color: #e9ecef;
             cursor: not-allowed;
             color: #6c757d;
         }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
-        
-        /* --- NEW CSS CLASS --- */
         .info-note {
-            color: #004085;
-            background-color: #cce5ff;
-            border: 1px solid #b8daff;
-            padding: 1em;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 1.2em;
+            border-radius: 8px;
+            color: #856404;
+            margin-bottom: 1.5em;
+            font-size: 0.95em;
         }
-
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none;
-                 cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #0056b3;
- }
-        .full-width { grid-column: 1 / -1;
- }
+        .info-box-blue {
+            background-color: #cce5ff;
+            border-left: 5px solid #007bff;
+            padding: 1em;
+            border-radius: 8px;
+            color: #004085;
+            font-size: 0.9em;
+            margin-top: 0.5em;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 2em;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            margin-top: 1.5em;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
         .cancel-link {
-            display: inline-block;
-            margin-left: 15px;
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
             text-decoration: none;
             color: #6c757d;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
         }
         .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideIn 0.2s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+        .modal-content h3 {
+            color: #dc3545;
+            margin-top: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .modal-content p {
+            color: #555;
+            margin: 1.5em 0;
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            margin-top: 2em;
+        }
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0;
+        }
+        .btn-modal-cancel:hover {
+            background-color: #5a6268;
+        }
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            width: auto;
+            padding: 10px 20px;
+            margin-top: 0;
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
-<body>
     <%- include('partials/header') %>
-    <h1>Edit Employee: <%= employee.first_name %> <%= employee.last_name %></h1>
+    
+    <div class="container">
+        <h1>
+            Edit Employee
+            <small><%= employee.first_name %> <%= employee.last_name %></small>
+        </h1>
 
-    <% if (typeof error !== 'undefined' && error) { %>
-        <p class="error"><%= error %></p>
-    <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
 
-    <%# --- NEW EJS LOGIC --- %>
-    <%# Create a variable to check if fields should be disabled %>
-    <% const isReadOnlyForHR = (user.role === 'HR') ? 'disabled' : '' %>
-
-    <%# Show a helpful note to the HR user %>
-    <% if (user.role === 'HR') { %>
-        <div class="info-note">
-            <strong>Note:</strong> As an HR user, you can only edit personal and address information.
-            Sensitive fields (Job, Pay, Status) are read-only. Please contact an Admin to change them.
-        </div>
-    <% } %>
-
-
-    <form action="/employees/edit/<%= employee.employee_id %>" method="POST">
-        
-        <div class="form-section">
-            <h3>Personal Information</h3>
+        <form id="employeeForm" action="/users/edit/<%= employee.public_employee_id %>" method="POST">
+            <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+            
+            <h2>Personal Information</h2>
             <div class="form-grid">
-                <div>
+                <div class="form-group">
                     <label for="first_name">First Name:</label>
                     <input type="text" id="first_name" name="first_name" value="<%= employee.first_name %>" required>
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="last_name">Last Name:</label>
                     <input type="text" id="last_name" name="last_name" value="<%= employee.last_name %>" required>
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="gender">Gender:</label>
                     <select id="gender" name="gender" required>
                         <option value="Male" <% if (employee.gender === 'Male') { %>selected<% } %>>Male</option>
@@ -99,74 +241,72 @@
                         <option value="Other" <% if (employee.gender === 'Other') { %>selected<% } %>>Other</option>
                     </select>
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="birth_date">Birth Date:</label>
                     <input type="date" id="birth_date" name="birth_date" value="<%= employee.birth_date.toISOString().substring(0, 10) %>" required>
                 </div>
-                <div class="full-width">
+                <div class="form-group full-width">
                     <label for="phone_number">Phone Number:</label>
                     <input type="tel" id="phone_number" name="phone_number" value="<%= employee.phone_number %>">
                 </div>
             </div>
-        </div>
 
-        <div class="form-section">
-            <h3>Address</h3>
+            <h2>Address</h2>
             <div class="form-grid">
-                <div class="full-width">
+                <div class="form-group full-width">
                     <label for="street_address">Street Address:</label>
                     <input type="text" id="street_address" name="street_address" value="<%= employee.street_address %>">
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="city">City:</label>
                     <input type="text" id="city" name="city" value="<%= employee.city %>">
                 </div>
-                <div>
-                    <label for="state">State (2-letter):</label>
-                    <input type="text" id="state" name="state" maxlength="2" value="<%= employee.state %>">
-                </div>
-                <div>
-                    <label for="zip_code">Zip Code:</label>
-                    <input type="text" id="zip_code" name="zip_code" value="<%= employee.zip_code %>">
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em;">
+                    <div>
+                        <label for="state">State:</label>
+                        <input type="text" id="state" name="state" maxlength="2" value="<%= employee.state %>">
+                    </div>
+                    <div>
+                        <label for="zip_code">Zip:</label>
+                        <input type="text" id="zip_code" name="zip_code" value="<%= employee.zip_code %>">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="form-section">
-            <h3>Job Details</h3>
-             <div class="form-grid">
-                <div>
+            <h2>Job Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
                     <label for="hire_date">Hire Date:</label>
-                    <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required <%= isReadOnlyForHR %>>
+                    <input type="date" id="hire_date" name="hire_date" value="<%= employee.hire_date.toISOString().substring(0, 10) %>" required>
                 </div>
-                <div>
+                 <div class="form-group">
                     <label for="termination_date">Termination Date:</label>
-                    <input type="date" id="termination_date" name="termination_date" value="<%= employee.termination_date ? employee.termination_date.toISOString().substring(0, 10) : '' %>" <%= isReadOnlyForHR %>>
+                    <input type="date" id="termination_date" name="termination_date" value="<%= employee.termination_date ? employee.termination_date.toISOString().substring(0, 10) : '' %>">
                 </div>
-                <div>
-                    <label for="hourly_rate">Hourly Rate:</label>
-                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>" <%= isReadOnlyForHR %>>
+                <div class="form-group">
+                    <label for="hourly_rate">Hourly Rate ($):</label>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" min="0" value="<%= employee.hourly_rate %>">
                 </div>
-                 <div>
-                    <label for="is_active">Status:</label>
-                     <select id="is_active" name="is_active" <%= isReadOnlyForHR %>>
+                 <div class="form-group">
+                    <label for="is_active">Account Status:</label>
+                      <select id="is_active" name="is_active">
                         <option value="1" <% if (employee.is_active) { %>selected<% } %>>Active</option>
-                        <option value="0" <% if (!employee.is_active) { %>selected<% } %>>Inactive</option>
+                        <option value="0" <% if (!employee.is_active) { %>selected<% } %>>Inactive (Disabled)</option>
                     </select>
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="employee_type">Role:</label>
-                    <select id="employee_type" name="employee_type" required <%= isReadOnlyForHR %>>
+                    <select id="employee_type" name="employee_type" required>
                         <option value="Staff" <% if (employee.employee_type === 'Staff') { %>selected<% } %>>Staff</option>
                         <option value="Maintenance" <% if (employee.employee_type === 'Maintenance') { %>selected<% } %>>Maintenance</option>
-                        <option value="Manager" <% if (employee.employee_type === 'Manager') { %>selected<% } %>>Manager</option>
-                        <option value="HR" <% if (employee.employee_type === 'HR') { %>selected<% } %>>HR</option>
+                        <option value="Location Manager" <% if (employee.employee_type === 'Location Manager') { %>selected<% } %>>Location Manager</option>
+                        <option value="Park Manager" <% if (employee.employee_type === 'Park Manager') { %>selected<% } %>>Park Manager</option>
                         <option value="Admin" <% if (employee.employee_type === 'Admin') { %>selected<% } %>>Admin</option>
                     </select>
                 </div>
-                <div>
-                    <label for="location_id">Location:</label>
-                    <select id="location_id" name="location_id" required <%= isReadOnlyForHR %>>
+                 <div class="form-group">
+                    <label for="location_id">Assigned Location:</label>
+                    <select id="location_id" name="location_id" required>
                         <% locations.forEach(location => { %>
                             <option value="<%= location.location_id %>" <% if (employee.location_id === location.location_id) { %>selected<% } %>>
                                 <%= location.location_name %>
@@ -174,34 +314,73 @@
                         <% }); %>
                     </select>
                 </div>
-                <div class="full-width">
-                    <label for="supervisor_id">Supervisor:</label>
-                    <select id="supervisor_id" name="supervisor_id" <%= isReadOnlyForHR %>>
+                <div class="form-group full-width">
+                    <label for="supervisor_id">Reports To (Supervisor):</label>
+                      <select id="supervisor_id" name="supervisor_id">
                         <option value="">-- None --</option>
                         <% supervisors.forEach(supervisor => { %>
                             <option value="<%= supervisor.employee_id %>" <% if (employee.supervisor_id === supervisor.employee_id) { %>selected<% } %>>
-                                <%= supervisor.first_name %> <%= supervisor.last_name %>
+                                <%= supervisor.first_name %> <%= supervisor.last_name %> (<%= supervisor.employee_type %>)
                             </option>
                         <% }); %>
                     </select>
                 </div>
             </div>
-        </div>
 
-        <div class="form-section">
-            <h3>Login Details</h3>
+            <h2>Login Details</h2>
             <div class="form-grid">
-                <div class="full-width">
-                     <label for="email">Email (Username):</label>
+                <div class="form-group full-width">
+                    <label for="email">Email (Username):</label>
                     <input type="email" id="email" name="email" value="<%= employee.email %>" required>
+                    <div class="info-box-blue">
+                        <i class="fa-solid fa-lock"></i> Password cannot be changed from this form. Use the "Reset Password" button on the main list.
+                    </div>
                 </div>
             </div>
-             <p><i>Note: Password cannot be changed from this form.</i></p>
+            
+            <button type="submit">Update Employee</button>
+            
+            <a href="/users<%= (typeof returnQuery !== 'undefined' && returnQuery) ? '?' + returnQuery : '' %>" class="cancel-link">Cancel</a>
+            
+            <button type="button" class="btn-delete" onclick="openModal()">Delete Employee</button>
+        </form>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Remove Employee?</h3>
+            <p>Are you sure you want to delete <strong><%= employee.first_name %> <%= employee.last_name %></strong>?<br>
+            This action cannot be undone.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete</button>
+            </div>
         </div>
-        
-        <br>
-        <button type="submit">Update Employee</button>
-        <a href="/users" class="cancel-link">Cancel</a>
-    </form>
+    </div>
+
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('employeeForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            form.action = "/users/delete/<%= employee.public_employee_id %>";
+            form.submit();
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

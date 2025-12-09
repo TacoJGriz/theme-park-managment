@@ -1,0 +1,396 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Portal Style Guide</title>
+    
+    <%# --- Import Poppins Font Only (Professional yet Friendly) --- %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. CORE RESET & TYPOGRAPHY --- */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #e9ecef; 
+            color: #333; 
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        /* --- 2. LAYOUT CONTAINERS --- */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; /* Softer corners */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Softer shadow */
+        }
+
+        /* --- 3. HEADINGS --- */
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        h2 {
+            color: #444;
+            font-size: 1.6em;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            border-left: 5px solid #007bff;
+            padding-left: 15px;
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.25em;
+            color: #666;
+            margin-bottom: 0.75em;
+            font-weight: 600;
+        }
+
+        /* --- 4. COLOR PALETTE (Utility Classes) --- */
+        .text-primary { color: #007bff; }
+        .text-success { color: #28a745; }
+        .text-danger  { color: #dc3545; }
+        .text-warning { color: #ffc107; }
+        .text-info    { color: #17a2b8; }
+        .text-muted   { color: #6c757d; }
+
+        /* --- 5. STATS BAR --- */
+        .stats-bar { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            margin-bottom: 2.5em; 
+        }
+        .stat-card { 
+            background-color: #ffffff; 
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 2.2em; 
+            color: #007bff; 
+            font-weight: 700;
+        }
+        .stat-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- 6. FILTER BARS --- */
+        .filter-bar { 
+            background-color: #ffffff; 
+            border: 1px solid #e9ecef; 
+            padding: 1.5em; 
+            border-radius: 12px; 
+            margin-bottom: 2em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .filter-controls { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.2em; 
+            align-items: flex-end; 
+        }
+        
+        /* --- 7. FORMS & INPUTS --- */
+        label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 8px; /* Softer inputs */
+            box-sizing: border-box; 
+            font-size: 0.95em;
+            font-family: 'Poppins', sans-serif; /* Ensure inputs use Poppins */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* --- 8. BUTTONS --- */
+        .btn { 
+            display: inline-block;
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 8px; /* Softer buttons */
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: 600; 
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        
+        .btn-outline {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+        .btn-outline:hover { background-color: #f8f9fa; color: #007bff; border-color: #007bff; }
+
+        /* --- 9. TABLES (Rounded & Modern) --- */
+        table { 
+            width: 100%; 
+            border-collapse: separate; /* Required for border-radius on table */
+            border-spacing: 0; 
+            margin-bottom: 1.5em; 
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; /* Nice rounded corners */
+            overflow: hidden;    /* Clips the header corners */
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff; 
+            color: white; 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td {
+            border-bottom: none; /* Remove bottom border on last row */
+        }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* --- 10. ALERTS --- */
+        .alert { 
+            padding: 1em 1.2em; 
+            border-radius: 8px; 
+            margin-bottom: 1.5em; 
+            font-weight: 600; 
+            display: flex;
+            align-items: center;
+        }
+        .alert-success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .alert-error   { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+        .alert-info    { color: #055160; background-color: #cff4fc; border: 1px solid #b6effb; }
+
+        /* --- 11. BADGES --- */
+        .badge {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 50rem;
+            text-transform: uppercase;
+        }
+        .badge-success { color: #fff; background-color: #28a745; }
+        .badge-danger { color: #fff; background-color: #dc3545; }
+        .badge-warning { color: #212529; background-color: #ffc107; }
+        .badge-secondary { color: #fff; background-color: #6c757d; }
+
+        .guide-section {
+            margin-bottom: 4em;
+            padding-bottom: 2em;
+            border-bottom: 1px dashed #ddd;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <div class="container">
+        <h1>Employee Portal Style Guide</h1>
+        <p class="text-muted">A comprehensive guide for standardizing the look and feel of all employee-facing management pages. Uses <strong>Poppins</strong> for a clean, modern, and friendly professional look.</p>
+
+        <div class="guide-section">
+            <h2>1. Color Palette</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 1em;">
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #007bff; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Primary</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #28a745; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Success</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #dc3545; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Danger</strong>
+                </div>
+                <div class="stat-card" style="padding: 1em; width: 120px; border:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="height: 50px; background: #ffc107; margin-bottom: 10px; border-radius: 6px;"></div>
+                    <strong>Warning</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>2. Buttons</h2>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                <button class="btn btn-primary">Primary Action</button>
+                <button class="btn btn-success">Confirm / Save</button>
+                <button class="btn btn-danger">Delete</button>
+                <button class="btn btn-secondary">Cancel</button>
+            </div>
+            <h3>Table Actions</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                <a href="#" class="btn btn-sm btn-outline" style="color: #28a745; border-color: #28a745;">View</a>
+                <a href="#" class="btn btn-sm btn-danger">Remove</a>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>3. Dashboards & Filters</h2>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <h3>1,240</h3>
+                    <p>Total Employees</p>
+                </div>
+                <div class="stat-card">
+                    <h3 class="text-success">98%</h3>
+                    <p>Active Status</p>
+                </div>
+                <div class="stat-card">
+                    <h3 class="text-danger">3</h3>
+                    <p>Pending Approval</p>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-controls">
+                    <div>
+                        <label>Search Records</label>
+                        <input type="text" placeholder="Name, ID, or Email...">
+                    </div>
+                    <div>
+                        <label>Filter by Role</label>
+                        <select>
+                            <option>All Roles</option>
+                            <option>Admin</option>
+                            <option>Staff</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>4. Modern Data Tables</h2>
+            <p>Rounded corners, soft borders, and clean spacing.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>EMP-001</strong></td>
+                        <td>Walt Disney</td>
+                        <td>Admin</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>EMP-002</strong></td>
+                        <td>Minnie Mouse</td>
+                        <td>Park Manager</td>
+                        <td><span class="badge badge-warning">On Leave</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>EMP-003</strong></td>
+                        <td>Donald Duck</td>
+                        <td>Maintenance</td>
+                        <td><span class="badge badge-danger">Terminated</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="guide-section" style="border-bottom: none;">
+            <h2>5. Feedback Messages</h2>
+            <div class="alert alert-success">✔ Operation completed successfully.</div>
+            <div class="alert alert-info">ℹ System maintenance scheduled for 2:00 AM.</div>
+            <div class="alert alert-error">⚠ Error: Could not save changes to the database.</div>
+        </div>
+
+    </div>
+</body>
+</html>

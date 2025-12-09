@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Requests</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 600;
+            padding: 8px 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .back-link:hover {
+            background-color: #dee2e6;
+            color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-Pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .badge-Approved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .badge-Rejected { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .btn-edit {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9em;
+            background-color: white;
+            color: #fd7e14;
+            border: 1px solid #fd7e14;
+            transition: all 0.2s;
+        }
+        .btn-edit:hover {
+            background-color: #fd7e14;
+            color: white;
+        }
+        .text-muted { color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Inventory Requests</h1>
+        <a href="/inventory" class="back-link">&laquo; Back to Park Inventory</a>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Item</th>
+                    <th>Vendor</th>
+                    <th>Amount</th>
+                    <th>Requested By</th>
+                    <th style="min-width: 100px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (requests.length === 0) { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2em; color: #6c757d;">No inventory requests found.</td>
+                    </tr>
+                <% } %>
+                <% requests.forEach(req => { %>
+                    <tr>
+                        <td><%= new Date(req.request_date).toLocaleDateString() %></td>
+                        <td><span class="badge badge-<%= req.status %>"><%= req.status %></span></td>
+                        <td><strong><%= req.item_name %></strong></td>
+                        <td><%= req.vendor_name %></td>
+                        <td style="font-weight: bold; color: #555;"><%= req.requested_count %></td>
+                        <td><%= req.requester_name %></td>
+                        <td>
+                            <% 
+                                const isManager = (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager');
+                                const isRequester = (user.id === req.requested_by_id);
+                            %>
+                            
+                            <% if (req.status === 'Pending') { %>
+                                <% if (isManager || isRequester) { %>
+                                    <a href="/inventory/request/edit/<%= req.public_request_id %>" class="btn-edit">Edit</a>
+                                <% } else { %>
+                                    <span class="text-muted">Pending Review</span>
+                                <% } %>
+                            <% } else { %>
+                                <span class="text-muted">—</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

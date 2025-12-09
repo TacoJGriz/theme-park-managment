@@ -1,24 +1,177 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Park Attendance Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        form { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; }
-        /* UPDATED: Change to 4 columns for form elements */
-        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; align-items: end; }
-        .form-grid label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-grid input[type="date"], .form-grid select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        .full-width { grid-column: 1 / -1; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        .chart-container { margin-top: 2em; border: 1px solid #ddd; padding: 1em; background: #fff; border-radius: 4px; }
-        .info-box { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-weight: bold; }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .filter-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px;
+            margin-bottom: 2em;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5em;
+            align-items: end;
+        }
+        .form-grid label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .form-grid input[type="date"], .form-grid select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-grid input:focus, .form-grid select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .chart-container {
+            margin-top: 2em;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            background: #fff;
+            border-radius: 12px;
+            position: relative;
+            height: 50vh;
+            min-height: 300px;
+            max-height: 600px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 2em;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        table.data-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        table.data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        table.data-table tr:last-child td { border-bottom: none; }
+        table.data-table tr:nth-child(even) { background-color: #f8f9fa; }
+        .spike-row {
+            background-color: #fff5f5 !important;
+        }
+        .spike-row td:first-child {
+            border-left: 4px solid #dc3545;
+        }
+        .spike-text {
+            color: #dc3545;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+        .normal-text { color: #28a745; font-weight: 600; }
+        .summary-row {
+            background-color: #e9ecef !important;
+            font-weight: 700;
+            font-size: 1.05em;
+            color: #495057;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        .btn-action {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #007bff;
+            background-color: white;
+            color: #007bff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            background-color: #007bff;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,123,255,0.2);
+        }
     </style>
 </head>
 <body>
@@ -30,7 +183,7 @@
             <p class="error"><%= error %></p>
         <% } %>
 
-               <form action="/reports/attendance" method="POST">
+        <form action="/reports/attendance" method="POST" class="filter-box">
             <div class="form-grid">
                 <div>
                     <label for="selected_date">Select Date:</label>
@@ -45,39 +198,122 @@
                         <option value="year" <%= grouping === 'year' ? 'selected' : '' %>>Year (Shows Monthly)</option>
                     </select>
                 </div>
-                
-                <%# MODIFIED: Changed filter from Location to Membership Type %>
                 <div>
-                    <label for="membership_type">Filter by Membership:</label>
-                    <select id="membership_type" name="membership_type">
+                    <label for="membership_type_id">Filter by Membership:</label>
+                    <select id="membership_type_id" name="membership_type_id">
+                        <option value="all" <%= membership_type_id === 'all' ? 'selected' : '' %>>All Visitors</option>
+                        <option value="non-member" <%= membership_type_id === 'non-member' ? 'selected' : '' %>>Non-Members Only</option>
                         <% membership_types.forEach(type => { %>
-                            <option value="<%= type %>" <%= type === membership_type ? 'selected' : '' %>>
-                                <%= type %>
+                            <option value="<%= type.type_id %>" <%= String(type.type_id) === membership_type_id ? 'selected' : '' %>>
+                                <%= type.type_name %>
                             </option>
                         <% }); %>
                     </select>
                 </div>
 
-                <div style="grid-column: 4; align-self: end;">
+                <div>
+                    <label for="location_id">Filter by Entry Location:</label>
+                    <select id="location_id" name="location_id">
+                        <option value="all" <%= typeof location_id === 'undefined' || location_id === 'all' ? 'selected' : '' %>>All Locations</option>
+                        <% locations.forEach(loc => { %>
+                            <option value="<%= loc.location_id %>" <%= String(loc.location_id) === location_id ? 'selected' : '' %>>
+                                <%= loc.location_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="ticket_type_id">Filter by Day Ticket:</label>
+                    <select id="ticket_type_id" name="ticket_type_id">
+                        <option value="all" <%= typeof ticket_type_id === 'undefined' || ticket_type_id === 'all' ? 'selected' : '' %>>All Tickets</option>
+                        <% ticket_types.forEach(ticket => { %>
+                            <option value="<%= ticket.ticket_type_id %>" <%= String(ticket.ticket_type_id) === ticket_type_id ? 'selected' : '' %>>
+                                <%= ticket.type_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div>
                     <button type="submit">Generate Report</button>
                 </div>
             </div>
         </form>
 
         <% if (attendance_data && attendance_data.length > 0) { %>
+            
+            <% 
+                let totalVisitors = 0;
+                attendance_data.forEach(d => totalVisitors += d.count);
+                let avgVisitors = (attendance_data.length > 0) ? (totalVisitors / attendance_data.length).toFixed(0) : 0;
+            %>
+
             <div class="chart-container">
                 <canvas id="attendanceChart"></canvas>
             </div>
 
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><%= labelFormat %></th>
+                        <th>Visitor Count</th>
+                        <th>Status</th>
+                        <th style="min-width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% attendance_data.forEach(row => { %>
+                        <tr class="<%= row.isSpike ? 'spike-row' : '' %>">
+                            <td><%= row.label %></td>
+                            <td style="font-weight: 600;"><%= row.count.toLocaleString() %></td>
+                            <td>
+                                <% if (row.isSpike) { %>
+                                    <span class="spike-text"><i class="fa-solid fa-arrow-trend-up"></i> High Traffic Spike</span>
+                                    <div style="font-size: 0.85em; color: #6c757d;">
+                                        +<%= row.zScore %>x normal variation
+                                    </div>
+                                <% } else { %>
+                                    <span class="normal-text">Normal</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% 
+                                    const reportStateQuery = [
+                                        'selected_date=' + encodeURIComponent(selected_date),
+                                        'grouping=' + encodeURIComponent(grouping),
+                                        'membership_type_id=' + encodeURIComponent(membership_type_id),
+                                        'location_id=' + encodeURIComponent(location_id),
+                                        'ticket_type_id=' + encodeURIComponent(ticket_type_id)
+                                    ].join('&');
+
+                                    const logDetailLink = `/reports/visit-log?grouping=${grouping}&interval=${encodeURIComponent(row.label)}&mem_type=${membership_type_id}&loc_id=${location_id}&ticket_id=${ticket_type_id}&back_query=${encodeURIComponent(reportStateQuery)}`;
+                                %>
+                                <% if (row.count > 0) { %>
+                                    <a href="<%= logDetailLink %>" class="btn-action">View Visit Log</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+                <tfoot>
+                    <tr class="summary-row">
+                        <td>SUMMARY</td>
+                        <td>Total: <%= totalVisitors.toLocaleString() %></td>
+                        <td>Avg: ~<%= avgVisitors %> / period</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+
             <script>
-                const data = <%- JSON.stringify(attendance_data) %>;
-                const labels = data.map(item => item.label);
-                const counts = data.map(item => item.count);
+                const reportData = <%- JSON.stringify(attendance_data) %>;
+                const labels = reportData.map(item => item.label);
+                const counts = reportData.map(item => item.count);
                 
-                // NEW: Dynamic arrays for styling spike points
-                const pointColors = data.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)'); // Red for spike, Blue for normal
-                const pointRadii = data.map(item => item.isSpike ? 8 : 4); // Large radius for spike
-                const pointBorderColors = data.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(75, 192, 192, 1)');
+                const pointColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)');
+                const pointRadii = reportData.map(item => item.isSpike ? 6 : 3);
+                const pointBorderColors = reportData.map(item => item.isSpike ? 'rgba(220, 53, 69, 1)' : 'rgba(0, 123, 255, 1)');
 
                 const ctx = document.getElementById('attendanceChart').getContext('2d');
                 new Chart(ctx, {
@@ -87,32 +323,39 @@
                         datasets: [{
                             label: 'Visitor Count',
                             data: counts,
-                            borderColor: 'rgba(75, 192, 192, 1)', 
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(0, 123, 255, 0.8)', 
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true,
-                            // NEW: Apply dynamic point styling arrays
                             pointBackgroundColor: pointColors, 
                             pointBorderColor: pointBorderColors,
                             pointRadius: pointRadii,
-                            pointHoverRadius: 10 // Highlight on hover
+                            pointHoverRadius: 8
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false, 
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Total Visitors'
-                                }
+                                title: { display: true, text: 'Total Visitors' },
+                                grid: { color: '#f0f0f0' }
                             },
                             x: {
-                                title: {
-                                    display: true,
-                                    text: '<%= labelFormat %>' 
+                                title: { display: true, text: '<%= labelFormat %>' },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                padding: 10,
+                                callbacks: {
+                                    title: function(context) { return context[0].label; },
+                                    label: function(context) { return `Visitors: ${context.parsed.y}`; }
                                 }
                             }
                         }
@@ -120,9 +363,8 @@
                 });
             </script>
        <% } else if (attendance_data && attendance_data.length === 0) { %>
-            <p style="text-align: center; font-weight: bold; margin-top: 2em;">No attendance data found for the selected date range.</p>
+            <p style="text-align: center; font-weight: bold; margin-top: 3em; color: #6c757d;">No attendance data found for the selected criteria.</p>
         <% } %>
-
     </div>
 </body>
 </html>

@@ -1,0 +1,496 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Membership | Primus Park</title>
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;
+            --secondary: #ffc107;
+            --success: #28a745;
+            --danger: #dc3545;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.15);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 0 1em;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 2em;
+        }
+        .page-header h1 {
+            font-family: 'Lobster', cursive;
+            font-size: 3em;
+            color: var(--primary);
+            margin: 0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        .signup-card {
+            background: var(--white);
+            padding: 3em;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border-top: 5px solid var(--accent);
+        }
+        .plan-summary {
+            background: linear-gradient(135deg, #e0f7fa, #e1bee7);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 1.5em;
+            border-radius: var(--radius);
+            margin-bottom: 2em;
+            text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .plan-summary h2 {
+            margin: 0 0 0.2em 0;
+            color: var(--primary-dark);
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .plan-summary p {
+            margin: 0;
+        }
+        .plan-name {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: var(--dark);
+        }
+        .plan-price {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'Lobster', cursive;
+            line-height: 1.2;
+        }
+        .form-section-title {
+            font-size: 1.2em;
+            color: var(--accent);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+            margin: 2em 0 1.5em 0;
+            font-weight: 700;
+        }
+        .form-section-title:first-of-type {
+            margin-top: 0;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95em;
+        }
+        input[type="text"], input[type="email"], input[type="tel"],
+        input[type="date"], input[type="password"], select {
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 2px solid #eee;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
+        }
+        #subMemberSection {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            padding: 1.5em;
+            border-radius: var(--radius);
+            margin-top: 2em;
+        }
+        .sub-member-card {
+            background: var(--white);
+            border: 1px solid #eee;
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-top: 1em;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sub-member-header {
+            display: flex;
+            justify-content: space-between; align-items: center;
+            margin-bottom: 1em; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;
+        }
+        .sub-member-header h4 {
+            margin: 0;
+            color: var(--primary);
+        }
+        .btn-remove {
+            background: #ffebee;
+            color: var(--danger); border: none;
+            padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; cursor: pointer;
+        }
+        .btn-remove:hover {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-add-member {
+            width: 100%;
+            padding: 12px;
+            margin-top: 1em;
+            border: 2px dashed var(--accent);
+            background: transparent;
+            color: var(--accent);
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-add-member:hover {
+            background: var(--accent);
+            color: white;
+        }
+        .payment-choice {
+            display: flex;
+            gap: 20px; justify-content: center;
+            background: var(--light); padding: 10px; border-radius: 30px; margin-bottom: 1.5em;
+        }
+        .payment-choice label {
+            display: flex;
+            align-items: center; gap: 8px; margin: 0; cursor: pointer;
+            padding: 8px 15px; border-radius: 20px; transition: background 0.2s;
+        }
+        .payment-choice label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .payment-choice input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
+        .payment-details-card {
+            background: var(--light);
+            padding: 1.5em;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center; gap: 10px; margin-top: 1em;
+            font-size: 0.9em; color: var(--gray);
+        }
+        .checkbox-wrapper input {
+            width: auto;
+        }
+        .btn-purchase {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            border-radius: 30px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2em;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+        }
+        .btn-purchase:hover {
+            background-color: #218838;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        .btn-cancel {
+            display: block;
+            text-align: center; margin-top: 1.5em;
+            color: var(--gray); text-decoration: none; font-weight: 600;
+        }
+        .btn-cancel:hover {
+            color: var(--danger);
+            text-decoration: underline;
+        }
+        .input-error {
+            border-color: var(--danger) !important;
+        }
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 4px;
+            display: block;
+        }
+        .main-error {
+            background: var(--danger);
+            color: white;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header', { simpleNav: true }) %>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Join the Family</h1>
+            <p>Unlock a year of magic with your new membership.</p>
+        </div>
+
+        <form action="/signup" method="POST" id="signupForm" class="signup-card" novalidate>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="main-error"><%= error %></div>
+            <% } %>
+
+            <div class="plan-summary">
+                <h2>You Are Purchasing</h2>
+                <div class="plan-name"><%= type.type_name %> Pass</div>
+                <div class="plan-price" id="planPrice">$<%= parseFloat(type.base_price).toFixed(2) %></div>
+            </div>
+
+            <input type="hidden" name="type_id" value="<%= type.type_id %>">
+
+            <div class="form-section-title">1. Primary Member Information</div>
+            <div class="form-grid">
+                <div>
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div>
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+                <div>
+                    <label for="phone_number">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
+                </div>
+                <div>
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" required>
+                </div>
+            </div>
+
+            <div class="form-section-title">2. Create Your Account</div>
+            <div class="form-grid">
+                <div class="full-width">
+                    <label for="email">Email Address (Username)</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div>
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+            </div>
+
+            <div class="full-width" id="subMemberSection" style="display: none;">
+                <div class="form-section-title">3. Add Family Members</div>
+                <p id="subMemberIntro" style="color: var(--gray); font-size: 0.9em; margin-bottom: 1em;"></p>
+
+                <div id="subMemberContainer"></div>
+
+                <button type="button" id="addMemberBtn" class="btn-add-member">
+                     <i class="fa-solid fa-plus"></i> Add Another Member
+                </button>
+            </div>
+
+            <div class="form-section-title" id="paymentSectionTitle">4. Payment Method</div>
+
+            <div class="payment-choice">
+                <label>
+                    <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
+                    Credit / Debit Card
+                </label>
+                <label>
+                    <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
+                    Bank Account
+                </label>
+            </div>
+
+            <div id="cardPaymentGroup" class="payment-details-card">
+                <div class="form-grid">
+                    <div>
+                        <label for="mock_card_brand">Card Type</label>
+                        <select id="mock_card_brand" name="mock_card_brand">
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="Amex">American Express</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="mock_card_number">Card Number</label>
+                        <input type="text" id="mock_card_number" name="mock_card_number" placeholder="0000 0000 0000 0000">
+                    </div>
+                    <div>
+                        <label for="mock_card_expiry">Expiration</label>
+                        <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
+                    </div>
+                    <div>
+                        <label for="mock_card_cvv">Security Code</label>
+                        <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="123">
+                    </div>
+                </div>
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" name="save_payment_card" value="true">
+                    Save securely for future renewals.
+                </label>
+            </div>
+
+            <div id="bankPaymentGroup" class="payment-details-card" style="display: none;">
+                <div class="form-grid">
+                    <div>
+                        <label for="mock_routing_number">Routing Number</label>
+                        <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="9 Digits">
+                    </div>
+                    <div>
+                        <label for="mock_account_number">Account Number</label>
+                        <input type="text" id="mock_account_number" name="mock_account_number" placeholder="Account #">
+                    </div>
+                </div>
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" name="save_payment_bank" value="true">
+                    Save securely for future renewals.
+                </label>
+            </div>
+
+            <p style="margin-top: 2em; font-size: 0.85em; color: var(--gray); text-align: center;">
+                <i>Payment is mocked for this demo. No real charge will be made.</i>
+            </p>
+
+            <button type="submit" class="btn-purchase">Complete Purchase</button>
+            <a href="/" class="btn-cancel">Cancel</a>
+
+        </form>
+    </div>
+
+    <script>
+        const membershipType = {
+            base_price: parseFloat('<%= type.base_price %>'),
+            base_members: parseInt('<%= type.base_members %>', 10),
+            additional_member_price: parseFloat('<%= type.additional_member_price || 0 %>')
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const planPriceEl = document.getElementById('planPrice');
+            const subMemberSection = document.getElementById('subMemberSection');
+            const subMemberIntro = document.getElementById('subMemberIntro');
+            const subMemberContainer = document.getElementById('subMemberContainer');
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            const paymentSectionTitle = document.getElementById('paymentSectionTitle');
+            let subMemberCount = 0;
+
+            window.updatePrice = function() {
+                const currentSubMembers = document.querySelectorAll('.sub-member-card').length;
+                const totalMembers = 1 + currentSubMembers;
+
+                const includedSubMembers = Math.max(0, membershipType.base_members - 1);
+                const paidMembers = Math.max(0, currentSubMembers - includedSubMembers);
+                const total = membershipType.base_price + (paidMembers * membershipType.additional_member_price);
+
+                planPriceEl.textContent = '$' + total.toFixed(2);
+
+                if (membershipType.base_members > 1) {
+                    if (paidMembers > 0) {
+                         subMemberIntro.innerHTML = `Pass includes <b>${membershipType.base_members}</b> members. You have added <b>${paidMembers}</b> extra member(s) at <b>$${membershipType.additional_member_price.toFixed(2)}</b> each.`;
+                    } else {
+                        const remainingFree = (membershipType.base_members - totalMembers);
+                        subMemberIntro.innerHTML = `Pass includes <b>${membershipType.base_members}</b> members. You can add <b>${remainingFree}</b> more member(s) at no extra cost.`;
+                    }
+                }
+            };
+
+            if (membershipType.base_members > 1) {
+                subMemberSection.style.display = 'block';
+                paymentSectionTitle.textContent = '4. Payment Method';
+                updatePrice();
+            } else {
+                subMemberSection.style.display = 'none';
+                paymentSectionTitle.textContent = '3. Payment Method';
+            }
+
+            addMemberBtn.addEventListener('click', () => {
+                subMemberCount++;
+                const div = document.createElement('div');
+                div.className = 'sub-member-card';
+                div.innerHTML = `
+                    <div class="sub-member-header">
+                        <h4>Family Member #${subMemberCount}</h4>
+                        <button type="button" class="btn-remove" onclick="this.closest('.sub-member-card').remove(); updatePrice();">Remove</button>
+                    </div>
+                    <div class="form-grid">
+                        <div><label>First Name</label><input type="text" name="sub_first_name[]" required></div>
+                        <div><label>Last Name</label><input type="text" name="sub_last_name[]" required></div>
+                        <div><label>Date of Birth</label><input type="date" name="sub_dob[]" required></div>
+                    </div>
+                `;
+                subMemberContainer.appendChild(div);
+                updatePrice();
+            });
+
+            const cardRadio = document.getElementById('payWithCard');
+            const bankRadio = document.getElementById('payWithBank');
+            const cardGroup = document.getElementById('cardPaymentGroup');
+            const bankGroup = document.getElementById('bankPaymentGroup');
+
+            function togglePayment() {
+                if (cardRadio.checked) {
+                    cardGroup.style.display = 'block';
+                    bankGroup.style.display = 'none';
+                    enableInputs(cardGroup);
+                    disableInputs(bankGroup);
+                } else {
+                    cardGroup.style.display = 'none';
+                    bankGroup.style.display = 'block';
+                    enableInputs(bankGroup);
+                    disableInputs(cardGroup);
+                }
+            }
+
+            function disableInputs(el) {
+                el.querySelectorAll('input, select').forEach(i => i.disabled = true);
+            }
+            function enableInputs(el) {
+                el.querySelectorAll('input, select').forEach(i => i.disabled = false);
+            }
+
+            cardRadio.addEventListener('change', togglePayment);
+            bankRadio.addEventListener('change', togglePayment);
+
+            togglePayment();
+        });
+    </script>
+</body>
+</html>

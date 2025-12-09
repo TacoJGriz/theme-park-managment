@@ -1,39 +1,312 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Retail & Food Items</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #fd7e14; color: white; }
-        .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1em;
+            margin-bottom: 2em;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.2em;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card h3 {
+            margin: 0 0 0.25em 0;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .stat-card p {
+            margin: 0;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        .filter-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px;
+            margin-bottom: 2em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 3fr 2fr 1fr;
+            gap: 1em;
+            align-items: flex-end;
+        }
+        .filter-controls label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .filter-controls input,
+        .filter-controls select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 0.95em;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        .filter-buttons { display: flex; gap: 10px; }
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px 15px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover { transform: translateY(-1px); }
+        .btn-filter { background-color: #007bff; }
+        .btn-filter:hover { background-color: #0056b3; }
+        .btn-clear { background-color: #6c757d; }
+        .btn-clear:hover { background-color: #545b62; }
+        .add-button {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        th.sortable a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        th.sortable a:hover { text-decoration: none; opacity: 0.9; }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 12px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #ced4da;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { background-color: #f8f9fa; transform: translateY(-1px); }
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <div class="container">
         <h1>Retail & Food Items</h1>
-        <a href="/items/new" class="add-button">Add New Item</a>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3 style="color: #007bff;"><%= counts.total || 0 %></h3>
+                <p>Total Items</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #28a745;"><%= counts.countFood || 0 %></h3>
+                <p>Food</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #17a2b8;"><%= counts.countSouvenir || 0 %></h3>
+                <p>Souvenirs</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #6f42c1;"><%= counts.countApparel || 0 %></h3>
+                <p>Apparel</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <form action="" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search Items</label>
+                        <input type="text" id="search" name="search" placeholder="Item Name, Summary, ID..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_type">Item Type</label>
+                        <select id="filter_type" name="filter_type">
+                            <option value="">All Types</option>
+                            <% types.forEach(t => { %>
+                                <option value="<%= t.item_type %>" <%= filters.type === t.item_type ? 'selected' : '' %>>
+                                    <%= t.item_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="?" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
+            <a href="/items/new" class="add-button">Add New Item</a>
+        <% } %>
+
+        <% 
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲'; 
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none';
+                        indicator = '▼';
+                    }
+                }
+                let href = `?search=${encodeURIComponent(search)}`;
+                if (filters.type) href += `&filter_type=${encodeURIComponent(filters.type)}`;
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+                return { href, indicator };
+            };
+        %>
+
         <table>
             <thead>
                 <tr>
-                    <th>Item Name</th>
-                    <th>Type</th>
-                    <th>Price</th>
+                    <th class="sortable" style="width: 120px;">
+                        <a href="<%= getSortState('id').href %>">
+                            <span>ID</span> <span class="sort-indicator"><%= getSortState('id').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('name').href %>">
+                            <span>Item Name</span> <span class="sort-indicator"><%= getSortState('name').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('type').href %>">
+                            <span>Type</span> <span class="sort-indicator"><%= getSortState('type').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('price').href %>">
+                            <span>Price</span> <span class="sort-indicator"><%= getSortState('price').indicator %></span>
+                        </a>
+                    </th>
                     <th>Summary</th>
+                    <th style="min-width: 100px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
+                <% if (items.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2em;">No items found matching criteria.</td>
+                    </tr>
+                <% } %>
                 <% items.forEach(item => { %>
                     <tr>
-                        <td><%= item.item_name %></td>
+                        <td><%= item.public_item_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= item.item_name %></strong></td>
                         <td><%= item.item_type %></td>
                         <td>$<%= parseFloat(item.price).toFixed(2) %></td>
                         <td><%= item.summary %></td>
+                        <td>
+                            <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <a href="/items/edit/<%= item.public_item_id %>" class="btn-action btn-edit">Edit</a>
+                            <% } %>
+                        </td>
                     </tr>
                 <% }); %>
             </tbody>

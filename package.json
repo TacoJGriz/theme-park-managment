@@ -1,12 +1,20 @@
 {
+  "name": "team-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
-    "mysql": "^2.18.1",
-    "mysql2": "^3.15.3",
-    "promise": "^8.3.0",
-    "stack": "^0.1.0"
+    "mysql2": "^3.15.2"
   }
 }

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Day Tickets | Primus Park</title>
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --primary-dark: #5a32a3;
+            --secondary: #ffc107;
+            --accent: #17a2b8;
+            --success: #28a745;
+            --danger: #dc3545;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 0 1em;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 2em;
+        }
+        .page-header h1 {
+            font-family: 'Lobster', cursive;
+            font-size: 3em;
+            color: var(--primary);
+            margin: 0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        .page-header p {
+            color: var(--gray);
+            font-size: 1.1em;
+        }
+        .ticket-form-card {
+            background: var(--white);
+            padding: 2.5em;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border-top: 5px solid var(--secondary);
+        }
+        .ticket-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 2em;
+        }
+        .ticket-option {
+            background: var(--light);
+            border: 2px solid transparent;
+            border-radius: var(--radius);
+            padding: 1.5em;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .ticket-option:hover {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: var(--shadow-md);
+        }
+        .ticket-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+        .ticket-price {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.2em;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .ticket-option input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .ticket-option input[type="number"]:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        .price-summary {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            padding: 1.5em;
+            border-radius: var(--radius);
+            margin: 2em 0;
+            text-align: center;
+        }
+        .price-summary h3 {
+            margin: 0 0 0.5em 0;
+            color: var(--gray);
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .price-summary p {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'Lobster', cursive;
+        }
+        .section-title {
+            font-size: 1.3em;
+            color: var(--primary-dark);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 1.5em;
+            margin-top: 0;
+        }
+        .form-row {
+            margin-bottom: 1.5em;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        input[type="text"], input[type="email"], input[type="tel"], select {
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 2px solid #eee;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
+        }
+        small {
+            display: block;
+            margin-top: 5px;
+            color: var(--gray);
+            font-size: 0.85em;
+        }
+        .payment-choice {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 1.5em;
+            background: var(--light);
+            padding: 10px;
+            border-radius: 30px;
+            justify-content: center;
+        }
+        .payment-choice label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .payment-choice label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .payment-choice input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
+        .btn-purchase {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            border-radius: 30px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn-purchase:hover {
+            background-color: #218838;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        .btn-cancel {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .btn-cancel:hover {
+            color: var(--danger);
+            text-decoration: underline;
+        }
+        .input-error {
+            border-color: var(--danger) !important;
+        }
+        .error-message {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+        }
+        .error-alert {
+            background: var(--danger);
+            color: white;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header', { simpleNav: true }) %>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Purchase Tickets</h1>
+            <p>Your adventure starts here! Select your tickets below.</p>
+        </div>
+
+        <form action="/purchase-tickets" method="POST" id="purchaseForm" class="ticket-form-card" novalidate>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="error-alert"><%= error %></div>
+            <% } %>
+
+            <h3 class="section-title">1. Select Tickets</h3>
+
+            <div class="ticket-grid">
+                <% ticketTypes.forEach(type => { %>
+                    <% const inputName = `quantities[]`; %>
+                    <div class="ticket-option">
+                        <label for="qty_<%= type.ticket_type_id %>" style="cursor:pointer;">
+                            <span class="ticket-name"><%= type.type_name %></span>
+                            <span class="ticket-price">$<%= parseFloat(type.base_price).toFixed(2) %></span>
+                        </label>
+                        <input type="number"
+                               id="qty_<%= type.ticket_type_id %>"
+                               name="<%= inputName %>"
+                               value="0"
+                               min="0"
+                               data-price="<%= type.base_price %>">
+                    </div>
+                <% }); %>
+            </div>
+
+            <div class="price-summary">
+                <h3>Total Amount</h3>
+                <p id="totalPrice">$0.00</p>
+            </div>
+
+            <h3 class="section-title">2. Your Information</h3>
+
+            <div class="form-row">
+                 <label for="email">Email Address:</label>
+                <input type="email" id="email" name="email" placeholder="name@example.com">
+            </div>
+
+            <div class="form-row">
+                <label for="phone_number">Phone Number:</label>
+                <input type="tel" id="phone_number" name="phone_number" placeholder="(123) 456-7890">
+                <small>Please enter at least one contact method for ticket delivery.</small>
+            </div>
+
+            <h3 class="section-title">3. Payment Details</h3>
+
+            <div class="payment-choice">
+                <label>
+                    <input type="radio" id="payWithCard" name="payment_method_choice" value="card" checked>
+                    Credit / Debit Card
+                </label>
+                <label>
+                    <input type="radio" id="payWithBank" name="payment_method_choice" value="bank">
+                    Bank Account
+                </label>
+            </div>
+
+            <div id="cardPaymentGroup">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row">
+                        <label for="mock_card_brand">Card Type</label>
+                        <select id="mock_card_brand" name="mock_card_brand">
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="Amex">American Express</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="mock_card_number">Card Number</label>
+                        <input type="text" id="mock_card_number" name="mock_card_number" placeholder="0000 0000 0000 0000">
+                    </div>
+                    <div class="form-row">
+                        <label for="mock_card_expiry">Expiry</label>
+                        <input type="text" id="mock_card_expiry" name="mock_card_expiry" placeholder="MM/YY">
+                    </div>
+                    <div class="form-row">
+                        <label for="mock_card_cvv">CVC</label>
+                        <input type="text" id="mock_card_cvv" name="mock_card_cvv" placeholder="123">
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankPaymentGroup" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row">
+                        <label for="mock_routing_number">Routing Number</label>
+                        <input type="text" id="mock_routing_number" name="mock_routing_number" placeholder="9 Digits">
+                    </div>
+                    <div class="form-row">
+                        <label for="mock_account_number">Account Number</label>
+                        <input type="text" id="mock_account_number" name="mock_account_number" placeholder="Account #">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2em;">
+                <button type="submit" class="btn-purchase">Complete Purchase</button>
+                <a href="/" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('purchaseForm');
+        const priceDisplay = document.getElementById('totalPrice');
+        let total = 0;
+
+        const cardRadio = document.getElementById('payWithCard');
+        const bankRadio = document.getElementById('payWithBank');
+        const cardGroup = document.getElementById('cardPaymentGroup');
+        const bankGroup = document.getElementById('bankPaymentGroup');
+
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone_number');
+        const cardInput = document.getElementById('mock_card_number');
+        const expiryInput = document.getElementById('mock_card_expiry');
+        const cvvInput = document.getElementById('mock_card_cvv');
+        const routingInput = document.getElementById('mock_routing_number');
+        const accountInput = document.getElementById('mock_account_number');
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+        const cvvRegex = /^\d{3,4}$/;
+        const routingRegex = /^\d{9}$/;
+        const accountRegex = /^\d{4,17}$/;
+
+        function calculateTotal() {
+            total = 0;
+            form.querySelectorAll('input[type="number"]').forEach(input => {
+                const price = parseFloat(input.dataset.price) || 0;
+                const quantity = parseInt(input.value, 10) || 0;
+                total += price * quantity;
+            });
+            priceDisplay.textContent = `$${total.toFixed(2)}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', calculateTotal);
+        form.addEventListener('input', (e) => {
+            if (e.target.type === 'number') calculateTotal();
+        });
+
+        cardRadio.addEventListener('change', () => {
+            if (cardRadio.checked) { cardGroup.style.display = 'block'; bankGroup.style.display = 'none'; }
+        });
+        bankRadio.addEventListener('change', () => {
+            if (bankRadio.checked) { cardGroup.style.display = 'none'; bankGroup.style.display = 'block'; }
+        });
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(msg => msg.remove());
+            document.querySelectorAll('.input-error').forEach(input => input.classList.remove('input-error'));
+        }
+
+        function showError(inputElement, message) {
+            inputElement.classList.add('input-error');
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'error-message';
+            errorSpan.textContent = message;
+            inputElement.parentElement.appendChild(errorSpan);
+        }
+
+        form.addEventListener('submit', (event) => {
+            clearErrors();
+            let isValid = true;
+            let firstErrorField = null;
+
+            if (emailInput.value.trim() === '' && phoneInput.value.trim() === '') {
+                isValid = false;
+                showError(emailInput, 'Please enter either an Email or Phone.');
+                showError(phoneInput, 'Please enter either an Email or Phone.');
+                firstErrorField = emailInput;
+            } else if (emailInput.value.trim() !== '' && !emailRegex.test(emailInput.value)) {
+                isValid = false;
+                showError(emailInput, 'Invalid email address.');
+                firstErrorField = emailInput;
+            }
+
+            let validationTotal = 0;
+            form.querySelectorAll('input[type="number"]').forEach(input => { validationTotal += parseInt(input.value, 10) || 0; });
+            if (validationTotal <= 0) {
+                isValid = false;
+                const firstTicket = form.querySelector('input[type="number"]');
+                showError(firstTicket, 'Select at least one ticket.');
+                if (!firstErrorField) firstErrorField = firstTicket;
+            }
+
+            if (cardRadio.checked) {
+                const cardDigits = cardInput.value.replace(/\D/g, '');
+                if (cardDigits.length < 16) { isValid = false; showError(cardInput, 'Invalid Card Number.'); if(!firstErrorField) firstErrorField=cardInput; }
+                if (!expiryRegex.test(expiryInput.value)) { isValid = false; showError(expiryInput, 'MM/YY format required.'); if(!firstErrorField) firstErrorField=expiryInput; }
+                if (!cvvRegex.test(cvvInput.value)) { isValid = false; showError(cvvInput, '3-4 digits required.'); if(!firstErrorField) firstErrorField=cvvInput; }
+            } else {
+                if (!routingRegex.test(routingInput.value)) { isValid = false; showError(routingInput, '9 digits required.'); if(!firstErrorField) firstErrorField=routingInput; }
+                if (!accountRegex.test(accountInput.value)) { isValid = false; showError(accountInput, 'Invalid Account Number.'); if(!firstErrorField) firstErrorField=accountInput; }
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                if (firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>

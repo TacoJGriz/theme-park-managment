@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vendor Checkout: <%= vendor.vendor_name %></title>
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #ffc107;
+            --success: #28a745;
+            --danger: #dc3545;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --border: #ced4da;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2em auto;
+            background: var(--white);
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        h1 small {
+            font-size: 0.6em;
+            color: #777;
+            font-weight: normal;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+        }
+        th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #eee;
+            color: #555;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .total-bar {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            text-align: right;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .btn-checkout {
+            background-color: var(--success);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            float: right;
+        }
+        .btn-checkout:hover {
+            background-color: #218838;
+        }
+        .cancel-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1em;
+        }
+        .stock-low {
+            color: var(--danger);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <h1>Checkout <small>at <%= vendor.vendor_name %></small></h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+
+        <form action="/inventory/checkout/<%= vendor.public_vendor_id %>" method="POST">
+            <input type="hidden" name="returnTo" value="<%= returnTo %>">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Price</th>
+                        <th>Current Stock</th>
+                        <th>Quantity Sold</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (items.length === 0) { %>
+                        <tr><td colspan="5" style="text-align:center; padding: 2em;">No inventory available at this location.</td></tr>
+                    <% } %>
+
+                    <% items.forEach(item => { %>
+                    <tr>
+                        <td><strong><%= item.item_name %></strong></td>
+                        <td>$<span class="price" data-id="<%= item.item_id %>"><%= parseFloat(item.price).toFixed(2) %></span></td>
+                        <td class="<%= item.count < 10 ? 'stock-low' : '' %>"><%= item.count %></td>
+                        <td>
+                            <input type="number"
+                                   name="quantities[item_<%= item.item_id %>]"
+                                   min="0"
+                                   max="<%= item.count %>"
+                                   value="0"
+                                   class="qty-input"
+                                   data-id="<%= item.item_id %>">
+                        </td>
+                        <td>$<span class="subtotal" id="subtotal-<%= item.item_id %>">0.00</span></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+
+            <div class="total-bar">
+                Total Sale: $<span id="grand-total">0.00</span>
+            </div>
+
+            <a href="<%= returnTo %>" class="cancel-link">Cancel</a>
+            <button type="submit" class="btn-checkout">Complete Sale</button>
+            <div style="clear:both;"></div>
+        </form>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.qty-input');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', updateTotals);
+        });
+
+        function updateTotals(e) {
+            if (e && e.target) {
+                const input = e.target;
+                let val = parseInt(input.value) || 0;
+                const max = parseInt(input.getAttribute('max')) || 0;
+                const min = parseInt(input.getAttribute('min')) || 0;
+
+                if (val > max) {
+                    input.value = max;
+                    val = max;
+                }
+                if (val < min) {
+                    input.value = min;
+                    val = min;
+                }
+            }
+
+            let grandTotal = 0;
+
+            inputs.forEach(input => {
+                const id = input.getAttribute('data-id');
+                const qty = parseInt(input.value) || 0;
+                const price = parseFloat(document.querySelector(`.price[data-id="${id}"]`).innerText);
+
+                const subtotal = qty * price;
+                document.getElementById(`subtotal-${id}`).innerText = subtotal.toFixed(2);
+
+                grandTotal += subtotal;
+            });
+
+            document.getElementById('grand-total').innerText = grandTotal.toFixed(2);
+        }
+    </script>
+</body>
+</html>

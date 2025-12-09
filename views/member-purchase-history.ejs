@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase History | Primus Park</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --accent: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --radius: 12px;
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--light); color: var(--dark); }
+
+        .container { max-width: 1000px; margin: 3em auto; padding: 0 2em; }
+
+        h1 {
+            font-family: 'Lobster', cursive; color: var(--dark); font-size: 3em;
+            border-bottom: 2px solid #eee; padding-bottom: 0.5em; margin-bottom: 1em;
+        }
+
+        /* Navigation back link */
+        .btn-back {
+            display: inline-block; margin-bottom: 2em;
+            text-decoration: none; color: var(--gray); font-weight: 600;
+            transition: var(--transition);
+        }
+        .btn-back:hover { color: var(--accent); transform: translateX(-5px); }
+
+        /* Main table container */
+        .history-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border-top: 5px solid var(--accent);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background-color: var(--dark); color: var(--white);
+            padding: 1.2em; text-align: left; font-weight: 600;
+            text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px;
+        }
+        td { padding: 1.2em; border-bottom: 1px solid #f0f0f0; color: #555; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f9f9f9; }
+
+        .price-tag { font-weight: 700; color: var(--dark); }
+
+        /* View receipt button */
+        .btn-action {
+            display: inline-block; padding: 6px 15px;
+            background-color: var(--accent); color: var(--white);
+            text-decoration: none; border-radius: 20px; font-size: 0.85em; font-weight: 600;
+            transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-action:hover { background-color: #138496; transform: translateY(-2px); }
+
+        .empty-state { text-align: center; padding: 4em; color: var(--gray); font-style: italic; }
+    </style>
+</head>
+<body>
+    <%- include('partials/member-header') %>
+
+    <div class="container">
+        <h1>Purchase History</h1>
+        <a href="/member/manage" class="btn-back">← Back to Account</a>
+
+        <div class="history-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Term</th>
+                        <th>Total</th>
+                        <th>Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% /* Check for empty history */ %>
+                    <% if (purchases.length === 0) { %>
+                        <tr><td colspan="5" class="empty-state">No purchase records found.</td></tr>
+                    <% } %>
+
+                    <% /* Iterate through past purchases */ %>
+                    <% purchases.forEach(purchase => { %>
+                        <tr>
+                            <td>
+                                <strong><%= new Date(purchase.purchase_date).toLocaleDateString() %></strong><br>
+                                <span style="font-size: 0.85em; color: var(--gray);"><%= new Date(purchase.purchase_date).toLocaleTimeString() %></span>
+                            </td>
+                            <td><%= purchase.type_name %></td>
+                            <td>
+                                <%= new Date(purchase.purchased_start_date).toLocaleDateString() %> -
+                                <%= new Date(purchase.purchased_end_date).toLocaleDateString() %>
+                            </td>
+                            <td class="price-tag">$<%= parseFloat(purchase.price_paid).toFixed(2) %></td>
+                            <td>
+                                <a href="/member/purchases/receipt/<%= purchase.public_purchase_id %>" class="btn-action">View</a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

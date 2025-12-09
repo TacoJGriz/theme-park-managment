@@ -4,89 +4,170 @@
     <meta charset="UTF-8">
     <title>Add New Ride</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 600px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
-        div { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], select {
-            width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
-        .error { color: #d9534f; font-weight: bold; background-color: #f2dede; padding: 1em; border-radius: 4px; margin-bottom: 15px; }
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 1em; }
-        button:hover { background-color: #0056b3;
- }
-        .full-width { grid-column: 1 / -1;
- }
-
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #28a745;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
         .cancel-link {
-            display: inline-block;
-            margin-left: 15px;
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
             text-decoration: none;
             color: #6c757d;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
         }
         .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>Add New Ride</h1>
+    
+    <div class="container">
+        <h1>Add New Ride</h1>
 
-    <% if (typeof error !== 'undefined' && error) { %>
-        <p class="error"><%= error %></p>
-    <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
 
-    <form action="/rides" method="POST">
-        <div class="form-grid">
-            <div class="full-width">
-                <label for="ride_name">Ride Name:</label>
-                <input type="text" id="ride_name" name="ride_name" required>
+        <form action="/rides" method="POST">
+            <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+            
+            <div class="form-grid">
+                <div style="grid-column: 1 / -1;">
+                    <label for="ride_name">Ride Name:</label>
+                    <input type="text" id="ride_name" name="ride_name" required placeholder="e.g. Space Mountain">
+                </div>
+                
+                <div>
+                    <label for="ride_type">Ride Type:</label>
+                    <select id="ride_type" name="ride_type" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="Rollercoaster">Rollercoaster</option>
+                        <option value="Water Ride">Water Ride</option>
+                        <option value="Flat Ride">Flat Ride</option>
+                        <option value="Show">Show</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="ride_status">Initial Status:</label>
+                    <select id="ride_status" name="ride_status" required>
+                        <option value="CLOSED">Closed (Default)</option>
+                        <option value="OPEN">Open</option>
+                        <option value="BROKEN">Broken</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="location_id">Location:</label>
+                    <select id="location_id" name="location_id" required>
+                        <option value="">-- Select Location --</option>
+                        <% locations.forEach(location => { %>
+                            <option value="<%= location.location_id %>"><%= location.location_name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="capacity">Capacity (per run):</label>
+                    <input type="number" id="capacity" name="capacity" min="1" placeholder="e.g. 24">
+                </div>
+                
+                <div>
+                    <label for="min_height">Min Height (inches):</label>
+                    <input type="number" id="min_height" name="min_height" min="0" placeholder="Optional">
+                </div>
+                
+                <div>
+                    <label for="max_weight">Max Weight (lbs):</label>
+                    <input type="number" id="max_weight" name="max_weight" min="0" placeholder="Optional">
+                </div>
             </div>
-            <div>
-                <label for="ride_type">Ride Type:</label>
-                <select id="ride_type" name="ride_type" required>
-                    <option value="Rollercoaster">Rollercoaster</option>
-                    <option value="Water Ride">Water Ride</option>
-                    <option value="Flat Ride">Flat Ride</option>
-                    <option value="Show">Show</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div>
-                <label for="ride_status">Initial Status:</label>
-                 <select id="ride_status" name="ride_status" required>
-                    <option value="OPEN">Open</option>
-                    <option value="CLOSED">Closed</option>
-                </select>
-            </div>
-            <div>
-                <label for="location_id">Location:</label>
-                <select id="location_id" name="location_id" required>
-                     <% locations.forEach(location => { %>
-                        <option value="<%= location.location_id %>"><%= location.location_name %></option>
-                    <% }); %>
-                </select>
-            </div>
-            <div>
-                <label for="capacity">Capacity (per run):</label>
-                <input type="number" id="capacity" name="capacity" min="0">
-            </div>
-             <div>
-                <label for="min_height">Min Height (inches):</label>
-                <input type="number" id="min_height" name="min_height" min="0">
-            </div>
-            <div>
-                <label for="max_weight">Max Weight (lbs):</label>
-                <input type="number" id="max_weight" name="max_weight" min="0">
-            </div>
-        </div>
-        <br>
-        <button type="submit">Add Ride</button>
-        <a href="/rides" class="cancel-link">Cancel</a>
-    </form>
+            
+            <br>
+            <button type="submit">Create Ride</button>
+            
+            <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/rides?' + returnQuery : '/rides'; %>
+            <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

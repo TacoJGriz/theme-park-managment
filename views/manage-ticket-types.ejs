@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Ticket Types</title>
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* content container */
+        .container { 
+            max-width: 1200px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* headers */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* alert messages */
+        .message { padding: 1em; border-radius: 8px; margin-bottom: 1.5em; font-weight: 600; }
+        .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+
+        /* add button style */
+        .add-button { 
+            display: inline-block;
+            margin-bottom: 1.5em; 
+            padding: 12px 25px; 
+            background-color: #28a745;
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover { 
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* table setup */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* small badges for ticket types */
+        .type-system { 
+            font-weight: 700; 
+            color: #6f42c1;
+            background-color: #f3eafa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        .type-standard { color: #333; }
+
+        /* status text */
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-inactive { color: #dc3545; font-weight: bold; }
+
+        /* action buttons */
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 12px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #ced4da;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-action:last-child { margin-bottom: 0; }
+        .btn-action:hover { transform: translateY(-1px); }
+
+        /* different button colors */
+        .btn-edit { color: #007bff; border-color: #007bff; }
+        .btn-edit:hover { background-color: #007bff; color: white; }
+
+        .btn-deactivate { color: #dc3545; border-color: #dc3545; }
+        .btn-deactivate:hover { background-color: #dc3545; color: white; }
+
+        .btn-activate { color: #28a745; border-color: #28a745; }
+        .btn-activate:hover { background-color: #28a745; color: white; }
+        
+        .btn-disabled { 
+            color: #adb5bd; 
+            border-color: #dee2e6; 
+            background-color: #f8f9fa; 
+            cursor: not-allowed; 
+            pointer-events: none; 
+            box-shadow: none;
+        }
+        .btn-disabled:hover { transform: none; }
+
+        /* helper to make form behave */
+        .toggle-form { display: block; margin: 0; width: 100%; }
+
+        /* modal popup */
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: scaleUp 0.2s ease-out;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.4em;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 2em;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .modal-btn:hover { opacity: 0.9; }
+
+        .modal-cancel { background-color: #e9ecef; color: #333; }
+        .modal-confirm { background-color: #007bff; color: white; }
+        
+        /* dynamic confirmation button colors */
+        .confirm-activate { background-color: #28a745; }
+        .confirm-deactivate { background-color: #dc3545; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.95); } to { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Manage Ticket Types</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %><div class="message error"><%= error %></div><% } %>
+        <% if (typeof success !== 'undefined' && success) { %><div class="message success"><%= success %></div><% } %>
+
+        <a href="/ticket-types/new" class="add-button">Add New Ticket Type</a>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ticket Name</th>
+                    <th>Base Price</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th style="min-width: 140px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% types.forEach(type => { %>
+                    <tr>
+                        <td><%= type.public_ticket_type_id.substring(0, 8).toUpperCase() %></td>
+                        <td><strong><%= type.type_name %></strong></td>
+                        <td>$<%= parseFloat(type.base_price).toFixed(2) %></td>
+                        <td>
+                           <% if (type.is_member_type) { %>
+                                <span class="type-system">System</span>
+                            <% } else { %>
+                                 <span class="type-standard">Standard</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (type.is_active) { %>
+                                <span class="status-active">Active</span>
+                            <% } else { %>
+                                 <span class="status-inactive">Inactive</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <a href="/ticket-types/edit/<%= type.public_ticket_type_id %>" class="btn-action btn-edit <% if (type.is_member_type) { %>btn-disabled<% } %>">Edit</a>
+                            
+                            <% if (!type.is_member_type) { %>
+                                <form id="form-<%= type.public_ticket_type_id %>" class="toggle-form" action="/ticket-types/toggle/<%= type.public_ticket_type_id %>" method="POST">
+                                    <% if (type.is_active) { %>
+                                        <button type="button" 
+                                                class="btn-action btn-deactivate"
+                                                onclick="confirmAction('form-<%= type.public_ticket_type_id %>', '<%= type.type_name %>', 'deactivate')">
+                                            Deactivate
+                                        </button>
+                                     <% } else { %>
+                                        <button type="button" 
+                                                class="btn-action btn-activate"
+                                                onclick="confirmAction('form-<%= type.public_ticket_type_id %>', '<%= type.type_name %>', 'activate')">
+                                            Activate
+                                        </button>
+                                    <% } %>
+                                </form>
+                            <% } else { %>
+                                 <span class="btn-action btn-disabled">System Locked</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                 <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure you want to modify this ticket type?</p>
+            
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+                <button type="button" id="modalConfirmBtn" class="modal-btn modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let formToSubmit = null; 
+        const modal = document.getElementById('confirmModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+
+        // logic to open modal with correct context
+        function confirmAction(formId, typeName, action) {
+            formToSubmit = document.getElementById(formId);
+            
+            if (action === 'deactivate') {
+                modalTitle.textContent = 'Deactivate Ticket Type?';
+                modalTitle.style.color = '#dc3545'; 
+                modalMessage.innerHTML = `Are you sure you want to deactivate <strong>${typeName}</strong>?<br>It will no longer be available for purchase.`;
+                confirmBtn.className = 'modal-btn modal-confirm confirm-deactivate';
+                confirmBtn.textContent = 'Deactivate';
+            } else {
+                modalTitle.textContent = 'Activate Ticket Type?';
+                modalTitle.style.color = '#28a745'; 
+                modalMessage.innerHTML = `Are you sure you want to activate <strong>${typeName}</strong>?<br>This will make it available for purchase immediately.`;
+                confirmBtn.className = 'modal-btn modal-confirm confirm-activate';
+                confirmBtn.textContent = 'Activate';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            formToSubmit = null;
+        }
+
+        confirmBtn.addEventListener('click', () => {
+            if (formToSubmit) {
+                formToSubmit.submit();
+            }
+        });
+
+        // close modal if clicked outside
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

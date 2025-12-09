@@ -2,80 +2,85 @@ DROP DATABASE IF EXISTS park_database;
 CREATE DATABASE park_database;
 USE park_database;
 
+-- employees
 CREATE TABLE employee_demographics (
     employee_id INT NOT NULL AUTO_INCREMENT,
+    public_employee_id VARCHAR(36) NULL UNIQUE,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     gender ENUM('Male', 'Female', 'Other') NOT NULL,
-    phone_number VARCHAR(15), -- accommodate for (123) 456-7890 formatting
+    phone_number VARCHAR(15),
     email VARCHAR(50) UNIQUE,
     street_address VARCHAR(255),
     city VARCHAR(100),
-    state VARCHAR(2), -- Storing 2-letter abbreviation
-    zip_code VARCHAR(10), -- Accommodates 5-digit or 5+4 format
+    state VARCHAR(2),
+    zip_code VARCHAR(10),
     birth_date DATE NOT NULL,
     hire_date DATE NOT NULL,
     termination_date DATE,
-    employee_type ENUM('Staff', 'Maintenance', 'Manager', 'HR', 'Admin') NOT NULL,
+    employee_type ENUM('Staff', 'Maintenance', 'Location Manager', 'Park Manager', 'Admin') NOT NULL,
     location_id INT,
     supervisor_id INT,
     hourly_rate DECIMAL(10, 2),
     is_active BOOL DEFAULT TRUE,
-    -- Keys
     PRIMARY KEY (employee_id),
+    INDEX (public_employee_id),
     FOREIGN KEY (supervisor_id) REFERENCES employee_demographics(employee_id),
-    -- Constraints
-    CONSTRAINT chk_dates CHECK (termination_date IS NULL OR termination_date >= hire_date), -- force termination date to be not null for active employees, OR if terminated, the termination date must be after hire date
-    CONSTRAINT chk_hire_age CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)), -- force employeees to be at least 16 years old (no child labor allowed)
-    CONSTRAINT chk_rate_positive CHECK (hourly_rate >= 0) -- force pay to not be negative 
+    CHECK (termination_date IS NULL OR termination_date >= hire_date),
+    CHECK (hire_date >= DATE_ADD(birth_date, INTERVAL 16 YEAR)),
+    CHECK (hourly_rate >= 0)
 );
 
+-- employee login
 CREATE TABLE employee_auth (
     employee_id INT NOT NULL,
-    password_hash VARCHAR(255) NOT NULL, -- Stores the secure bcrypt hash
-    
-    -- Keys
+    password_hash VARCHAR(255) NOT NULL,
     PRIMARY KEY (employee_id),
-    FOREIGN KEY (employee_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE CASCADE -- If an employee is deleted, their login is automatically deleted.
+    FOREIGN KEY (employee_id) REFERENCES employee_demographics (employee_id) ON DELETE CASCADE
 );
 
+-- locations
 CREATE TABLE location (
     location_id INT NOT NULL AUTO_INCREMENT,
+    public_location_id VARCHAR(36) NULL UNIQUE,
     location_name VARCHAR(50) NOT NULL UNIQUE,
     summary VARCHAR(250),
     manager_id INT,
     manager_start DATE,
-    -- keys
+    pin_x DECIMAL(5, 2) NULL,
+    pin_y DECIMAL(5, 2) NULL,
     PRIMARY KEY (location_id),
-    FOREIGN KEY (manager_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL -- if a manager is deleted, the manager id for the location is Null
+    INDEX (public_location_id),
+    FOREIGN KEY (manager_id) REFERENCES employee_demographics (employee_id) ON DELETE SET NULL
 );
 
+-- link employees to location
 ALTER TABLE employee_demographics
 ADD FOREIGN KEY (location_id) REFERENCES location (location_id);
 
+-- rides
 CREATE TABLE rides (
     ride_id INT NOT NULL AUTO_INCREMENT,
+    public_ride_id VARCHAR(36) NULL UNIQUE,
     ride_name VARCHAR(50) NOT NULL,
     ride_type ENUM('Rollercoaster', 'Water Ride', 'Flat Ride', 'Show', 'Other') NOT NULL,
-    ride_status ENUM("OPEN", "CLOSED", "BROKEN"),
+    ride_status ENUM('OPEN', 'CLOSED', 'BROKEN', 'WEATHER CLOSURE'),
     max_weight INT,
     min_height INT,
     capacity INT,
     location_id INT,
     PRIMARY KEY (ride_id),
-    FOREIGN KEY (location_id)
-        REFERENCES location (location_id),
-	CONSTRAINT chk_weight CHECK (max_weight >= 0),
-    CONSTRAINT chk_height CHECK (min_height >= 0),
-    CONSTRAINT chk_capacity CHECK (capacity >= 0)
+    INDEX (public_ride_id),
+    FOREIGN KEY (location_id) REFERENCES location (location_id),
+    CHECK (max_weight >= 0),
+    CHECK (min_height >= 0),
+    CHECK (capacity >= 0)
 );
-    
+
+-- maintenance logs
 CREATE TABLE maintenance (
     maintenance_id INT NOT NULL AUTO_INCREMENT,
+    public_maintenance_id VARCHAR(36) NULL UNIQUE,
     ride_id INT NOT NULL,
     report_date DATE NOT NULL DEFAULT (CURDATE()),
     start_date DATE,
@@ -83,67 +88,115 @@ CREATE TABLE maintenance (
     summary VARCHAR(250),
     employee_id INT,
     cost DECIMAL(10,2),
-    -- Keys
+    pending_employee_id INT DEFAULT NULL,
+    assignment_requested_by INT DEFAULT NULL,
     PRIMARY KEY (maintenance_id),
-    FOREIGN KEY (ride_id)
-        REFERENCES rides (ride_id)
-        ON DELETE CASCADE,
-	FOREIGN KEY (employee_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL,
-    -- Constraints
-    CONSTRAINT chk_maintenance_dates CHECK (start_date IS NULL OR start_date >= report_date),
-    CONSTRAINT chk_completion_date CHECK (end_date IS NULL OR end_date >= start_date),
-    CONSTRAINT chk_cost_positive CHECK (cost IS NULL OR cost >= 0)
+    INDEX (public_maintenance_id),
+    FOREIGN KEY (ride_id) REFERENCES rides (ride_id) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES employee_demographics (employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (pending_employee_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (assignment_requested_by) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    CHECK (start_date IS NULL OR start_date >= report_date),
+    CHECK (end_date IS NULL OR end_date >= start_date),
+    CHECK (cost IS NULL OR cost >= 0)
 );
 
+-- memberships
+CREATE TABLE membership_type (
+    type_id INT NOT NULL AUTO_INCREMENT,
+    public_type_id VARCHAR(36) NULL UNIQUE,
+    type_name VARCHAR(50) NOT NULL UNIQUE,
+    base_price DECIMAL(10, 2) NOT NULL,
+    base_members INT NOT NULL DEFAULT 1,
+    additional_member_price DECIMAL(10, 2) NULL DEFAULT NULL,
+    guest_pass_limit INT NOT NULL DEFAULT 0,
+    description VARCHAR(250),
+    is_active BOOL NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (type_id),
+    INDEX (public_type_id),
+    CHECK (base_price >= 0),
+    CHECK (guest_pass_limit >= 0)
+);
+
+-- blackout dates
+CREATE TABLE blackout_dates (
+    blackout_id INT NOT NULL AUTO_INCREMENT,
+    type_id INT NOT NULL,
+    blackout_date DATE NOT NULL,
+    reason VARCHAR(100),
+    PRIMARY KEY (blackout_id),
+    FOREIGN KEY (type_id) REFERENCES membership_type(type_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_type_date (type_id, blackout_date)
+);
+
+-- members
 CREATE TABLE membership (
     membership_id INT NOT NULL AUTO_INCREMENT,
+    public_membership_id VARCHAR(36) NULL UNIQUE,
+    primary_member_id INT NULL DEFAULT NULL,
     first_name VARCHAR(25) NOT NULL,
     last_name VARCHAR(25) NOT NULL,
     email VARCHAR(50) UNIQUE,
     phone_number VARCHAR(15),
     date_of_birth DATE NOT NULL,
-    member_type ENUM('Individual', 'Family', 'Gold', 'Platinum') NOT NULL,
+    type_id INT NOT NULL,
     start_date DATE NOT NULL DEFAULT (CURDATE()),
-	end_date DATE NOT NULL,
-    -- keys
+    end_date DATE NOT NULL,
+    guest_passes_remaining INT NOT NULL DEFAULT 0,
     PRIMARY KEY (membership_id),
-    -- constraints
-    CONSTRAINT chk_membership_dates CHECK (end_date > start_date)
+    INDEX (public_membership_id),
+    FOREIGN KEY (type_id) REFERENCES membership_type (type_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_primary_member FOREIGN KEY (primary_member_id) REFERENCES membership(membership_id) ON DELETE SET NULL,
+    CHECK (end_date > start_date),
+    CHECK (guest_passes_remaining >= 0)
 );
 
+-- tickets
+CREATE TABLE ticket_types (
+    ticket_type_id INT NOT NULL AUTO_INCREMENT,
+    public_ticket_type_id VARCHAR(36) NULL UNIQUE,
+    type_name VARCHAR(50) NOT NULL UNIQUE,
+    base_price DECIMAL(10, 2) NOT NULL,
+    description VARCHAR(250) NULL,
+    is_active BOOL NOT NULL DEFAULT TRUE,
+    is_member_type BOOL NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (ticket_type_id),
+    INDEX (public_ticket_type_id),
+    CHECK (base_price >= 0)
+);
+
+-- visits
 CREATE TABLE visits (
     visit_id INT NOT NULL AUTO_INCREMENT,
     membership_id INT,
     visit_date DATETIME,
     exit_time TIME,
-    ticket_type ENUM('Adult', 'Child', 'Senior', 'Member', 'Other') NOT NULL,
-    ticket_price DECIMAL(10,2),
-    discount_amount DECIMAL(10,2),
-    -- Keys
+    ticket_type_id INT NOT NULL,
+    ticket_price DECIMAL(10,2) NULL,
+    discount_amount DECIMAL(10,2) NULL,
+    logged_by_employee_id INT,
+    visit_group_id VARCHAR(36) NULL,
     PRIMARY KEY (visit_id),
-    FOREIGN KEY (membership_id)
-        REFERENCES membership (membership_id),
-	-- Constraints
-    CONSTRAINT chk_positive_prices CHECK (ticket_price >= 0 AND discount_amount >= 0),
-    CONSTRAINT chk_valid_discount CHECK (discount_amount <= ticket_price)
+    FOREIGN KEY (membership_id) REFERENCES membership (membership_id),
+    FOREIGN KEY (ticket_type_id) REFERENCES ticket_types(ticket_type_id),
+    FOREIGN KEY (logged_by_employee_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    INDEX (visit_group_id),
+    CHECK (ticket_price >= 0 AND discount_amount >= 0),
+    CHECK (discount_amount <= ticket_price)
 );
 
-
+-- weather
 CREATE TABLE weather_events (
     weather_id INT NOT NULL AUTO_INCREMENT,
     event_date DATETIME NOT NULL,
     end_time DATETIME,
     weather_type ENUM('Rain', 'Thunderstorm', 'Tornado Warning', 'Heatwave', 'Other') NOT NULL,
     park_closure BOOL NOT NULL DEFAULT FALSE,
-    -- keys
     PRIMARY KEY (weather_id),
-    -- constraints
-    CONSTRAINT chk_weather_times CHECK (end_time IS NULL OR end_time >= event_date)
+    CHECK (end_time IS NULL OR end_time >= event_date)
 );
 
-
+-- promotions
 CREATE TABLE event_promotions (
     event_id INT NOT NULL AUTO_INCREMENT,
     event_name VARCHAR(100) NOT NULL UNIQUE,
@@ -152,88 +205,221 @@ CREATE TABLE event_promotions (
     end_date DATE NOT NULL,
     discount_percent DECIMAL(10,2) NOT NULL,
     summary VARCHAR(250),
-    -- keys
     PRIMARY KEY (event_id),
-    -- constraints
-    CONSTRAINT chk_event_dates CHECK (end_date >= start_date),
-    CONSTRAINT chk_discount_percent CHECK (discount_percent BETWEEN 0 AND 100)
+    CHECK (end_date >= start_date),
+    CHECK (discount_percent BETWEEN 0 AND 100)
 );
 
-
+-- daily stats
 CREATE TABLE daily_stats (
     date_rec DATE NOT NULL,
     visitor_count INT,
     PRIMARY KEY (date_rec),
-	CONSTRAINT chk_stats_count_positive CHECK (visitor_count >= 0)
+    CHECK (visitor_count >= 0)
 );
 
-
+-- vendors
 CREATE TABLE vendors (
     vendor_id INT NOT NULL AUTO_INCREMENT,
+    public_vendor_id VARCHAR(36) NULL UNIQUE,
     vendor_name VARCHAR(100) NOT NULL UNIQUE,
     location_id INT,
-    manager_id INT,
-    -- keys
+    vendor_status ENUM('OPEN', 'CLOSED') NOT NULL DEFAULT 'OPEN',
     PRIMARY KEY (vendor_id),
-    FOREIGN KEY (location_id)
-        REFERENCES location (location_id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE,
-    FOREIGN KEY (manager_id)
-        REFERENCES employee_demographics (employee_id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE
+    INDEX (public_vendor_id),
+    FOREIGN KEY (location_id) REFERENCES location (location_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
+-- items
 CREATE TABLE item (
     item_id INT NOT NULL AUTO_INCREMENT,
+    public_item_id VARCHAR(36) NULL UNIQUE,
     item_type ENUM('Food', 'Souvenir', 'Apparel', 'Other') NOT NULL,
     item_name VARCHAR(50),
     price DECIMAL(10,2),
     summary VARCHAR(250),
     PRIMARY KEY (item_id),
-    CONSTRAINT chk_item_price_positive CHECK (price >= 0)
+    INDEX (public_item_id),
+    CHECK (price >= 0)
 );
 
+-- inventory
 CREATE TABLE inventory (
     item_id INT NOT NULL,
     vendor_id INT NOT NULL,
     count INT,
+    min_count INT DEFAULT 10,
+    def_count INT DEFAULT 50,
     PRIMARY KEY (item_id , vendor_id),
-    FOREIGN KEY (item_id)
-        REFERENCES item (item_id),
-    FOREIGN KEY (vendor_id)
-        REFERENCES vendors (vendor_id),
-    CONSTRAINT chk_count_positive CHECK (count >= 0)
+    FOREIGN KEY (item_id) REFERENCES item (item_id),
+    FOREIGN KEY (vendor_id) REFERENCES vendors (vendor_id),
+    CHECK (count >= 0)
 );
 
+-- requests
+CREATE TABLE inventory_requests (
+    request_id INT NOT NULL AUTO_INCREMENT,
+    public_request_id VARCHAR(36) NULL UNIQUE,
+    vendor_id INT NOT NULL,
+    item_id INT NOT NULL,
+    requested_count INT NOT NULL,
+    requested_by_id INT,
+    location_id INT,
+    request_date DATE NOT NULL DEFAULT (CURDATE()),
+    status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+    PRIMARY KEY (request_id),
+    INDEX (public_request_id),
+    FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES item(item_id) ON DELETE CASCADE,
+    FOREIGN KEY (requested_by_id) REFERENCES employee_demographics(employee_id) ON DELETE SET NULL,
+    FOREIGN KEY (location_id) REFERENCES location(location_id) ON DELETE SET NULL,
+    CHECK (requested_count >= 0)
+);
+
+-- ride stats
 CREATE TABLE daily_ride (
     ride_id INT NOT NULL,
     dat_date DATE NOT NULL,
     ride_count INT UNSIGNED DEFAULT 0,
     run_count INT UNSIGNED DEFAULT 0,
-    -- keys
     PRIMARY KEY (ride_id , dat_date),
     FOREIGN KEY (ride_id) REFERENCES rides (ride_id),
-    FOREIGN KEY (dat_date) REFERENCES daily_stats (date_rec),
-    -- constraints
-    CONSTRAINT chk_ride_count_positive CHECK (ride_count >= 0),
-    CONSTRAINT chk_run_count_positive CHECK (run_count >= 0)
+    FOREIGN KEY (dat_date) REFERENCES daily_stats (date_rec)
 );
 
-CREATE TABLE employee_ride_assignments (
-    assignment_id INT NOT NULL AUTO_INCREMENT, -- Simple key for editing/deleting
-    employee_id INT NOT NULL,
-    ride_id INT NOT NULL,
-    assignment_date DATE NOT NULL,
-    role VARCHAR(50), -- Optional: e.g., 'Operator', 'Attendant'
-    -- Keys
-    PRIMARY KEY (assignment_id),
-    UNIQUE KEY uk_employee_per_day (employee_id, assignment_date),
-    FOREIGN KEY (employee_id) 
-        REFERENCES employee_demographics(employee_id) 
-        ON DELETE CASCADE,
-    FOREIGN KEY (ride_id) 
-        REFERENCES rides(ride_id) 
-        ON DELETE CASCADE
+-- member auth
+CREATE TABLE member_auth (
+    membership_id INT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    PRIMARY KEY (membership_id),
+    FOREIGN KEY (membership_id) REFERENCES membership (membership_id) ON DELETE CASCADE
 );
+
+-- payment methods
+CREATE TABLE member_payment_methods (
+    payment_method_id INT NOT NULL AUTO_INCREMENT,
+    public_payment_id VARCHAR(36) NULL UNIQUE,
+    membership_id INT NOT NULL,
+    payment_type ENUM('Card', 'Bank') NOT NULL,
+    is_default BOOL NOT NULL DEFAULT FALSE,
+    mock_identifier VARCHAR(50),
+    mock_expiration VARCHAR(5),
+    PRIMARY KEY (payment_method_id),
+    INDEX (public_payment_id),
+    FOREIGN KEY (membership_id) REFERENCES membership (membership_id) ON DELETE CASCADE
+);
+
+-- history
+CREATE TABLE membership_purchase_history (
+    purchase_id INT NOT NULL AUTO_INCREMENT,
+    public_purchase_id VARCHAR(36) NULL UNIQUE,
+    membership_id INT NOT NULL,
+    purchase_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    type_id INT NOT NULL,
+    type_name_snapshot VARCHAR(50) NOT NULL,
+    price_paid DECIMAL(10, 2) NOT NULL,
+    purchased_start_date DATE NOT NULL,
+    purchased_end_date DATE NOT NULL,
+    payment_method_id INT NULL,
+    PRIMARY KEY (purchase_id),
+    INDEX (public_purchase_id),
+    FOREIGN KEY (membership_id) REFERENCES membership(membership_id) ON DELETE CASCADE,
+    FOREIGN KEY (type_id) REFERENCES membership_type(type_id) ON DELETE RESTRICT,
+    FOREIGN KEY (payment_method_id) REFERENCES member_payment_methods(payment_method_id) ON DELETE SET NULL
+);
+
+-- e-tickets
+CREATE TABLE prepaid_tickets (
+    e_ticket_id INT NOT NULL AUTO_INCREMENT,
+    purchase_id VARCHAR(50) NOT NULL,
+    ticket_code VARCHAR(36) NOT NULL UNIQUE,
+    ticket_type_id INT NOT NULL,
+    purchase_date DATETIME NOT NULL,
+    email VARCHAR(50),
+    phone_number VARCHAR(15),
+    base_price DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    is_redeemed BOOL NOT NULL DEFAULT FALSE,
+    redeemed_date DATETIME,
+    visit_id INT NULL,
+    PRIMARY KEY (e_ticket_id),
+    FOREIGN KEY (ticket_type_id) REFERENCES ticket_types(ticket_type_id),
+    FOREIGN KEY (visit_id) REFERENCES visits(visit_id) ON DELETE SET NULL,
+    INDEX (purchase_id)
+);
+
+DELIMITER $$
+
+-- auto restock trigger
+DROP TRIGGER IF EXISTS auto_restock $$
+CREATE TRIGGER auto_restock
+AFTER UPDATE ON inventory
+FOR EACH ROW
+BEGIN
+    DECLARE existing_request_id INT;
+
+    IF NEW.min_count IS NOT NULL AND NEW.def_count IS NOT NULL AND (NEW.count < NEW.min_count) THEN
+        SELECT request_id INTO existing_request_id
+        FROM inventory_requests
+        WHERE status = 'Pending'
+          AND item_id = NEW.item_id
+          AND vendor_id = NEW.vendor_id
+        LIMIT 1;
+
+        IF existing_request_id IS NULL THEN
+            INSERT INTO inventory_requests (
+                public_request_id,
+                vendor_id,
+                item_id,
+                requested_count,
+                requested_by_id,
+                location_id,
+                request_date,
+                status
+            )
+            SELECT
+                UUID(),
+                NEW.vendor_id,
+                NEW.item_id,
+                (NEW.def_count - NEW.count),
+                NULL,
+                V.location_id,
+                CURDATE(),
+                'Pending'
+            FROM vendors V
+            WHERE V.vendor_id = NEW.vendor_id;
+        ELSEIF existing_request_id IS NOT NULL AND NEW.count < OLD.count THEN
+            UPDATE inventory_requests
+            SET requested_count = requested_count + (OLD.count - NEW.count)
+            WHERE request_id = existing_request_id;
+        END IF;
+    END IF;
+END$$
+
+-- weather closure trigger
+DROP TRIGGER IF EXISTS weather_closure $$
+CREATE TRIGGER weather_closure
+AFTER INSERT ON weather_events
+FOR EACH ROW
+BEGIN
+    IF NEW.end_time IS NULL AND NEW.park_closure IS TRUE THEN
+        UPDATE rides
+        SET ride_status = 'WEATHER CLOSURE'
+        WHERE ride_status = 'OPEN';
+    END IF;
+END$$
+
+-- reopen trigger
+DROP TRIGGER IF EXISTS weather_ended $$
+CREATE TRIGGER weather_ended
+AFTER UPDATE ON weather_events
+FOR EACH ROW
+BEGIN
+    IF OLD.end_time IS NULL AND NEW.end_time IS NOT NULL AND OLD.park_closure IS TRUE THEN
+        UPDATE rides
+        SET ride_status = 'OPEN'
+        WHERE ride_status = 'WEATHER CLOSURE';
+    END IF;
+END$$
+
+DELIMITER ;

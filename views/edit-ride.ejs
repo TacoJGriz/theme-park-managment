@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Ride: <%= ride.ride_name %></title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        h1 small {
+            display: block;
+            font-size: 0.6em;
+            color: #777;
+            font-weight: normal;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+        div.form-group { margin-bottom: 1.5em; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            margin-top: 10px;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .cancel-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .cancel-link:hover {
+            color: #343a40;
+            text-decoration: underline;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        .modal-content {
+            background: white;
+            padding: 2em;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideIn 0.2s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+        .modal-content h3 {
+            margin-top: 0; color: #dc3545; font-size: 1.5em;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .modal-content p { color: #555; margin: 1.5em 0; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 1em; justify-content: center; margin-top: 2em; }
+        .btn-modal-cancel {
+            padding: 10px 20px; background: #e9ecef; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: #495057;
+        }
+        .btn-modal-confirm {
+            padding: 10px 20px; background: #dc3545; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: white;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <div class="container">
+        <h1>
+            Edit Ride
+            <small><%= ride.ride_name %></small>
+        </h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+
+        <form action="/rides/edit/<%= ride.public_ride_id %>" method="POST">
+            <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+            
+            <div class="form-grid">
+                <div style="grid-column: 1 / -1;">
+                    <label for="ride_name">Ride Name:</label>
+                    <input type="text" id="ride_name" name="ride_name" value="<%= ride.ride_name %>" required>
+                </div>
+                
+                <div>
+                    <label for="ride_type">Ride Type:</label>
+                    <select id="ride_type" name="ride_type" required>
+                        <option value="Rollercoaster" <%= ride.ride_type === 'Rollercoaster' ? 'selected' : '' %>>Rollercoaster</option>
+                        <option value="Water Ride" <%= ride.ride_type === 'Water Ride' ? 'selected' : '' %>>Water Ride</option>
+                        <option value="Flat Ride" <%= ride.ride_type === 'Flat Ride' ? 'selected' : '' %>>Flat Ride</option>
+                        <option value="Show" <%= ride.ride_type === 'Show' ? 'selected' : '' %>>Show</option>
+                        <option value="Other" <%= ride.ride_type === 'Other' ? 'selected' : '' %>>Other</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="ride_status">Status:</label>
+                    <select id="ride_status" name="ride_status" required>
+                        <option value="CLOSED" <%= ride.ride_status === 'CLOSED' ? 'selected' : '' %>>Closed</option>
+                        <option value="OPEN" <%= ride.ride_status === 'OPEN' ? 'selected' : '' %>>Open</option>
+                        <option value="BROKEN" <%= ride.ride_status === 'BROKEN' ? 'selected' : '' %>>Broken (Maintenance)</option>
+                        <option value="WEATHER CLOSURE" <%= ride.ride_status === 'WEATHER CLOSURE' ? 'selected' : '' %>>Weather Closure</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="location_id">Location:</label>
+                    <select id="location_id" name="location_id" required>
+                        <% locations.forEach(location => { %>
+                            <option value="<%= location.location_id %>" <%= ride.location_id === location.location_id ? 'selected' : '' %>>
+                                <%= location.location_name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="capacity">Capacity (per run):</label>
+                    <input type="number" id="capacity" name="capacity" min="1" value="<%= ride.capacity %>">
+                </div>
+                
+                <div>
+                    <label for="min_height">Min Height (inches):</label>
+                    <input type="number" id="min_height" name="min_height" min="0" value="<%= ride.min_height %>">
+                </div>
+                
+                <div>
+                    <label for="max_weight">Max Weight (lbs):</label>
+                    <input type="number" id="max_weight" name="max_weight" min="0" value="<%= ride.max_weight %>">
+                </div>
+            </div>
+            
+            <br>
+            <button type="submit">Save Changes</button>
+        </form>
+        
+        <form id="deleteForm" action="/rides/delete/<%= ride.public_ride_id %>" method="POST">
+             <input type="hidden" name="returnQuery" value="<%= typeof returnQuery !== 'undefined' ? returnQuery : '' %>">
+             <button type="button" class="delete-btn" onclick="openModal()">Delete Ride</button>
+        </form>
+
+        <% const cancelLink = (typeof returnQuery !== 'undefined' && returnQuery) ? '/rides?' + returnQuery : '/rides'; %>
+        <a href="<%= cancelLink %>" class="cancel-link">Cancel</a>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Ride?</h3>
+            <p>Are you sure you want to delete <strong><%= ride.ride_name %></strong>?<br>
+            This will also delete all maintenance logs and run history.</p>
+            
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-modal-confirm" onclick="confirmDelete()">Yes, Delete It</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            deleteForm.submit();
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

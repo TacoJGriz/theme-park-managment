@@ -1,89 +1,227 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Maintenance History</title>
-     <style>
-        body { font-family: sans-serif;
- margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 900px;
- margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
- }
-        h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em;
- }
-        h1 small { color: #666; font-weight: normal;
- }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5em;
- }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd;
- }
-        th { background-color: #6c757d; color: white;
- }
-        tr:nth-child(even) { background-color: #f9f9f9;
- }
-        tr:hover { background-color: #f1f1f1;
- }
-        .action-link { text-decoration: none; color: #28a745; font-weight: bold;
- }
-        .action-link:hover { text-decoration: underline;
- }
-        .status-open { background-color: #fff;
- }
-        .status-closed { background-color: #ffeeba;
- }
+    <style>
+        /* basic page styles */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
 
-        /* --- 'BACK' LINK STYLE --- */
-        .back-link {
+        /* container for the main content */
+        .container { 
+            max-width: 1200px;
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        /* headers */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em; 
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 small { 
+            font-size: 0.6em;
+            color: #777; 
+            font-weight: normal; 
+            margin-left: 10px;
+        }
+
+        /* back button styling */
+        .back-link { 
             display: inline-block;
-            margin-bottom: 1.5em;
-            text-decoration: none;
+            margin-bottom: 1.5em; 
+            text-decoration: none; 
             color: #007bff;
-            font-weight: bold;
+            font-weight: 600;
+            padding: 8px 15px; 
+            background-color: #e9ecef;
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background-color 0.2s, color 0.2s;
         }
-        .back-link:hover {
-            text-decoration: underline;
+        .back-link:hover { 
+            background-color: #dee2e6;
+            color: #0056b3;
         }
+        
+        /* table setup */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 1em;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* status badges */
+        .status-badge { 
+            display: inline-block;
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 0.85em; 
+            font-weight: bold; 
+            text-transform: uppercase;
+        }
+        .status-open { background-color: #ffeeba; color: #856404; }
+        .status-complete { background-color: #d4edda; color: #155724; }
+        .cost { font-family: monospace; font-weight: bold; color: #555; }
+
+        /* generic button styles */
+        .btn-action { 
+            display: inline-block;
+            padding: 6px 12px; 
+            font-size: 0.8em; 
+            font-weight: 600; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            border: 1px solid #ced4da; 
+            margin-bottom: 4px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            text-align: center;
+            min-width: 80px;
+        }
+        .btn-action:hover { background-color: #f8f9fa; }
+        
+        /* specific button colors */
+        .btn-complete { color: #28a745; border-color: #28a745; } 
+        .btn-complete:hover { background-color: #28a745; color: white; }
+
+        .btn-assign { color: #007bff; border-color: #007bff; } 
+        .btn-assign:hover { background-color: #007bff; color: white; }
+        
+        .btn-edit { color: #d39e00; border-color: #ffc107; } 
+        .btn-edit:hover { background-color: #ffc107; color: #212529; }
+        
+        .btn-reopen { color: #dc3545; border-color: #dc3545; } 
+        .btn-reopen:hover { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
+    
     <div class="container">
-        <h1>Maintenance History for <br><small><%= ride.ride_name %></small></h1>
         
-        <a href="/rides" class="back-link">&laquo; Back to Rides List</a>
+        <%# check where the back button should go based on query params %>
+        <% if (typeof ridesListQuery !== 'undefined' && ridesListQuery) { %>
+            <a href="/rides?<%= ridesListQuery %>" class="back-link">&laquo; Back to Rides List</a>
+        <% } else if (typeof back_query !== 'undefined' && back_query) { %>
+            <a href="/reports/maintenance?<%= decodeURIComponent(back_query) %>" class="back-link">&laquo; Back to Maintenance Report</a>
+        <% } else { %>
+            <a href="/rides" class="back-link">&laquo; Back to Rides List</a>
+        <% } %>
+
+        <h1>
+            Maintenance History
+            <small>Ride: <%= ride.ride_name %></small>
+        </h1>
 
         <table>
             <thead>
-                <tr>
-                    <th>Reported On</th>
-                    <th>Summary</th>
-                    <th>Assigned To</th>
-                    <th>Completed On</th>
-                    <th>Cost</th>
-                    <th>Status</th>
-                </tr>
+             <tr>
+                <th>Report Date</th>
+                <th>Assigned To</th>
+                <th>Completion</th>
+                <th>Cost</th>
+                <th>Status</th>
+                <th style="min-width: 120px;">Actions</th>
+             </tr>
             </thead>
             <tbody>
+                <%# show message if no logs exist %>
                 <% if (maintenance_logs.length === 0) { %>
-                    <tr>
-                        <td colspan="6">No maintenance records found for this ride.</td>
-                    </tr>
+                    <tr><td colspan="6" style="text-align: center; padding: 2em;">No maintenance records found.</td></tr>
                 <% } %>
-                <% maintenance_logs.forEach(log => { %>
-                    <tr class="<%= log.end_date ? 'status-closed' : 'status-open' %>">
-                        <td><%= log.report_date.toISOString().substring(0, 10) %></td>
-                        <td><%= log.summary %></td>
-                        <td><%= log.employee_name || 'Unassigned' %></td>
-                        <td><%= log.end_date ? log.end_date.toISOString().substring(0, 10) : '---' %></td>
-                        <td>$<%= log.cost ? parseFloat(log.cost).toFixed(2) : '0.00' %></td>
-                        <td>
-                            <% if (log.end_date) { %>
-                                Completed
+
+                 <% maintenance_logs.forEach(log => { %>
+                <tr>
+                    <td><%= new Date(log.report_date).toLocaleDateString() %></td>
+                    <td>
+                       <%= log.employee_name || 'Unassigned' %>
+                        <%# show pending transfer if exists %>
+                        <% if (log.pending_employee_name) { %>
+                            <br><small style="color: #e0a800;">(Pending transfer to: <%= log.pending_employee_name %>)</small>
+                        <% } %>
+                     </td>
+                    <td><%= log.end_date ? new Date(log.end_date).toLocaleDateString() : '---' %></td>
+                    <td>
+                        <% if (log.cost) { %>
+                            <span class="cost">$<%= parseFloat(log.cost).toFixed(2) %></span>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </td>
+                    
+                    <td>
+                         <% if (log.end_date) { %>
+                            <span class="status-badge status-complete">Complete</span>
+                        <% } else { %>
+                            <span class="status-badge status-open">Open</span>
+                        <% } %>
+                    </td>
+
+                   <td>
+                        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                            <% if (!log.end_date) { %>
+                                <%# active maintenance actions %>
+                                
+                                <%# location managers cant complete tasks %>
+                                <% if (user.role !== 'Location Manager') { %>
+                                    <a href="/maintenance/complete/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-complete">Complete</a>
+                                <% } %>
+                                
+                                <a href="/maintenance/reassign/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-assign">Reassign</a>
+                                <a href="/maintenance/edit/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-edit">Edit Report</a>
                             <% } else { %>
-                                <a href="/maintenance/complete/<%= log.maintenance_id %>" class="action-link">Complete Work Order</a>
+                                <%# completed maintenance actions %>
+                                <a href="/maintenance/edit-completion/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-edit">Edit Completion</a>
+                                <a href="/maintenance/reopen/<%= log.public_maintenance_id %>?returnQuery=<%= ridesListQuery %>" class="btn-action btn-reopen">Reopen</a>
                             <% } %>
-                        </td>
-                    </tr>
+                        </div>
+                     </td>
+                </tr>
                 <% }); %>
             </tbody>
         </table>

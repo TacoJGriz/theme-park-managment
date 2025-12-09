@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maintenance Report</title>
+    <%# chart js library %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* standard body styles */
+        body { 
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+
+        /* main container */
+        .container { 
+            max-width: 1400px; 
+            margin: 2em auto; 
+            background: white; 
+            padding: 2.5em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        /* headers */
+        h1 { 
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 0.5em; 
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* report filter controls */
+        .report-controls {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1.5em;
+            border-radius: 12px;
+            margin-bottom: 2em;
+        }
+
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            align-items: end; 
+        }
+        
+        label { 
+            display: block;
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9em; 
+            color: #495057;
+        }
+
+        /* inputs */
+        input[type="date"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* update button */
+        button { 
+            padding: 11px 25px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+
+        /* top metrics bar */
+        .metrics-bar { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1.5em; 
+            margin-bottom: 2.5em; 
+        }
+        .metric-card { 
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-2px); }
+
+        .metric-card h3 { 
+            margin: 0 0 0.25em 0; 
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #333;
+        }
+        .metric-card p { 
+            margin: 0; 
+            font-weight: 600; 
+            color: #6c757d; 
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        
+        /* red highlight for bad metrics */
+        .metric-card.highlight {
+            background-color: #fff5f5;
+            border-color: #f5c6cb;
+        }
+        .metric-card.highlight h3 { color: #dc3545; }
+        .metric-card.highlight p { color: #a71d2a; }
+
+        /* charts layout */
+        .charts-container { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 2em; 
+            margin-bottom: 3em; 
+        }
+        .chart-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .chart-card h4 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.1em;
+            color: #495057;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px; 
+            width: 100%;
+        }
+
+        /* data table */
+        table { 
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 1.5em;
+            font-size: 0.9em;
+            background: white;
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th { 
+            background-color: #007bff;
+            color: white; 
+            padding: 15px;
+            text-align: left; 
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td { 
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1; 
+            vertical-align: middle;
+            color: #555;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+        
+        .ride-id { font-family: monospace; color: #6c757d; font-weight: bold; }
+        
+        /* status badges */
+        .status-badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 0.8em; 
+        }
+        .status-open { background-color: #ffeeba; color: #856404; }
+        .status-complete { background-color: #d4edda; color: #155724; }
+        
+        /* view details button */
+        .btn-view { 
+            display: inline-block;
+            text-decoration: none; 
+            color: #17a2b8;
+            font-weight: 600; 
+            padding: 6px 12px; 
+            border: 1px solid #17a2b8; 
+            border-radius: 6px; 
+            font-size: 0.85em; 
+            transition: all 0.2s;
+            background: white;
+        }
+        .btn-view:hover { 
+            background-color: #17a2b8; 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Maintenance Report</h1>
+
+        <div class="report-controls">
+            <form action="/reports/maintenance" method="POST">
+                <div class="form-grid">
+                    <div>
+                        <label>Start Date:</label>
+                        <input type="date" name="selected_date1" value="<%= selected_date1 %>" required>
+                    </div>
+                    <div>
+                        <label>End Date:</label>
+                        <input type="date" name="selected_date2" value="<%= selected_date2 %>" required>
+                    </div>
+                    <div>
+                        <label>Location:</label>
+                        <select name="locations_selected">
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.location_id %>" <%= String(loc.location_id) === String(locations_selected) ? 'selected' : '' %>>
+                                    <%= loc.location_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Ride Type:</label>
+                        <select name="type_selected">
+                            <option value="all">All Types</option>
+                            <% rideTypes.forEach(t => { %>
+                                <option value="<%= t.ride_type %>" <%= t.ride_type === type_selected ? 'selected' : '' %>>
+                                    <%= t.ride_type %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit">Update Report</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <% if (data && data.length > 0) { %>
+            
+            <div class="metrics-bar">
+                <div class="metric-card highlight">
+                    <h3><%= metrics.avg_monthly %></h3>
+                    <p>Avg. Breakdowns / Month</p>
+                </div>
+                <div class="metric-card">
+                    <h3><%= metrics.total %></h3>
+                    <p>Total Incidents</p>
+                </div>
+                <div class="metric-card">
+                    <h3><%= metrics.avg_repair_days %> Days</h3>
+                    <p>Avg. Repair Time</p>
+                </div>
+                <div class="metric-card">
+                    <h3>$<%= parseFloat(metrics.total_cost).toLocaleString() %></h3>
+                    <p>Total Cost</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h4>Maintenance Trend (Incidents)</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>Breakdowns by Ride Type</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <% 
+                // construct the back query for links
+                const backParams = new URLSearchParams();
+                backParams.set('d1', selected_date1);
+                backParams.set('d2', selected_date2);
+                backParams.set('loc', locations_selected);
+                backParams.set('type', type_selected);
+                const backQuery = backParams.toString();
+            %>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ride ID</th>
+                        <th>Ride Name</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Reported</th>
+                        <th>Completed</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% data.forEach(item => { %>
+                        <tr>
+                            <td class="ride-id"><%= (item.public_ride_id) ? item.public_ride_id.substring(0, 8).toUpperCase() : 'N/A' %></td>
+                            <td style="font-weight: bold;"><%= item.ride_name %></td>
+                            <td><%= item.ride_type %></td>
+                            <td><%= item.location_name %></td>
+                            <td><%= item.report_date.toLocaleDateString() %></td>
+                            <td><%= item.end_date ? item.end_date.toLocaleDateString() : '-' %></td>
+                            <td><%= item.cost ? '$' + parseFloat(item.cost).toFixed(2) : '-' %></td>
+                            <td>
+                                <% if (item.end_date) { %>
+                                    <span class="status-badge status-complete">Complete</span>
+                                <% } else { %>
+                                    <span class="status-badge status-open">Open</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (item.public_ride_id) { %>
+                                    <a href="/maintenance/ride/<%= item.public_ride_id %>?back_query=<%= encodeURIComponent(backQuery) %>" class="btn-view">View Log</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+
+            <script>
+                // setup the timeline bar chart
+                const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+                new Chart(timelineCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: <%- JSON.stringify(chartData.timeline.labels) %>,
+                        datasets: [{
+                            label: 'Incidents Reported',
+                            data: <%- JSON.stringify(chartData.timeline.data) %>,
+                            backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+
+                // setup the ride type doughnut chart
+                const typeCtx = document.getElementById('typeChart').getContext('2d');
+                new Chart(typeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: <%- JSON.stringify(chartData.types.labels) %>,
+                        datasets: [{
+                            data: <%- JSON.stringify(chartData.types.data) %>,
+                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } }
+                    }
+                });
+            </script>
+
+        <% } else if (data && data.length === 0) { %>
+            <div style="text-align: center; padding: 3em; background: #f8f9fa; border-radius: 12px; border: 1px dashed #dee2e6; margin-top: 2em;">
+                <h3 style="color: #6c757d; margin-top: 0;">No Data Available</h3>
+                <p style="color: #999;">No maintenance records found for the selected criteria.</p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

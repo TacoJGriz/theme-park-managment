@@ -1,56 +1,401 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vendors</title>
-     <style>
-         body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-         .container { max-width: 900px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-         h1 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
-         table { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
-         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-         th { background-color: #007bff; color: white; }
-         tr:nth-child(even) { background-color: #f9f9f9; }
-         tr:hover { background-color: #f1f1f1; }
-         .action-link { text-decoration: none; color: #007bff; font-weight: bold; }
-         .action-link:hover { text-decoration: underline; }
-         .add-button { display: inline-block; margin-bottom: 1.5em; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-         .add-button:hover { background-color: #218838; }
-     </style>
+    <title>Park Vendors</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1.5em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1em;
+            margin-bottom: 2em;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.2em;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card h3 {
+            margin: 0 0 0.25em 0;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .stat-card p {
+            margin: 0;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        .filter-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 1.5em;
+            border-radius: 12px;
+            margin-bottom: 2em;
+        }
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1em;
+            align-items: flex-end;
+        }
+        .filter-controls label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .filter-controls input,
+        .filter-controls select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 0.95em;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            flex-grow: 1;
+            padding: 10px 15px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover {
+            transform: translateY(-1px);
+        }
+        .btn-filter {
+            background-color: #007bff;
+        }
+        .btn-filter:hover {
+            background-color: #0056b3;
+        }
+        .btn-clear {
+            background-color: #6c757d;
+        }
+        .btn-clear:hover {
+            background-color: #545b62;
+        }
+        .add-button {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .add-button:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95em;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px #e9ecef, 0 2px 4px rgba(0,0,0,0.02);
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        th.sortable a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        th.sortable a:hover {
+            text-decoration: none;
+            opacity: 0.9;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+            color: #555;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        .status-OPEN {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-CLOSED {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .btn-action {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 12px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #ced4da;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-action:last-child {
+            margin-bottom: 0;
+        }
+        .btn-action:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-1px);
+        }
+        .btn-inventory {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-inventory:hover {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn-edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-edit:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .message {
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
+        .success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+        }
+        .error {
+            color: #842029;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+        }
+    </style>
 </head>
 <body>
     <%- include('partials/header') %>
 
     <div class="container">
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
+
         <h1>Park Vendors</h1>
-        <% if (user.role === 'Admin' || user.role === 'Manager') { %>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3 style="color: #007bff;"><%= counts.total || 0 %></h3>
+                <p>Total Vendors</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #28a745;"><%= counts.open_count || 0 %></h3>
+                <p>Open</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="color: #dc3545;"><%= counts.closed_count || 0 %></h3>
+                <p>Closed</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <form action="" method="GET">
+                <div class="filter-controls">
+                    <div>
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" placeholder="Name, ID, Location..." value="<%= search %>">
+                    </div>
+                    <div>
+                        <label for="filter_location">Location</label>
+                        <select id="filter_location" name="filter_location">
+                            <option value="">All Locations</option>
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.location_id %>" <%= String(filters.location) === String(loc.location_id) ? 'selected' : '' %>>
+                                    <%= loc.location_name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter_status">Status</label>
+                        <select id="filter_status" name="filter_status">
+                            <option value="">All Statuses</option>
+                            <option value="OPEN" <%= filters.status === 'OPEN' ? 'selected' : '' %>>Open</option>
+                            <option value="CLOSED" <%= filters.status === 'CLOSED' ? 'selected' : '' %>>Closed</option>
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn btn-filter">Filter</button>
+                        <a href="?" class="filter-btn btn-clear">Clear</a>
+                    </div>
+                </div>
+                <% if (currentSort && currentDir) { %>
+                    <input type="hidden" name="sort" value="<%= currentSort %>">
+                    <input type="hidden" name="dir" value="<%= currentDir %>">
+                <% } %>
+            </form>
+        </div>
+
+        <% if (user.role === 'Admin' || user.role === 'Park Manager') { %>
             <a href="/vendors/new" class="add-button">Add New Vendor</a>
         <% } %>
+
+        <%
+            const getSortState = (column) => {
+                let nextDir = 'asc';
+                let indicator = '';
+                if (currentSort === column) {
+                    if (currentDir === 'asc') {
+                        nextDir = 'desc';
+                        indicator = '▲';
+                    } else if (currentDir === 'desc') {
+                        nextDir = 'none';
+                        indicator = '▼';
+                    }
+                }
+                let href = `?search=${encodeURIComponent(search)}`;
+                if (filters.location) href += `&filter_location=${encodeURIComponent(filters.location)}`;
+                if (filters.status) href += `&filter_status=${encodeURIComponent(filters.status)}`;
+                if (nextDir !== 'none') {
+                    href += `&sort=${column}&dir=${nextDir}`;
+                }
+                return { href, indicator };
+            };
+        %>
 
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Manager</th>
-                    <th>Action</th>
+                    <th class="sortable" style="width: 120px;">
+                        <a href="<%= getSortState('id').href %>">
+                            <span>ID</span> <span class="sort-indicator"><%= getSortState('id').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('name').href %>">
+                            <span>Name</span> <span class="sort-indicator"><%= getSortState('name').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('location').href %>">
+                            <span>Location</span> <span class="sort-indicator"><%= getSortState('location').indicator %></span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="<%= getSortState('status').href %>">
+                            <span>Status</span> <span class="sort-indicator"><%= getSortState('status').indicator %></span>
+                        </a>
+                    </th>
+                    <th style="min-width: 160px;">Action</th>
                 </tr>
             </thead>
             <tbody>
+                <% if (vendors.length === 0) { %>
+                    <tr><td colspan="5" style="text-align: center; padding: 2em;">No vendors found.</td></tr>
+                <% } %>
                 <% vendors.forEach(vendor => { %>
                     <tr>
-                        <td><%= vendor.vendor_id %></td>
-                        <td><%= vendor.vendor_name %></td>
+                        <td><%= vendor.public_vendor_id.substring(0, 8).toUpperCase() %></td>
+
+                        <td><strong><%= vendor.vendor_name %></strong></td>
+
                         <td><%= vendor.location_name || 'N/A' %></td>
-                        <td><%= vendor.manager_name || 'Unassigned' %></td>
+                        <td><span class="status-<%= vendor.vendor_status %>"><%= vendor.vendor_status %></span></td>
                         <td>
-                            <%# 3. HIDE THIS ACTION LINK BASED ON ROLE AS WELL %>
-                            <% if (user.role === 'Admin' || user.role === 'Manager') { %>
-                                <a href="/assign-manager/vendor/<%= vendor.vendor_id %>" class="action-link">Assign Manager</a>
-                            <% } else { %>
-                                No actions available
-                            <% } %>
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                <% if (vendor.vendor_status === 'CLOSED') { %>
+                                    <span class="btn-action btn-disabled" style="color: #adb5bd; border-color: #dee2e6; background-color: #f8f9fa; cursor: not-allowed;">Checkout</span>
+                                <% } else { %>
+                                    <a href="/inventory/checkout/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action" style="color: #28a745; border-color: #28a745;">Checkout</a>
+                                <% } %>
+                             <% } %>
+
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager' || user.role === 'Staff') { %>
+                                 <a href="/inventory/vendor/<%= vendor.public_vendor_id %>?returnTo=vendors" class="btn-action btn-inventory">View Inventory</a>
+                             <% } %>
+
+                             <% if (user.role === 'Admin' || user.role === 'Park Manager' || user.role === 'Location Manager') { %>
+                                <a href="/vendors/edit/<%= vendor.public_vendor_id %>" class="btn-action btn-edit">Edit Vendor</a>
+                             <% } %>
                         </td>
                     </tr>
                 <% }); %>
@@ -59,4 +404,3 @@
     </div>
 </body>
 </html>
-

@@ -4,83 +4,162 @@
     <meta charset="UTF-8">
     <title>Log Weather Event</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; }
-        h1 { color: #444; text-align: center; margin-top: 1em; }
-        form { max-width: 500px; margin: 2em auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px;
- border: 1px solid #ccc; }
-        .checkbox-label {
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            background: white;
+            padding: 2.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        div.form-group { margin-bottom: 1.5em; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        input[type="datetime-local"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .checkbox-group {
             display: flex;
             align-items: center;
             padding: 10px 0;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 1em;
+            color: #856404;
+            font-weight: 600;
         }
-        input[type="checkbox"] {
-            width: auto; 
+        .checkbox-group input {
+            width: auto;
             margin-right: 10px;
+            transform: scale(1.2);
         }
-
+        .checkbox-group label {
+            margin: 0;
+            display: inline;
+            color: #856404;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
         button {
-            padding: 12px 20px;
-            background-color: #ffc107;
-            color: #333;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
             border: none;
+            border-radius: 8px;
             cursor: pointer;
-            border-radius: 4px;
             font-size: 1em;
-            font-weight: bold;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         button:hover {
-            background-color: #e0a800;
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
-        .error { color: red; font-weight: bold;
- }
-
         .cancel-link {
-            display: inline-block;
-            margin-left: 15px;
+            display: block;
+            text-align: center;
+            margin-top: 1.5em;
             text-decoration: none;
             color: #6c757d;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: color 0.2s;
         }
         .cancel-link:hover {
+            color: #343a40;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-    <h1>Log Weather Event</h1>
-    <% if (typeof error !== 'undefined' && error) { %><p class="error"><%= error %></p><% } %>
-    <form action="/weather" method="POST">
-        <div>
-            <label for="event_date">Event Start Date & Time:</label>
-            <input type="datetime-local" id="event_date" name="event_date" required>
-        </div>
-        <div>
-            <label for="end_time">Event End Date & Time (optional):</label>
-            <input type="datetime-local" id="end_time" name="end_time">
-        </div>
-        <div>
-            <label for="weather_type">Weather Type:</label>
-            <select id="weather_type" name="weather_type" required>
-                <option value="Rain">Rain</option>
-                <option value="Thunderstorm">Thunderstorm</option>
-                <option value="Tornado Warning">Tornado Warning</option>
-                <option value="Heatwave">Heatwave</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <div>
-            <label class="checkbox-label">
-                <input type="checkbox" name="park_closure" value="1">
-                Did this cause a full park closure?
-            </label>
-        </div>
-        <br>
-        <button type="submit">Log Event</button>
-        <a href="/weather" class="cancel-link">Cancel</a>
-    </form>
+    
+    <div class="container">
+        <h1>Log Weather Event</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+        
+        <% 
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const maxDateTime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
+        %>
+    
+        <form action="/weather" method="POST">
+            <div class="form-group">
+                <label for="event_date">Event Start Date & Time:</label>
+                <input type="datetime-local" id="event_date" name="event_date" step="60" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="end_time">Event End Date & Time (optional):</label>
+                <input type="datetime-local" id="end_time" name="end_time" step="60" max="<%= maxDateTime %>">
+            </div>
+            
+            <div class="form-group">
+                <label for="weather_type">Weather Type:</label>
+                <select id="weather_type" name="weather_type" required>
+                    <option value="Rain">Rain</option>
+                    <option value="Thunderstorm">Thunderstorm</option>
+                    <option value="Tornado Warning">Tornado Warning</option>
+                    <option value="Heatwave">Heatwave</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="park_closure" name="park_closure" value="1">
+                <label for="park_closure">Did this cause a full park closure?</label>
+            </div>
+            
+            <br>
+            <button type="submit">Log Event</button>
+            <a href="/weather" class="cancel-link">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

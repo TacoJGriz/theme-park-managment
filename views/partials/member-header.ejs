@@ -1,0 +1,124 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary: #6f42c1;       
+        --primary-dark: #5a32a3;
+        --secondary: #ffc107;     
+        --accent: #17a2b8;        
+        
+        --dark: #343a40;
+        --light: #f8f9fa;
+        --white: #ffffff;
+        --gray: #6c757d;
+        
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
+
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+        --radius: 12px;
+        --transition: all 0.3s ease;
+    }
+
+    .navbar {
+        background-color: var(--accent); 
+        padding: 0.8em 2em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--white);
+        margin-bottom: 2em;
+        min-height: 50px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .nav-links a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        transition: var(--transition);
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+
+    .nav-links a:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--white);
+        transform: translateY(-1px);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .welcome-text {
+        font-weight: 600;
+        font-size: 0.95em;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .btn-nav {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        display: inline-block;
+    }
+
+    .btn-password {
+        background-color: var(--secondary);
+        color: var(--dark);
+        border: 1px solid var(--secondary);
+    }
+    .btn-password:hover {
+        background-color: #e0a800;
+        color: var(--dark);
+        transform: translateY(-1px);
+    }
+
+    .btn-logout {
+        background-color: rgba(0, 0, 0, 0.15);
+        color: var(--white);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-logout:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+</style>
+
+<% if (member) { %>
+<nav class="navbar">
+    <div class="nav-links">
+        <a href="/member/dashboard">Dashboard</a>
+        <a href="/member/history">Visit History</a>
+        <a href="/member/purchases">Purchases</a>
+        <a href="/member/manage">Account</a>
+    </div>
+    <div class="user-info">
+        <span class="welcome-text">
+            Welcome, <%= member.firstName || member.first_name %>!
+        </span>
+        <a href="/member/change-password" class="btn-nav btn-password">Change Password</a>
+        <a href="/member/logout" class="btn-nav btn-logout">Logout</a>
+    </div>
+</nav>
+<% } %>
