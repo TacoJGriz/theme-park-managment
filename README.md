@@ -43,6 +43,7 @@ To view park data and verify changes, connect via **MySQL Workbench**:
 
 #### Option A: Hosted Version (No Setup)
 Access the live application here: **[https://theme-park-app.onrender.com/](https://theme-park-app.onrender.com/)**
+> *Note: hosted version is no longer up*
 > *Note: Data changes made on the frontend can be verified in the database using the connection established in Step 1.*
 
 #### Option B: Local Setup
